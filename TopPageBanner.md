@@ -1,5 +1,5 @@
 ---
-banner: ["[Welcome](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/banner/welcome.jpg)"]
+banner: ["https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/banner/welcome.jpg"]
 ---
 #meta
 
@@ -9,9 +9,6 @@ add this to the `frontmatter` of the page where you want the banner shown:
 `banner: ["url","width","height"]`
 
 - `url` - required
-  - if the file is on the server (recommended) use: `banner/welcome.png`
-    or
-  * if the file is on the web  use: `[Banner](https://example.com/banner.png)` (not recommended - width and height won’t work)
 - `width` - optional
 - `height` - optional
 
@@ -37,9 +34,9 @@ function widgets.banner()
     local bannerHeight = fm.frontmatter.banner[3] or ""
     local md
     if bannerWidth ~= "" or bannerHeigth ~= "" then
-      md = "![[" .. bannerPath .. "|" .. bannerWidth .."x".. bannerHeight .. "]]"
+      md = "![Banner|" .. bannerWidth .."x".. bannerHeight .. "]("..bannerPath..")"
     else
-      md = "![[" .. bannerPath .. "]]"
+      md = "![Banner](" .. bannerPath .. ")"
     end
 
     return widget.new {
