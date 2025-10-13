@@ -2,12 +2,12 @@
   This is a collection of awesome SilverBullet libraries, currently containing:
 
 # Available libraries
-* **DayProgressBar** - Displays a Progress Bar with time left in Day
-* **EmbedGoogleMapsWidget** - it embeds Google Maps into a page as Widget
-* **HeaderLevelToggle** - Toggles header level using Shortcut keys
-* **SelectionToCodeblockToggle** - Transforms Selection into a CodeBlock
-* **TopPageBanner** - Displays an embedded image on the top of the page
-* **SearchBar_ModernStyle** - Restyling of the “Find in Page” - Search Bar
+* [**DayProgressBar**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DayProgressBar.md) - Displays a Progress Bar with time left in Day
+* [**EmbedGoogleMapsWidget**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/EmbedGoogleMapsWidget.md) - it embeds Google Maps into a page as Widget
+* [**HeaderLevelToggle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/HeaderLevelToggle.md) - Toggles header level using Shortcut keys
+* [**SelectionToCodeblockToggle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SelectionToCodeblockToggle.md) - Transforms Selection into a CodeBlock
+* [**TopPageBanner**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TopPageBanner.md) - Displays an embedded image on the top of the page
+* [**SearchBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md) - Restyling of the “Find in Page” - Search Bar
 
 # How to use
 1. Navigate to the library you would like to import, e.g. `https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md`
