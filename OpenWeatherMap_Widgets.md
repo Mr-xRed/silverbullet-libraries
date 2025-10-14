@@ -5,13 +5,13 @@
 ## Configuration
 
 Get your OpenWeatherMap API KEY from [OpenWeatherMap Website](https://home.openweathermap.org/api_keys). If you don’t have one, you can get one with the free plan.
-Setup your apiKey (required) and other options in your configuration page using:
+Setup your **apiKey** (required⚠️) and the other optional keys in your configuration page using:
 
 ```
 config.set( "owm", {
-            apiKey = "YOUR_API_KEY",  --required
+            apiKey = "YOUR_API_KEY",  --required ⚠️
             refresh = 30,             --optional (minutes)
-            def_location = "Berlin"   --optional
+            defLocation = "Berlin"    --optional (req. for def widget)
 }) 
 ```
 
@@ -43,9 +43,9 @@ or
 config.define("owm", {
     type = "object",
     properties = {
-      apiKey = schema.string(), --req.
-      refresh = schema.number(), --opt.
-      defLocation = schema.string() --req. for default loc widget only
+      apiKey = schema.string(), 
+      refresh = schema.number(), 
+      defLocation = schema.string() 
     }
 })
 ```
