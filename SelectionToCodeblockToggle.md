@@ -4,17 +4,32 @@
 
 This `space-lua` will create custom shortcut commands (Ctrl-Alt-1 to Ctrl-Alt-9) for converting current selection or current line into the specific CodeBlock.
 
-To define your custom CodeBlock languages, edit `block_lang` variable below. You can define up to 9 CodeBlock languages which will be assigned to Ctrl-Alt-1 to Ctrl-Alt-9.
+To define your custom CodeBlock languages, using the `config.set` `blockLang` array in your configuration page. You can define up to 9 CodeBlock languages which will be assigned to Ctrl-Alt-1 to Ctrl-Alt-9 Shortcut keys. Make sure your `config.set` is of higher priority than your script otherwise it wont work.
+
+## Configuration
+
+```lua
+-- priority: 10
+config.set("blockLang",
+          {"bash", "space-lua", "space-style", "mysql", "html"})
+```
+
+
+## Implementation
 
 ```space-lua
-
-local block_lang = { "bash", "space-lua", "space-style", "mysql" }
-
+-- priority: 9
+config.define("blockLang", { type = "array" })
+local block_lang = config.get("blockLang") or ""
+   if block_lang == "" then 
+     editor.flashNotification("⚠️ blockLang not set or make sure priority >= 10", "error")
+   end
 for i, lang in ipairs(block_lang) do
   command.define {
     name = "CodeBlock: " .. lang,
     key = "Ctrl-Alt-" .. i,
-    run = function() CodeBlock(lang) end}
+    mac = "Cmd-Alt-" .. i,
+    run = function() CodeBlock(lang) end }
 end
 
 local function CodeBlock(lang) 
