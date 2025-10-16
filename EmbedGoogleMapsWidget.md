@@ -14,7 +14,7 @@ The widget accepts following arguments:
     *   `m (default)`: standard street map
     *   `k` : satellite/hybrid view
 
-!!! Undeclared/Empty arguments must be skipped with double-quotes `""`
+⚠️ Undeclared/Empty arguments must be skipped with double-quotes `""`
 
 ## Example:
 ${embed_map("Colosseum","","400","18","k")}

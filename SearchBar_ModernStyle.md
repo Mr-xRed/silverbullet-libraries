@@ -13,7 +13,7 @@
 html[data-theme="dark"] {
   --editor-panels-bottom-color: #eee;
   --editor-panels-border-color: #eee6;
-  --editor-panels-bottom-background-color: #5551;
+  --editor-panels-bottom-background-color: #0004;
   --editor-panels-bottom-textfield-background: #777;
 }
 

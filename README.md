@@ -9,6 +9,7 @@
 * [**TopPageBanner**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TopPageBanner.md) - Displays an embedded image on the top of the page
 * [**SearchBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md) - Restyling of the “Find in Page” - Search Bar
 * [**OpenWeatherMap_Widgets**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/OpenWeatherMap_Widgets.md) - OWM Weather widgets using slash commands
+* [**CustomColoredTables**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/CustomColoredTables.md) - Adds a little color to your boring tables
 
 # How to use
 1. Navigate to the library you would like to import, e.g. `https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md`
