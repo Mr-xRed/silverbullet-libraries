@@ -82,7 +82,7 @@ Use it Like this:
 |----|------|--------|--------|----------|--------|-------------|--------|-------------|----------|
 | 1  | Alice Smith | alice@example.com | +1-555-1234 | USA | New York | Sales | Manager | 2023-04-12 | Active |
 | 2  | Bob Johnson | bob@example.com | +44-555-5678 | UK | London | IT | Developer | 2022-11-05 | Inactive |
-| 3  | Carol Davis | carol@example.com | +49-555-9012 | Germany | Berlin | HR | Recruiter | 2024-02-19 | Pending |
+| 3  | Carol Davis | [carol@example.com](carol@example.com) | +49-555-9012 | Germany | Berlin | HR | Recruiter | 2024-02-19 | Pending |
 
 ## Implementation
 
@@ -114,15 +114,15 @@ table:has(.sb-hashtag[data-tag-name="wine"]) {
 /* ---------- sea ---------- */
 table:has(.sb-hashtag[data-tag-name="sea"]) {
   thead { background-color: #0048f2;}
-  tbody tr:nth-child(even) { background-color: #4569a2;}
-  tbody tr:nth-child(odd) { background-color: #658ac4;}
+  tbody tr:nth-child(even) { background-color: #658ac4;}
+  tbody tr:nth-child(odd) { background-color: #4569a2;}
   --editor-wiki-link-page-color: #ffe559;
 }
 /* ---------- silver ---------- */
 table:has(.sb-hashtag[data-tag-name="silver"]) {
   thead { background-color: #333333;}
-  tbody tr:nth-child(even) { background-color: #444444;}
-  tbody tr:nth-child(odd) { background-color: #555555;}
+  tbody tr:nth-child(even) { background-color: #555555;}
+  tbody tr:nth-child(odd) { background-color: #444444;}
   --editor-wiki-link-page-color: #d1d1d1;
 }
 /* ---------- mint ---------- */

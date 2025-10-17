@@ -2,14 +2,16 @@
   This is a collection of awesome SilverBullet libraries, currently containing:
 
 # Available libraries
+* [**Admonitions_multiligual**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Admonitions_multiligual.md) - Adds 🇬🇧 🇩🇪 🇫🇷 🇮🇹 🇨🇳 🇪🇸 languages for custom admonitions 
+* [**Custom_Width_and_Color_Tables**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Custom_Width_and_Color_Tables.md) - Adds custom color and width to your boring tables
 * [**DayProgressBar**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DayProgressBar.md) - Displays a Progress Bar with time left in Day
 * [**EmbedGoogleMapsWidget**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/EmbedGoogleMapsWidget.md) - it embeds Google Maps into a page as Widget
 * [**HeaderLevelToggle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/HeaderLevelToggle.md) - Toggles header level using Shortcut keys
+* [**OpenWeatherMap_Widgets**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/OpenWeatherMap_Widgets.md) - OWM Weather widgets using slash commands
+* [**SearchBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md) - Restyling of the “Find in Page” - Search Bar
 * [**SelectionToCodeblockToggle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SelectionToCodeblockToggle.md) - Transforms Selection into a CodeBlock
 * [**TopPageBanner**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TopPageBanner.md) - Displays an embedded image on the top of the page
-* [**SearchBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md) - Restyling of the “Find in Page” - Search Bar
-* [**OpenWeatherMap_Widgets**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/OpenWeatherMap_Widgets.md) - OWM Weather widgets using slash commands
-* [**Custom_Width_and_Color_Tables**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Custom_Width_and_Color_Tables.md) - Adds custom color and width to your boring tables
+
 
 # How to use
 1. Navigate to the library you would like to import, e.g. `https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md`
