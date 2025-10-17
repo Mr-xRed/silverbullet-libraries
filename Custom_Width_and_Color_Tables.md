@@ -56,7 +56,6 @@ Use it Like this:
 | 002       | 2025-10-16  | Bob Johnson | Widget B     | 1         | $8.50    |
 | 003       | 2025-10-17  | Carol Davis | Widget C     | 5         | $28.75   |
 
-
 ### Maroon
 | ID #maroon #t70p| Name | Email | Department | Role | Start Date | Status |
 |----|------|--------|-------------|-------|-------------|----------|
