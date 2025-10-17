@@ -1,6 +1,4 @@
-#meta
-
-# Weather Widget for OpenWeatherMaps.org
+# Weather Widget for OpenWeatherMap.org
 
 ## Configuration
 

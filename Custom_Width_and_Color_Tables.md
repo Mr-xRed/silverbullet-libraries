@@ -1,5 +1,3 @@
-#meta
-
 # Custom Width & Colored Tables
 
 ## Usage:

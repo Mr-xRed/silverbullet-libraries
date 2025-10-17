@@ -1,7 +1,6 @@
-#meta
+# Embed Google Maps in your pages
 
-## Embed Google Maps in your pages
-The widget accepts following arguments:
+## The widget accepts following arguments:
 
 *   `qry` - required - City, Address, Coordinates
 *   `width` - optional - in pixels or %, default is 640
@@ -17,7 +16,7 @@ The widget accepts following arguments:
 ⚠️ Undeclared/Empty arguments must be skipped with double-quotes `""`
 
 ## Example:
-${embed_map("Colosseum","","400","18","k")}
+${embed_map("Statue of Liberty","","400","18","k")}
 
 ## Implementation
 ```space-lua
