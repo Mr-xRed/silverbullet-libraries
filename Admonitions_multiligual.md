@@ -19,7 +19,7 @@ config.set("admonLang","de")
 
 ## Implementation
 
-To not have multiple space-styles for the different languages I left the admonition types in wnglish, and handle the multi language support only in the SlashCommand definitions (you can check out below).
+To not have multiple space-styles for the different languages I left the admonition types in english, and handle the multi language support only in the SlashCommand definitions (you can check out below).
 
 
 ### Styling, icons and colors
