@@ -227,7 +227,7 @@ local lang_map = {
   fr = admonitions_fr,
   it = admonitions_it,
   zh = admonitions_zh,
-  zh = admonitions_es
+  es = admonitions_es
 }
 
 local lang = config.get("admonLang") or ""
