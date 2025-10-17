@@ -13,10 +13,10 @@ Table percentage tags
 
 Use it Like this:
 
-\| Header A | Header B #mint #t30p|
+\| Header    | Header   #mint #t30p|
 \|-----------|---------------------|
-\|   Cell A  |        Cell B       |
-\|   Cell A  |        Cell B       |
+\|   Cell    |        Cell         |
+\|   Cell    |        Cell         |
 
 
 ## Color Themes:
@@ -26,6 +26,7 @@ Use it Like this:
 |----------|----------|
 | Cell A | Cell B |
 | Cell X | Cell Y |
+| Cell I | Cell II |
 
 ### Silver
 | ID #silver #t30p | Name        | Status     |
