@@ -1,3 +1,7 @@
+---
+githubUrl: "https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Admonitions_multiligual.md"
+---
+
 # Multilingual Custom Admonitions
 
 Shoutout to [paletochen](https://community.silverbullet.md/u/paletochen/summary), [mjf](https://community.silverbullet.md/u/mjf), [malys](https://community.silverbullet.md/u/malys/summary) and [i\_am\_dangry](https://community.silverbullet.md/u/i_am_dangry/summary) for making this admonitions possible.
@@ -16,9 +20,12 @@ I wanted to translate the admonition texts to german for my use case, and tinker
 config.set("admonLang","de")
 ```
 
-### Customize the look of your admonitions (paddings, border-width, style & radius)
+### Customize the look of your admonitions (paddings,font size , border-width, style & radius)
 ```space-style
 :root {
+  --admonition-title-font-size: 1em;
+  --admonition-title-font-weight: 800;
+  --admonition-text-font-size: 1em;
   --admonition-padding-title: 0.5em;
   --admonition-padding-text: 1em;
   --admonition-border-width: 2px;
@@ -136,6 +143,7 @@ To not have multiple space-styles for the different languages I left the admonit
 }
 /* target all admonitions */
 #sb-main .cm-editor .sb-admonition {
+  font-size: var(--admonition-text-font-size);
 /* uncomment next line if you want paragraph padding inside your admonition/*
 /*  padding-top: calc(var(--admonition-padding-text)/2); */ 
   padding-inline: calc(1*var(--admonition-padding-text));
@@ -144,6 +152,9 @@ To not have multiple space-styles for the different languages I left the admonit
   
 /* target the admonition title */
 .sb-admonition-title {
+  color: var(--admonition-color);
+  font-size: var(--admonition-title-font-size) !important;
+  font-weight: var(--admonition-title-font-weight) !important;
   padding-inline: calc(2*var(--admonition-padding-title)) !important; 
   padding-block: var(--admonition-padding-title) !important;
   border-top: var(--admonition-border-width)  var(--admonition-border-style) var(--admonition-color);
@@ -352,7 +363,7 @@ end
 > Your configuration was applied successfully. Everything is running exactly as intended. When success messages appear, take a brief moment to bask in the satisfaction — your system finally listened, and nothing exploded. That’s progress worth celebrating.
 
 > **question** Question
->  What happens if you modify this setting? Try it and observe the result to understand the behavior. Questions like these encourage exploration and help you build intuition instead of just following recipes. The best learning often starts with curiosity.
+> What happens if you modify this setting? Try it and observe the result to understand the behavior. Questions like these encourage exploration and help you build intuition instead of just following recipes. The best learning often starts with curiosity.
 
 > **warning** Warning
 > Changing these values could cause unexpected results. Proceed carefully and back up your data first. Warnings exist to stop your future self from swearing at your past self — a small yellow triangle that screams, “Don’t say I didn’t warn you.”
