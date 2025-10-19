@@ -25,9 +25,9 @@ config.set("admonLang","de")
 :root {
   --admonition-title-font-size: 1em;
   --admonition-title-font-weight: 800;
-  --admonition-text-font-size: 1em;
+  --admonition-text-font-size: 0.8em;
   --admonition-padding-title: 0.5em;
-  --admonition-padding-text: 1em;
+  --admonition-padding-text: 0.8em;
   --admonition-border-width: 2px;
   --admonition-border-style: solid;
 /* dotted, dashed, solid, double, groove, ridge, inset, outset, none, hidden */
@@ -339,7 +339,7 @@ for key, displayName in pairs(admonitions) do
     name = displayName .. " admonition",
     description = "Admonition for " .. displayName,
     run = function()
-      editor.insertAtCursor("> **"..key.."** "..displayName.."\n> |^|".."\n", true, true)
+      editor.insertAtCursor("> **"..key.."** "..displayName.."\n> |^|".."\n", false, true)
     end
   }
 end
