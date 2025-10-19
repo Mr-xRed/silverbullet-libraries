@@ -1,7 +1,3 @@
----
-githubUrl: "https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Admonitions_multiligual.md"
----
-
 # Multilingual Custom Admonitions
 
 Shoutout to [paletochen](https://community.silverbullet.md/u/paletochen/summary), [mjf](https://community.silverbullet.md/u/mjf), [malys](https://community.silverbullet.md/u/malys/summary) and [i\_am\_dangry](https://community.silverbullet.md/u/i_am_dangry/summary) for making this admonitions possible.
@@ -334,12 +330,14 @@ local lang = config.get("admonLang") or ""
 local admonitions = lang_map[lang] or admonitions_en
 
 -- Generate slash commands
-for key, displayName in pairs(admonitions) do
+for type, displayName in pairs(admonitions) do
   slashcommand.define {
     name = displayName .. " admonition",
     description = "Admonition for " .. displayName,
     run = function()
-      editor.insertAtCursor("> **"..key.."** "..displayName.."\n> |^|".."\n", false, true)
+      local currentLine= editor.getCurrentLine()
+      local admonitionTemplate = "> **"..type.."** "..displayName.."\n> ".. currentLine.text .."|^|\n"
+      editor.replaceRange(currentLine.from, currentLine.to, admonitionTemplate, true)
     end
   }
 end
@@ -354,7 +352,7 @@ end
 > This is a simple note to remind you of something important. Keep it in mind before making changes to your setup. Notes like this are meant to draw your attention without alarming you, serving as small signposts to prevent silly mistakes later.
 
 > **info** Info
-> Here’s some additional information that might clarify things. It’s not essential, but it could save you some confusion later. These  informational blocks are like friendly nudges, helping you connect dots that might otherwise slip through the cracks. It’s not essential, but it could save you some confusion later.  
+> Here’s some additional information that might clarify things. It’s not essential, but it could save you some confusion later. These  informational blocks are like friendly nudges, helping you connect dots that might otherwise slip through the cracks.
 
 > **tip** Tip
 > Use keyboard shortcuts to speed up your workflow. Small optimizations make a big difference over time. Tips are the gentle whispers of experience, saving you hours of trial and error while making you look like you’ve mastered the system from day one.
