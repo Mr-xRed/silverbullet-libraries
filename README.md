@@ -11,6 +11,8 @@
 * [**SearchBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md) - Restyling of the “Find in Page” - Search Bar
 * [**SelectionToCodeblockToggle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SelectionToCodeblockToggle.md) - Transforms Selection into a CodeBlock
 * [**TopPageBanner**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TopPageBanner.md) - Displays an embedded image on the top of the page
+CodeBlock
+* [**UpdateSilverbulletLibraries**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/UpdateSilverbulletLibraries.md) - Updates Community Silverbullet-Libraries
 
 
 # How to use
