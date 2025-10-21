@@ -14,7 +14,6 @@
 CodeBlock
 * [**UpdateSilverbulletLibraries**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/UpdateSilverbulletLibraries.md) - Updates Community Silverbullet-Libraries
 
-
 # How to use
 1. Navigate to the library you would like to import, e.g. `https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md`
 2. Copy the URL

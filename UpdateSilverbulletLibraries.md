@@ -1,29 +1,28 @@
 # Update SilverBullet Libraries 
 
-## Libraries imported using **Github Repo** that can be updated:
+${widgets.commandButton("Import","Import: URL")} | ${widgets.commandButton("Update GitHub","Import: Update all GitHub Libraries")} | ${widgets.commandButton("Update Raw Markdown","Import: Update all Raw Markdown Libraries")}
+
+
+## Libraries imported using **Github Repo**:
 ${query[[from index.tag "page"
 where githubUrl != nil 
 select "[["..ref.."]]"
 order by githubUrl desc 
 ]]}
 
-#### Try it out: Push button to update all community libraries from GitHub: ${widgets.commandButton("Github Update","Import: Update all Libraries from GitHub")}
-
-## Libraries imported using **Markdown**: 🚧 in progress 🚧
+## Libraries imported using **Markdown**:
 ${query[[from index.tag "page"
 where source == "markdown-import" 
 select  "[["..ref.."]]"
 order by githubUrl desc 
 ]]} 
 
-
-### Try it out: Push button to update Markdown libraries 🚧 in progress 🚧
-
-
 ### Commands & Current progress:
-- Import: Update current page from GitHub Repo ✅
-- Import: Update all Libraries from GitHub Repo ✅
-- Import: Update all Libraries with Markdown interpreter 🚧 in progress 🚧
+- Import: Update current page (GitHub or Raw Markdown) ✅
+- Import: Update all GitHub Libraries ✅
+- Import: Update all Raw Markdown Libraries ✅
+- Import: One 💍 Command to rule them all  🚧 in progress 🚧
+
 
 ## Implementation 
 
@@ -52,8 +51,6 @@ function updateLibraryFromGitHub(page)
   rawUrl = rawUrl:gsub("/blob/", "/")
   rawUrl = rawUrl:gsub("/tree/", "/")
 
-  -- editor.flashNotification("Fetching latest version from GitHub…")
-
   local req = http.request(rawUrl)
   if not req.ok then
     js.log("Failed to fetch " .. rawUrl)
@@ -80,10 +77,54 @@ end
 
 ```
 
+## Update Raw Markdown Library (Function)
+```space-lua
+-- Function to update a given Markdown page
+function updateLibraryRawMarkdown(page)
+  if not page then editor.flashNotification("No page specified to update", "error") return end
+  -- get current text and original frontmatter
+  local original_text = space.readPage(page) or ""
+  local parsed = index.extractFrontmatter(original_text)
+  local fm = parsed.frontmatter or {}
+  local url = fm.sourceUrl
+  local interpreter = fm.source
+  local frontmatter = '---\nsource: "' .. interpreter .. '"\nsourceUrl: "'.. url ..'"\n---'
+  if not url or url == "" then
+    editor.flashNotification("⚠️ No 'sourceUrl' found in frontmatter: " .. page, "error")
+    return
+  end
+  
+  local req = http.request(url)
+  if not req.ok then
+    js.log("Failed to fetch " .. url)
+    editor.flashNotification("⚠️ Update failed: could not fetch remote file:" .. url, "error")
+    return
+  end
+
+  local newContent = req.body or ""
+  if newContent == "" then
+    editor.flashNotification("⚠️ Fetched content is empty:" .. url, "error")
+    return
+  end
+
+  local final
+  if fm and fm ~= "" then
+    final = frontmatter .. "\n\n" .. newContent
+  else
+    final = newContent
+  end
+
+  space.writePage(page, final)
+  editor.flashNotification("✅ Page: " .. page.." updated")
+end
+
+```
+
+
+
 ### Update all GitHub Libraries (Command)
 ```space-lua
 local function updateAllGithubLibraries()
-  -- if not page then editor.flashNotification("No page specified to update", "error") return end
   local updatablePages = query[[from index.tag "page" where githubUrl != nil select ref order by githubUrl desc ]]
     for _, pages in ipairs(updatablePages) do
       updateLibraryFromGitHub(pages)
@@ -92,9 +133,9 @@ local function updateAllGithubLibraries()
 end
 
 command.define {
-  name = "Import: Update all Libraries from GitHub",
-  key = "Ctrl-Alt-z",
-  mac = "Cmd-Alt-z",
+  name = "Import: Update all GitHub Libraries",
+  key = "Ctrl-Alt-g",
+  mac = "Cmd-Alt-g",
   run = function()
        updateAllGithubLibraries()
   end
@@ -102,16 +143,51 @@ command.define {
 
 ```
 
+
+## Update Raw Markdown (Command)
+```space-lua
+local function updateAllRawMarkdownLibraries()
+  local updatablePages = query[[from index.tag "page" where source == "markdown-import" select ref order by sourceUrl desc ]]
+  if not updatablePages or #updatablePages == 0 then
+    editor.flashNotification("Nothing to update, try importing a library first!") 
+    return
+  end
+  for _, page in ipairs(updatablePages) do
+    updateLibraryRawMarkdown(page)
+  end
+end
+
+command.define {
+  name = "Import: Update all Raw Markdown Libraries",
+  key = "Ctrl-Alt-m",
+  mac = "Cmd-Alt-m",
+  run = function()
+    updateAllRawMarkdownLibraries()
+  end
+}
+```
+
+
 ### Update GitHub library for current page (Command)
 ```space-lua
 -- Command definition
 command.define {
-  name = "Import: Update current page from GitHub",
+  name = "Import: Update current page",
   key = "Ctrl-Alt-u",
   mac = "Cmd-Alt-u",
   run = function()
     local page = editor.getCurrentPage()
-    updateLibraryFromGitHub(page)
+    local original_text = editor.getText()
+    local fm = index.extractFrontmatter(original_text).frontmatter or {}
+    local raw_url = fm.sourceUrl
+    local github_url = fm.githubUrl
+    if github_url or not github_url == "" then
+        updateLibraryFromGitHub(page)
+    elseif raw_url or not raw_url == "" then
+        updateLibraryRawMarkdown(page)
+    else editor.flashNotification("⚠️ No update URL found in frontmatter: ")
+        return
+    end
     editor.navigate({ kind = "page", page = page })
   end
 }
