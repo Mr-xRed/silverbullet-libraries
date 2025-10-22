@@ -4,13 +4,13 @@ Shoutout to [paletochen](https://community.silverbullet.md/u/paletochen/summary)
 I wanted to translate the admonition texts to german for my use case, and tinkered around until I made it multilingual😜.
 
 ## Currently supported languages
-🇬🇧  🇩🇪  🇫🇷  🇮🇹  🇨🇳  🇪🇸  🇭🇺  🇷🇴
+🇬🇧  🇩🇪  🇫🇷  🇮🇹  🇨🇳  🇪🇸  🇭🇺  🇷🇴  🇨🇿
 
 ## Configuration
 
 ### Language
 - add following space-lua to your configuration with your desired language. 
-- available languages: "en", "de", "fr", "it", "zh", "es", "hu","ro",
+- available languages: "en", "de", "fr", "it", "zh", "es", "hu", "ro", “cs”
   
 ```lua
 config.set("admonLang","de")
@@ -179,7 +179,7 @@ To not have multiple space-styles for the different languages I left the admonit
 -- prioity: 9
 config.define("admonLang", {
     type = "string",
-    enum = {"en", "de", "fr", "it", "zh", "es", "hu", "ro"}
+    enum = {"en", "de", "fr", "it", "zh", "es", "hu", "ro", "cs"}
 })
 
 -- English
@@ -309,6 +309,22 @@ local admonitions_ro = {
   quote = "Citat"
 }
 
+-- Czech
+local admonitions_cs = {
+  note = "Poznámka",
+  abstract = "Abstrakt",
+  info = "Informace",
+  tip = "Tip",
+  success = "Úspěch",
+  question = "Otázka",
+  warning = "Varování",
+  failure = "Neúspěch",
+  danger = "Nebezpečí",
+  bug = "Chyba",
+  example = "Příklad",
+  quote = "Citát"
+}
+
 -- Language mapping
 local lang_map = {
   en = admonitions_en,
@@ -318,7 +334,8 @@ local lang_map = {
   zh = admonitions_zh,
   es = admonitions_es,
   hu = admonitions_hu,
-  ro = admonitions_ro
+  ro = admonitions_ro,
+  cs = admonitions_cs
 }
 
 local lang = config.get("admonLang") or ""
