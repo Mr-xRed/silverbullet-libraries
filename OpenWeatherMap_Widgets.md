@@ -9,7 +9,7 @@ Setup your **apiKey** (required⚠️) and the other optional keys in your confi
 config.set( "owm", {
             apiKey = "YOUR_API_KEY",  --required ⚠️
             refresh = 30,             --optional (minutes)
-            defLocation = "Berlin"    --optional (req. for def widget)
+            defLocation = "Berlin",   --optional (req. for def widget)
             temp = true,              --optional |
             humidity = true,          --optional |
             wind = true,              --optional |-(false to hide)
