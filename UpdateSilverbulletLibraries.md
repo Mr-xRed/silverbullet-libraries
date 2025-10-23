@@ -1,6 +1,6 @@
 # Update SilverBullet Libraries 
 
-${widgets.commandButton("Import","Import: URL")} | ${widgets.commandButton("Update GitHub","Import: Update all GitHub Libraries")} | ${widgets.commandButton("Update Raw Markdown","Import: Update all Raw Markdown Libraries")}  | ${widgets.commandButton("Update current page","Import: Update current page")}
+${widgets.commandButton("Import","Import: URL")} | ${widgets.commandButton("Update GitHub","Import: Update all GitHub Libraries")} | ${widgets.commandButton("Update Raw Markdown","Import: Update all Raw Markdown Libraries")} | ${widgets.commandButton("Update current page","Import: Update current page")}
 
 
 ## Libraries imported using **Github Repo**:

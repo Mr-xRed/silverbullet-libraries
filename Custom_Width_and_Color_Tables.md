@@ -11,7 +11,7 @@ Table percentage tags
 
 Use it Like this:
 
-\| Header    | Header   #mint #t30p|
+\| Header    | Header  #mint #t30p|
 \|-----------|---------------------|
 \|   Cell    |        Cell         |
 \|   Cell    |        Cell         |
@@ -20,6 +20,7 @@ Use it Like this:
 ## Color Themes:
 
 ### Standard (no tag)
+
 | Header A | Header B |
 |----------|----------|
 | Cell A | Cell B |
@@ -27,6 +28,7 @@ Use it Like this:
 | Cell I | Cell II |
 
 ### Silver
+
 | ID #silver #t30p | Name        | Status     |
 |----|--------------|------------|
 | 1  | Alice Smith  | Active     |
@@ -34,6 +36,7 @@ Use it Like this:
 | 3  | Carol Davis  | Pending    |
 
 ### Sea
+
 | Product #sea #t40p| Category   | Price | In Stock |
 |----------|-------------|-------|-----------|
 | Widget A | Tools       | $12.99 | Yes       |
@@ -41,63 +44,81 @@ Use it Like this:
 | Widget C | Accessories | $5.75  | Yes       |
 
 ### Mint
-| ID #mint #t50p| First Name | Last Name | Department | Role          |
+
+| ID #mint #t50p| First Name | Last Name | Dep. | Role          |
 |----|-------------|------------|-------------|----------------|
 | 101 | John       | Miller     | Sales       | Manager        |
 | 102 | Sarah      | Brown      | IT          | Developer      |
 | 103 | Luke       | Green      | HR          | Recruiter      |
 
 ### Hazel
-| Order ID #hazel #t60p| Date       | Customer    | Product     | Quantity | Total   |
+
+|  ID #hazel #t60p| Date       | Customer    | Product     | Qty | Total   |
 |-----------|-------------|-------------|--------------|-----------|----------|
 | 001       | 2025-10-15  | Alice Smith | Widget A     | 3         | $38.97   |
 | 002       | 2025-10-16  | Bob Johnson | Widget B     | 1         | $8.50    |
 | 003       | 2025-10-17  | Carol Davis | Widget C     | 5         | $28.75   |
 
 ### Maroon
-| ID #maroon #t70p| Name | Email | Department | Role | Start Date | Status |
+
+| ID #maroon #t70p| Name | Email | Dep. | Role | Start Date | Status |
 |----|------|--------|-------------|-------|-------------|----------|
 | 1  | Alice Smith | alice@example.com | Sales | Manager | 2023-04-12 | Active |
 | 2  | Bob Johnson | bob@example.com | IT | Developer | 2022-11-05 | Inactive |
 | 3  | Carol Davis | carol@example.com | HR | Recruiter | 2024-02-19 | Pending |
 
 ### Burgundy
-| ID #burgundy #t80p| Name | Email | Phone | Country | Department | Role | Status |
+
+| ID #burgundy #t80p| Name | Email | Phone | Country | Dep. | Role | Status |
 |----|------|--------|--------|----------|-------------|--------|---------|
 | 1  | Alice | alice@example.com | +1-555-1234 | USA | Sales | Manager | Active |
 | 2  | Bob   | bob@example.com   | +44-555-5678 | UK  | IT    | Engineer | Inactive |
 | 3  | Carol | carol@example.com | +49-555-9012 | DE  | HR    | Analyst  | Pending  |
 
 ### Wine
-| ID #wine #t90p| First Name | Last Name | Email | Phone | Department | Role | Country | Status |
+
+| ID #wine #t90p| First Name | Last Name | Email | Phone | Dep. | Role | Country | Status |
 |----|-------------|------------|--------|--------|-------------|--------|----------|----------|
 | 1  | Alice | Smith | alice@example.com | +1-555-1000 | Sales | Manager | USA | Active |
 | 2  | Bob | Johnson | bob@example.com | +44-555-2000 | IT | Developer | UK | Inactive |
 | 3  | Carol | Davis | carol@example.com | +49-555-3000 | HR | Analyst | Germany | Pending |
 
 ### Grape
-| ID #grape| Name | Email | Phone | Country | City | Department | Role | Hire Date | Status |
+
+| ID #grape| Name | Email | Phone | Country | City | Dep. | Role | Hire Date | Status |
 |----|------|--------|--------|----------|--------|-------------|--------|-------------|----------|
 | 1  | Alice Smith | alice@example.com | +1-555-1234 | USA | New York | Sales | Manager | 2023-04-12 | Active |
 | 2  | Bob Johnson | bob@example.com | +44-555-5678 | UK | London | IT | Developer | 2022-11-05 | Inactive |
-| 3  | Carol Davis | [carol@example.com](carol@example.com) | +49-555-9012 | Germany | Berlin | HR | Recruiter | 2024-02-19 | Pending |
+| 3  | Carol Davis | carol@example.com | +49-555-9012 | Germany | Berlin | HR | Recruiter | 2024-02-19 | Pending |
 
 ## Implementation
 
 ### Color Themes
 ```space-style
 /*   Adds a rounded corner to the tables   */
-table { border-radius: 15px; overflow: hidden;}
+.sb-table-widget:has(.sb-hashtag), .sb-lua-directive-block:has(.sb-hashtag) { border-radius: 15px !important; border: 2px solid rgba(0,0,0,0.5); box-shadow: 5px 5px 10px rgba(0,0,0,0.5);overflow: hidden;}
+
+table {}
 
 /* Hide specific colour tags inside tables */
-table .sb-hashtag[data-tag-name="wine"],
-table .sb-hashtag[data-tag-name="sea"],
-table .sb-hashtag[data-tag-name="silver"],
-table .sb-hashtag[data-tag-name="mint"],
-table .sb-hashtag[data-tag-name="burgundy"],
-table .sb-hashtag[data-tag-name="grape"],
-table .sb-hashtag[data-tag-name="hazel"],
-table .sb-hashtag[data-tag-name="maroon"] {
+
+.sb-table-widget .sb-hashtag[data-tag-name="wine"],
+.sb-table-widget .sb-hashtag[data-tag-name="sea"],
+.sb-table-widget .sb-hashtag[data-tag-name="silver"],
+.sb-table-widget .sb-hashtag[data-tag-name="mint"],
+.sb-table-widget .sb-hashtag[data-tag-name="burgundy"],
+.sb-table-widget .sb-hashtag[data-tag-name="grape"],
+.sb-table-widget .sb-hashtag[data-tag-name="hazel"],
+.sb-table-widget .sb-hashtag[data-tag-name="maroon"],
+
+.sb-lua-directive-block .sb-hashtag[data-tag-name="wine"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name="sea"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name="silver"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name="mint"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name="burgundy"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name="grape"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name="hazel"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name="maroon"] {
   display: none !important;
 }
 
@@ -230,22 +251,22 @@ html[data-theme="light"] {
 
 ### Table Width with Tag
 ```space-style
-table .sb-hashtag[data-tag-name="t30p"],
-table .sb-hashtag[data-tag-name="t40p"],
-table .sb-hashtag[data-tag-name="t50p"],
-table .sb-hashtag[data-tag-name="t60p"],
-table .sb-hashtag[data-tag-name="t70p"],
-table .sb-hashtag[data-tag-name="t80p"], 
-table .sb-hashtag[data-tag-name="t90p"]{
+table .sb-hashtag[data-tag-name="t30p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t30p"],
+table .sb-hashtag[data-tag-name="t40p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t40p"],
+table .sb-hashtag[data-tag-name="t50p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t50p"],
+table .sb-hashtag[data-tag-name="t60p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t60p"],
+table .sb-hashtag[data-tag-name="t70p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t70p"],
+table .sb-hashtag[data-tag-name="t80p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t80p"],
+table .sb-hashtag[data-tag-name="t90p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t90p"] {
   display: none !important;
 }
-table:has(.sb-hashtag[data-tag-name="t30p"]) {width:30% !important;}
-table:has(.sb-hashtag[data-tag-name="t40p"]) {width:40% !important;}
-table:has(.sb-hashtag[data-tag-name="t50p"]) {width:50% !important;}
-table:has(.sb-hashtag[data-tag-name="t60p"]) {width:60% !important;}
-table:has(.sb-hashtag[data-tag-name="t70p"]) {width:70% !important;}
-table:has(.sb-hashtag[data-tag-name="t80p"]) {width:80% !important;}
-table:has(.sb-hashtag[data-tag-name="t90p"]) {width:90% !important;}
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t30p"]) {width:30% !important;}
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t40p"]) {width:40% !important;}
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t50p"]) {width:50% !important;}
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t60p"]) {width:60% !important;}
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t70p"]) {width:70% !important;}
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t80p"]) {width:80% !important;}
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t90p"]) {width:90% !important;}
 ```
 
 
