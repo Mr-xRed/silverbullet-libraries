@@ -18,11 +18,6 @@
 Here is an example how your ActionButton Config should look like this:
 
 ```lua
--- config.set {
---   actionButtons = {
-
--- ... add other buttons here ...
-
    {
       icon = "layout", description = "Toggle Tree View",
       run = function()
@@ -30,14 +25,11 @@ Here is an example how your ActionButton Config should look like this:
         js.import("/.fs/Library/PanelDragResize.js").enableDrag("#sb-top .panel, #sb-main .sb-panel", "#sb-top .panel")
        end
     },
-
--- ... add other buttons here ...
-
---  }
--- }
 ```
 
-## Step 4. Reload and enjoy: ${widgets.commandButton("System: Reload")}
+## Step 4. System Reload: ${widgets.commandButton("System: Reload")}
+
+## Step 5. Reload UI and enjoy: ${widgets.commandButton("Client: Reload UI")}
 
 > **success** Success
 > Now you have a Movable and Resizable TreeView
@@ -355,11 +347,28 @@ command.define {
        end
 }
 
+command.define {
+  name = "Delete PanelDragResize.js",
+  hide = true,
+  run = function()
+          local jsFile = space.deleteDocument("Library/PanelDragResize.js")
+          editor.flashNotification("JS-File deleted")
+    end
+}
+
 ```
+Manually load the .js (usefull only for debugging): ${widgets.commandButton("Treeview: Drag&Resize Extension JS Import")}
 
-Manually load the .js (used only for debugging): ${widgets.commandButton("Treeview: Drag&Resize Extension JS Import")}
+## Uninstall:
 
+> **failure** Step 1: Delete Panel.Drag.Resize.js
+> ${widgets.commandButton("Delete PanelDragResize.js")}
+
+> **failure** Step 2: Manually remove following line from your ActionButton config:
+> `js.import("/.fs/Library/PanelDragResize.js").enableDrag("#sb-top .panel, #sb-main .sb-panel", "#sb-top .panel")`
+
+> **failure** Step 3: Delete this Page
+> ${widgets.commandButton("Page: Delete")}
 
 ## Discussions about this extension:
-
 - [SilverBullet Community](https://community.silverbullet.md/t/introducing-orbitcal-a-floating-calendar-widget-proof-of-concept/3442?u=mr.red)
