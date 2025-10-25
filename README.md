@@ -13,6 +13,8 @@
 * [**TopPageBanner**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TopPageBanner.md) - Displays an embedded image on the top of the page
 CodeBlock
 * [**UpdateSilverbulletLibraries**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/UpdateSilverbulletLibraries.md) - Updates Community Silverbullet-Libraries
+* [**Treeview_Extension_DragAndResize**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Treeview_Extension_DragAndResize.md) - Adds Drag & Resize capabilities to TreeView
+
 
 # How to use
 1. Navigate to the library you would like to import, e.g. `https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md`

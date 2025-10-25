@@ -185,7 +185,7 @@ command.define {
         updateLibraryFromGitHub(page)
     elseif raw_url or not raw_url == "" then
         updateLibraryRawMarkdown(page)
-    else editor.flashNotification("⚠️ No update URL found in frontmatter: ")
+    else editor.flashNotification("⚠️ No update URL found in frontmatter")
         return
     end
     editor.navigate({ kind = "page", page = page })
