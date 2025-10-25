@@ -1,6 +1,6 @@
 # Treeview Extension to Drag & Resize
 
-> **bug** Experimental
+> **warning** Experimental
 > This Extension is still experimental and it might not work on all your Devices/Mobiles/Tablets/Browsers as intended.
 
 > **warning** Dependencies
@@ -361,13 +361,13 @@ Manually load the .js (usefull only for debugging): ${widgets.commandButton("Tre
 
 ## Uninstall:
 
-> **failure** Step 1: Delete Panel.Drag.Resize.js
+> **danger** Step 1: Delete Panel.Drag.Resize.js
 > ${widgets.commandButton("Delete PanelDragResize.js")}
 
-> **failure** Step 2: Manually remove following line from your ActionButton config:
+> **danger** Step 2: Manually remove or comment following line in your ActionButton Config:
 > `js.import("/.fs/Library/PanelDragResize.js").enableDrag("#sb-top .panel, #sb-main .sb-panel", "#sb-top .panel")`
 
-> **failure** Step 3: Delete this Page
+> **danger** Step 3: Delete this Page, then -> System Reload, then -> Reload UI
 > ${widgets.commandButton("Page: Delete")}
 
 ## Discussions about this extension:
