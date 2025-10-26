@@ -6,11 +6,13 @@
 > **warning** Dependencies
 > You must have TreeView Plug installed: [Treeview Plug](https://github.com/joekrill/silverbullet-treeview)
 
-## Step 1. Reload your space to load the space-lua from this page: ${widgets.commandButton("System: Reload")}
+## How to Install?
 
-## Step 2. Save Library/PanelDragResize.js using this button: ${widgets.commandButton("Save PanelDragResize.js")}
+### Step 1. Reload your space to load the space-lua from this page: ${widgets.commandButton("System: Reload")}
 
-## Step 3. Configure your Treeviews ActionButton, to load the .js when you open Treeview
+### Step 2. Save Library/PanelDragResize.js using this button: ${widgets.commandButton("Save PanelDragResize.js")}
+
+### Step 3. Configure your Treeviews ActionButton, to load the .js when you open Treeview
 
 > **note** Add this line after `editor.invokeCommand "Tree View: Toggle"` :
 > `js.import("/.fs/Library/PanelDragResize.js").enableDrag()`
@@ -27,12 +29,25 @@ Here is an example how your ActionButton Config should look like this:
     },
 ```
 
-## Step 4. System Reload: ${widgets.commandButton("System: Reload")}
+### Step 4. System Reload: ${widgets.commandButton("System: Reload")}
 
-## Step 5. Reload UI and enjoy: ${widgets.commandButton("Client: Reload UI")}
+### Step 5. Reload UI and enjoy: ${widgets.commandButton("Client: Reload UI")}
 
 > **success** Success
 > Now you have a Movable and Resizable TreeView
+
+
+## How to Uninstall?
+
+> **danger** Step 1: Delete Panel.Drag.Resize.js
+> ${widgets.commandButton("Delete PanelDragResize.js")}
+
+> **danger** Step 2: Manually remove or comment following line in your ActionButton Config:
+> `js.import("/.fs/Library/PanelDragResize.js").enableDrag()`
+
+> **danger** Step 3: Delete this Page, then -> System Reload, then -> Reload UI
+> ${widgets.commandButton("Page: Delete")}
+
 
 ## Implementation
 ### Visual Customization & Style
@@ -363,16 +378,5 @@ command.define {
 ```
 Manually load the .js (usefull only for debugging): ${widgets.commandButton("Treeview: Drag&Resize Extension JS Import")}
 
-## Uninstall:
-
-> **danger** Step 1: Delete Panel.Drag.Resize.js
-> ${widgets.commandButton("Delete PanelDragResize.js")}
-
-> **danger** Step 2: Manually remove or comment following line in your ActionButton Config:
-> `js.import("/.fs/Library/PanelDragResize.js").enableDrag()`
-
-> **danger** Step 3: Delete this Page, then -> System Reload, then -> Reload UI
-> ${widgets.commandButton("Page: Delete")}
-
 ## Discussions about this extension:
-- [SilverBullet Community](https://community.silverbullet.md/t/introducing-orbitcal-a-floating-calendar-widget-proof-of-concept/3442?u=mr.red)
+- [SilverBullet Community](https://community.silverbullet.md/t/proof-of-concept-floating-widgets-example-treeview-orbitcal-calendar/3442?u=mr.red)
