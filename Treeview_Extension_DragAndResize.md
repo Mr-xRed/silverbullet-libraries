@@ -76,6 +76,8 @@ Here is an example how your ActionButton Config should look like this:
   display: block;
   position: fixed;
 
+  box-sizing: border-box ; 
+
   width: var(--sb-panel-width);
   height: var(--sb-panel-height);
 
@@ -99,6 +101,8 @@ Here is an example how your ActionButton Config should look like this:
   display: block;
   position: fixed;
   overflow: hidden;
+
+  box-sizing: border-box ; 
 
   min-width: calc(var(--min-sb-panel-width) - 2 * (var(--frame-width) + var(--window-border)));
   min-height: calc(var(--min-sb-panel-height) - var(--header-height) - var(--frame-width) - var(--window-border));
@@ -346,7 +350,6 @@ export function enableDrag(
   });
   observer.observe(document.body, { childList: true, subtree: true });
 }
-
 ]]
 
 command.define {
