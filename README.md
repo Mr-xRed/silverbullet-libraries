@@ -14,6 +14,7 @@
 CodeBlock
 * [**UpdateSilverbulletLibraries**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/UpdateSilverbulletLibraries.md) - Updates Community Silverbullet-Libraries
 * [**Treeview_Extension_DragAndResize**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Treeview_Extension_DragAndResize.md) - Adds Drag & Resize capabilities to TreeView
+* [**ModalBoxHighlighter**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/ModalBoxHighlighter.md) - Improves focus and usability
 
 
 # How to use
