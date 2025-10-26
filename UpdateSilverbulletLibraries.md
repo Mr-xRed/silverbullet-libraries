@@ -28,17 +28,17 @@ order by githubUrl desc
 
 ### Update GitHub Library (Function)
 ```space-lua
--- Function to update a given page from GitHub
-
 function updateLibraryFromGitHub(page)
+  if not page then 
+    editor.flashNotification("No page specified to update", "error")
+    return
+  end
 
-  if not page then editor.flashNotification("No page specified to update", "error") return end
-  -- get current text and original frontmatter
+  -- Get current content and frontmatter
   local original_text = space.readPage(page) or ""
   local parsed = index.extractFrontmatter(original_text)
   local fm = parsed.frontmatter or {}
   local url = fm.githubUrl
-  local frontmatter = '---\ngithubUrl: "'.. url ..'"\n---'
 
   if not url or url == "" then
     editor.flashNotification("⚠️ No 'githubUrl' found in frontmatter: " .. page, "error")
@@ -64,16 +64,15 @@ function updateLibraryFromGitHub(page)
     return
   end
 
-  local final
-  if fm and fm ~= "" then
-    final = frontmatter .. "\n\n" .. newContent
-  else
-    final = newContent
-  end
+  -- Patch frontmatter
+  local patched = index.patchFrontmatter(newContent, {
+    {op="set-key", path="githubUrl", value=url}
+  })
 
-  space.writePage(page, final)
+  space.writePage(page, patched)
   editor.flashNotification("✅ Page: " .. page.." updated from GitHub")
 end
+
 
 ```
 
@@ -81,19 +80,23 @@ end
 ```space-lua
 -- Function to update a given Markdown page
 function updateLibraryRawMarkdown(page)
-  if not page then editor.flashNotification("No page specified to update", "error") return end
-  -- get current text and original frontmatter
+  if not page then 
+    editor.flashNotification("No page specified to update", "error") 
+    return 
+  end
+
+  -- Get current text and frontmatter
   local original_text = space.readPage(page) or ""
   local parsed = index.extractFrontmatter(original_text)
   local fm = parsed.frontmatter or {}
   local url = fm.sourceUrl
   local interpreter = fm.source
-  local frontmatter = '---\nsource: "' .. interpreter .. '"\nsourceUrl: "'.. url ..'"\n---'
+
   if not url or url == "" then
     editor.flashNotification("⚠️ No 'sourceUrl' found in frontmatter: " .. page, "error")
     return
   end
-  
+
   local req = http.request(url)
   if not req.ok then
     js.log("Failed to fetch " .. url)
@@ -107,15 +110,14 @@ function updateLibraryRawMarkdown(page)
     return
   end
 
-  local final
-  if fm and fm ~= "" then
-    final = frontmatter .. "\n\n" .. newContent
-  else
-    final = newContent
-  end
+  -- Patch frontmatter instead of manually reconstructing
+  local patched = index.patchFrontmatter(newContent, {
+    {op="set-key", path="sourceUrl", value=url},
+    {op="set-key", path="source", value=interpreter}
+  })
 
-  space.writePage(page, final)
-  editor.flashNotification("✅ Page: " .. page.." updated")
+  space.writePage(page, patched)
+  editor.flashNotification("✅ Page: " .. page .. " updated")
 end
 
 ```
