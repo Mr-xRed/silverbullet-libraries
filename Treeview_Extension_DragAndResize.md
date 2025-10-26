@@ -39,20 +39,22 @@ Here is an example how your ActionButton Config should look like this:
 ```space-style
 
 :root{
-    --sb-panel-width: 400px; /* Default panel width */
-    --sb-panel-height: 400px; /* Default panel height */
+    --sb-panel-width: 400px;      /* Default panel width */
+    --sb-panel-height: 400px;     /* Default panel height */
 
-    --min-sb-panel-height: 300px; /* Minimal panel height */
-    --min-sb-panel-width: 300px; /* Minimal panel width */
+    --min-sb-panel-height: 250px; /* Minimal panel height */
+    --min-sb-panel-width: 250px;  /* Minimal panel width */
 
-    --header-height: 30px; /* Header height which you drag the window from */
-    --top-offset: 60px; /* Initial Position */
-    --left-offset: 10px; /* Initial Position */
+    --header-height: 30px;        /* Header height, drag-area */
+    --top-offset: 60px;           /* Initial position */
+    --left-offset: 10px;          /* Initial position */
 
-    --widget-border: 2px;
-    --widget-offset: 5px;
-    --widget-border-radius: 10px;
-    --widget-border-color: #5558;
+    --frame-width: 5px;           /* frame thickness, you need to clear local storage to take effect*/
+    --frame-color: #0000;         /* frame color */
+
+    --window-border: 2px;         /* solid border width (aesthetic) */
+    --window-border-radius: 10px; /* inner iframe border radius*/
+    --window-border-color: #5558; /* solid border color (aesthetic) */
 }
 
 #sb-top .panel{
@@ -68,13 +70,13 @@ Here is an example how your ActionButton Config should look like this:
   min-height: var(--min-sb-panel-width);
   min-width: var(--min-sb-panel-height);
 
-  background: #0000 !important;
-  border: var(--widget-border) solid var(--widget-border-color);
+  background: var(--frame-color) !important;
+  border: var(--window-border) solid var(--window-border-color);
 
   backdrop-filter: blur(10px);
   box-shadow:0px 0px 20px #0008;
 
-  border-radius: calc(var(--widget-border-radius) + (var(--widget-offset)));
+  border-radius: calc(var(--window-border-radius) + (var(--frame-width)));
   z-index: 20;
 }
 
@@ -83,17 +85,17 @@ Here is an example how your ActionButton Config should look like this:
   position: fixed;
   overflow: hidden;
 
-  min-width: calc(var(--min-sb-panel-width) - 2 * (var(--widget-offset) + var(--widget-border)));
-  min-height: calc(var(--min-sb-panel-height) - var(--header-height) - var(--widget-offset) - var(--widget-border));
+  min-width: calc(var(--min-sb-panel-width) - 2 * (var(--frame-width) + var(--window-border)));
+  min-height: calc(var(--min-sb-panel-height) - var(--header-height) - var(--frame-width) - var(--window-border));
 
-  width: calc(var(--sb-panel-width) - 2 * (var(--widget-offset) + var(--widget-border)));
-  height: calc(var(--sb-panel-height) - var(--header-height) - var(--widget-offset) - var(--widget-border));
+  width: calc(var(--sb-panel-width) - 2 * (var(--frame-width) + var(--window-border)));
+  height: calc(var(--sb-panel-height) - var(--header-height) - var(--frame-width) - var(--window-border));
   top: calc(var(--top-offset) + (var(--header-height)));
-  left: calc(var(--left-offset) + 2px + var(--widget-offset));
+  left: calc(var(--left-offset) + 2px + var(--frame-width));
 
   background: #0000;
-  border: var(--widget-border) solid var(--widget-border-color) !important;
-  border-radius: var(--widget-border-radius);
+  border: var(--window-border) solid var(--window-border-color) !important;
+  border-radius: var(--window-border-radius);
   z-index: 20;
 }
 ```
@@ -115,11 +117,11 @@ export function enableDrag(
   const header = headers[0];
 
   // Config
-  const edgeSize = 10;
-  const M_bounds = { l: 10, t: 60, r: 30, b: 10 };
-  const snapDistance = 100;
-  const minWidth = 200;
-  const minHeight = 200;
+  const edgeSize = 20;
+  const M_bounds = { l: 5, t: 60, r: 20, b: 5 };
+  const snapDistance = 50;
+  const minWidth = 100;
+  const minHeight = 100;
 
   // State
   let isDragging = false, isResizing = false;
