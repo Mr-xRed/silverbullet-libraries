@@ -13,7 +13,7 @@
 ## Step 3. Configure your Treeviews ActionButton, to load the .js when you open Treeview
 
 > **note** Add this line after `editor.invokeCommand "Tree View: Toggle"` :
-> `js.import("/.fs/Library/PanelDragResize.js").enableDrag("#sb-top .panel, #sb-main .sb-panel", "#sb-top .panel")`
+> `js.import("/.fs/Library/PanelDragResize.js").enableDrag()`
 
 Here is an example how your ActionButton Config should look like this:
 
@@ -22,7 +22,7 @@ Here is an example how your ActionButton Config should look like this:
       icon = "layout", description = "Toggle Tree View",
       run = function()
         editor.invokeCommand "Tree View: Toggle"
-        js.import("/.fs/Library/PanelDragResize.js").enableDrag("#sb-top .panel, #sb-main .sb-panel", "#sb-top .panel")
+        js.import("/.fs/Library/PanelDragResize.js").enableDrag()
        end
     },
 ```
@@ -103,7 +103,9 @@ Here is an example how your ActionButton Config should look like this:
 
 ```space-lua
 local jsCode = [[
-export function enableDrag(windowSelector, headerSelector) {
+export function enableDrag(
+  windowSelector = "#sb-top .panel, #sb-main .sb-panel",
+  headerSelector = "#sb-top .panel") {
   const dragItems = document.querySelectorAll(windowSelector);
   const headers = document.querySelectorAll(headerSelector);
   if (dragItems.length < 2 || headers.length === 0) return;
@@ -365,7 +367,7 @@ Manually load the .js (usefull only for debugging): ${widgets.commandButton("Tre
 > ${widgets.commandButton("Delete PanelDragResize.js")}
 
 > **danger** Step 2: Manually remove or comment following line in your ActionButton Config:
-> `js.import("/.fs/Library/PanelDragResize.js").enableDrag("#sb-top .panel, #sb-main .sb-panel", "#sb-top .panel")`
+> `js.import("/.fs/Library/PanelDragResize.js").enableDrag()`
 
 > **danger** Step 3: Delete this Page, then -> System Reload, then -> Reload UI
 > ${widgets.commandButton("Page: Delete")}
