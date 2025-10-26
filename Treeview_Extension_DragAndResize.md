@@ -12,19 +12,18 @@
 
 ### Step 2. Save Library/PanelDragResize.js using this button: ${widgets.commandButton("Save PanelDragResize.js")}
 
-### Step 3. Configure your Treeviews ActionButton, to load the .js when you open Treeview
+### Step 3. ReConfigure your Treeviews ActionButton, with new command:
 
-> **note** Add this line after `editor.invokeCommand "Tree View: Toggle"` :
-> `js.import("/.fs/Library/PanelDragResize.js").enableDrag()`
+> **note** Important
+> Replace the old command: `"Tree View: Toggle"` with this one: `"Tree View: Toggle Move&Resize"`
 
 Here is an example how your ActionButton Config should look like this:
 
 ```lua
-   {
+    {
       icon = "layout", description = "Toggle Tree View",
       run = function()
-        editor.invokeCommand "Tree View: Toggle"
-        js.import("/.fs/Library/PanelDragResize.js").enableDrag()
+        editor.invokeCommand "Tree View: Toggle Move&Resize"
        end
     },
 ```
@@ -36,17 +35,31 @@ Here is an example how your ActionButton Config should look like this:
 > **success** Success
 > Now you have a Movable and Resizable TreeView
 
-
 ## How to Uninstall?
 
 > **danger** Step 1: Delete Panel.Drag.Resize.js
 > ${widgets.commandButton("Delete PanelDragResize.js")}
 
-> **danger** Step 2: Manually remove or comment following line in your ActionButton Config:
-> `js.import("/.fs/Library/PanelDragResize.js").enableDrag()`
+> **danger** Step 2: Change back to your old Action Button Config:
+> Change back to the old command: use `"Tree View: Toggle"` instead of `"Tree View: Toggle Move&Resize"`
 
 > **danger** Step 3: Delete this Page, then -> System Reload, then -> Reload UI
 > ${widgets.commandButton("Page: Delete")}
+
+## How does this work:
+> **warning** This is currently more like a hack than a real-world implementation
+>  1.  **Selection of elements:** It grabs the two panel `<div>` (primary and secondary) and the primary is used as the header element and as the drag handle.
+>  2.  **State tracking:** Maintains flags (`isDragging`, `isResizing`) and initial offsets/positions for calculating movement or resizing.
+>  3.  **Edge detection:** Determines if the pointer is near the right or bottom edges to switch between drag mode and resize mode.
+>  4.  **Dragging logic:** Calculates the new top-left position of the primary panel based on cursor movement and applies the same relative delta to the secondary panel.
+>  5.  **Resizing logic:** Computes width/height changes from pointer movement and updates both panels dimensions while keeping their relative sizes.
+>  6.  **Cursor management:** Dynamically updates the cursor style (`grab`, `move`, `resize`) depending on hover or active action.
+>  7.  **Iframe handling:** Temporarily disables `pointer-events` on any nested iframes while dragging/resizing to prevent event capture issues.
+>  8.  **Bounds and snapping:** Ensures panels stay within screen limits, respect minimum width/height, and snap to edges if near.
+>  9.  **Persistence:** Stores panel positions and sizes in `localStorage` so the layout survives reloads.
+>  10. **Global pointer management:** Uses `window` event listeners for pointermove and pointerup to ensure smooth dragging/resizing even if the cursor leaves the header, cleaning up afterward.
+>  
+> ==This is essentially a two-panel windowing system built on top of elements never intended for it.==
 
 
 ## Implementation
@@ -119,9 +132,27 @@ Here is an example how your ActionButton Config should look like this:
 }
 ```
 
-## Implementation:
-### Javascript
+## Redefine Keybindings and Command
+```space-lua
+command.update {
+  name = "Tree View: Toggle",
+  key = "",
+  mac = "",
+  hide = true
+}
 
+command.define {
+  name = "Tree View: Toggle Move&Resize",
+  key = "Ctrl-Alt-b",
+  mac = "Cmd-Alt-b",
+  run = function()
+        editor.invokeCommand "Tree View: Toggle"
+        js.import("/.fs/Library/PanelDragResize.js").enableDrag()  --this line is added to be Resizable
+       end
+}
+```
+
+### Javascript
 ```space-lua
 local jsCode = [[
 export function enableDrag(
@@ -379,7 +410,7 @@ command.define {
 }
 
 ```
-Manually load the .js (usefull only for debugging): ${widgets.commandButton("Treeview: Drag&Resize Extension JS Import")}
+Manually load the .js (only for debugging): ${widgets.commandButton("Treeview: Drag&Resize Extension JS Import")}
 
 ## Discussions about this extension:
 - [SilverBullet Community](https://community.silverbullet.md/t/proof-of-concept-floating-widgets-example-treeview-orbitcal-calendar/3442?u=mr.red)
