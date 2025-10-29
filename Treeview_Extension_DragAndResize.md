@@ -48,16 +48,16 @@ Here is an example how your ActionButton Config should look like this:
 
 ## How does this work:
 > **warning** This is currently more like a hack than a real-world implementation
->  1.  **Selection of elements:** It grabs the two panel `<div>` (primary and secondary) and the primary is used as the header element and as the drag handle.
->  2.  **State tracking:** Maintains flags (`isDragging`, `isResizing`) and initial offsets/positions for calculating movement or resizing.
->  3.  **Edge detection:** Determines if the pointer is near the right or bottom edges to switch between drag mode and resize mode.
->  4.  **Dragging logic:** Calculates the new top-left position of the primary panel based on cursor movement and applies the same relative delta to the secondary panel.
->  5.  **Resizing logic:** Computes width/height changes from pointer movement and updates both panels dimensions while keeping their relative sizes.
->  6.  **Cursor management:** Dynamically updates the cursor style (`grab`, `move`, `resize`) depending on hover or active action.
->  7.  **Iframe handling:** Temporarily disables `pointer-events` on any nested iframes while dragging/resizing to prevent event capture issues.
->  8.  **Bounds and snapping:** Ensures panels stay within screen limits, respect minimum width/height, and snap to edges if near.
->  9.  **Persistence:** Stores panel positions and sizes in `localStorage` so the layout survives reloads.
->  10. **Global pointer management:** Uses `window` event listeners for pointermove and pointerup to ensure smooth dragging/resizing even if the cursor leaves the header, cleaning up afterward.
+>   1.  **Selection of elements:** It grabs the two panel `<div>` (primary and secondary) and the primary is used as the header element and as the drag handle.
+>   2.  **State tracking:** Maintains flags (`isDragging`, `isResizing`) and initial offsets/positions for calculating movement or resizing.
+>   3.  **Edge detection:** Determines if the pointer is near the right or bottom edges to switch between drag mode and resize mode.
+>   4.  **Dragging logic:** Calculates the new top-left position of the primary panel based on cursor movement and applies the same relative delta to the secondary panel.
+>   5.  **Resizing logic:** Computes width/height changes from pointer movement and updates both panels dimensions while keeping their relative sizes.
+>   6.  **Cursor management:** Dynamically updates the cursor style (`grab`, `move`, `resize`) depending on hover or active action.
+>   7.  **Iframe handling:** Temporarily disables `pointer-events` on any nested iframes while dragging/resizing to prevent event capture issues.
+>   8.  **Bounds and snapping:** Ensures panels stay within screen limits, respect minimum width/height, and snap to edges if near.
+>   9.  **Persistence:** Stores panel positions and sizes in `localStorage` so the layout survives reloads.
+>   10. **Global pointer management:** Uses `window` event listeners for pointermove and pointerup to ensure smooth dragging/resizing even if the cursor leaves the header, cleaning up afterward.
 >  
 > ==This is essentially a two-panel windowing system built on top of elements never intended for it.==
 

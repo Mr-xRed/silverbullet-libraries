@@ -39,7 +39,7 @@ config.set("admonLang","de")
 To not have multiple space-styles for the different languages I left the admonition types in english, and handle the multi language support only in the SlashCommand definitions.
 
 ### Styling: Colors
-(see [[#Examples:| Examples]])
+(jump to [[#Examples:| Examples]])
 
 ```space-style
 
@@ -496,7 +496,7 @@ end
 ```
 
 ## Examples:
-(See [[#Styling: Colors|Colors]])
+(jump to [[#Styling: Colors|Colors]])
 
 > **danger** Danger  
 > This action is irreversible and could break critical functionality. Execute only if you know what you’re doing. Danger warnings are not for decoration; they mean “one click and you’ll regret everything.” Always assume they’re dead serious — because they usually are.

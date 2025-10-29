@@ -2,6 +2,7 @@
   This is a collection of awesome SilverBullet libraries, currently containing:
 
 # Available libraries
+* ⭐ [**Manage_Silverbullet_Libraries**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Manage_Silverbullet_Libraries.md) - Manage your imported silverbullet-libraries
 * [**Admonitions_multilingual**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Admonitions_multilingual.md) - Adds 🇬🇧 🇩🇪 🇫🇷 🇮🇹 🇨🇳 🇪🇸 🇭🇺 🇷🇴 🇨🇿 🇵🇱  & modern style custom admonitions 
 * [**Custom_Width_and_Color_Tables**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Custom_Width_and_Color_Tables.md) - Adds custom color and width to your boring tables
 * [**DayProgressBar**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DayProgressBar.md) - Displays a Progress Bar with time left in Day
@@ -18,7 +19,7 @@ CodeBlock
 
 
 # How to use
-1. Navigate to the library you would like to import, e.g. `https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md`
+1. Navigate to the library you would like to import, e.g. `https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Manage_Silverbullet_Libraries.md`
 2. Copy the URL
 3. Run the `Import: URL` command in SilverBullet and paste the URL to the library, select to import from a `Github: Repo file`.
 4. Run the `System: Reload` command

@@ -27,7 +27,7 @@ order by githubUrl desc
 ## Implementation 
 
 ### Update GitHub Library (Function)
-```space-lua
+```
 function updateLibraryFromGitHub(page)
   if not page then 
     editor.flashNotification("No page specified to update", "error")
@@ -77,7 +77,7 @@ end
 ```
 
 ## Update Raw Markdown Library (Function)
-```space-lua
+```
 -- Function to update a given Markdown page
 function updateLibraryRawMarkdown(page)
   if not page then 
@@ -125,7 +125,7 @@ end
 
 
 ### Update all GitHub Libraries (Command)
-```space-lua
+```
 local function updateAllGithubLibraries()
   local updatablePages = query[[from index.tag "page" where githubUrl != nil select ref order by githubUrl desc ]]
     for _, pages in ipairs(updatablePages) do
@@ -147,7 +147,7 @@ command.define {
 
 
 ## Update Raw Markdown (Command)
-```space-lua
+```
 local function updateAllRawMarkdownLibraries()
   local updatablePages = query[[from index.tag "page" where source == "markdown-import" select ref order by sourceUrl desc ]]
   if not updatablePages or #updatablePages == 0 then
@@ -171,7 +171,7 @@ command.define {
 
 
 ### Update GitHub library for current page (Command)
-```space-lua
+```
 -- Command definition
 command.define {
   name = "Import: Update current page",
