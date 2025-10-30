@@ -17,17 +17,17 @@ select {
       or not lastCommitDate or lastCommitDate == "" or lastCommitDate == nil ) and "⚪ Unknown"
       or updateDate < lastCommitDate and "🔴 Outdated" or "🟢 Up to date"),
    last_updated = (updateDate and parse_datetime(updateDate)) 
-    and os.date("%m-%d %H:%M", parse_datetime(updateDate)) or "",
+    and os.date("%y.%m.%d %H:%M", parse_datetime(updateDate)) or "",
    last_commit = (lastCommitDate and parse_datetime(lastCommitDate)) 
-    and os.date("%m-%d %H:%M", parse_datetime(lastCommitDate)) or ""
+    and os.date("%y.%m.%d %H:%M", parse_datetime(lastCommitDate)) or ""
   }
 order by updateDate]])}
 
-- ⚠️ to see the table above you need the latest edge build:
-`SilverBullet 2.1.9-7c6becc7db03b7239f5e0ddfc61971005c0c7c62`
+> **warning** To see the interactive table (above) you need the latest edge build: 
+> **SilverBullet 2.1.9-7c6becc7** or newer
 
-#### Fallback-Table
-- ⚠️ As a fallback you can use following non interactive table:
+> **success** Fallback-Table
+> As a fallback you can see your imported libraries in the following non interactive table:
 
 ${query[[from index.tag "page" where githubUrl != nil or source == "markdown-import" 
 select {
@@ -55,9 +55,13 @@ order by updateDate]]}
 
 # Configuration (example)
 
-#### libraries.apiKey
-* the API KEY is only required if you exceed the 60 API calls per hour limit
-* if you setup you Github API KEY you have up to 5000 API calls per hour limit
+#### libraries.apiToken
+* the API Token is only required if you exceed the 60 API calls per hour limit
+* if you setup you Github API Token you have up to 5000 API calls per hour
+  
+> **note** To setup your free API Token log into your Github
+> Go to **Settings** > **Developer settings** > **Personal access Tokens** > **Fine grained Tokens** > [**Generate new token**](https://github.com/settings/personal-access-tokens/new)
+> You can use any token type — even one limited to *Public repositories (read-only access)*
   
 #### libraries.defaultPath
 * set your default path where you want your libraries to be saved
@@ -68,7 +72,7 @@ order by updateDate]]}
 
 ```lua
 config.set( "libraries", {
-    apiKey = "YOUR_GITHUB_API_KEY", 
+    apiToken = "YOUR_GITHUB_API_TOKEN", 
     defaultPath = "Library/Custom/",
     repos = {
               {"silverbulletmd/silverbullet-libraries",""}, -- {"owner/repository", "path"},
@@ -91,20 +95,37 @@ command.define {
   mac = "Cmd-Alt-s",
   run = function()
 
-  local importConfig = config.get("libraries") or {}
-  local API_KEY = importConfig.apiKey
-  local repos = importConfig.repos or {{"silverbulletmd/silverbullet-libraries",""}}
-  local defaultPath = importConfig.defaultPath or "Library/Custom/"
-      
-   -- Helper: build headers based on presence of API key
-    local function buildHeaders()
+    local importConfig = config.get("libraries") or {}
+    local API_TOKEN = importConfig.apiToken
+    local repos = importConfig.repos or {{"silverbulletmd/silverbullet-libraries",""}}
+    local defaultPath = importConfig.defaultPath or "Library/Custom/"
+    local askedAuth = false
+    local useAuth = API_TOKEN and API_TOKEN ~= ""
+
+    local function buildHeaders(useToken)
       local headers = { ["X-GitHub-Api-Version"] = "2022-11-28" }
-      if API_KEY and API_KEY ~= "" then
-        headers["Authorization"] = "Bearer " .. API_KEY
+      if useToken and API_TOKEN and API_TOKEN ~= "" then
+        headers["Authorization"] = "Bearer " .. API_TOKEN
       end
       return headers
     end
-    
+
+    local function safeRequest(url)
+      local resp = http.request(url, { headers = buildHeaders(useAuth) })
+      -- only handle invalid auth once
+      if resp.status == 401 and useAuth and not askedAuth then
+        askedAuth = true
+        local conf = editor.confirm("⚠️ Invalid or expired GitHub API token. Continue unauthenticated (limited requests) or cancel to fix it? Set an empty (apiToken = \"\") to skip this prompt next time.")
+        if conf == false then
+          editor.flashNotification("Cancelled to fix API Token", "error")
+          return 
+        end
+        useAuth = false
+        resp = http.request(url, { headers = buildHeaders(useAuth) })
+      end
+    return resp
+    end
+  
     -- Build repo options
     local repoOptions = {}
     for _, r in ipairs(repos) do
@@ -127,7 +148,7 @@ command.define {
     local selectedItem = nil
 
     while browsing do
-      local fileList = http.request(currentUrl, { headers = buildHeaders() })
+      local fileList = safeRequest(currentUrl)
       if not fileList.ok then
         editor.flashNotification("⚠️ Failed to fetch: " .. currentUrl, "error")
         return
@@ -198,7 +219,7 @@ command.define {
     commitsUrl = commitsUrl:gsub("%?.*$", "")
     commitsUrl = commitsUrl:gsub("/contents/", "/commits?path=")
 
-    local reqCommits = http.request(commitsUrl, { headers = buildHeaders() })
+    local reqCommits = safeRequest(commitsUrl)
     if not reqCommits.ok then
       editor.flashNotification("⚠️ Failed to fetch commit info: " .. commitsUrl, "error")
       return
@@ -213,7 +234,7 @@ command.define {
     local lastCommit = commits[1]
     local lastCommitDate = lastCommit.commit.committer.date
 
-    local fileReq = http.request(selectedItem.download_url, { headers = buildHeaders() })
+    local fileReq = safeRequest(selectedItem.download_url)
     if not fileReq.ok then
       editor.flashNotification("⚠️ Failed to fetch file: " .. selectedItem.download_url, "error")
       return
@@ -253,7 +274,6 @@ command.define {
     editor.setText(updated)
   end
 }
-
 ```
 
 ## 🧱 Build DOM Table to accept buttons (Function)
@@ -291,7 +311,7 @@ function buildTable(q)
 end
 
 local function deletePageButton(page_to_delete)
-            if editor.confirm("DELETE: ⚠️🔥 " .. page_to_delete .. "🔥⚠️ ❔") then
+            if editor.confirm("DELETE? ⚠️🔥 " .. page_to_delete .. "🔥⚠️ ") then
                 space.deletePage(page_to_delete)
                 codeWidget.refreshAll()
                 editor.flashNotification("🗑️ Page deleted: " .. page_to_delete)
@@ -303,28 +323,71 @@ end
 ## 🖌 Buttons Style
 
 ```space-style
+
+.sb-notifications {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+:root {
+  --btn-update-bg: oklch(50% 0.25 160);
+  --btn-update-text: oklch(100% 0.05 160);
+  --btn-update-border: oklch(70% 0.20 160);
+  --btn-update-hover: oklch(70% 0.25 160);
+
+  --btn-delete-bg: oklch(50% 0.25 30);
+  --btn-delete-text: oklch(100% 0.05 30);
+  --btn-delete-border: oklch(70% 0.20 30);
+  --btn-delete-hover: oklch(70% 0.25 30);
+}
+
+table.manageLibraries td button {
+  padding: 6px 12px !important;
+  margin-inline: 4px;
+  font-size: 0.95em;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background 0.25s ease,
+    transform 0.15s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
+}
+
+/* UPDATE button */
 table.manageLibraries td button:first-child {
-    padding: 5px !important;
-    margin-inline: 3px;
-    color: oklch(95% 0.1 150);
-    font-size: 1em; padding: 3px;
-    background: oklch(20% 0.4 150);
-    border: 1px solid oklch(35% 0.4 150);
-    border-radius: 5px;
+  background: var(--btn-update-bg);
+  color: var(--btn-update-text);
+  border-color: var(--btn-update-border);
 }
 
+table.manageLibraries td button:first-child:hover {
+  background: var(--btn-update-hover);
+  border-color: color-mix(in oklch, var(--btn-update-hover), white 5%);
+  box-shadow: 0 0 5px color-mix(in oklch, var(--btn-update-hover), white 15%);
+  transform: scale(0.95);
+}
+
+/* DELETE button */
 table.manageLibraries td button:last-child {
-    padding: 5px !important;
-    margin-inline: 3px;
-    color: oklch(95% 0.1 20);
-    font-size: 1em; padding: 3px;
-    background: oklch(20% 0.4 20);
-    border: 1px solid oklch(35% 0.4 20);
-    border-radius: 5px;
+  background: var(--btn-delete-bg);
+  color: var(--btn-delete-text);
+  border-color: var(--btn-delete-border);
 }
 
-table.manageLibraries td button:first-child:hover {background: oklch(40% 0.4 150);}
-table.manageLibraries td button:last-child:hover {background: oklch(40% 0.4 20);}
+table.manageLibraries td button:last-child:hover {
+  background: var(--btn-delete-hover);
+  border-color: color-mix(in oklch, var(--btn-delete-hover), white 5%);
+  box-shadow: 0 0 5px color-mix(in oklch, var(--btn-delete-hover), white 15%);
+  transform: scale(0.95);
+}
+
+/* Optional: subtle elevation for a “modern” feel */
+table.manageLibraries td button:active {
+  transform: scale(0.90);
+  box-shadow: 0 0 4px color-mix(in oklch, black, var(--btn-delete-bg) 20%);
+}
 
 ```
 
