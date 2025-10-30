@@ -1,21 +1,13 @@
 # Update SilverBullet Libraries 
 
-${widgets.commandButton("Import","Import: URL")} | ${widgets.commandButton("Update GitHub","Import: Update all GitHub Libraries")} | ${widgets.commandButton("Update Raw Markdown","Import: Update all Raw Markdown Libraries")} | ${widgets.commandButton("Update current page","Import: Update current page")}
-
+> **warning** DEPRECATED
+> This library will no longer receive updates. Please use the NEW ✨ [Manage\_Silverbullet\_Libraries](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Manage_Silverbullet_Libraries.md) ✨ instead.
 
 ## Libraries imported using **Github Repo**:
-${query[[from index.tag "page"
-where githubUrl != nil 
-select "[["..ref.."]]"
-order by githubUrl desc 
-]]}
+
 
 ## Libraries imported using **Markdown**:
-${query[[from index.tag "page"
-where source == "markdown-import" 
-select  "[["..ref.."]]"
-order by githubUrl desc 
-]]} 
+
 
 ### Commands & Current progress:
 - Import: Update current page (GitHub or Raw Markdown) ✅
