@@ -46,6 +46,21 @@ This CSS snippet is all about **improving focus and usability** when interacti
 ```
 
 
+## Silversearch-Modalbox Highlighter
+
+```space-style
+#sb-root:has(.sb-modal-box)::before, #sb-root:has(.sb-modal)::before {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sb-modal-box[open], .sb-modal {
+  position: fixed;
+  z-index: 9999;
+}
+
+```
+
 ## Discussions about this space-style
 * [SilverBullet Community](https://community.silverbullet.md/t/modalbox-highlighter/3456?u=mr.red)
 
