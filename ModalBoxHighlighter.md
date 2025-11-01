@@ -1,4 +1,6 @@
-
+---
+tags: meta
+---
 # ModalBox Highlighter
 
 This CSS snippet is all about **improving focus and usability** when interacting with modal boxes in SilverBullet, such as search results, dialogs, or other pop-ups. Essentially, it’s a combination of **visual polish** and **functional enhancement**.

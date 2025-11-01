@@ -1,4 +1,5 @@
 ---
+tags: meta
 banner: ["https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/banner/welcome.jpg"]
 ---
 ## Usage

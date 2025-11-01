@@ -1,3 +1,6 @@
+---
+tags: meta
+---
 # Embed Google Maps in your pages
 
 ## The widget accepts following arguments:

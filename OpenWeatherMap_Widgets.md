@@ -1,3 +1,6 @@
+---
+tags: meta
+---
 # Weather Widget for OpenWeatherMap.org
 
 ## Configuration

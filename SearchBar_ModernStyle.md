@@ -1,3 +1,6 @@
+---
+tags: meta
+---
 # “Find in Page” - SearchBar restyling
 
 * this will give your searchbar a modern look

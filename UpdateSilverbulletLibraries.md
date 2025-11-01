@@ -1,3 +1,6 @@
+---
+tags: meta
+---
 # Update SilverBullet Libraries 
 
 > **warning** DEPRECATED

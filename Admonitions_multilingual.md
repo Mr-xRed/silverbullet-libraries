@@ -1,3 +1,6 @@
+---
+tags: meta
+---
 # Multilingual Custom Admonitions
 
 Shoutout to [paletochen](https://community.silverbullet.md/u/paletochen/summary), [mjf](https://community.silverbullet.md/u/mjf), [malys](https://community.silverbullet.md/u/malys/summary) and [i\_am\_dangry](https://community.silverbullet.md/u/i_am_dangry/summary) for making this admonitions possible.

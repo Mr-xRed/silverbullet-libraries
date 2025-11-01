@@ -1,3 +1,6 @@
+---
+tags: meta
+---
 # Time left in a day Progress Bar
 
 This function will display the hours and percentage of the day left, and a progress bar (1xEmoji for each hour - but you can edit the bar length using `barLength` variable)

@@ -1,4 +1,6 @@
-
+---
+tags: meta
+---
 # Manage SilverBullet Libraries 
 
 ${widgets.commandButton("Import: URL")} | ${widgets.commandButton("Import: Browse GitHub Repositories")} | ${widgets.commandButton("Update All Github Libraries","Import: Check & Update All GitHub Libraries")} | ${widgets.commandButton("Update All Markdown Libraries","Import: Update All Raw-Markdown Libraries")} | ${widgets.commandButton("Import: Check All Github Update Statuses")}
