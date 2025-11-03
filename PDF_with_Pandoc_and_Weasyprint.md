@@ -74,29 +74,21 @@ command.define {
     local target_pdf =  "Pandoc/" .. target .. ".pdf"
     while not space.fileExists("pandocTMP.md") do
       end
-
+    
     local pandocArgs = {
       "-c", "Pandoc/pandoc.css",
   --    "--toc",                            
   --    "--toc-depth=3",
+      "--pdf-engine=weasyprint",
       "-s",
-      "-o", "pandocTMP.html",
+      "-o", target_pdf,
       "pandocTMP.md"
     }
     
     shell.run("pandoc", pandocArgs)
-    sync.performFileSync("pandocTMP.html")
-    while not space.fileExists("pandocTMP.html") do end
-
-    local weasyArgs = {
-      "pandocTMP.html",
-       target_pdf
-    }
-    shell.run("weasyprint", weasyArgs)
-
-    space.deleteFile("pandocTMP.md")
-    space.deleteFile("pandocTMP.html")
+    while not space.fileExists(target_pdf) do end
     editor.flashNotification("PDF generated: " .. target_pdf)
+    space.deleteFile("pandocTMP.md")
     editor.openUrl("/.fs/" .. target_pdf)
   end
 }
