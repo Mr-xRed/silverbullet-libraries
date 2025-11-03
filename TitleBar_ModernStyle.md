@@ -22,7 +22,7 @@ tags: meta
   width: calc(100vw - 20px);
   max-width: var(--editor-width);
   border-radius: 15px;
-  border: 1px solid #aaa4;
+ /* border: 1px solid #aaa4;*/
   padding: 5px 0px;
   box-shadow:
     inset 2px 2px 6px rgba(255,255,255,0.2), 
