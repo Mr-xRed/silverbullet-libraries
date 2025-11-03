@@ -77,11 +77,11 @@ Here is an example how your ActionButton Config should look like this:
     --min-sb-panel-width: 250px;  /* Minimal panel width */
 
     --header-height: 30px;        /* Header height, drag-area */
-    --top-offset: 60px;           /* Initial position */
+    --top-offset: 70px;           /* Initial position */
     --left-offset: 10px;          /* Initial position */
 
     --frame-width: 5px;           /* frame thickness, you need to clear local storage to take effect*/
-    --frame-color: #0000;         /* frame color */
+    --frame-color: rgba(64, 64, 64, 0.2);         /* frame color */
 
     --window-border: 2px;         /* solid border width (aesthetic) */
     --window-border-radius: 10px; /* inner iframe border radius*/
@@ -171,7 +171,7 @@ export function enableDrag(
 
   // Config
   const edgeSize = 20;
-  const M_bounds = { l: 5, t: 60, r: 20, b: 5 };
+  const M_bounds = { l: 5, t: 80, r: 20, b: 5 };
   const snapDistance = 50;
   const minWidth = 100;
   const minHeight = 100;
