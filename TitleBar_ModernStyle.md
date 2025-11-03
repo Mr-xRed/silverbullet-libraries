@@ -51,7 +51,7 @@ tags: meta
 }
 
 .cm-scroller {
-    overflow-x: hidden;
+    overflow-x: hidden !important;
 }  
 ```
 

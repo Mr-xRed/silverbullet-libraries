@@ -26,10 +26,10 @@ select {
 order by updateDate]])}
 
 > **warning** To see the interactive table (above) you need the latest edge build: 
-> **SilverBullet 2.1.9-7c6becc7** or newer
+> **SilverBullet 2.2.1--gf44f00f** or newer
 
 > **success** Fallback-Table
-> As a fallback you can see your imported libraries in the following non interactive table:
+> As a fallback for **2.1.9** or lower, you can see your imported libraries in the following non interactive table
 
 ${query[[from index.tag "page" where githubUrl != nil or source == "markdown-import" 
 select {
