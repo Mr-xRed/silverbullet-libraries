@@ -425,12 +425,12 @@ function updateLibraryFromGitHub(page)
   end
 
   local commits = req.body or {}
-  if #commits == 0 then
+  if rawlen.commits == 0 or {} then
     editor.flashNotification("⚠️ No commits found for this file", "error")
     return
   end
 
-  local lastCommit = commits[1]
+  local lastCommit = commits[1] or {}
   local remoteCommitDate = lastCommit.commit.committer.date  -- ISO8601 string
 
   -- Treat missing dates as outdated
