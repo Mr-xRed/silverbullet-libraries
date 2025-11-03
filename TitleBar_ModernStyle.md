@@ -19,8 +19,8 @@ tags: meta
   left: calc(50% - 5px); 
   transform: translateX(-50%);
   
-  width: calc(100vw - 20px);
-  max-width: var(--editor-width);
+  width: calc(100vw - 40px);
+  max-width: calc(var(--editor-width) + 80px);
   border-radius: 15px;
  /* border: 1px solid #aaa4;*/
   padding: 5px 0px;
