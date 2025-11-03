@@ -95,7 +95,10 @@ Use it Like this:
 .sb-lua-directive-block:has(table) {
   border-radius: 15px !important;
   border: 2px solid rgba(0,0,0,0.5);
-  box-shadow: 2px 2px 10px rgba(0,0,0,0.5);overflow: hidden;}
+  overflow: hidden;
+  box-shadow: 0 1px 6px oklch(20% 0 250 / 0.5),
+              0 6px 12px oklch(20% 0 250 / 0.4);
+}
 
 table {}
 
