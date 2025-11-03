@@ -7,13 +7,12 @@ Shoutout to [paletochen](https://community.silverbullet.md/u/paletochen/summary)
 I wanted to translate the admonition texts to german for my use case, and tinkered around until I made it multilingual😜.
 
 ## Currently supported languages
-🇬🇧  🇩🇪  🇫🇷  🇮🇹  🇨🇳  🇪🇸  🇭🇺  🇷🇴  🇨🇿  🇵🇱
-
+🇬🇧  🇩🇪  🇫🇷  🇮🇹  🇨🇳  🇪🇸  🇭🇺  🇷🇴  🇨🇿  🇵🇱  🇵🇹/🇧🇷
 ## Configuration
 
 ### Language
 - add following space-lua to your configuration with your desired language. 
-- available languages: "en", "de", "fr", "it", "zh", "es", "hu", "ro", “cs”, “pl”
+- available languages: "en", "de", "fr", "it", "zh", "es", "hu", "ro", “cs”, “pl”, “pt”
   
 ```lua
 config.set("admonLang","de")
@@ -251,7 +250,7 @@ Licensed under the ISC and MIT licenses.
 -- prioity: 9
 config.define("admonLang", {
     type = "string",
-    enum = {"en", "de", "fr", "it", "zh", "es", "hu", "ro", "cs", "pl"}
+    enum = {"en", "de", "fr", "it", "zh", "es", "hu", "ro", "cs", "pl", "pt"}
 })
 
 local admonitions_en = {
@@ -462,6 +461,29 @@ local admonitions_pl = {
   ["Uwaga!"] = "warning",
 }
 
+-- Português brasileiro --
+local admonitions_pt = {
+  ["Nota"] = "note",
+  ["Resumo"] = "abstract",
+  ["Informação"] = "info",
+  ["Dica"] = "tip",
+  ["Sucesso"] = "success",
+  ["Questão"] = "question",
+  ["Cuidado"] = "warning",
+  ["Falha"] = "failure",
+  ["Perigo"] = "danger",
+  ["Erro"] = "bug",
+  ["Exemplo"] = "example",
+  ["Citação"] = "quote",
+  ["Ver também"] = "seealso",
+  -- aliases
+  ["Aviso"] = "warning",
+  ["Ver"] = "seealso",
+  ["Pergunta"] = "question",
+  ["Dúvida"] = "question",
+  ["Comentário"] = "quote",	
+}
+
 -- Language mapping
 local lang_map = {
   en = admonitions_en,
@@ -473,7 +495,8 @@ local lang_map = {
   hu = admonitions_hu,
   ro = admonitions_ro,
   cs = admonitions_cs,
-  pl = admonitions_pl
+  pl = admonitions_pl,
+  pt = admonitions_pt
 }
 
 -- Select language first
