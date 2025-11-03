@@ -17,6 +17,8 @@ CodeBlock
 * [**Treeview_Extension_DragAndResize**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Treeview_Extension_DragAndResize.md) - Adds Drag & Resize capabilities to TreeView
 * [**ModalBoxHighlighter**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/ModalBoxHighlighter.md) - Improves focus and usability
 * [**TitleBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TitleBar_ModernStyle.md) - Improves aesthetics
+* [**PDF_with_Pandoc_and_Weasyprint**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PDF_with_Pandoc_and_Weasyprint.md) - Example on how to use Pandoc with Silverbullet
+
 
 
 # How to use

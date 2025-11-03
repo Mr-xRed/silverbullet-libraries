@@ -1,5 +1,5 @@
 ---
-tags: meta
+tags: meta/library
 ---
 # Custom Width & Colored Tables
 

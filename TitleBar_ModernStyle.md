@@ -1,5 +1,5 @@
 ---
-tags: meta
+tags: meta/library
 ---
 
 # Title Bar Restyling

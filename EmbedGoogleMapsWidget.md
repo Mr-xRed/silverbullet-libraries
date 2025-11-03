@@ -1,5 +1,5 @@
 ---
-tags: meta
+tags: meta/library
 ---
 # Embed Google Maps in your pages
 

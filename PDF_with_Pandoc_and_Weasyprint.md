@@ -1,3 +1,7 @@
+---
+tags: meta/library
+---
+
 ## This command will use `pandoc` & `weasyprint` to create a printout of a page in PDF
 
 > **warning** WORK IN PROGRESS

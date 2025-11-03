@@ -1,5 +1,5 @@
 ---
-tags: meta
+tags: meta/library
 ---
 # Time left in a day Progress Bar
 
