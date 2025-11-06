@@ -3,7 +3,7 @@ tags: meta/library
 ---
 
 ## Discussions about this space-style
-* [SilverBullet Community](https://community.silverbullet.md)
+* [SilverBullet Community](https://community.silverbullet.md/t/css-structure-map-for-silverbullet/3507?u=mr.red)
 
 
 > **warning** Caution
