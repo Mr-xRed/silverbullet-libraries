@@ -21,7 +21,7 @@ tags: meta/library
   
   width: calc(100vw - 60px);
   max-width: calc(var(--editor-width) + 120px);
-  border-radius: 15px;
+  border-radius: 35px;
   padding: 5px 0px;
   box-shadow:
     inset 2px 2px 6px rgba(255,255,255,0.2), 
@@ -63,13 +63,23 @@ tags: meta/library
     overflow-x: hidden !important;
 }  
 
+
+
 button svg {
-  filter: drop-shadow(0 0px 5px rgba(0, 0, 0, 0.6));
+  transition: filter 0.25s ease, transform 0.25s ease;
+}
+  /*  transition: filter 0.15s ease, transform 0.15s ease;
+  filter:
+    drop-shadow(0 0 1px rgba(0, 0, 0, 1))
+    drop-shadow(0 0 2px var(--root-background-color));
+}
+*/
+button:hover svg {
+  filter: drop-shadow(0 0 1px currentColor);
+  transform: scale(1.5);
 }
 
-button:hover svg {
-  filter: drop-shadow(0 0px 5px rgba(0, 0, 0, 0.2));
-}
+
 
 #sb-editor > iframe {
     position: relative;
