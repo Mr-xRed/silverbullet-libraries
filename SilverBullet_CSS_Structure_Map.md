@@ -2,7 +2,7 @@
 tags: meta/library
 ---
 
-## Discussions about this space-style
+## Discussions
 * [SilverBullet Community](https://community.silverbullet.md/t/css-structure-map-for-silverbullet/3507?u=mr.red)
 
 
