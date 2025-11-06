@@ -39,17 +39,17 @@ Use it Like this:
 
 ### Sea
 | Product #sea #t40p| Category   | Price | In Stock |
-|----------|-------------|-------|-----------|
+|----------|-------------|--------|-----------|
 | Widget A | Tools       | $12.99 | Yes       |
 | Widget B | Hardware    | $8.50  | No        |
 | Widget C | Accessories | $5.75  | Yes       |
 
 ### Mint
-| ID #mint #t50p| First Name | Last Name | Dep. | Role          |
-|----|-------------|------------|-------------|----------------|
-| 101 | John       | Miller     | Sales       | Manager        |
-| 102 | Sarah      | Brown      | IT          | Developer      |
-| 103 | Luke       | Green      | HR          | Recruiter      |
+| ID #mint #t50p| First Name | Last Name | Dep. | Role     |
+|-----|------------|------------|-------------|-------------|
+| 101 | John       | Miller     | Sales       | Manager     |
+| 102 | Sarah      | Brown      | IT          | Developer   |
+| 103 | Luke       | Green      | HR          | Recruiter   |
 
 ### Hazel
 |  ID #hazel #t60p| Date       | Customer    | Product     | Qty | Total   |

@@ -37,20 +37,18 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
     *   Parses and expands the Markdown into a full tree (`markdown.parseMarkdown` and `markdown.expandMarkdown`).
     *   Renders it back into complete Markdown text (`markdown.renderParseTree`).
 3.  Create a temporary Markdown file
-    *   Writes the rendered content into `pandocTMP.md`.
+    *   Writes the rendered content into `pandocTMP.md`
     *   Syncs the file system to ensure the file exists before continuing.
 4.  Prompt for output file name
     *   Asks the user to input a file name.
     *   Creates a PDF path under `/Pandoc/` folder.
-5.  Generate HTML with Pandoc
-    *   Runs Pandoc to convert the temporary Markdown file to HTML:
-        *   Uses a CSS file [[#pandoc.css]] for styling.
-        *   The commented-out options show that you could enable TOC, landscape, etc.
-6.  Convert HTML to PDF with WeasyPrint
-    *   Runs WeasyPrint on the generated HTML to produce the final PDF.
-7.  Clean up temporary files
-    *   Deletes both `pandocTMP.md` and `pandocTMP.html`.
-8.  Notify and open result
+5.  Generate PDF with Pandoc & Weasyprint as PDF-Engine 
+    * Uses a CSS file [[#pandoc.css]] for styling.
+    * The commented-out options show that you could enable TOC, landscape, etc.
+    *   Runs WeasyPrint to produce the final PDF.
+6.  Clean up the temporary file
+    *   Deletes both `pandocTMP.md`
+7.  Notify and open result
     *   Displays a message confirming success.
     *   Opens the generated PDF file for review/print/download.
 
