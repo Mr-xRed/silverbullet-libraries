@@ -47,7 +47,7 @@ name: Mr-xRed/Treeview_Extension_DragAndResize
 uri: github:Mr-xRed/silverbullet-libraries/Treeview_Extension_DragAndResize.md
 ---
 name: Mr-xRed/SilverBullet_CSS_Structure_Map
-uri: github:Mr-xRed/silverbullet-libraries/SilverBullet_CSS_Structure_Map
+uri: github:Mr-xRed/silverbullet-libraries/SilverBullet_CSS_Structure_Map.md
 ```
 
 ## Tools
