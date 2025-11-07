@@ -7,7 +7,7 @@ name: Mr-xRed/TitleBar_ModernStyle
 uri: github:Mr-xRed/silverbullet-libraries/TitleBar_ModernStyle.md
 ---
 name: Mr-xRed/Custom_Width_and_Color_Tables
-uri: github:Mr-xRed/silverbullet-libraries/Custom_Width_and_Color_Tables.md
+uri: ghr:Mr-xRed/silverbullet-libraries/Custom_Width_and_Color_Tables.md
 ---
 name: Mr-xRed/DayProgressBar
 uri: github:Mr-xRed/silverbullet-libraries/DayProgressBar.md
