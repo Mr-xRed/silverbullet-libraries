@@ -151,7 +151,7 @@ Page decorations allow per-page CSS class application via frontmatter.
 * `.cm-textfield` ➡ [[#colors.scss(L191-209)]] ➡ ==Search input==  
 * `.cm-button` ➡ [[#colors.scss(L191-209)]] ➡ ==Search button==  
 
-## Line Type Class
+## Line Type Classes
 
 * `.sb-line-h1 → .sb-line-h6` ➡ [[#editor.scss(L17-29)]], [[#editor.scss(L247-269)]] ➡ ==Header lines==  
 * `.sb-line-ul` ➡ [[#editor.scss(L119-120)]], [[#editor.scss(L212-222)]] ➡ ==Unordered list==  

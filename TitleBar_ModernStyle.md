@@ -1,5 +1,8 @@
 ---
+description: "Modern restyling of the Title Bar"
 tags: meta/library
+files:
+- TitleBar_ModernStyle.md
 ---
 
 # Title Bar Restyling
