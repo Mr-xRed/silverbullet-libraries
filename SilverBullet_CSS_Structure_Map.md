@@ -49,7 +49,7 @@ tags: meta/library
 `    │       │   │       ├── .sb-line-code              ` [[#Line Type Classes|🔗]] code blocks  
 `    │       │   │       ├── .sb-line-blockquote        ` [[#Line Type Classes|🔗]] blockquotes  
 `    │       │   │       ├── .sb-line-task              ` [[#Line Type Classes|🔗]] task items  
-`    │       │   │       ├── .sb-line-comment           ` [[#Line Type Classes|🔗]]
+`    │       │   │       ├── .sb-line-comment           ` [[#Line Type Classes|🔗]]  
 `    │       │   │       ├── .sb-line-hr                ` [[#Line Type Classes|🔗]]
 `    │       │   │       ├── .sb-line-ul, .sb-line-ol   ` [[#Line Type Classes|🔗]] list  
 `    │       │   │       └── .sb-line-li-{1 → 5}        ` [[#Line Type Classes|🔗]] list indentation levels  
