@@ -11,16 +11,16 @@ tags: meta/library
 
 
 `html, body                                             ` [[#Document|🔗]]  
-`└── #sb-root                                           ` [[#Root & Layout IDs|🔗]]
-`    ├── .sb-modal-box                                  ` [[#Top Bar Classes|🔗]]
-`    │                                                  ` ➡️
-`    ├── #sb-top                                        ` ➡️
-`    │   ├── .main                                      ` ➡️
-`    │   │   └── .inner                                 ` ➡️
-`    │   │       └── .wrapper                           ` ➡️
-`    │   │           ├── .sb-page-prefix                ` ➡️
-`    │   │           ├── #sb-current-page               ` ➡️ Page Title editor
-`    │   │           │   └── .cm-editor                 ` ➡️ Mini Editor
+`└── #sb-root                                           ` [[#Root & Layout IDs|🔗]]  
+`    ├── .sb-modal-box                                  ` [[#Top Bar Classes|🔗]]  
+`    │                                                  ` ➡️  
+`    ├── #sb-top                                        ` ➡️ 
+`    │   ├── .main                                      ` ➡️  
+`    │   │   └── .inner                                 ` ➡️  
+`    │   │       └── .wrapper                           ` ➡️  
+`    │   │           ├── .sb-page-prefix                ` ➡️  
+`    │   │           ├── #sb-current-page               ` ➡️  
+`    │   │           │   └── .cm-editor                 ` ➡️
 `    │   │           │       ├── .cm-scroller           ` ➡️
 `    │   │           │       └── .cm-content            ` ➡️
 `    │   │           │           └── .cm-line           ` ➡️
