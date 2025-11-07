@@ -14,68 +14,68 @@ tags: meta/library
 `└── #sb-root                                           ` [[#Root & Layout IDs|🔗]]  
 `    ├── .sb-modal-box                                  ` [[#Top Bar Classes|🔗]]  
 `    │                                                  ` ➡️  
-`    ├── #sb-top                                        ` ➡️ 
+`    ├── #sb-top                                        ` ➡️  
 `    │   ├── .main                                      ` ➡️  
 `    │   │   └── .inner                                 ` ➡️  
 `    │   │       └── .wrapper                           ` ➡️  
 `    │   │           ├── .sb-page-prefix                ` ➡️  
 `    │   │           ├── #sb-current-page               ` ➡️  
-`    │   │           │   └── .cm-editor                 ` ➡️
-`    │   │           │       ├── .cm-scroller           ` ➡️
-`    │   │           │       └── .cm-content            ` ➡️
-`    │   │           │           └── .cm-line           ` ➡️
-`    │   │           ├── .sb-notifications              ` ➡️
-`    │   │           │   └── .sb-notification-{type}    ` ➡️
-`    │   │           ├── .sb-sync-progress              ` ➡️
-`    │   │           │   └── .progress-wrapper          ` ➡️
-`    │   │           │       └── .progress-bar          ` ➡️
-`    │   │           └── .sb-actions                    ` ➡️ Action Buttons
-`    │   │               └── button                     ` ➡️
-`    │   ├── .panel                                     ` ➡️
-`    │   │                                              ` ➡️
-`    │   ├── .sb-sync-error                             ` ➡️ conditional class
-`    │   ├── .sb-saved / .sb-unsaved / .sb-loading.     ` ➡️ on `#sb-current-page`
-`    │   └── .sb-decorated-object                       ` ➡️ optional on `#sb-current-page`
-`    │                                                  ` ➡️
-`    ├── #sb-main                                       ` ➡️ main content area
-`    │   ├── .sb-panel                                  ` ➡️ left/right panels
-`    │   │   └── iframe                                 ` ➡️
-`    │   └── #sb-editor                                 ` ➡️ editor container
-`    │       ├── .cm-editor                             ` ➡️ CodeMirror editor
-`    │       │   ├── .cm-scroller                       ` ➡️
-`    │       │   ├── .cm-content                        ` ➡️
-`    │       │   │   └── .cm-line                       ` [[#Line Type Classes|🔗]]
-`    │       │   │       ├── .sb-line-h1 → .sb-line-h6  ` [[#Line Type Classes|🔗]] heading levels
-`    │       │   │       ├── .sb-line-code              ` [[#Line Type Classes|🔗]] code blocks
-`    │       │   │       ├── .sb-line-blockquote        ` [[#Line Type Classes|🔗]] blockquotes
-`    │       │   │       ├── .sb-line-task              ` [[#Line Type Classes|🔗]] task items
+`    │   │           │   └── .cm-editor                 ` ➡️  
+`    │   │           │       ├── .cm-scroller           ` ➡️  
+`    │   │           │       └── .cm-content            ` ➡️  
+`    │   │           │           └── .cm-line           ` ➡️  
+`    │   │           ├── .sb-notifications              ` ➡️  
+`    │   │           │   └── .sb-notification-{type}    ` ➡️  
+`    │   │           ├── .sb-sync-progress              ` ➡️  
+`    │   │           │   └── .progress-wrapper          ` ➡️  
+`    │   │           │       └── .progress-bar          ` ➡️  
+`    │   │           └── .sb-actions                    ` ➡️ Action Buttons  
+`    │   │               └── button                     ` ➡️  
+`    │   ├── .panel                                     ` ➡️  
+`    │   │                                              ` ➡️  
+`    │   ├── .sb-sync-error                             ` ➡️ conditional class  
+`    │   ├── .sb-saved / .sb-unsaved / .sb-loading.     ` ➡️ on `#sb-current-page`  
+`    │   └── .sb-decorated-object                       ` ➡️ optional on `#sb-current-page`  
+`    │                                                  ` ➡️  
+`    ├── #sb-main                                       ` ➡️ main content area  
+`    │   ├── .sb-panel                                  ` ➡️ left/right panels  
+`    │   │   └── iframe                                 ` ➡️  
+`    │   └── #sb-editor                                 ` ➡️ editor container  
+`    │       ├── .cm-editor                             ` ➡️ CodeMirror editor  
+`    │       │   ├── .cm-scroller                       ` ➡️  
+`    │       │   ├── .cm-content                        ` ➡️  
+`    │       │   │   └── .cm-line                       ` [[#Line Type Classes|🔗]]  
+`    │       │   │       ├── .sb-line-h1 → .sb-line-h6  ` [[#Line Type Classes|🔗]] heading levels  
+`    │       │   │       ├── .sb-line-code              ` [[#Line Type Classes|🔗]] code blocks  
+`    │       │   │       ├── .sb-line-blockquote        ` [[#Line Type Classes|🔗]] blockquotes  
+`    │       │   │       ├── .sb-line-task              ` [[#Line Type Classes|🔗]] task items  
 `    │       │   │       ├── .sb-line-comment           ` [[#Line Type Classes|🔗]]
 `    │       │   │       ├── .sb-line-hr                ` [[#Line Type Classes|🔗]]
-`    │       │   │       ├── .sb-line-ul, .sb-line-ol   ` [[#Line Type Classes|🔗]] list
-`    │       │   │       └── .sb-line-li-{1 → 5}        ` [[#Line Type Classes|🔗]] list indentation levels
-`    │       │   ├── .cm-gutters                        ` [[#Line Type Classes|🔗]] line gutters
-`    │       │   ├── .cm-cursor / .cm-dropCursor        ` ➡️
-`    │       │   ├── .cm-selectionBackground            ` ➡️
-`    │       │   ├── .cm-panels-bottom                  ` ➡️ bottom panels like search
-`    │       │   │   ├── .cm-search                     ` ➡️
+`    │       │   │       ├── .sb-line-ul, .sb-line-ol   ` [[#Line Type Classes|🔗]] list  
+`    │       │   │       └── .sb-line-li-{1 → 5}        ` [[#Line Type Classes|🔗]] list indentation levels  
+`    │       │   ├── .cm-gutters                        ` [[#Line Type Classes|🔗]] line gutters  
+`    │       │   ├── .cm-cursor / .cm-dropCursor        ` ➡️  
+`    │       │   ├── .cm-selectionBackground            ` ➡️  
+`    │       │   ├── .cm-panels-bottom                  ` ➡️ bottom panels like search  
+`    │       │   │   ├── .cm-search                     ` ➡️  
 `    │       │   │   │   ├── .cm-textfield              ` ➡️    
-`    │       │   │   │   └── .cm-button                 ` ➡️
-`    │       │   │   └── .cm-vim-panel                  ` ➡️
-`    │       │   └── .cm-tooltip-autocomplete           ` ➡️
-`    │       │       ├── .cm-completionLabel            ` ➡️
-`    │       │       ├── .cm-completionDetail           ` ➡️
-`    │       │       └── .cm-completionIcon             ` ➡️
-`    │       ├── .sb-markdown-widget                    ` ➡️
-`    │       ├── .sb-markdown-top-widget                ` ➡️
-`    │       ├── .sb-markdown-bottom-widget             ` ➡️
-`    │       ├── .sb-lua-directive-block                ` ➡️
-`    │       ├── .sb-lua-directive-inline               ` ➡️
-`    │       ├── .sb-top-iframe                         ` ➡️
-`    │       └── .sb-bottom-iframe                      ` ➡️
-`    │                                                  ` ➡️
-`    └── .sb-bhs                                        ` ➡️ bottom horizontal split
-`        └── .sb-panel                                  ` ➡️
-`                                                       ` ➡️
+`    │       │   │   │   └── .cm-button                 ` ➡️  
+`    │       │   │   └── .cm-vim-panel                  ` ➡️  
+`    │       │   └── .cm-tooltip-autocomplete           ` ➡️  
+`    │       │       ├── .cm-completionLabel            ` ➡️  
+`    │       │       ├── .cm-completionDetail           ` ➡️  
+`    │       │       └── .cm-completionIcon             ` ➡️  
+`    │       ├── .sb-markdown-widget                    ` ➡️  
+`    │       ├── .sb-markdown-top-widget                ` ➡️  
+`    │       ├── .sb-markdown-bottom-widget             ` ➡️  
+`    │       ├── .sb-lua-directive-block                ` ➡️  
+`    │       ├── .sb-lua-directive-inline               ` ➡️  
+`    │       ├── .sb-top-iframe                         ` ➡️  
+`    │       └── .sb-bottom-iframe                      ` ➡️  
+`    │                                                  ` ➡️  
+`    └── .sb-bhs                                        ` ➡️ bottom horizontal split  
+`        └── .sb-panel                                  ` ➡️  
+`                                                       ` ➡️  
 
 # Notes
 
