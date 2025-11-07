@@ -10,10 +10,10 @@ name: Mr-xRed/Custom_Width_and_Color_Tables
 uri: ghr:Mr-xRed/silverbullet-libraries/Custom_Width_and_Color_Tables.md
 ---
 name: Mr-xRed/DayProgressBar
-uri: github:Mr-xRed/silverbullet-libraries/DayProgressBar.md
+uri: ghr:Mr-xRed/silverbullet-libraries/DayProgressBar.md
 ---
 name: Mr-xRed/EmbedGoogleMapsWidget
-uri: github:Mr-xRed/silverbullet-libraries/EmbedGoogleMapsWidget.md
+uri: ghr:Mr-xRed/silverbullet-libraries/EmbedGoogleMapsWidget.md
 ---
 name: Mr-xRed/HeaderLevelToggle
 uri: github:Mr-xRed/silverbullet-libraries/HeaderLevelToggle.md
