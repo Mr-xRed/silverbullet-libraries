@@ -1,3 +1,7 @@
+---
+tags: meta/respository
+---
+
 ```#meta/library/remote
 name: Mr-xRed/TitleBar_ModernStyle
 uri: github:Mr-xRed/silverbullet-libraries/TitleBar_ModernStyle.md
