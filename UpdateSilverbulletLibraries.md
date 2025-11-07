@@ -1,5 +1,5 @@
 ---
-tags: meta/library
+tags: meta
 ---
 # Update SilverBullet Libraries 
 

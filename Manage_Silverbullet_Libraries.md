@@ -1,6 +1,11 @@
 ---
-tags: meta/library
+tags: meta
 ---
+
+> **warning** DEPRECATED
+> This library will no longer receive updates. And all Functions&Commands have been disactivated.
+> Use the official ✨[[Library/Std/Pages/Library Manager]]✨ instead.
+
 # Manage SilverBullet Libraries 
 
 ${widgets.commandButton("Import: URL")} | ${widgets.commandButton("Import: Browse GitHub Repositories")} | ${widgets.commandButton("Update All Github Libraries","Import: Check & Update All GitHub Libraries")} | ${widgets.commandButton("Update All Markdown Libraries","Import: Update All Raw-Markdown Libraries")} | ${widgets.commandButton("Import: Check All Github Update Statuses")}
@@ -90,7 +95,7 @@ config.set( "libraries", {
 # Implementation 
 
 ## 🗂️ Import: Browse GitHub Repositories (Command)
-```space-lua
+```lua
 command.define {
   name = "Import: Browse GitHub Repositories",
   key = "Ctrl-Alt-s",
@@ -280,7 +285,7 @@ command.define {
 
 ## 🧱 Build DOM Table to accept buttons (Function)
 
-```space-lua
+```lua
 function buildTable(q)
   local rows = {}
   for r in q do
@@ -324,8 +329,7 @@ end
 
 ## 🖌 Buttons Style
 
-```space-style
-
+```css
 .sb-notifications {
   position: fixed !important;
   z-index: 9999 !important;
@@ -394,7 +398,7 @@ table.manageLibraries td button:active {
 ```
 
 ## ⚙️ Check & Update GitHub Library (Function)
-```space-lua
+```lua
 function updateLibraryFromGitHub(page)
   if not page then 
     editor.flashNotification("No page specified to update", "error")
@@ -480,7 +484,7 @@ end
 ```
 
 ## ⚙️ Update Raw Markdown Library (Function)
-```space-lua
+```lua
 -- Function to update a given Markdown page
 function updateLibraryRawMarkdown(page)
   if not page then 
@@ -527,7 +531,7 @@ end
 ```
 
 ## ⚙️ Check Update Status for a page (Function)
-```space-lua
+```lua
 function checkLibraryUpdateStatus(page)
   if not page then return end
 
@@ -578,7 +582,7 @@ end
 ```
 
 ## ⚙️ Update Github or Markdown for specified page (Function)
-```space-lua
+```lua
 function updateLibrary(page)
     local original_text = space.readPage(page)
     local fm = index.extractFrontmatter(original_text).frontmatter or {}
@@ -596,7 +600,7 @@ end
 ```
 
 ## 🚀 Import: Check All Github Update Statuses (Command)
-```space-lua
+```lua
 command.define {
   name = "Import: Check All Github Update Statuses",
   key = "Ctrl-Alt-h",
@@ -621,7 +625,7 @@ end
 ```
 
 ## 🚀 Import: Check & Update All GitHub Libraries (Command)
-```space-lua
+```lua
 command.define {
   name = "Import: Check & Update All GitHub Libraries",
   key = "Ctrl-Alt-g",
@@ -643,7 +647,7 @@ end
 
 ## 🚀 Import: Update All Raw-Markdown Libraries (Command)
 
-```space-lua
+```lua
 command.define {
   name = "Import: Update All Raw-Markdown Libraries",
   key = "Ctrl-Alt-m",
@@ -704,7 +708,7 @@ command.define {
 
 ## 🪄 Helper Functions
 ### Parse Custom Date
-```space-lua
+```lua
 function parse_datetime(str)
   if not str or str == "" then
     return nil
