@@ -1,6 +1,4 @@
----
-tags: meta/repository
----
+#meta/repository
 
 ```#meta/library/remote
 name: Mr-xRed/TitleBar_ModernStyle
