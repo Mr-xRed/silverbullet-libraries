@@ -1,5 +1,5 @@
 ---
-tags: meta/respository
+tags: meta/repository
 ---
 
 ```#meta/library/remote
