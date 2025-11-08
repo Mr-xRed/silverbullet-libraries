@@ -1,5 +1,6 @@
 ---
 tags: meta/library
+pageDecoration.prefix: "🖨️ "
 ---
 
 ## This command will use `pandoc` & `weasyprint` to create a printout of a page in PDF

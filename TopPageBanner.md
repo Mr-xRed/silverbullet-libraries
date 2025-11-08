@@ -1,6 +1,7 @@
 ---
 tags: meta/library
 banner: ["https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/banner/welcome.jpg"]
+pageDecoration.prefix: "🖌️ "
 ---
 ## Usage
 add this to the `frontmatter` of the page where you want the banner shown:

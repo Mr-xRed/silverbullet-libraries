@@ -1,5 +1,6 @@
 ---
 tags: meta/library
+pageDecoration.prefix: "🖌️ "
 ---
 # “Find in Page” - SearchBar restyling
 

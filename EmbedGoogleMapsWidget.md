@@ -1,5 +1,6 @@
 ---
 tags: meta/library
+pageDecoration.prefix: "🗺️ "
 ---
 # Embed Google Maps in your pages
 

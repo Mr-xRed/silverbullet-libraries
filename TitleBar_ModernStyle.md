@@ -1,6 +1,7 @@
 ---
 description: "Modern restyling of the Title Bar"
 tags: meta/library
+pageDecoration.prefix: "🖌️ "
 ---
 
 # Title Bar Restyling

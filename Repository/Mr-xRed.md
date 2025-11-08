@@ -1,5 +1,6 @@
 ---
 tags: meta/repository
+pageDecoration.prefix: "📚 "
 ---
 
 ## Widgets

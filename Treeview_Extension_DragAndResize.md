@@ -2,6 +2,7 @@
 tags: meta/library
 files:
 - PanelDragResize.js
+pageDecoration.prefix: "📎 "
 ---
 # Treeview Extension to Drag & Resize
 
