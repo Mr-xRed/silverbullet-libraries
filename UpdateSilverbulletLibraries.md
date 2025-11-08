@@ -1,4 +1,5 @@
 ---
+pageDecoration.prefix: "☠️ "
 tags: meta
 ---
 # Update SilverBullet Libraries 
