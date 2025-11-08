@@ -1,7 +1,7 @@
 ---
 tags: meta/library
 files:
-- PanelDragResize.plug.js
+- PanelDragResize.js
 ---
 # Treeview Extension to Drag & Resize
 
@@ -137,7 +137,7 @@ command.define {
   mac = "Cmd-Alt-b",
   run = function()
         editor.invokeCommand "Tree View: Toggle"
-        js.import("./PanelDragResize.plug.js").enableDrag()
+        js.import("/.fs/Library/Mr-xRed/Treeview_Extension_DragAndResize/PanelDragResize.js").enableDrag()
        end
 }
 ```
