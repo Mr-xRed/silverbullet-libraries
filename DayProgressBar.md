@@ -1,5 +1,6 @@
 ---
 tags: meta/library
+pageDecoration.prefix: "🛠️ "
 ---
 # Time left in a day Progress Bar
 

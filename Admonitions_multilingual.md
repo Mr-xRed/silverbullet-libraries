@@ -1,5 +1,6 @@
 ---
 tags: meta/library
+pageDecoration.prefix: "🛠️ "
 ---
 # Multilingual Custom Admonitions
 
