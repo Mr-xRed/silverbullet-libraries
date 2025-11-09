@@ -1,9 +1,6 @@
 ---
 pageDecoration.prefix: "☠️ "
 tags: meta
-share.uri: "github:mr-xred/silverbullet-libraries@main/UpdateSilverbulletLibraries.md"
-share.hash: 376935f1
-share.mode: push
 ---
 # Update SilverBullet Libraries 
 
