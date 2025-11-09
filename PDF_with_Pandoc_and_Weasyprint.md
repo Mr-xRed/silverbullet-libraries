@@ -1,13 +1,14 @@
 ---
 tags: meta/library
 pageDecoration.prefix: "🖨️ "
+files:
+- pandoc.css
 ---
 
 ## This command will use `pandoc` & `weasyprint` to create a printout of a page in PDF
 
 > **warning** WORK IN PROGRESS
-> For now everything is hard coded except the resulting filename.
-> It’s just an example and where to start with pandoc and weasyprint, but not a complete solution yet.
+> It’s just an example and how to start with pandoc and weasyprint, but not a complete solution yet.
 
 ### Short instructions how to install `pandoc` and `weasyprint` (on the server side where SilverBullet is running)
 
@@ -24,9 +25,12 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
 
 ## Instructions
 
-1. After you installed pandoc & weasyprint Reload: ${widgets.commandButton("System: Reload")} 
-2. Save this [[#pandoc.css]] using this button: ${widgets.commandButton("Save pandoc.css")} 
-3. Use Ctrl-p to start the command or ${widgets.commandButton("Pandoc: Publish PDF")}
+1. Set the path to your custom CSS using config.set:
+  `config.set("pandocCSS","/.fs/Library/PDF_with_Pandoc_and_Weasyprint/pandoc.css")`
+  if omitted then the default CSS file path is:
+  `/.fs/Library/PDF_with_Pandoc_and_Weasyprint/pandoc.css`
+2. Reload System: ${widgets.commandButton("System: Reload")} 
+3. Use Ctrl-p to run the command or ${widgets.commandButton("Pandoc: Publish PDF")}
 4. Enter your target Filename (without the PDF extension)
 
 ## ⚙️ Step-by-step what this script does:
@@ -44,7 +48,7 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
     *   Asks the user to input a file name.
     *   Creates a PDF path under `/Pandoc/` folder.
 5.  Generate PDF with Pandoc & Weasyprint as PDF-Engine 
-    * Uses a CSS file [[#pandoc.css]] for styling.
+    * Uses the CSS file for styling.
     * The commented-out options show that you could enable TOC, landscape, etc.
     *   Runs WeasyPrint to produce the final PDF.
 6.  Clean up the temporary file
@@ -56,6 +60,10 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
 ## Command implementation
 
 ```space-lua
+config.define("pandocCSS", {type = "string"})
+
+local pandocCSS = config.get("pandocCSS") or "/.fs/Library/PDF_with_Pandoc_and_Weasyprint/pandoc.css"
+
 command.define {
   name = "Pandoc: Publish PDF",
   key = "Ctrl-p",
@@ -75,7 +83,7 @@ command.define {
       end
     
     local pandocArgs = {
-      "-c", "Pandoc/pandoc.css",
+      "-c", pandocCSS,
   --    "--toc",                            
   --    "--toc-depth=3",
       "--pdf-engine=weasyprint",
@@ -97,10 +105,9 @@ command.define {
 
 ## pandoc.css
 
-${widgets.commandButton("Save pandoc.css")}  ${widgets.commandButton("Delete pandoc.css")}
+$ {widgets.commandButton("Save pandoc.css")}  $ {widgets.commandButton("Delete pandoc.css")}
 
-```space-lua
-
+```
 local CSS = [[
 /* Register strings for the header */
 h1.title { string-set: title content(); }
