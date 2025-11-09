@@ -26,9 +26,9 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
 ## Instructions
 
 1. Set the path to your custom CSS using config.set:
-  `config.set("pandocCSS","/.fs/Library/PDF_with_Pandoc_and_Weasyprint/pandoc.css")`
+  `config.set("pandocCSS","/.fs/Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css")`
   if omitted then the default CSS file path is:
-  `/.fs/Library/PDF_with_Pandoc_and_Weasyprint/pandoc.css`
+  `/.fs/Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css`
 2. Reload System: ${widgets.commandButton("System: Reload")} 
 3. Use Ctrl-p to run the command or ${widgets.commandButton("Pandoc: Publish PDF")}
 4. Enter your target Filename (without the PDF extension)
@@ -62,7 +62,8 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
 ```space-lua
 config.define("pandocCSS", {type = "string"})
 
-local pandocCSS = config.get("pandocCSS") or "/.fs/Library/PDF_with_Pandoc_and_Weasyprint/pandoc.css"
+local pandocCSS = config.get("pandocCSS") or "Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css"
+--local pandocCSS = config.get("pandocCSS") or "silverbullet-libraries/pandoc.css"
 
 command.define {
   name = "Pandoc: Publish PDF",
@@ -73,13 +74,14 @@ command.define {
     local mdTree = markdown.parseMarkdown(mdContent)
           mdTree = markdown.expandMarkdown(mdTree)
     local renderedMd = markdown.renderParseTree(mdTree)
+    local tempFile = "pandocTMP.md"
     -- Create a temporary file
-    space.writeFile("pandocTMP.md", renderedMd)
-    sync.performFileSync("pandocTMP.md")
+    space.writeFile(tempFile, renderedMd)
+    sync.performFileSync(tempFile)
     local target = editor.prompt("File name", "")
     if not target or target == "" then return end
-    local target_pdf =  "Pandoc/" .. target .. ".pdf"
-    while not space.fileExists("pandocTMP.md") do
+    local target_pdf =  target .. ".pdf"
+    while not space.fileExists(tempFile) do
       end
     
     local pandocArgs = {
@@ -89,7 +91,7 @@ command.define {
       "--pdf-engine=weasyprint",
       "-s",
       "-o", target_pdf,
-      "pandocTMP.md"
+      "-i", tempFile
     }
     
     shell.run("pandoc", pandocArgs)
