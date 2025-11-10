@@ -24,7 +24,8 @@
 * [**SilverBullet_CSS_Structure_Map**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SilverBullet_CSS_Structure_Map.md) - WORK IN PROGRESS
 
 ### Tools
-* [**PDF_with_Pandoc_and_Weasyprint**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PDF_with_Pandoc_and_Weasyprint.md) - Example on how to use Pandoc with Silverbullet
+* [**PrintPreview**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PrintPreview.md) - PrintPreview implementation using space-lua/HTML/CSS
+* ☠️ [**PDF_with_Pandoc_and_Weasyprint**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PDF_with_Pandoc_and_Weasyprint.md) - Example on how to use Pandoc with Silverbullet
 
 ### Deprecated Libraries
 * ☠️ [**UpdateSilverbulletLibraries**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/UpdateSilverbulletLibraries.md) - Updates Community Silverbullet-Libraries
