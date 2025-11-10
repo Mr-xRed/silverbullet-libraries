@@ -1,8 +1,8 @@
 
 @page {
-   size: A4 /*landscape*/;  /* uncomment for landscape */
-   margin: 15mm 25mm;
-   
+/*  size: A4 ; 
+    margin: 15mm 25mm;
+*/   
     @top-center {
         font-family: "Inter", "Segoe UI", sans-serif;
         font-size: 10pt;
