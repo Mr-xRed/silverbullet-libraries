@@ -1,14 +1,15 @@
 ---
 tags: meta/library
-pageDecoration.prefix: "🖨️ "
+pageDecoration.prefix: "☠️ "
 files:
 - pandoc.css
 ---
 
 ## This command will use `pandoc` & `weasyprint` to create a printout of a page in PDF
 
-> **warning** WORK IN PROGRESS
-> It’s just an example and how to start with pandoc and weasyprint, but not a complete solution yet.
+> **warning** DEPRECATED
+> This is just an example and how to start with pandoc and weasyprint, but not a complete solution.
+> Use PrintPreview instead.
 
 ### Short instructions how to install `pandoc` and `weasyprint` (on the server side where SilverBullet is running)
 
@@ -29,12 +30,8 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
   `config.set("pandocCSS","Relative/Path/To/custom.css")`
   if omitted then the default CSS file path will be used:
   `Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css`
-2. Reload System: |html|_isWidget|
-|--|--|
-|{}|true| 
-3. Use Ctrl-p to run the command or |html|_isWidget|
-|--|--|
-|{}|true|
+2. Reload System
+3. Use Ctrl-p to run the command or.
 4. Enter your target Filename (without the PDF extension)
 
 ## ⚙️ Step-by-step what this script does:
@@ -63,7 +60,7 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
 
 ## Command implementation
 
-```space-lua
+```lua
 config.define("pandocCSS", {type = "string"})
 
 local pandocCSS = config.get("pandocCSS") or "Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css"

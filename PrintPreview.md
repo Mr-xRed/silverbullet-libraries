@@ -136,3 +136,6 @@ command.define {
 }
 ```
 
+
+## Discussions to this Library
+* [Silverbullet Community](https://community.silverbullet.md/t/how-to-print-export-with-preview-removed/2581?u=mr.red)
