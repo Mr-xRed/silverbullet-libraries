@@ -78,7 +78,7 @@ command.define {
   run = function()
     editor.save()
     --retrieve configuration values and set defaults
-    local PrintPreview = config.get("PrintPreview")
+    local PrintPreview = config.get("PrintPreview") or {}
     local styleFile = PrintPreview.CSSFile or "Library/Mr-xRed/PrintPreview/printpreview.css"
     local pageSize = PrintPreview.pageSize or "A4"
     local pageLayout = PrintPreview.landscape and "landscape" or ""
