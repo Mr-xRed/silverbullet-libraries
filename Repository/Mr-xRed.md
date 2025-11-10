@@ -53,6 +53,9 @@ uri: github:Mr-xRed/silverbullet-libraries/SilverBullet_CSS_Structure_Map.md
 
 ## Tools
 ```#meta/library/remote
+name: Mr-xRed/PrintPreview
+uri: github:Mr-xRed/silverbullet-libraries/PrintPreview.md
+---
 name: Mr-xRed/PDF_with_Pandoc_and_Weasyprint
 uri: github:Mr-xRed/silverbullet-libraries/PDF_with_Pandoc_and_Weasyprint.md
 ```

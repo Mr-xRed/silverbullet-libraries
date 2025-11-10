@@ -13,7 +13,7 @@ files:
 ### Short instructions how to install `pandoc` and `weasyprint` (on the server side where SilverBullet is running)
 
 - these instructions are for linux only (debian) 
-- maybe it also works with other distros like ubuntu but cant guarantee
+- maybe it also works with other distros like ubuntu but can’t guarantee
 - if you run SilverBullet on docker, these instructions aren’t for you (sorry).
 
 ```bash
@@ -25,12 +25,16 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
 
 ## Instructions
 
-1. Set the path to your custom CSS using config.set:
-  `config.set("pandocCSS","/.fs/Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css")`
-  if omitted then the default CSS file path is:
-  `/.fs/Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css`
-2. Reload System: ${widgets.commandButton("System: Reload")} 
-3. Use Ctrl-p to run the command or ${widgets.commandButton("Pandoc: Publish PDF")}
+1. Set the relative path inside your space to your custom CSS using:
+  `config.set("pandocCSS","Relative/Path/To/custom.css")`
+  if omitted then the default CSS file path will be used:
+  `Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css`
+2. Reload System: |html|_isWidget|
+|--|--|
+|{}|true| 
+3. Use Ctrl-p to run the command or |html|_isWidget|
+|--|--|
+|{}|true|
 4. Enter your target Filename (without the PDF extension)
 
 ## ⚙️ Step-by-step what this script does:
@@ -63,7 +67,6 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
 config.define("pandocCSS", {type = "string"})
 
 local pandocCSS = config.get("pandocCSS") or "Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css"
---local pandocCSS = config.get("pandocCSS") or "silverbullet-libraries/pandoc.css"
 
 command.define {
   name = "Pandoc: Publish PDF",
@@ -78,9 +81,10 @@ command.define {
     -- Create a temporary file
     space.writeFile(tempFile, renderedMd)
     sync.performFileSync(tempFile)
-    local target = editor.prompt("File name", "")
+    local target = editor.prompt("Enter 'Path/FileName' without the .pdf extension", "PDF/")
     if not target or target == "" then return end
-    local target_pdf =  target .. ".pdf"
+    local target_pdf = target .. ".pdf"
+    space.writeFile(target_pdf, "CreatedForFilePath")
     while not space.fileExists(tempFile) do
       end
     
@@ -90,150 +94,21 @@ command.define {
   --    "--toc-depth=3",
       "--pdf-engine=weasyprint",
       "-s",
+--      "--metadata", "title=" .. target,
       "-o", target_pdf,
       "-i", tempFile
     }
     
     shell.run("pandoc", pandocArgs)
     while not space.fileExists(target_pdf) do end
-    editor.flashNotification("PDF generated: " .. target_pdf)
     space.deleteFile("pandocTMP.md")
+    editor.flashNotification("PDF generated: " .. target_pdf)
     editor.openUrl("/.fs/" .. target_pdf)
   end
 }
 
 ```
 
-
-## pandoc.css
-
-$ {widgets.commandButton("Save pandoc.css")}  $ {widgets.commandButton("Delete pandoc.css")}
-
-```
-local CSS = [[
-/* Register strings for the header */
-h1.title { string-set: title content(); }
-p.author { string-set: author content(); }
-
-@page {
-   size: A4 /*landscape*/;  /* uncomment for landscape */
-   margin: 25mm 25mm;       /* Top/Bottom Left/Right*/
-  
-  @top-center {
-    content: string(title) " — " string(author);
-    font-size: 10pt;
-    color: #555;
-  }
-  @bottom-center {
-    content: "Page " counter(page) " of " counter(pages);
-    font-size: 9pt;
-    color: #999;
-  }
-}
-body {
-    font-family: 'Courier New', Courier, monospace; 
-    font-family: "Times New Roman", serif;
-    font-family: "Inter", "Segoe UI", sans-serif;
-    color: #222;
-    line-height: 1.5;      /* spacing between lines */
-}
-
-p { hyphens: auto;
-    text-align: justify;
-}
-
-/* #TOC {
-  page-break-after: always;
-}
-#TOC ul {
-  list-style-type: none;
-  padding-left: 0;
-}
-#TOC a {
-  text-decoration: none;
-  color: inherit;
-} */
-
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  color: #005b99;
-  margin-top: 1em;
-  margin-bottom: 0.5em;
-}
-
-h1 {
-  padding-bottom: 0.1em;
-  border-bottom: 1px solid #005b99;
-}
-
-/* h2 { page-break-before: always; } */
-
-code, pre {
-  background: #f5f5f5;
-  padding: 0.1em 0.2em;
-  border-radius: 3px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.85em;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-table :is(th, td) {
-  border: 2px solid var(#bababa);
-  padding: 0.4rem;
-}
-
-table > thead {
-  background-color: var(#f7f7f7);
-}
-
-table > tbody > tr:nth-child(even) {
-  background-color: var(#f7f7f7);
-}
-
-blockquote {
-  color: #555;
-  border-left: 3px solid #005b99;
-  padding-left: 0.5em;  /* reduced */
-  font-style: italic;
-}
-
-img {
-  margin-left: auto;
-  margin-right: auto;
-  page-break-inside: avoid;  /* Avoid splitting the image */
-  break-inside: avoid;       /* Modern equivalent */
-  display: block;            /* Ensures proper box behavior */
-  max-width: 100%;           /* Scale down if needed */
-}
-figure {
-  display: block;
-  text-align: center;  /* centers image and caption */
-}
-]]
-
-command.define {
-  name = "Save pandoc.css",
-  hide = true,
-  run = function()
-          local CSSFile = space.writeDocument("Pandoc/pandoc.css", CSS)
-          editor.flashNotification("CSS-file saved with size: " .. CSSFile.size .. " bytes")
-    end
-}
-
-command.define {
-  name = "Delete pandoc.css",
-  hide = true,
-  run = function()
-          space.deleteDocument("Pandoc/pandoc.css")
-          editor.flashNotification("CSS-File deleted")
-    end
-}
-
-```
 
 ## Pandoc args & options
 
