@@ -6,25 +6,26 @@ pageDecoration.prefix: "🖨️ "
 files:
 - printpreview.css
 ---
+# Print Preview Command `Ctrl-Alt-p`
 
 > **warning** Caution
 > WORK IN PROGRESS
 
-# Print Preview Command `Ctrl-Alt-p`
+> **tip** Hint
+> When Running the command make sure you have Pop-Up’s enabled because the PrintPreview will open a new Window/Tab with a `PrintPreview.html`
 
-## What does it do?
-* Save and fetch content: It saves the current editor page and retrieves its Markdown text.
-* Parse and expand Markdown: Converts the Markdown into a parse tree, expands it, and renders it back to expanded Markdown.
-* Convert to HTML: Turns the expanded Markdown into HTML and cleans up repeated `<br>` tags, adjusts image paths, and marks certain tables as widgets.
-* Wrap in HTML structure: Embeds the HTML into a full HTML page with metadata, CSS, and hidden header info for print.
-* Export and preview: Writes the HTML to PrintPreview.html, syncs it, sends notification, and opens it in the browser.
+## How does it work?
+* It saves the current editor page and retrieves its Markdown text.
+* Converts the Markdown into a parse tree, expands it, and renders it back to expanded Markdown.
+* Turns the expanded Markdown into HTML and cleans up repeated `<br>` tags, adjusts image paths, and marks certain tables as widgets.
+* Embeds the HTML into a full HTML page with metadata, CSS and header and footer info for print.
+* Writes the HTML to PrintPreview.html, syncs it, sends notification, and opens it in the browser.
 
 ## Options & Config
 
-### Config.set example
-
 * You can style your PrintPreview page with a custom CSS file and other attributes:
 
+**Config.set example**
 ```lua
 config.set("PrintPreview", {
     CSSFile = "path/to/your_custom.css", --default is included with the library
@@ -115,11 +116,6 @@ command.define {
 <style> @page { size: ]].. pageSize .. " " .. pageLayout ..  [[; margin: ]] .. marginTopBottom .. " ".. marginLeftRight ..[[;
      @top-center { content: ']].. pageName .. pageAuthor ..[['; }}</style>
 <body>
-<!-- Hidden elements for printed headers -->
-<!--
-<h1 class="title" style="display:none;">]] .. pageName .. [[</h1>
-<p class="author" style="display:none;">]] .. pageAuthor .. [[</p>
- -->
 ]] .. htmlContent .. [[
 </body>
 </html>
