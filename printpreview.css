@@ -124,12 +124,13 @@ span.p {
 
 
 img {
+  box-sizing: border-box; 
   padding: 1em;
   page-break-inside: avoid;  /* Avoid splitting the image */
   break-inside: avoid;       /* Modern equivalent */
   max-width: 100%;           /* Scale down if needed */
-  display: block;        /* ensures it’s a block element, starts on a new line */
-  margin: 1em auto;      /* optional spacing and centering */
+  display: block;            /* ensures it’s a block element, starts on a new line */
+  margin: 1em auto;          /* optional spacing and centering */
 
 }
 
@@ -148,11 +149,9 @@ figure {
 
 /* OPTIONAL Hide specific colour tags inside tables */
 
-
 table.isWidget {
     display: none;
 }
-
 
 .sb-hashtag[data-tag-name="silver"],
 .sb-hashtag[data-tag-name="burgundy"],
@@ -164,15 +163,3 @@ table.isWidget {
 .sb-hashtag[data-tag-name="wine"] {
   display: none !important;
 }
-
-/*
-
-blockquote .p strong:first-of-type {
-    display: none;
-}
-blockquote .p:nth-of-type(2) {
-    font-weight: bold; /* make remaining text bold */
-      color: red;
-}
-*/
-
