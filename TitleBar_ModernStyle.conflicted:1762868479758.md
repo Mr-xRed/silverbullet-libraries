@@ -97,7 +97,7 @@ button:hover svg {
 #sb-top.sb-sync-error:after {
     content: "SERVER UNREACHABLE";
     position: absolute;
-    top: 100px;
+    top: 11px;
     left: 50%;
     transform: translate(-50%, -50%);
     display: inline-block;
@@ -106,10 +106,8 @@ button:hover svg {
     border-radius: 20px;
     font-weight: bold;
     background-color: oklch(60% 0.35 40/0.4);
-   backdrop-filter: blur(10px) saturate(100%);
-  -webkit-backdrop-filter: blur(10px) saturate(100%);
     color: var(--top-sync-error-color);
-    white-space: nowrap; 
+    white-space: nowrap; /* prevents breaking onto two lines */
 }
 
 ```

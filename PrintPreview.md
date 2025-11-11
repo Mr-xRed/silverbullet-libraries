@@ -72,6 +72,35 @@ config.define("PrintPreview", {
   }
 })
 
+
+function selectCSS()
+    local files = space.listFiles()
+    local options = {}
+
+    for _, f in ipairs(files) do
+      if f.contentType and f.contentType:match("^text/css;") then
+        table.insert(options, {
+          name = f.name,
+          value = f.name,
+          description = f.path or f.contentType
+        })
+      end
+    end
+
+    if #options == 0 then
+      editor.flashNotification("No CSS files found.")
+      return
+    end
+
+    local result = editor.filterBox("Select a CSS file:", options, "Choose one of the detected CSS files")
+
+    if result then
+      return result.name
+    else
+      return "Library/Mr-xRed/PrintPreview/printpreview.css"
+    end
+  end
+  
 command.define {
   name = "Markdown: Print Preview",
   key = "Ctrl-Alt-p",
@@ -79,7 +108,7 @@ command.define {
     editor.save()
     --retrieve configuration values and set defaults
     local PrintPreview = config.get("PrintPreview") or {}
-    local styleFile = PrintPreview.CSSFile or "Library/Mr-xRed/PrintPreview/printpreview.css"
+    local styleFile = PrintPreview.CSSFile or selectCSS() 
     local pageSize = PrintPreview.pageSize or "A4"
     local pageLayout = PrintPreview.landscape and "landscape" or ""
     local marginTopBottom = PrintPreview.marginTB or "20mm"
