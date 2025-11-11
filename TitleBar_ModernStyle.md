@@ -90,6 +90,26 @@ button:hover svg {
     top: 85px !important;
 }
 
+#sb-top.sb-sync-error {
+    position: relative;
+}
+
+#sb-top.sb-sync-error:after {
+    content: "SERVER UNREACHABLE";
+    position: absolute;
+    top: 11px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: inline-block;
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    background-color: oklch(60% 0.35 40/0.4);
+    color: var(--top-sync-error-color);
+    white-space: nowrap; /* prevents breaking onto two lines */
+}
+
 ```
 
 ## Discussions to this space-style
