@@ -29,7 +29,7 @@ This CSS snippet is all about **improving focus and usability** when interacti
   position: fixed;
   inset: 0; 
   background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(14px);
   z-index: 9998;
   opacity: 0;
   pointer-events: none; 
