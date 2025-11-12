@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/SearchBar_ModernStyle"
 tags: meta/library
 pageDecoration.prefix: "🖌️ "
 ---

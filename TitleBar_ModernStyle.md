@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/TitleBar_ModernStyle"
 description: "Modern restyling of the Title Bar"
 tags: meta/library
 pageDecoration.prefix: "🖌️ "

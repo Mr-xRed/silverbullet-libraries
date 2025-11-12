@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/HeaderLevelToggle"
 tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---

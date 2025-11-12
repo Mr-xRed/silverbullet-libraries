@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/DayProgressBar"
 tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---

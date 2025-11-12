@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/OpenWeatherMap_Widgets"
 tags: meta/library
 pageDecoration.prefix: "⛅️ "
 ---

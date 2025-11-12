@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/ModalBoxHighlighter"
 tags: meta/library
 pageDecoration.prefix: "🖌️ "
 ---

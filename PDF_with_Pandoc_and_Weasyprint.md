@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint"
 tags: meta/library
 pageDecoration.prefix: "☠️ "
 files:

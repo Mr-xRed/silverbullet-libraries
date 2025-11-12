@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/Custom_Width_and_Color_Tables"
 tags: meta/library
 pageDecoration.prefix: "🖌️ "
 ---

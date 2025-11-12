@@ -1,4 +1,5 @@
 ---
+name: "Repository/Mr-xRed Repo"
 tags: meta/repository
 pageDecoration.prefix: "📚 "
 ---

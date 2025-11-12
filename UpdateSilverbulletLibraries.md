@@ -1,11 +1,12 @@
 ---
+name: "Library/Mr-xRed/UpdateSilverbulletLibraries"
 pageDecoration.prefix: "☠️ "
 tags: meta
 ---
 # Update SilverBullet Libraries 
 
 > **warning** DEPRECATED
-> This library will no longer receive updates. Please use the NEW ✨ [Manage\_Silverbullet\_Libraries](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Manage_Silverbullet_Libraries.md) ✨ instead.
+> This library will no longer receive updates. Please use the Official ✨[[Library/Std/Pages/Library Manager]]✨  instead.
 
 ## Libraries imported using **Github Repo**:
 

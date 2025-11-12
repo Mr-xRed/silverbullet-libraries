@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/PrintPreview"
 tags: meta/library
 title: "Print Preview Command"
 author: "Mr-xRed"

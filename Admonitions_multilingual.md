@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/Admonitions_multilingual"
 tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---

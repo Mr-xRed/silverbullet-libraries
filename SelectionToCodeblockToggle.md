@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/SelectionToCodeblockToggle"
 tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---

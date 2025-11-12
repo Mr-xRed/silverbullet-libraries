@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/Manage_Silverbullet_Libraries"
 pageDecoration.prefix: "☠️ "
 tags: meta
 ---

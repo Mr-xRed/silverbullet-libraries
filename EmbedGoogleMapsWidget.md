@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/EmbedGoogleMapsWidget"
 tags: meta/library
 pageDecoration.prefix: "🗺️ "
 ---

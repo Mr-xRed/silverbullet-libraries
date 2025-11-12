@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/Treeview_Extension_DragAndResize"
 tags: meta/library
 files:
 - PanelDragResize.js
