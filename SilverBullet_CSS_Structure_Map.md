@@ -1,4 +1,5 @@
 ---
+name: "Library/Mr-xRed/SilverBullet_CSS_Structure_Map"
 tags: meta/library
 pageDecoration.prefix: "🖌️ "
 ---
