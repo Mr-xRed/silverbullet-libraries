@@ -10,9 +10,8 @@ This function will display the hours and percentage of the day left, and a progr
 Visual Example:
 ⏳04:20h (18.0%) 🟢🟢🟢🟢🟢⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️⭕️
 
-
 ## Usage
-${timeLeftBar()}
+`${timeLeftBar()}`
 
 ## Implementation
 ```space-lua
