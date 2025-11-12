@@ -22,7 +22,6 @@ local function toggleHead(level)
   -- Toggle: remove if same, otherwise set new level
   if currentLevel == level then
     editor.replaceRange(line.from, line.to, cleanText, true)
-    editor.flashNotification(editor.getCurrentLine(), "info")
   else
     editor.replaceRange(line.from, line.to, string.rep("#", level) .. " " .. cleanText, true)
   end

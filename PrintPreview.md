@@ -92,7 +92,7 @@ function selectCSS()
       return
     end
 
-    local result = editor.filterBox("Select a CSS file:", options, "Choose one of the detected CSS files")
+    local result = editor.filterBox("Select StyleSheet:", options, "or press 'Esc' to use default")
 
     if result then
       return result.name
