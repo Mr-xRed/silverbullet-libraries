@@ -40,6 +40,8 @@ body {
     overflow-wrap: break-word;
     word-break: normal;
     hyphens: auto;
+    font-size: 0.9em;
+
 }
 
 p {
@@ -170,7 +172,10 @@ blockquote {
   border: 1px solid var(--base-5);
   color: var(--base-1);
   border-radius: 5px;
-  font-style: italic; /* global default */
+  font-style: italic;
+  page-break-inside: avoid;
+  break-inside: avoid;
+
 }
 
 blockquote .p {

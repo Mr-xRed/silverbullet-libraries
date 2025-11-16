@@ -167,6 +167,9 @@ blockquote {
   border-left: 3px solid var(--base-5);
   color: var(--base-1);
   font-style: italic;
+  page-break-inside: avoid;
+  break-inside: avoid;
+
 }
 
 blockquote .p {
