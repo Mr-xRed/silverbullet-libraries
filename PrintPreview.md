@@ -99,7 +99,7 @@ local function selectCSS()
     if result then
       return result.name
     else
-      return "Library/Mr-xRed/PrintPreview/classic.css"
+      return "Library/Mr-xRed/classic.css"
     end
   end
   

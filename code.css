@@ -166,7 +166,7 @@ tbody tr:nth-child(odd) {
 
 blockquote {
   margin: 0.7em 2em;
-  padding-left: 0.5em;
+  padding: 0.5em;
   border: 1px solid var(--base-5);
   color: var(--base-1);
   border-radius: 5px;
