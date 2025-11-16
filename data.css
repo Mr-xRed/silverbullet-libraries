@@ -1,0 +1,248 @@
+
+ :root {
+    --hue: 160;
+    --base-10: oklch(100%,0,0);
+    --base-9: oklch(99.5% 0.01 var(--hue)); /* lightest */
+    --base-8: oklch(95% 0.02 var(--hue));
+    --base-7: oklch(85% 0.10 var(--hue));
+    --base-6: oklch(65% 0.15 var(--hue));
+    --base-5: oklch(50% 0.20 var(--hue));   /* accent */
+    --base-4: oklch(40% 0.15 var(--hue));
+    --base-3: oklch(30% 0.15 var(--hue));
+    --base-2: oklch(20% 0.13 var(--hue));
+    --base-1: oklch(10% 0.10 var(--hue)); /* darkest */
+    --base-0: oklch(0,0,0);
+  /* font-family: Palatino, Georgia, Garamond, "Times New Roman", serif; */
+  font-family: "Trebuchet MS",Verdana, "Segoe UI", Helvetica, Arial, sans-serif;
+  /* font-family:  Monaco, Menlo, Consolas, "Courier New", Courier, monospace;  */
+}
+
+@page {
+   
+    @top-center {
+        font-size: 0.8em;
+        font-weight: 600;
+        color: var(--base-2);       
+        letter-spacing: 0.5px;    
+    }
+    @bottom-center {
+        content: counter(page) " / " counter(pages);
+        font-size: 9pt;
+        color: var(--base-2);
+    }
+}
+
+body {
+    margin: 0 auto 5em auto;
+    width: clamp(420px, 70%, 1000px);
+    line-height: 1.45;
+    hyphens: auto;
+}
+
+p {
+    margin: 0 0 1em 0;
+    /* text-align: justify; */
+    /* text-justify: inter-word; */
+    /* text-align-last: justify; */
+}
+
+a {
+    color: var(--base-5);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+a[href]:not(.hashtag)::after {
+    content: " <" attr(href) ">";
+    font-size: 80%;
+    color: var(--base-7);
+    /* white-space: normal; */
+    word-break: break-all;
+}
+
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--base-5);
+  margin: 1em 0 0.4em 0;
+  font-weight: 600;
+  page-break-after: avoid;
+}
+
+h1 {
+  padding-bottom: 0.5em;
+}
+
+hr {
+  border: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+/*  page-break-before: always;
+  break-before: page;*/
+} 
+
+
+code, pre {
+  background: var(--base-9);
+  border: 1px solid var(--base-8);
+  font-family: Monaco, "JetBrains Mono", monospace;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: auto-phrase;
+  /* page-break-inside: avoid;
+  break-inside: avoid; */
+}
+
+code {
+  padding: 0.1em 0.35em;
+  border-radius: 5px;
+  font-size: 0.95em;
+}
+
+pre {
+  font-size: 0.70em;
+  padding: 0.35em 0.5em;
+  border-radius: 7px;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+pre[data-lang] {
+    position: relative;
+}
+
+pre[data-lang]::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0.3em;
+    right: 0.3em;
+
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    background: var(--base-8);
+    padding: 0.2em 0.5em;
+    border-radius: 5px;
+
+    color: var(--base-3);
+    opacity: 0.9;
+}
+
+
+table {
+  width: 100%;
+  font-size: 80%;
+  border-collapse: collapse;
+  page-break-inside: auto; 
+}
+
+table th,
+table td {
+  border: 1px solid var(--base-1);
+  padding: 0.1rem 0.5rem;
+}
+
+thead {
+  background: var(--base-8);
+  font-weight: 600;
+  page-break-inside: avoid;
+}
+
+tbody tr:nth-child(even) {
+  background: var(--base-9);
+}
+
+tbody tr:nth-child(odd) {
+  background: var(--base-10);
+}
+
+blockquote {
+  margin: 0.7em 2em;
+  padding-left: 0.5em;
+  border-left: 3px solid var(--base-5);
+  color: var(--base-1);
+  font-style: italic;
+}
+
+blockquote .p {
+  font-style: normal;
+}
+
+blockquote strong {
+  font-family: Menlo, Consolas, "Courier New", monospace;
+  font-weight: bold;
+  font-style: normal;
+}
+
+blockquote .p br + * {
+  font-style: italic;
+}
+
+
+ol {
+  margin: 0.5em 2em;
+  padding-left: 0.5em;
+  font-style: italic;
+}
+:not(blockquote) > span.p {
+  display: block;
+  text-align: justify;
+}
+
+span:has(img) {
+  display: inline-block;
+  padding: 1em;
+  overflow: hidden;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0.6em auto;
+  border-radius: 5px;
+  page-break-inside: avoid;
+}
+
+/*
+img {
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+*/
+
+figure {
+  display: block;
+  text-align: center;
+  page-break-inside: avoid;
+}
+
+@media print {
+  body {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}
+
+
+/* OPTIONAL Hide specific colour tags inside tables */
+
+table.isWidget {
+    display: none;
+}
+.sb-hashtag[data-tag-name^="t"],
+.sb-hashtag[data-tag-name="silver"],
+.sb-hashtag[data-tag-name="burgundy"],
+.sb-hashtag[data-tag-name="maroon"],
+.sb-hashtag[data-tag-name="hazel"],
+.sb-hashtag[data-tag-name="mint"],
+.sb-hashtag[data-tag-name="sea"],
+.sb-hashtag[data-tag-name="grape"],
+.sb-hashtag[data-tag-name="wine"] {
+  display: none !important;
+}

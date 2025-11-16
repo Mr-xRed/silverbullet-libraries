@@ -5,9 +5,11 @@ title: "Print Preview Command"
 author: "Mr-xRed"
 pageDecoration.prefix: "🖨️ "
 files:
-- printpreview.css
+- classic.css
+- code.css
+- data.css
 ---
-# Print Preview Command `Ctrl-Alt-p`
+# PrintPreview Command `Ctrl-Alt-p`
 
 > **warning** Caution
 > WORK IN PROGRESS
@@ -20,7 +22,7 @@ files:
 * Converts the Markdown into a parse tree, expands it, and renders it back to expanded Markdown.
 * Turns the expanded Markdown into HTML and cleans up repeated `<br>` tags, adjusts image paths, and marks certain tables as widgets.
 * Embeds the HTML into a full HTML page with metadata, CSS and header and footer info for print.
-* Writes the HTML to PrintPreview.html, syncs it, sends notification, and opens it in the browser.
+* Writes the HTML to temp/PrintPreview.html, syncs it, sends notification, and opens it in the browser.
 
 ## Options & Config
 
@@ -30,14 +32,15 @@ files:
 ```lua
 config.set("PrintPreview", {
     CSSFile = "path/to/your_custom.css", --default is included with the library
-    pageSize = "A4",                     --default: A4
-    marginTB = "20mm",                   --default: 20mm
-    marginLR = "25mm",                   --default: 25mm
+    pageSize = "A4",                     --default: "A4"
+    marginTRBL = "20mm 20mm 20mm 25mm",  --default: "20mm 20mm 20mm 25mm" Top Right Bottom Left
     landscape = true                     --default: false
 })  
 ```
 
-> **tip** Check [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@page/size) for different `pageSize` options: 
+> **tip** Check out [developer.mozilla.org](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@page/size) for different `pageSize` options 
+
+> **tip** Check out [printcss.live/editor](https://printcss.live/editor) if you want to make your own custom Stylesheets
 
 * You can also set a `title` and `author` in the page’s frontmatter to use in the printout header. If you don’t set them, the page name will be used instead:
 
@@ -61,20 +64,18 @@ author: "Mr-xRed"
 ## Implementation
 
 ```space-lua
-
 config.define("PrintPreview", {
   type = "object",
   properties = {
     CSSFile = schema.string(),
-    pageSize = schema.string(),   --default: A4
-    landscape = schema.boolean(), --default: false
-    marginTB = schema.string(),   --default: 20mm
-    marginLR = schema.string(),   --default: 25mm
+    pageSize = schema.string(),   
+    landscape = schema.boolean(), 
+    marginTRBL = schema.string(),
   }
 })
 
 
-function selectCSS()
+local function selectCSS()
     local files = space.listFiles()
     local options = {}
 
@@ -98,7 +99,7 @@ function selectCSS()
     if result then
       return result.name
     else
-      return "Library/Mr-xRed/PrintPreview/printpreview.css"
+      return "Library/Mr-xRed/PrintPreview/classic.css"
     end
   end
   
@@ -112,8 +113,7 @@ command.define {
     local styleFile = PrintPreview.CSSFile or selectCSS() 
     local pageSize = PrintPreview.pageSize or "A4"
     local pageLayout = PrintPreview.landscape and "landscape" or ""
-    local marginTopBottom = PrintPreview.marginTB or "20mm"
-    local marginLeftRight = PrintPreview.marginLR or "25mm"
+    local marginTRBL = PrintPreview.marginTRBL or "20mm 20mm 20mm 25mm"
     local mdContent = editor.getText()
     -- Extracts Title and Author from frontmatter
     local pageFrontmatter = (index.extractFrontmatter(mdContent)).frontmatter
@@ -143,7 +143,7 @@ command.define {
 <title>]] .. pageName .. [[</title>
 <link rel="stylesheet" href="/.fs/]]..styleFile..[[">
 </head>
-<style> @page { size: ]].. pageSize .. " " .. pageLayout ..  [[; margin: ]] .. marginTopBottom .. " ".. marginLeftRight ..[[;
+<style> @page { size: ]].. pageSize .. " " .. pageLayout ..  [[; margin: ]] .. marginTRBL .. [[;
      @top-center { content: ']].. pageName .. pageAuthor ..[['; }}</style>
 <body>
 ]] .. htmlContent .. [[
@@ -152,7 +152,7 @@ command.define {
 ]]
 
     -- Write HTML to file
-    local outputFile = "PrintPreview.html"
+    local outputFile = "temp/PrintPreview.html"
     space.writeFile(outputFile, fullHtml)
     sync.performFileSync(outputFile)
 
