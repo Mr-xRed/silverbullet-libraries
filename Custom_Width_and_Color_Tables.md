@@ -102,12 +102,12 @@ Use it Like this:
               0 6px 12px oklch(20% 0 250 / 0.4);
 }
 
-
+/*
 tbody tr:hover td {
         font-weight: 900;
         transition: transform 0.5s ease;
 }
-
+*/
 table {}
 
 /* Hide specific colour tags inside tables */

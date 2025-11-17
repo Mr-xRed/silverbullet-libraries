@@ -3,8 +3,8 @@
     --hue: 300;
     --base-10: oklch(100%,0,0);
     --base-9: oklch(99.5% 0.01 var(--hue)); /* lightest */
-    --base-8: oklch(97% 0.05 var(--hue));
-    --base-7: oklch(85% 0.10 var(--hue));
+    --base-8: oklch(97% 0.03 var(--hue));
+    --base-7: oklch(90% 0.06 var(--hue));
     --base-6: oklch(70% 0.15 var(--hue));
     --base-5: oklch(55% 0.20 var(--hue));   /* accent */
     --base-4: oklch(40% 0.15 var(--hue));
@@ -105,7 +105,7 @@ code, pre {
 code{
   padding: 0.1em 0.35em;
   border-radius: 3px;
-  font-size: 0.95em;
+  font-size: 0.95 em;
 }
 
 pre {
