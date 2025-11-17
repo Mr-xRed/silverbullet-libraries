@@ -65,7 +65,7 @@ a[href^="http"]::after {
     content: " <" attr(href) ">";
     font-size: 80%;
     color: var(--base-6);
-    white-space: normal;
+    /* white-space: normal; */
     word-break: break-all;
 }
 
@@ -90,54 +90,56 @@ hr {
   break-before: page;*/
 } 
 
+/* Force HLJS not to style background */
+code.hljs, code.hljs * {
+    background: transparent !important;  
+    font-family: inherit !important;   
+    font-size: inherit !important;    
+    border: none !important;            
+  }
 
-code, pre {
+
+pre, code.sb-code {
   background: var(--base-8);
-  border: 1px solid var(--base-7);
+  border: 1px solid var(--base-6);
   font-family: Monaco, "JetBrains Mono", monospace;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-break: auto-phrase;
-  /* page-break-inside: avoid;
-  break-inside: avoid; */
+  padding: 0.35em 0.5em;
+  border-radius: 5px;
+  font-size: 0.70em;
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
-code{
-  padding: 0.1em 0.35em;
-  border-radius: 3px;
-  font-size: 0.95 em;
-}
-
-pre {
-   font-size: 0.70em;
-   padding: 0.35em 0.5em;
-   border-radius: 5px;
-   max-width: 100%;
-   overflow-x: hidden;
-}
-
-pre[data-lang] {
-    position: relative;
-}
 
 pre[data-lang]::before {
-    content: attr(data-lang);
-    position: absolute;
-    top: 0.3em;
-    right: 0.3em;
-
-    font-size: 0.9em;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-
-    background: var(--base-7);
-    padding: 0.2em 0.5em;
-    border-radius: 5px;
-
-    color: var(--base-1);
-    opacity: 0.9;
+  content: attr(data-lang);
+  position: absolute;
+  top: 0.3em;
+  right: 0.3em;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--base-7);
+  padding: 0.2em 0.5em;
+  border-radius: 5px;
+  color: var(--base-1);
+  opacity: 0.9;
 }
 
+
+pre > code {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  white-space: inherit;
+  overflow: inherit;
+  padding: 0;
+}
 
 table {
   width: 100%;

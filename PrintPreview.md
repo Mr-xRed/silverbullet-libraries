@@ -186,6 +186,52 @@ command.define {
 <style> @page { size: ]].. pageSize .. " " .. pageLayout ..  [[; margin: ]] .. marginTRBL .. [[;
      @top-center { content: ']].. pageName .. pageAuthor ..[['; }}
 </style>
+
+<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/summerfruit.min.css"> -->
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/base16/summerfruit-light.min.css"> -->
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/base16/grayscale-light.min.css"> -->
+<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css"> -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/vs.min.css">
+
+
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
+
+<script defer>
+document.addEventListener('DOMContentLoaded', () => {
+  const decodeHtml = html => {
+    const t = document.createElement('textarea');
+    t.innerHTML = html;
+    return t.value;
+  };
+
+  const langMap = {
+    'space-lua': 'lua',
+    'space-style': 'css'
+  };
+
+  document.querySelectorAll('pre[data-lang]').forEach(pre => {
+    let html = pre.innerHTML.replace(/<br\s*\/?>/gi, '\n').replace(/&nbsp;/g, ' ');
+    const text = decodeHtml(html);
+
+    let lang = pre.getAttribute('data-lang') || '';
+    lang = langMap[lang] || lang.replace(/^space-/, '') || 'plaintext';
+
+    let code = pre.querySelector('code');
+    if (!code) {
+      code = document.createElement('code');
+      pre.innerHTML = '';
+      pre.appendChild(code);
+    }
+
+    code.className = 'language-' + lang;
+    code.textContent = text;
+  });
+
+  if (window.hljs?.highlightAll) hljs.highlightAll();
+  else document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
+});
+</script>
+
 </head>
 <body>
 ]] .. htmlContent .. [[
