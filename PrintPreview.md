@@ -1,8 +1,6 @@
 ---
 name: "Library/Mr-xRed/PrintPreview"
 tags: meta/library
-title: "Print Preview Command"
-author: "Mr-xRed"
 pageDecoration.prefix: "🖨️ "
 files:
 - classic.css
@@ -15,7 +13,7 @@ files:
 > WORK IN PROGRESS
 
 > **tip** Hint
-> When Running the command make sure you have Pop-Up’s enabled because the PrintPreview will open a new Window/Tab with a `PrintPreview.html`
+> When Running the command make sure you have **Pop-Up**’s enabled because the PrintPreview will open a new Window/Tab with a `PrintPreview.html`
 
 ## How does it work?
 * It saves the current editor page and retrieves its Markdown text.
@@ -74,6 +72,46 @@ config.define("PrintPreview", {
   }
 })
 
+local function toc()
+  local text = editor.getText()
+  local pageName = editor.getCurrentPage()
+  local parsedMarkdown = markdown.parseMarkdown(text)
+  -- Collect all headers
+  local headers = {}
+  for topLevelChild in parsedMarkdown.children do
+    if topLevelChild.type then
+      local headerLevel = string.match(topLevelChild.type, "^ATXHeading(%d+)")
+      if headerLevel then
+        local text = ""
+        table.remove(topLevelChild.children, 1)
+        for child in topLevelChild.children do
+          text = text .. string.trim(markdown.renderParseTree(child))
+        end
+        text = string.gsub(text, "%[%[(.-)%]%]", "%1")
+
+        if text != "" then
+          table.insert(headers, {
+            name = text,
+            pos = topLevelChild.from,
+            level = tonumber(headerLevel)
+          })
+        end
+      end
+    end
+  end
+  local minLevel = 6
+  for _, header in ipairs(headers) do
+    if header.level < minLevel then
+      minLevel = header.level
+    end
+  end
+  local md = "# Table of Contents" .. "\n"
+  for _, header in ipairs(headers) do
+      md = md .. string.rep(" ", (header.level - minLevel) * 2) ..
+         "* [[" .. pageName .. "@" .. header.pos .. "|" .. header.name .. "]]\n"
+    end
+    return  md
+end
 
 local function selectCSS()
     local files = space.listFiles()
@@ -119,12 +157,14 @@ command.define {
     local pageFrontmatter = (index.extractFrontmatter(mdContent)).frontmatter
     local pageName =  pageFrontmatter.title or editor.getCurrentPage()
     local pageAuthor = pageFrontmatter.author and (" - " .. pageFrontmatter.author) or ""
+    local tocMD = pageFrontmatter.toc and toc() or ""
     -- Parse and expand Markdown
     local mdTree = markdown.parseMarkdown(mdContent)
           mdTree = markdown.expandMarkdown(mdTree)
     local expandedMd = markdown.renderParseTree(mdTree)
     -- Convert expanded Markdown to HTML
-    local htmlContent = markdown.markdownToHtml(expandedMd)
+    local htmlContent = markdown.markdownToHtml(tocMD or "")  .. markdown.markdownToHtml(expandedMd)
+  --  local htmlContent = markdown.markdownToHtml(expandedMd)
     -- Clean up <br> tags: fix malformed ones, collapse repeated <br>, and remove <br> immediately after closing tags
           htmlContent = htmlContent:gsub("<br></br>", "<br>")
           htmlContent = htmlContent:gsub("<br><br>", "<br>")
@@ -142,9 +182,11 @@ command.define {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>]] .. pageName .. [[</title>
 <link rel="stylesheet" href="/.fs/]]..styleFile..[[">
-</head>
+
 <style> @page { size: ]].. pageSize .. " " .. pageLayout ..  [[; margin: ]] .. marginTRBL .. [[;
-     @top-center { content: ']].. pageName .. pageAuthor ..[['; }}</style>
+     @top-center { content: ']].. pageName .. pageAuthor ..[['; }}
+</style>
+</head>
 <body>
 ]] .. htmlContent .. [[
 </body>
