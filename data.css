@@ -3,10 +3,10 @@
     --hue: 160;
     --base-10: oklch(100%,0,0);
     --base-9: oklch(99.5% 0.01 var(--hue)); /* lightest */
-    --base-8: oklch(95% 0.02 var(--hue));
+    --base-8: oklch(97% 0.05 var(--hue));
     --base-7: oklch(85% 0.10 var(--hue));
-    --base-6: oklch(65% 0.15 var(--hue));
-    --base-5: oklch(50% 0.20 var(--hue));   /* accent */
+    --base-6: oklch(70% 0.15 var(--hue));
+    --base-5: oklch(55% 0.20 var(--hue));   /* accent */
     --base-4: oklch(40% 0.15 var(--hue));
     --base-3: oklch(30% 0.15 var(--hue));
     --base-2: oklch(20% 0.13 var(--hue));
@@ -56,10 +56,10 @@ a:hover {
     text-decoration: underline;
 }
 
-a[href]:not(.hashtag)::after {
+a[href^="http"]::after {
     content: " <" attr(href) ">";
     font-size: 80%;
-    color: var(--base-7);
+    color: var(--base-6);
     /* white-space: normal; */
     word-break: break-all;
 }
@@ -87,8 +87,8 @@ hr {
 
 
 code, pre {
-  background: var(--base-9);
-  border: 1px solid var(--base-8);
+  background: var(--base-8);
+  border: 1px solid var(--base-7);
   font-family: Monaco, "JetBrains Mono", monospace;
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -125,11 +125,11 @@ pre[data-lang]::before {
     text-transform: uppercase;
     letter-spacing: 0.5px;
 
-    background: var(--base-8);
+    background: var(--base-7);
     padding: 0.2em 0.5em;
     border-radius: 5px;
 
-    color: var(--base-3);
+    color: var(--base-2);
     opacity: 0.9;
 }
 
