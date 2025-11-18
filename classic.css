@@ -1,12 +1,11 @@
 
  :root {
-    --hue: 240;
     --base-10: oklch(100%,0,0);
-    --base-9: oklch(99.5% 0.01 var(--hue)); /* lightest */
-    --base-8: oklch(98% 0.03 var(--hue));
+   --base-9: oklch(99.5% 0.01 var(--hue)); /* lightest */
+    --base-8: oklch(97% 0.03 var(--hue));
     --base-7: oklch(90% 0.06 var(--hue));
-    --base-6: oklch(70% 0.15 var(--hue));
-    --base-5: oklch(55% 0.20 var(--hue));   /* accent */
+    --base-6: oklch(75% 0.10 var(--hue));
+    --base-5: oklch(60% 0.25 var(--hue));   /* accent */
     --base-4: oklch(40% 0.15 var(--hue));
     --base-3: oklch(30% 0.15 var(--hue));
     --base-2: oklch(20% 0.13 var(--hue));

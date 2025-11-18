@@ -33,6 +33,7 @@ config.set("PrintPreview", {
     pageSize = "A4",                     --default: "A4"
     marginTRBL = "20mm 20mm 20mm 25mm",  --default: "20mm 20mm 20mm 25mm" Top Right Bottom Left
     landscape = true                     --default: false
+    accentHue = "260"                    --default: if ommited it will ask you
 })  
 ```
 
@@ -62,21 +63,23 @@ author: "Mr-xRed"
 ## Implementation
 
 ```space-lua
-config.define("PrintPreview", {
+config.define("Markdown: Print Preview", {
   type = "object",
   properties = {
     CSSFile = schema.string(),
-    pageSize = schema.string(),   
-    landscape = schema.boolean(), 
+    pageSize = schema.string(),
+    landscape = schema.boolean(),
     marginTRBL = schema.string(),
+    accentHue = schema.string()
   }
 })
 
+-- Generate TOC ------------------------------------------------------
 local function toc()
   local text = editor.getText()
   local pageName = editor.getCurrentPage()
   local parsedMarkdown = markdown.parseMarkdown(text)
-  -- Collect all headers
+
   local headers = {}
   for topLevelChild in parsedMarkdown.children do
     if topLevelChild.type then
@@ -89,7 +92,7 @@ local function toc()
         end
         text = string.gsub(text, "%[%[(.-)%]%]", "%1")
 
-        if text != "" then
+        if text ~= "" then
           table.insert(headers, {
             name = text,
             pos = topLevelChild.from,
@@ -99,100 +102,95 @@ local function toc()
       end
     end
   end
+
   local minLevel = 6
-  for _, header in ipairs(headers) do
-    if header.level < minLevel then
-      minLevel = header.level
-    end
+  for _, h in ipairs(headers) do
+    if h.level < minLevel then minLevel = h.level end
   end
-  local md = "# Table of Contents" .. "\n"
-  for _, header in ipairs(headers) do
-      md = md .. string.rep(" ", (header.level - minLevel) * 2) ..
-         "* [[" .. pageName .. "@" .. header.pos .. "|" .. header.name .. "]]\n"
-    end
-    return  md
+
+  local md = "# Table of Contents\n"
+  for _, h in ipairs(headers) do
+    md = md ..
+      string.rep(" ", (h.level - minLevel) * 2)
+      .. "* [[" .. pageName .. "@" .. h.pos .. "|" .. h.name .. "]]\n"
+  end
+
+  return md
 end
 
-local function selectCSS()
-    local files = space.listFiles()
-    local options = {}
+--------------------------------------------------------------------
+-- Select PRINT MODE (Classic, Data, Code, Custom)
+--------------------------------------------------------------------
+local function selectMode()
+  local modes = {
+    { name = "Classic", value = "classic", description="Narrations, Stories, Prose, Longer texts etc." },
+    { name = "Data", value = "data", description="Tables, mermaid snippets and other data" },
+    { name = "Code", value = "code", description="Code, Snippets, Highlighted syntaxes etc." },
+    { name = "Custom", value = "custom", description="Use your own stylesheets" }
+  }
+  local result = editor.filterBox("Select Print Mode:", modes, "Esc = cancel")
+  return result and result.value
+end
 
-    for _, f in ipairs(files) do
-      if f.contentType and f.contentType:match("^text/css;") then
-        table.insert(options, {
-          name = f.name,
-          value = f.name,
-          description = f.path or f.contentType
-        })
-      end
-    end
+--------------------------------------------------------------------
+-- Accent Hue selection 
+--------------------------------------------------------------------
+local function selectAccentHue()
+local hueOptions = {
+  { name = "Red",    value = 30,  description = "Hue = 30"  },
+  { name = "Orange", value = 60,  description = "Hue = 60"  },
+  { name = "Yellow", value = 95,  description = "Hue = 95"  },
+  { name = "Green",  value = 140, description = "Hue = 140" },
+  { name = "Blue",   value = 265, description = "Hue = 265" },
+  { name = "Indigo", value = 285, description = "Hue = 285" },
+  { name = "Violet", value = 315, description = "Hue = 315" },
+}
+  local accentHue = editor.filterBox("Choose accent color (hue):", hueOptions, "Esc = cancel")
+  return accentHue and accentHue.value or nil
+end
+--------------------------------------------------------------------
+-- Custom CSS selection (excluding defaults)
+--------------------------------------------------------------------
+local function selectCustomCSS()
+  local files = space.listFiles()
+  local options = {}
 
-    if #options == 0 then
-      editor.flashNotification("No CSS files found.")
-      return
-    end
+  local blocked = {
+    ["Library/Mr-xRed/classic.css"] = true,
+    ["Library/Mr-xRed/data.css"] = true,
+    ["Library/Mr-xRed/code.css"] = true
+  }
 
-    local result = editor.filterBox("Select StyleSheet:", options, "or press 'Esc' to use default")
-
-    if result then
-      return result.name
-    else
-      return "Library/Mr-xRed/classic.css"
+  for _, f in ipairs(files) do
+    if f.contentType and f.contentType:match("^text/css;") and not blocked[f.name] then
+      table.insert(options, {
+        name = f.name,
+        value = f.name,
+        description = f.path or f.contentType
+      })
     end
   end
-  
-command.define {
-  name = "Markdown: Print Preview",
-  key = "Ctrl-Alt-p",
-  run = function()
-    editor.save()
-    --retrieve configuration values and set defaults
-    local PrintPreview = config.get("PrintPreview") or {}
-    local styleFile = PrintPreview.CSSFile or selectCSS() 
-    local pageSize = PrintPreview.pageSize or "A4"
-    local pageLayout = PrintPreview.landscape and "landscape" or ""
-    local marginTRBL = PrintPreview.marginTRBL or "20mm 20mm 20mm 25mm"
-    local mdContent = editor.getText()
-    -- Extracts Title and Author from frontmatter
-    local pageFrontmatter = (index.extractFrontmatter(mdContent)).frontmatter
-    local pageName =  pageFrontmatter.title or editor.getCurrentPage()
-    local pageAuthor = pageFrontmatter.author and (" - " .. pageFrontmatter.author) or ""
-    local tocMD = pageFrontmatter.toc and toc() or ""
-    -- Parse and expand Markdown
-    local mdTree = markdown.parseMarkdown(mdContent)
-          mdTree = markdown.expandMarkdown(mdTree)
-    local expandedMd = markdown.renderParseTree(mdTree)
-    -- Convert expanded Markdown to HTML
-    local htmlContent = markdown.markdownToHtml(tocMD or "")  .. markdown.markdownToHtml(expandedMd)
-  --  local htmlContent = markdown.markdownToHtml(expandedMd)
-    -- Clean up <br> tags: fix malformed ones, collapse repeated <br>, and remove <br> immediately after closing tags
-          htmlContent = htmlContent:gsub("<br></br>", "<br>")
-          htmlContent = htmlContent:gsub("<br><br>", "<br>")
-          htmlContent = htmlContent:gsub("(</%w+>)<br>", "%1")
-    -- Fix image/file paths by replacing relative `%.fs/` with absolute `/.fs/` in src attributes
-          htmlContent = htmlContent:gsub('src=["\']%.fs/', 'src="/.fs/')
-    -- Add class "isWidget" to tables containing _isWidget so it can be hidden
-          htmlContent = htmlContent:gsub('(<table)([^>]*>.-<td>_isWidget</td>.-</table>)', '%1 class="isWidget"%2')
-    -- Wrap in HTML structure and link CSS
-    local fullHtml = [[
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>]] .. pageName .. [[</title>
-<link rel="stylesheet" href="/.fs/]]..styleFile..[[">
 
-<style> @page { size: ]].. pageSize .. " " .. pageLayout ..  [[; margin: ]] .. marginTRBL .. [[;
-     @top-center { content: ']].. pageName .. pageAuthor ..[['; }}
-</style>
+  if #options == 0 then
+    editor.flashNotification("No CSS files found.")
+    return nil
+  end
 
-<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/summerfruit.min.css"> -->
-<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/base16/summerfruit-light.min.css"> -->
-<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/base16/grayscale-light.min.css"> -->
-<!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/default.min.css"> -->
+  local result = editor.filterBox("Choose custom stylesheet:", options, "Esc = cancel")
+  return result and result.name
+end
+
+
+--------------------------------------------------------------------
+-- Build HTML depending on mode
+--------------------------------------------------------------------
+local function buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue)
+  local extraHead = ""
+  local extraBeforeEnd = ""
+
+  if mode == "code" then
+    extraHead = [[
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/vs.min.css">
-
 
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
 
@@ -231,23 +229,116 @@ document.addEventListener('DOMContentLoaded', () => {
   else document.querySelectorAll('pre code').forEach(el => hljs.highlightElement(el));
 });
 </script>
+    ]]
 
+  elseif mode == "data" then
+    extraBeforeEnd = [[
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+  document.querySelectorAll('pre.mermaid').forEach(pre => {
+    pre.textContent = pre.innerHTML
+      .replace(/<br[^>]*>/gi, '\n')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&gt;/g, '>')   // most important ones
+      .replace(/&lt;/g, '<')
+      .replace(/&amp;/g, '&')
+      .trim();
+  });
+
+  mermaid.initialize({ startOnLoad: true });
+</script>
+    ]]
+  end
+
+  -- Classic gets nothing extra.
+
+  return [[
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>]] .. pageName .. [[</title>
+<link rel="stylesheet" href="/.fs/]] .. cssFile .. [[">
+<style>
+:root{--hue:]] .. accentHue .. [[;}
+@page { size: ]] .. pageSize .. " " .. pageLayout .. [[; margin: ]] .. marginTRBL .. [[; 
+@top-center { content: ']] .. pageName .. pageAuthor .. [['; }}
+</style>
+]] .. extraHead .. [[
 </head>
 <body>
-]] .. htmlContent .. [[
+]] .. htmlBody .. [[
+]] .. extraBeforeEnd .. [[
 </body>
 </html>
 ]]
+end
 
-    -- Write HTML to file
+--------------------------------------------------------------------
+-- Main command
+--------------------------------------------------------------------
+command.define {
+  name = "Markdown: Print Preview",
+  key = "Ctrl-Alt-p",
+  run = function()
+    editor.save()
+
+    local mode = selectMode()
+    if not mode then
+      editor.flashNotification("Print cancelled.")
+      return
+    end
+
+    local cssFile
+    if mode == "classic" then
+      cssFile = "Library/Mr-xRed/classic.css"
+    elseif mode == "code" then
+      cssFile = "Library/Mr-xRed/code.css"
+    elseif mode == "data" then
+      cssFile = "Library/Mr-xRed/data.css"
+    elseif mode == "custom" then
+      cssFile = selectCustomCSS()
+      if not cssFile then
+        editor.flashNotification("No custom stylesheet selected.")
+        return
+      end
+    end
+
+    local PrintPreview = config.get("PrintPreview") or {}
+    local pageSize = PrintPreview.pageSize or "A4"
+    local pageLayout = PrintPreview.landscape and "landscape" or ""
+    local marginTRBL = PrintPreview.marginTRBL or "20mm 20mm 20mm 25mm"
+    local accentHue = PrintPreview.accentHue or selectAccentHue()
+
+    local mdContent = editor.getText()
+    local fm = (index.extractFrontmatter(mdContent)).frontmatter
+    local pageName = fm.title or editor.getCurrentPage()
+    local pageAuthor = fm.author and (" - " .. fm.author) or ""
+    local tocMD = fm.toc and toc() or ""
+
+    local mdTree = markdown.expandMarkdown(markdown.parseMarkdown(mdContent))
+    local expanded = markdown.renderParseTree(mdTree)
+    local htmlBody = markdown.markdownToHtml(tocMD) .. markdown.markdownToHtml(expanded)
+    htmlBody = htmlBody:gsub('(<pre%s+)data%-lang="mermaid"([^>]*)', '%1class="mermaid"%2')
+    htmlBody = htmlBody:gsub("<br><?><pre class=\"mermaid\">", '<pre class="mermaid">')
+    htmlBody =  htmlBody:gsub("<br></br>", "<br>")
+    htmlBody =  htmlBody:gsub("<br><br>", "<br>")
+    htmlBody =  htmlBody:gsub("(</%w+>)<br>", "%1")
+    htmlBody =  htmlBody:gsub('src=["\']%.fs/', 'src="/.fs/')
+    htmlBody =  htmlBody:gsub('(<table)([^>]*>.-<td>_isWidget</td>.-</table>)', '%1 class="isWidget"%2')
+    
+    local fullHtml = buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue)
+
     local outputFile = "temp/PrintPreview.html"
     space.writeFile(outputFile, fullHtml)
     sync.performFileSync(outputFile)
 
-    editor.flashNotification("HTML exported to: " .. outputFile)
+    editor.flashNotification("HTML exported: " .. outputFile)
     editor.openUrl("/.fs/" .. outputFile)
   end
 }
+
 ```
 
 
