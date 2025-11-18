@@ -320,8 +320,9 @@ command.define {
     local mdTree = markdown.expandMarkdown(markdown.parseMarkdown(mdContent))
     local expanded = markdown.renderParseTree(mdTree)
     local htmlBody = markdown.markdownToHtml(tocMD) .. markdown.markdownToHtml(expanded)
-    htmlBody = htmlBody:gsub('(<pre%s+)data%-lang="mermaid"([^>]*)', '%1class="mermaid"%2')
-    htmlBody = htmlBody:gsub("<br><?><pre class=\"mermaid\">", '<pre class="mermaid">')
+    htmlBody = htmlBody:gsub('(<pre%s+)data%-lang="mermaid"([^>]*)', '%1data-lang="mermaid" class="mermaid"%2')
+    htmlBody = htmlBody:gsub('<br%s*/?>%s*(<pre class="mermaid">)', '%1')
+
     htmlBody =  htmlBody:gsub("<br></br>", "<br>")
     htmlBody =  htmlBody:gsub("<br><br>", "<br>")
     htmlBody =  htmlBody:gsub("(</%w+>)<br>", "%1")
