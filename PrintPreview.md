@@ -145,7 +145,7 @@ local hueOptions = {
   { name = "Indigo", value = 285, description = "Hue = 285" },
   { name = "Violet", value = 315, description = "Hue = 315" },
 }
-  local accentHue = editor.filterBox("Choose accent color (hue):", hueOptions, "Esc = cancel")
+  local accentHue = editor.filterBox("Choose accent color (hue):", hueOptions, "Esc = fallback to default (240)")
   return accentHue and accentHue.value or nil
 end
 --------------------------------------------------------------------
@@ -309,7 +309,7 @@ command.define {
     local pageSize = PrintPreview.pageSize or "A4"
     local pageLayout = PrintPreview.landscape and "landscape" or ""
     local marginTRBL = PrintPreview.marginTRBL or "20mm 20mm 20mm 25mm"
-    local accentHue = PrintPreview.accentHue or selectAccentHue()
+    local accentHue = PrintPreview.accentHue or selectAccentHue() or "240"
 
     local mdContent = editor.getText()
     local fm = (index.extractFrontmatter(mdContent)).frontmatter
