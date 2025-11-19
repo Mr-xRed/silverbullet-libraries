@@ -7,25 +7,36 @@ pageDecoration.prefix: "🛠️ "
 
 Toggle header levels (h1-h6)  headers with one convenient combo-keypress (Ctrl-1 to Ctrl-6):
 
-## Implementation 
+## Implementation
 ```space-lua
 -- function to toggle a specific header level
 local function toggleHead(level)
   local line = editor.getCurrentLine()
-  local text = line.textWithCursor
-
-  -- Detect current header level
+  
+  local text = line.text
   local currentLevel = string.match(text, "^(#+)%s*")
   currentLevel = currentLevel and #currentLevel or 0
-
-  local cleanText = string.gsub(text, "^#+%s*", "")
-
-  -- Toggle: remove if same, otherwise set new level
-  if currentLevel == level then
-    editor.replaceRange(line.from, line.to, cleanText, true)
+  
+  local textC = line.textWithCursor
+  local posC = string.find(textC, "|^|", 1, true)
+  
+  local lineHead
+  if posC > currentLevel + 1 then
+    local bodyTextC = string.gsub(textC, "^#+%s*", "")
+    if currentLevel == level then
+      lineHead = bodyTextC
+    else
+      lineHead = string.rep("#", level) .. " " .. bodyTextC
+    end
   else
-    editor.replaceRange(line.from, line.to, string.rep("#", level) .. " " .. cleanText, true)
+    local bodyText = string.gsub(text, "^#+%s*", "")
+    if currentLevel == level then
+      lineHead = "|^|" .. bodyText
+    else
+      lineHead = string.rep("#", level) .. " |^|" .. bodyText
+    end
   end
+  editor.replaceRange(line.from, line.to, lineHead, true)
 end
 
 -- register commands Ctrl-1 → Ctrl-6
