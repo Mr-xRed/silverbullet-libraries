@@ -29,7 +29,7 @@ files:
 **Config.set example**
 ```lua
 config.set("PrintPreview", {
-    CSSFile = "path/to/your_custom.css", --default is included with the library
+--    CSSFile = "path/to/your_custom.css", --default is included with the library
     pageSize = "A4",                     --default: "A4"
     marginTRBL = "20mm 20mm 20mm 25mm",  --default: "20mm 20mm 20mm 25mm" Top Right Bottom Left
     landscape = true                     --default: false
@@ -324,7 +324,7 @@ command.define {
     htmlBody = htmlBody:gsub('<br%s*/?>%s*(<pre class="mermaid">)', '%1')
 
     htmlBody =  htmlBody:gsub("<br></br>", "<br>")
-    htmlBody =  htmlBody:gsub("<br><br>", "<br>")
+--    htmlBody =  htmlBody:gsub("<br><br>", "<br>")
     htmlBody =  htmlBody:gsub("(</%w+>)<br>", "%1")
     htmlBody =  htmlBody:gsub('src=["\']%.fs/', 'src="/.fs/')
     htmlBody =  htmlBody:gsub('(<table)([^>]*>.-<td>_isWidget</td>.-</table>)', '%1 class="isWidget"%2')
