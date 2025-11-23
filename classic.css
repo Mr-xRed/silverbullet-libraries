@@ -1,6 +1,14 @@
 /* =========================================
    1. GLOBAL VARIABLES & TYPOGRAPHY
    ========================================= */
+/*
+* {
+    box-sizing: border-box;
+    outline: 2px solid limegreen !important;
+    background: oklch(80% 0.2 140 / 0.1);
+}
+*/
+
 :root {
     /* --- MAIN PALETTE --- */
     --base-10: oklch(99% 0.01 var(--hue));   /* Paper Color (Cream) */
@@ -17,9 +25,9 @@
 
     /* --- WOOD TEXTURE COLORS (Converted to OKLCH) --- */
     --wood-base:   oklch(28% 0.038 68);       /* Deep Walnut Brown */
-    --wood-light:  oklch(100% 0 0 / 2%);      /* Grain Highlight */
-    --wood-dark:   oklch(0% 0 0 / 20%);       /* Grain Shadow */
-    --wood-glow:   oklch(75% 0.15 50 / 60%);  /* Warm Varnish Glow */
+    --wood-light:  oklch(100% 0 0 / 3%);      /* Grain Highlight */
+    --wood-dark:   oklch(0% 0 0 / 30%);       /* Grain Shadow */
+    --wood-glow:   oklch(75% 0.15 50 / 70%);  /* Warm Varnish Glow */
     --wood-shadow: oklch(10% 0 0 / 60%);      /* Desk Vignette */
     
     /* --- PAPER STACK COLORS --- */
@@ -85,8 +93,8 @@ h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, pre + p, figure + p, blockquote 
 h1, h2, h3, h4, h5, h6 {
     font-weight: 700;
     color: var(--base-0);
-    margin-top: 2em;
-    margin-bottom: 1em;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
     line-height: 1.2;
     text-align: center;
     
@@ -109,6 +117,49 @@ h2 {
     position: relative;
     margin-bottom: 0.8em; 
 }
+
+/* =========================================
+   DROP CAPS (The Big First Letter)
+   ========================================= */
+
+/* =========================================
+   DROP CAPS (The Big First Letter)
+   ========================================= */
+/*
+span.p {
+    display: block;
+    margin-bottom: 0.8em;
+}
+
+h1 + span.p, h2 + span.p, h1 + .p, h2 + .p {
+    text-indent: 0 !important;
+}
+
+h1 + span.p::first-letter,
+h2 + span.p::first-letter,
+h1 + .p::first-letter,
+h2 + .p::first-letter {
+    float: left;
+    font-family: "Georgia", serif;
+    font-weight: bold;
+    
+    font-size: 3.5em;
+    line-height: 0.8; 
+    
+    margin-right: 0.15em;
+    
+    margin-top: 0.12em;  
+                
+    
+    color: var(--base-0);
+}
+
+h1 + span.p::first-line,
+h2 + span.p::first-line {
+    font-variant: small-caps;
+    font-size: 1.15em;
+    letter-spacing: 0.05em;
+} */
 
 h2::after {
     content: "❖";
@@ -248,19 +299,18 @@ blockquote::before {
         background-image:
             /* Layer 1: Subtle diagonal grain (light) */
             repeating-linear-gradient(
-                120deg,
-                var(--wood-light) 0px,
-                var(--wood-light) 1px,
-                transparent 1px,
-                transparent 10px
+                3deg,
+                var(--wood-light) 10px,
+                var(--wood-light) 11px,
+                transparent 30px,
+                transparent 100px
             ),
-            /* Layer 2: Subtle steep grain (dark) */
             repeating-linear-gradient(
-                20deg,
-                var(--wood-dark) 0px,
-                var(--wood-dark) 1px,
-                transparent 1px,
-                transparent 5px
+                1deg,
+                var(--wood-dark) 10px,
+                var(--wood-dark) 11px,
+                transparent 30px,
+                transparent 255px
             ),
             /* Layer 3: Warm center glow/varnish effect */
             radial-gradient(ellipse at center, var(--wood-glow) 0%, var(--wood-shadow) 100%);
@@ -272,7 +322,7 @@ blockquote::before {
 
     body {
         background-color: var(--base-10);
-        width: clamp(500px, 70ch, 800px);
+        width: clamp(300px, 70ch, 600px);
         min-height: 90vh;
         margin: 0 auto;
         padding: 4rem 5rem;

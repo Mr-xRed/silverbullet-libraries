@@ -62,7 +62,7 @@ event.listen {
 
 #sb-main .cm-editor .sb-lua-top-widget.sb-lua-directive-inline .sb-widget-array img{
   border: none;          /* no border */
-/*  border-radius: 15px; */   /* rounded corners */
+ /* border-radius: 15px;  */  /* rounded corners */
 }
 #sb-main .cm-editor .sb-lua-top-widget.sb-lua-directive-inline {
   border: none;          /* no border */
