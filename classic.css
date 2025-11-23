@@ -320,29 +320,58 @@ blockquote::before {
         min-height: 100%;
     }
 
-    body {
-        background-color: var(--base-10);
-        width: clamp(300px, 70ch, 600px);
-        min-height: 90vh;
-        margin: 0 auto;
-        padding: 4rem 5rem;
-        
-        /* 3D Stack Shadow (Top Stack) - Converted to OKLCH */
-        box-shadow: 
-            0 -1px 1px  oklch(0% 0 0 / 35%), 
-            0 -10px 0 -6px var(--stack-color), 
-            0 -10px 1px -4px oklch(0% 0 0 / 25%), 
-            0 -20px 0 -12px var(--stack-color), 
-            0 -20px 1px -10px oklch(0% 0 0 / 15%),
-            0 15px 30px oklch(0% 0 0 / 20%);
-        
-        border-radius: 2px;
-    }
+ body {
+    /* Base Color: Slightly warm off-white works best for paper */
+    background-color: var(--base-10); 
+    
+    /* Paper Texture (SVG Noise) */
+    background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)" opacity="0.08"/%3E%3C/svg%3E');
+    
+    /* Essential for positioning the bookmark */
+    position: relative; 
+
+    /* Layout & Dimensions */
+    width: clamp(300px, 70ch, 600px);
+    min-height: 90vh;
+    margin: 0 auto;
+    padding: 4rem 5rem;
+    
+    /* 3D Stack Shadow */
+    box-shadow: 
+        0 -1px 1px  oklch(0% 0 0 / 35%), 
+        0 -10px 0 -6px var(--stack-color), 
+        0 -10px 1px -4px oklch(0% 0 0 / 25%), 
+        0 -20px 0 -12px var(--stack-color), 
+        0 -20px 1px -10px oklch(0% 0 0 / 15%),
+        0 15px 30px oklch(0% 0 0 / 20%);
+    
+    border-radius: 2px;
+    /* Important: Add overflow: hidden to the body if you want to clip the bookmark */
+    /* This ensures the bookmark doesn't extend past the main paper area visually */
+    overflow: visible; 
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    right: 50px;
+    z-index: 10;
+    width: 50px;
+    height: 100px;
+
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' width='50' height='100' viewBox='0 0 50 100'> <path d='M0 0 H50 V0 L50 100 L25 80 L0 100 L0 70 Z' fill='%23A52A2A'/></svg>");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    filter: 
+       drop-shadow(1px 1px 3px rgb(0 0 0 / 0.6))
+       drop-shadow(3px 3px 5px rgb(0 0 0 / 0.2));
+}
 
     img {
         /* Converted rgba(0,0,0,0.1) */
         box-shadow: 0 2px 5px oklch(0% 0 0 / 10%);
-        transform: rotate(-1deg);
+        transform: rotate(-0.5deg);
     }
 }
 
@@ -385,7 +414,7 @@ blockquote::before {
     img {
         transform: none;
         box-shadow: none;
-        max-width: 100% !important;
+        max-width: 95% !important;
     }
 
     a {
