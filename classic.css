@@ -344,7 +344,6 @@ blockquote::before {
         0 -20px 0 -12px var(--stack-color), 
         0 -20px 1px -10px oklch(0% 0 0 / 15%),
         0 15px 30px oklch(0% 0 0 / 20%);
-    
     border-radius: 2px;
     /* Important: Add overflow: hidden to the body if you want to clip the bookmark */
     /* This ensures the bookmark doesn't extend past the main paper area visually */
@@ -352,6 +351,26 @@ blockquote::before {
 }
 
 body::before {
+content: '';
+position: absolute;
+top: -38px;
+left: 10px;
+z-index: 10;
+width: 100px;
+height: 150px;
+background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='150' viewBox='0 0 60 150'><defs><filter id='shadow' x='-50%' y='-50%' width='200%' height='200%'><feDropShadow dx='2' dy='3' stdDeviation='2' flood-opacity='0.3'/></filter><linearGradient id='metal' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23999'/><stop offset='40%' stop-color='%23fff'/><stop offset='60%' stop-color='%23bbb'/><stop offset='100%' stop-color='%23888'/></linearGradient></defs><g transform='translate(10, 10)'><path d='M30 40 L30 100 A15 15 0 0 1 0 100 L0 30 A18 20 0 0 1 20 15' fill='none' stroke='url(%23metal)' stroke-width='1.5' stroke-linecap='round' filter='url(%23shadow)'/></g></svg>");
+transform: rotate(20deg);
+background-repeat: no-repeat;
+background-size: contain;
+background-repeat: no-repeat;
+background-size: 100% 100%;
+filter:
+drop-shadow(1px 1px 1px rgb(0 0 0 / 0.6))
+drop-shadow(3px 3px 5px rgb(0 0 0 / 0.2));
+}
+
+
+body::after {
     content: '';
     position: absolute;
     top: -10px;
@@ -359,14 +378,14 @@ body::before {
     z-index: 10;
     width: 50px;
     height: 100px;
-
-    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' width='50' height='100' viewBox='0 0 50 100'> <path d='M0 0 H50 V0 L50 100 L25 80 L0 100 L0 70 Z' fill='%23A52A2A'/></svg>");
+    background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' fill='%23A52A2A' width='50' height='100' viewBox='0 0 50 100'> <path d='M0 0 H50 V0 L50 100 L25 80 L0 100 L0 70 Z'/></svg>");
     background-size: 100% 100%;
     background-repeat: no-repeat;
     filter: 
        drop-shadow(1px 1px 3px rgb(0 0 0 / 0.6))
        drop-shadow(3px 3px 5px rgb(0 0 0 / 0.2));
 }
+
 
     img {
         /* Converted rgba(0,0,0,0.1) */
