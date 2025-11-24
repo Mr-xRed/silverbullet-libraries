@@ -1,13 +1,10 @@
 /* =========================================
    1. GLOBAL VARIABLES & TYPOGRAPHY
    ========================================= */
-/*
-* {
-    box-sizing: border-box;
+/* * {
     outline: 2px solid limegreen !important;
     background: oklch(80% 0.2 140 / 0.1);
-}
-*/
+} */
 
 :root {
     /* --- MAIN PALETTE --- */
@@ -51,7 +48,8 @@ body {
 }
 
 /* --- Paragraphs --- */
-p {
+body > p, span.p {
+    text-indent: 1.5em;
     margin: 0;
     text-align: justify;
     text-justify: inter-character;
@@ -82,8 +80,8 @@ hr {
 }
 
 /* Reset indent after non-text elements */
-h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, pre + p, figure + p, blockquote + p {
-    text-indent: 0;
+h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, pre + p, figure + p, blockquote + p, span.p{
+    text-indent: 0em;
     margin-top: 0.8em;
     orphans: 3; 
     widows: 3;
@@ -112,54 +110,11 @@ h1 {
 }
 
 h2 {
-    font-size: 1.4em;
+    font-size: 1.6em;
     font-variant: small-caps;
     position: relative;
     margin-bottom: 0.8em; 
 }
-
-/* =========================================
-   DROP CAPS (The Big First Letter)
-   ========================================= */
-
-/* =========================================
-   DROP CAPS (The Big First Letter)
-   ========================================= */
-/*
-span.p {
-    display: block;
-    margin-bottom: 0.8em;
-}
-
-h1 + span.p, h2 + span.p, h1 + .p, h2 + .p {
-    text-indent: 0 !important;
-}
-
-h1 + span.p::first-letter,
-h2 + span.p::first-letter,
-h1 + .p::first-letter,
-h2 + .p::first-letter {
-    float: left;
-    font-family: "Georgia", serif;
-    font-weight: bold;
-    
-    font-size: 3.5em;
-    line-height: 0.8; 
-    
-    margin-right: 0.15em;
-    
-    margin-top: 0.12em;  
-                
-    
-    color: var(--base-0);
-}
-
-h1 + span.p::first-line,
-h2 + span.p::first-line {
-    font-variant: small-caps;
-    font-size: 1.15em;
-    letter-spacing: 0.05em;
-} */
 
 h2::after {
     content: "❖";
@@ -170,6 +125,10 @@ h2::after {
     margin-top: 0.5em;
 }
 
+h3 {font-size: 1.4em;font-variant: small-caps;}
+h4 {font-size: 1.3em;}
+h5 {font-size: 1.2em;}
+h6 {font-size: 1.1em;}
 /* --- Links --- */
 a {
     color: var(--base-4); 
@@ -193,9 +152,16 @@ code, pre {
     font-family: "JetBrains Mono", "Fira Code", Monaco, monospace;
     font-size: 0.85em;
     color: var(--base-2);
+
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-all !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
 }
 
 code { padding: 0.1em 0.3em; }
+
 
 pre {
     position: relative;
@@ -204,7 +170,6 @@ pre {
     white-space: pre-wrap;
     word-break: break-word;
     overflow-wrap: break-word;
-    /* Converted shadow rgba(0,0,0,0.05) */
     box-shadow: inset 0 0 5px oklch(0% 0 0 / 5%);
     break-inside: avoid;
     page-break-inside: avoid;
@@ -229,15 +194,16 @@ pre[data-lang]::before {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 2em 0;
+    text-align: left;
+    margin: 1em 0;
     font-size: 0.9em;
     break-inside: avoid;
     page-break-inside: avoid;
 }
 
-table :is(th, td) {
+table th, table td {
     border: none;
-    padding: 0.5rem;
+    padding: 0.3rem;
 }
 
 table > thead {
@@ -351,22 +317,22 @@ blockquote::before {
 }
 
 body::before {
-content: '';
-position: absolute;
-top: -38px;
-left: 10px;
-z-index: 10;
-width: 100px;
-height: 150px;
-background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='150' viewBox='0 0 60 150'><defs><filter id='shadow' x='-50%' y='-50%' width='200%' height='200%'><feDropShadow dx='2' dy='3' stdDeviation='2' flood-opacity='0.3'/></filter><linearGradient id='metal' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23999'/><stop offset='40%' stop-color='%23fff'/><stop offset='60%' stop-color='%23bbb'/><stop offset='100%' stop-color='%23888'/></linearGradient></defs><g transform='translate(10, 10)'><path d='M30 40 L30 100 A15 15 0 0 1 0 100 L0 30 A18 20 0 0 1 20 15' fill='none' stroke='url(%23metal)' stroke-width='1.5' stroke-linecap='round' filter='url(%23shadow)'/></g></svg>");
-transform: rotate(20deg);
-background-repeat: no-repeat;
-background-size: contain;
-background-repeat: no-repeat;
-background-size: 100% 100%;
-filter:
-drop-shadow(1px 1px 1px rgb(0 0 0 / 0.6))
-drop-shadow(3px 3px 5px rgb(0 0 0 / 0.2));
+    content: '';
+    position: absolute;
+    top: -36px;
+    left: 10px;
+    z-index: 10;
+    width: 100px;
+    height: 150px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='60' height='150' viewBox='0 0 60 150'><defs><filter id='shadow' x='-50%' y='-50%' width='200%' height='200%'><feDropShadow dx='2' dy='3' stdDeviation='2' flood-opacity='0.3'/></filter><linearGradient id='metal' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='%23999'/><stop offset='40%' stop-color='%23fff'/><stop offset='60%' stop-color='%23bbb'/><stop offset='100%' stop-color='%23888'/></linearGradient></defs><g transform='translate(10, 10)'><path d='M30 40 L30 100 A15 15 0 0 1 0 100 L0 30 A18 20 0 0 1 20 15' fill='none' stroke='url(%23metal)' stroke-width='1.5' stroke-linecap='round' filter='url(%23shadow)'/></g></svg>");
+    transform: rotate(15deg);
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    filter:
+        drop-shadow(1px 1px 1px rgb(0 0 0 / 0.6))
+        drop-shadow(3px 3px 5px rgb(0 0 0 / 0.2));
 }
 
 
@@ -377,7 +343,7 @@ body::after {
     right: 50px;
     z-index: 10;
     width: 50px;
-    height: 100px;
+    height: 80px;
     background-image: url("data:image/svg+xml;utf8, <svg xmlns='http://www.w3.org/2000/svg' fill='%23A52A2A' width='50' height='100' viewBox='0 0 50 100'> <path d='M0 0 H50 V0 L50 100 L25 80 L0 100 L0 70 Z'/></svg>");
     background-size: 100% 100%;
     background-repeat: no-repeat;
@@ -444,4 +410,21 @@ body::after {
     button, .nav, .no-print, .sb-hashtag {
         display: none !important;
     }
+}
+
+/* OPTIONAL Hide specific colour tags inside tables */
+
+table.isWidget {
+    display: none;
+}
+.sb-hashtag[data-tag-name^="t"],
+.sb-hashtag[data-tag-name="silver"],
+.sb-hashtag[data-tag-name="burgundy"],
+.sb-hashtag[data-tag-name="maroon"],
+.sb-hashtag[data-tag-name="hazel"],
+.sb-hashtag[data-tag-name="mint"],
+.sb-hashtag[data-tag-name="sea"],
+.sb-hashtag[data-tag-name="grape"],
+.sb-hashtag[data-tag-name="wine"] {
+  display: none !important;
 }

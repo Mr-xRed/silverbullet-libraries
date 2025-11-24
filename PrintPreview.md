@@ -321,13 +321,26 @@ command.define {
     local expanded = markdown.renderParseTree(mdTree)
     local htmlBody = markdown.markdownToHtml(tocMD) .. markdown.markdownToHtml(expanded)
     htmlBody = htmlBody:gsub('(<pre%s+)data%-lang="mermaid"([^>]*)', '%1data-lang="mermaid" class="mermaid"%2')
+    htmlBody = htmlBody:gsub('<span class="p">(.-)</span>', '<p>%1</p>')
     htmlBody = htmlBody:gsub('<br%s*/?>%s*(<pre class="mermaid">)', '%1')
-
     htmlBody =  htmlBody:gsub("<br></br>", "<br>")
---    htmlBody =  htmlBody:gsub("<br><br>", "<br>")
+    htmlBody =  htmlBody:gsub("<br><br>", "<br>")
     htmlBody =  htmlBody:gsub("(</%w+>)<br>", "%1")
+--    htmlBody =  htmlBody:gsub("</p><br><p>", "</p><p>")
     htmlBody =  htmlBody:gsub('src=["\']%.fs/', 'src="/.fs/')
-    htmlBody =  htmlBody:gsub('(<table)([^>]*>.-<td>_isWidget</td>.-</table>)', '%1 class="isWidget"%2')
+    htmlBody = htmlBody:gsub(
+                  '(<table.-</table>)',
+                  function(tbl)
+                    if tbl:find('<td>%s*_isWidget%s*</td>') then
+                      return tbl:gsub('<table', '<table class="isWidget"', 1)
+                    else
+                      return tbl
+                    end
+                  end
+                )
+
+    --    htmlBody = htmlBody:gsub('(<table)(>.-<td>_isWidget</td>.-</table>)', '<table class="isWidget"%2')
+--      htmlBody = htmlBody:gsub("(<table.-)(<td>_isWidget</td>.-</table>)",'%2')
     
     local fullHtml = buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue)
 
