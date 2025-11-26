@@ -80,12 +80,19 @@ hr {
 }
 
 /* Reset indent after non-text elements */
-h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, pre + p, figure + p, blockquote + p, span.p{
+h1 + p, h2 + p, h3 + p, h4 + p, h5 + p, h6 + p, pre + p, figure + p, blockquote + p, span.p {
     text-indent: 0em;
     margin-top: 0.8em;
     orphans: 3; 
     widows: 3;
  }
+
+ul li p,
+ol li p {
+  margin: 0;
+  padding: 0;
+}
+
 
 /* --- Headings --- */
 h1, h2, h3, h4, h5, h6 {
@@ -161,7 +168,6 @@ code, pre {
 }
 
 code { padding: 0.1em 0.3em; }
-
 
 pre {
     position: relative;
