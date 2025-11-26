@@ -8,17 +8,17 @@
 
 :root {
     /* --- MAIN PALETTE --- */
-    --base-10: oklch(99% 0.01 var(--hue));   /* Paper Color (Cream) */
-    --base-9: oklch(95% 0.03 var(--hue));    /* Code Blocks */
-    --base-8: oklch(92% 0.04 var(--hue));    /* Borders */
-    --base-7: oklch(85% 0.08 var(--hue));
-    --base-6: oklch(75% 0.10 var(--hue));
-    --base-5: oklch(55% 0.20 var(--hue));    /* Accent */
-    --base-4: oklch(45% 0.15 var(--hue));
-    --base-3: oklch(35% 0.12 var(--hue));
-    --base-2: oklch(25% 0.10 var(--hue));
-    --base-1: oklch(15% 0.05 var(--hue));    /* Main Text */
-    --base-0: oklch(10% 0.02 var(--hue));    /* Darkest Ink */
+    --base-10: oklch(99% calc(0.01 * var(--chroma)) var(--hue));   /* Paper Color (Cream) */
+    --base-9: oklch(97% calc(0.03 * var(--chroma)) var(--hue));    /* Code Blocks */
+    --base-8: oklch(92% calc(0.04 * var(--chroma)) var(--hue));    /* Borders */
+    --base-7: oklch(85% calc(0.08 * var(--chroma)) var(--hue));
+    --base-6: oklch(75% calc(0.10 * var(--chroma)) var(--hue));
+    --base-5: oklch(55% calc(0.20 * var(--chroma)) var(--hue));    /* Accent */
+    --base-4: oklch(45% calc(0.15 * var(--chroma)) var(--hue));
+    --base-3: oklch(35% calc(0.12 * var(--chroma)) var(--hue));
+    --base-2: oklch(25% calc(0.10 * var(--chroma)) var(--hue));
+    --base-1: oklch(15% calc(0.05 * var(--chroma)) var(--hue));    /* Main Text */
+    --base-0: oklch(10% calc(0.02 * var(--chroma)) var(--hue));    /* Darkest Ink */
 
     /* --- WOOD TEXTURE COLORS (Converted to OKLCH) --- */
     --wood-base:   oklch(28% 0.038 68);       /* Deep Walnut Brown */
@@ -178,14 +178,14 @@ pre {
 pre[data-lang]::before {
   content: attr(data-lang);
   position: absolute;
-  top: 0.2em;
-  right: 0.2em;
+  top: 0.3em;
+  right: 0.25em;
   font-size: 0.8em;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   background: var(--base-8);
-  padding: 0.2em 0.5em;
-  border-radius: 3px;
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
   color: var(--base-1);
   opacity: 0.9;
 }
@@ -335,7 +335,7 @@ body::before {
         drop-shadow(3px 3px 5px rgb(0 0 0 / 0.2));
 }
 
-
+/*
 body::after {
     content: '';
     position: absolute;
@@ -351,7 +351,7 @@ body::after {
        drop-shadow(1px 1px 3px rgb(0 0 0 / 0.6))
        drop-shadow(3px 3px 5px rgb(0 0 0 / 0.2));
 }
-
+*/
 
     img {
         /* Converted rgba(0,0,0,0.1) */

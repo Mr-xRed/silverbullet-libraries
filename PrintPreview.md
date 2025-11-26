@@ -63,10 +63,10 @@ author: "Mr-xRed"
 ## Implementation
 
 ```space-lua
-config.define("Markdown: Print Preview", {
+config.define("PrintPreview", {
   type = "object",
   properties = {
-    CSSFile = schema.string(),
+--    CSSFile = schema.string(),
     pageSize = schema.string(),
     landscape = schema.boolean(),
     marginTRBL = schema.string(),
@@ -126,9 +126,9 @@ local function selectMode()
     { name = "Classic", value = "classic", description="Narrations, Stories, Prose, Longer texts etc." },
     { name = "Data", value = "data", description="Tables, mermaid snippets and other data" },
     { name = "Code", value = "code", description="Code, Snippets, Highlighted syntaxes etc." },
-    { name = "Custom", value = "custom", description="Use your own stylesheets" }
+    { name = "Custom CSS", value = "custom", description="Use your own stylesheets" }
   }
-  local result = editor.filterBox("Select Print Mode:", modes, "Esc = cancel")
+  local result = editor.filterBox("Select Print Mode:", modes, "Esc = Cancel")
   return result and result.value
 end
 
@@ -145,7 +145,7 @@ local hueOptions = {
   { name = "Indigo", value = 285, description = "Hue = 285" },
   { name = "Violet", value = 315, description = "Hue = 315" },
 }
-  local accentHue = editor.filterBox("Choose accent color (hue):", hueOptions, "Esc = fallback to default (240)")
+  local accentHue = editor.filterBox("Choose accent color (hue):", hueOptions, "Esc = fallback to grayscale")
   return accentHue and accentHue.value or nil
 end
 --------------------------------------------------------------------
@@ -176,7 +176,7 @@ local function selectCustomCSS()
     return nil
   end
 
-  local result = editor.filterBox("Choose custom stylesheet:", options, "Esc = cancel")
+  local result = editor.filterBox("Choose custom stylesheet:", options, "Esc = Cancel")
   return result and result.name
 end
 
@@ -184,7 +184,7 @@ end
 --------------------------------------------------------------------
 -- Build HTML depending on mode
 --------------------------------------------------------------------
-local function buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue)
+local function buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue, chroma)
   local extraHead = ""
   local extraBeforeEnd = ""
 
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <title>]] .. pageName .. [[</title>
 <link rel="stylesheet" href="/.fs/]] .. cssFile .. [[">
 <style>
-:root{--hue:]] .. accentHue .. [[;}
+:root{--hue:]] .. accentHue .. [[;--chroma:]] .. chroma .. [[;}
 @page { size: ]] .. pageSize .. " " .. pageLayout .. [[; margin: ]] .. marginTRBL .. [[; 
 @top-center { content: ']] .. pageName .. pageAuthor .. [['; }}
 </style>
@@ -279,7 +279,7 @@ end
 -- Main command
 --------------------------------------------------------------------
 command.define {
-  name = "Markdown: Print Preview",
+  name = "Export: Print Preview",
   key = "Ctrl-Alt-p",
   run = function()
     editor.save()
@@ -309,7 +309,8 @@ command.define {
     local pageSize = PrintPreview.pageSize or "A4"
     local pageLayout = PrintPreview.landscape and "landscape" or ""
     local marginTRBL = PrintPreview.marginTRBL or "20mm 20mm 20mm 25mm"
-    local accentHue = PrintPreview.accentHue or selectAccentHue() or "240"
+    local accentHue = tonumber(PrintPreview.accentHue) or tonumber(selectAccentHue()) or 0
+    local chroma = (accentHue == 0) and 0 or 1
 
     local mdContent = editor.getText()
     local fm = (index.extractFrontmatter(mdContent)).frontmatter
@@ -326,7 +327,6 @@ command.define {
     htmlBody =  htmlBody:gsub("<br></br>", "<br>")
     htmlBody =  htmlBody:gsub("<br><br>", "<br>")
     htmlBody =  htmlBody:gsub("(</%w+>)<br>", "%1")
---    htmlBody =  htmlBody:gsub("</p><br><p>", "</p><p>")
     htmlBody =  htmlBody:gsub('src=["\']%.fs/', 'src="/.fs/')
     htmlBody = htmlBody:gsub(
                   '(<table.-</table>)',
@@ -342,7 +342,7 @@ command.define {
     --    htmlBody = htmlBody:gsub('(<table)(>.-<td>_isWidget</td>.-</table>)', '<table class="isWidget"%2')
 --      htmlBody = htmlBody:gsub("(<table.-)(<td>_isWidget</td>.-</table>)",'%2')
     
-    local fullHtml = buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue)
+    local fullHtml = buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue, chroma)
 
     local outputFile = "temp/PrintPreview.html"
     space.writeFile(outputFile, fullHtml)
