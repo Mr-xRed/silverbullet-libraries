@@ -268,7 +268,9 @@ document.addEventListener('DOMContentLoaded', () => {
 ]] .. extraHead .. [[
 </head>
 <body>
+<div class="page">
 ]] .. htmlBody .. [[
+</div>
 ]] .. extraBeforeEnd .. [[
 </body>
 </html>

@@ -38,7 +38,7 @@
 /* =========================================
    2. SHARED CONTENT STYLES (Screen & Print)
    ========================================= */
-body {
+.page {
     color: var(--base-1);
     line-height: 1.45;
     text-align: justify;
@@ -151,23 +151,36 @@ a:hover {
     border-bottom: 1px solid var(--base-0);
 }
 
+p:has(code) {
+  text-align: left;
+}
+
+
 /* --- Code Blocks --- */
 code, pre {
-    background: var(--base-9); 
-    border: 1px solid var(--base-8);
-    border-radius: 6px;
-    font-family: "JetBrains Mono", "Fira Code", Monaco, monospace;
-    font-size: 0.85em;
-    color: var(--base-2);
+  white-space: pre-wrap;
+  background: var(--base-9); 
+  border: 1px solid var(--base-8);
+  border-radius: 6px;
+  font-family: "JetBrains Mono", "Fira Code", Monaco, monospace;
+  font-size: 0.85em;
+  color: var(--base-2);
 
-    white-space: pre-wrap !important;
-    overflow-wrap: anywhere !important;
-    word-break: break-all !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
+  /* Step 1: normal wrapping allowed */
+  white-space: pre-wrap;
+
+  /* Step 2: allow browser to break long words *if needed* */
+  overflow-wrap: break-word;
+
+  /* Step 3: but avoid the nuclear option unless absolutely forced */
+  word-break: normal;
+
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 code { padding: 0.1em 0.3em; }
+
 
 pre {
     position: relative;
@@ -292,23 +305,53 @@ blockquote::before {
         min-height: 100%;
     }
 
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.page {
+  background-color: var(--base-10);
+  background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)" opacity="0.08"/%3E%3C/svg%3E');
+  position: relative;
+  max-width: 600px;
+  min-width: 300px;
+  min-height: 90vh;
+  margin: 0 auto;
+  padding: 4rem 5rem;
+  box-shadow:
+    0 -1px 1px oklch(0% 0 0 / 35%),
+    0 -10px 0 -6px var(--stack-color),
+    0 -10px 1px -4px oklch(0% 0 0 / 25%),
+    0 -20px 0 -12px var(--stack-color),
+    0 -20px 1px -10px oklch(0% 0 0 / 15%),
+    0 15px 30px oklch(0% 0 0 / 20%);
+  border-radius: 2px;
+  overflow: visible;
+}
+
+/* Add 20px breathing room on small screens */
+@media (max-width: 640px) {
+  .page {
+    margin-left: 20px;
+    margin-right: 20px;
+    max-width: none;
+  }
+}
+
+/*
  body {
-    /* Base Color: Slightly warm off-white works best for paper */
     background-color: var(--base-10); 
-    
-    /* Paper Texture (SVG Noise) */
     background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noise"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noise)" opacity="0.08"/%3E%3C/svg%3E');
-    
-    /* Essential for positioning the bookmark */
+
     position: relative; 
 
-    /* Layout & Dimensions */
-    width: clamp(300px, 70ch, 600px);
+    max-width: 600px; 
+    min-width: 300px; 
     min-height: 90vh;
     margin: 0 auto;
     padding: 4rem 5rem;
     
-    /* 3D Stack Shadow */
     box-shadow: 
         0 -1px 1px  oklch(0% 0 0 / 35%), 
         0 -10px 0 -6px var(--stack-color), 
@@ -317,12 +360,11 @@ blockquote::before {
         0 -20px 1px -10px oklch(0% 0 0 / 15%),
         0 15px 30px oklch(0% 0 0 / 20%);
     border-radius: 2px;
-    /* Important: Add overflow: hidden to the body if you want to clip the bookmark */
-    /* This ensures the bookmark doesn't extend past the main paper area visually */
     overflow: visible; 
 }
+*/
 
-body::before {
+.page::before {
     content: '';
     position: absolute;
     top: -36px;
@@ -392,7 +434,7 @@ body::after {
         padding: 0;
     }
 
-    body {
+    body, .page{
         background: transparent;
         width: 100%;
         max-width: none;
