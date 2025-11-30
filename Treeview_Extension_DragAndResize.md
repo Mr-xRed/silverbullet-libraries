@@ -139,7 +139,7 @@ command.define {
   mac = "Cmd-Alt-b",
   run = function()
         editor.invokeCommand "Tree View: Toggle"
-        js.import("/.fs/Library/Mr-xRed/Treeview_Extension_DragAndResize/PanelDragResize.js").enableDrag()
+        js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
        end
 }
 ```

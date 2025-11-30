@@ -13,13 +13,13 @@ This CSS snippet is all about **improving focus and usability** when interacti
 
 
 ```space-style
+
 /* Makes the modal box a little narrower and higher to fit more results*/
 .sb-modal-box {
-    width: 600px;
+   /* width: 600px;*/
     top:80px;
     border-radius: 15px !important;
 }
-
 .sb-modal-box .sb-result-list {
     max-height: 60vh;
 }
@@ -31,36 +31,24 @@ This CSS snippet is all about **improving focus and usability** when interacti
   inset: 0; 
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(14px);
-  z-index: 9998;
+  z-index: 68;
   opacity: 0;
   pointer-events: none; 
-  transition: opacity 0.5s ease;
+  transition: opacity 0.3s ease;
 }
 
-#sb-root:has(.sb-modal-box[open])::before {
+/*#sb-root:has(.sb-modal-box[open])::before,*/
+#sb-root:has(.sb-modal-box)::before,
+#sb-root:has(.sb-modal)::before
+{
   opacity: 1;
   pointer-events: auto;
 }
 
-.sb-modal-box[open] {
+.sb-modal-box[open],
+.sb-modal {
   position: fixed;
-  z-index: 9999;
-}
-
-```
-
-
-## Silversearch-Modalbox Highlighter
-
-```space-style
-#sb-root:has(.sb-modal-box)::before, #sb-root:has(.sb-modal)::before {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.sb-modal-box[open], .sb-modal {
-  position: fixed;
-  z-index: 9999;
+  z-index: 69;
 }
 
 ```
