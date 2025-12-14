@@ -127,10 +127,14 @@ end
   background-color: rgba(127,127,127,0.3);
 }
 
-.image-tile {
-  animation: fly-in linear both;
-  animation-timeline: view();
-  animation-range: entry 0% cover 100%;
+@supports (animation-timeline: view()) {
+
+  .image-tile {
+    animation: fly-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 100%;
+  }
+
 }
 
 @keyframes fly-in {
