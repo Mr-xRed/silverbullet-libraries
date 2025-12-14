@@ -159,4 +159,4 @@ end
 
 
 ## Discussions to this library
-* [SilverBullet Community](https://community.silverbullet.md/)
+* [SilverBullet Community](https://community.silverbullet.md/t/image-gallery-browser-widget-for-silverbullet/3647?u=mr.red)
