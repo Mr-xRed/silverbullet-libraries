@@ -120,7 +120,7 @@ end
 
 .image-tile:hover img {
   transform: scale(1.05);
-  transition: transform 0.5s ease;
+  transition: transform 0.25s ease;
 }
 
 .image-tile:hover {
