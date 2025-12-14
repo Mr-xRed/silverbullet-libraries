@@ -9,10 +9,10 @@ pageDecoration.prefix: "🖼️ "
 
 ## Usage: `${widgets.imageGallery("FolderPathWith/Images","height")}`
  
-${widgets.imageGallery("","50vh")}
+${widgets.imageGallery("")}
 
 > **note** Note
-> To display all images use `""` for the path
+> To display all images use empty `""` for the path
 
 
 
@@ -20,7 +20,9 @@ ${widgets.imageGallery("","50vh")}
 
 ```space-lua
 function widgets.imageGallery(folderPrefix, height)
-  height = height or "50vh"  -- default if omitted
+  if not height or height == "" then
+    height = "50vh"
+  end
 
   local files = space.listFiles()
   local galleryHtml = string.format("<div class='image-gallery' style='max-height:%s;'>", height)
