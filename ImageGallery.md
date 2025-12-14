@@ -134,25 +134,28 @@ end
 }
 
 @keyframes fly-in {
-  0% {      /* when the element is entering the viewport */
+  0% {
     opacity: 0.8;
-    transform: translateY(100px);
-    filter: blur(10px);
+    transform: translateY(30px) scaleX(0.7);
+    filter: blur(5px);
   }
-  10% {     /* fully visible */
+
+  11% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scaleX(1);
     filter: blur(0);
   }
-  85% {     /* stable on screen */
+
+  90% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scaleX(1);
     filter: blur(0);
   }
-  100% {    /* leaving at top */
+
+  100% {
     opacity: 0.8;
-    transform: translateY(-100px);
-    filter: blur(10px);
+    transform: translateY(-30px) scaleX(0.7);
+    filter: blur(5px);
   }
 }
 
