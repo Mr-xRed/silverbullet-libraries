@@ -1,3 +1,9 @@
+---
+name: "Library/Mr-xRed/ImageGallery"
+tags: meta/library
+pageDecoration.prefix: "🖼️ "
+---
+
 # Image Gallery Widget
 
 
