@@ -63,7 +63,6 @@ end
 
 ```space-style
 .image-gallery {
-  
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   grid-auto-rows: 190px; /* image + title */
@@ -79,7 +78,7 @@ end
   flex-direction: column;
   text-decoration: none;
   color: inherit;
-
+  
   background: var(--editor-code-background-color, #111);
   border-radius: 8px;
   overflow: hidden;
@@ -122,6 +121,9 @@ end
   transition: transform 0.5s ease;
 }
 
+.image-tile:hover {
+  background-color: rgba(127,127,127,0.3);
+}
 
 .image-tile {
   animation: fly-in linear both;
