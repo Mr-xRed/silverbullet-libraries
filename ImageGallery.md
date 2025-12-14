@@ -63,9 +63,7 @@ end
 
 ```space-style
 .image-gallery {
-  height: 80vh;
-  min-height: 0;
-
+  
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   grid-auto-rows: 190px; /* image + title */
