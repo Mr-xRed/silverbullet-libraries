@@ -23,7 +23,7 @@ function widgets.imageGallery(folderPrefix, height)
   height = height or "50vh"  -- default if omitted
 
   local files = space.listFiles()
-  local galleryHtml = string.format("<div class='image-gallery' style='height:%s;'>", height)
+  local galleryHtml = string.format("<div class='image-gallery' style='max-height:%s;'>", height)
 
   for _, file in ipairs(files) do
     local name = file.name
