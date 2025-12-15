@@ -81,7 +81,7 @@ function widgets.documentExplorer(folderPrefix, height)
   -- ---------- BREADCRUMBS ----------
   local crumbs = {}
   local path = ""
-  table.insert(crumbs, "<a data-ref='/explorer:' href='/explorer:'>Root</a>")
+  table.insert(crumbs, "<a data-ref='/explorer:' href='/explorer:'>root</a>")
   for part in folderPrefix:gmatch("([^/]+)/") do
     path = path .. part .. "/"
     table.insert(crumbs,
