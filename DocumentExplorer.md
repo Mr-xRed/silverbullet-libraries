@@ -1,7 +1,7 @@
 ---
-name: "Library/Mr-xRed/ImageGallery"
+name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
-pageDecoration.prefix: "🖼️ "
+pageDecoration.prefix: "🗂️ "
 ---
 # Document Explorer
 
