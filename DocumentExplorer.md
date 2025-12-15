@@ -6,10 +6,14 @@ pageDecoration.prefix: "🗂️ "
 # Document Explorer
 
 ### Currently supported extension:
-
 * Pages: .md
 * Images: .png, .jpg, .jpeg, .webp, .gif
 * Documents: .pdf
+
+### Supported Browsers:
+* 🟢 GoogleChrome: tested & working 
+* 🟢 Firefox - tested & working (animations doesn`t work)
+* 🟡 Safari - tested & partially working (opening documents doesn’t work)
 
 ## GoTo: ${widgets.commandButton("Document Explorer","Navigate: Document Explorer")}
 
@@ -26,7 +30,6 @@ command.define {
 ## Integration:
 
 ### Document Explorer Widget
-
 ```space-lua
 function widgets.documentExplorer(folderPrefix, height)
   if not height or height == "" then
@@ -176,7 +179,6 @@ virtualPage.define {
 ```space-style
 
 /* ---------- FILE EXTENSION LABEL ---------- */
-
 .md-tile,
 .pdf-tile {
   position: relative; 
@@ -188,7 +190,7 @@ virtualPage.define {
   position: absolute;
   top: 4px;
   right: 6px;
-  color: white;
+  color: oklch(1 0 0); /* white */
   font-size: 0.65em;
   font-weight: bold;
   padding: 1px 4px;
@@ -196,8 +198,15 @@ virtualPage.define {
   pointer-events: none;
 }
 
-.md-tile::after { content: "MD";   background: rgba(0,0,250,0.6);}
-.pdf-tile::after { content: "PDF";   background: rgba(250,0,0,0.6);}
+.md-tile::after {
+  content: "MD";
+  background: oklch(0.55 0.23 260 / 0.6); /* blue */
+}
+
+.pdf-tile::after {
+  content: "PDF";
+  background: oklch(0.55 0.23 30 / 0.6); /* red */
+}
 
 
 /* ---------- PDF TILE ---------- */
@@ -218,7 +227,7 @@ virtualPage.define {
 /* ---------- MARKDOWN TILE ---------- */
 .md-tile {
   width: 100%;
-  background: rgba(0, 0, 0, 0);
+  background: oklch(0 0 0 / 0); /* transparent */
 
   white-space: nowrap;
   overflow: hidden;
@@ -245,7 +254,7 @@ virtualPage.define {
 
 .explorer-breadcrumbs a {
   text-decoration: none;
-  color: var(--editor-link-color, #7aa2ff);
+  color: var(--editor-link-color);
 }
 
 .explorer-breadcrumbs a:hover {
@@ -279,7 +288,7 @@ virtualPage.define {
   border-radius: 8px;
   overflow: hidden;
 
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  box-shadow: 0 2px 6px oklch(0 0 0 / 0.25);
 }
 
 .folder-tile {
@@ -318,7 +327,7 @@ virtualPage.define {
 
 /* ---------- HOVER ---------- */
 .image-tile:hover {
-  background-color: rgba(127,127,127,0.3);
+  background-color: oklch(0.65 0 0 / 0.3); /* neutral grey */
 }
 
 .image-tile:hover img {
