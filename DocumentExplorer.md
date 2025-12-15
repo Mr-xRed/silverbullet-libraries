@@ -11,7 +11,8 @@ pageDecoration.prefix: "🗂️ "
 * Documents: .pdf
 
 ### Supported Browsers:
-* 🟢 GoogleChrome: tested & working 
+* 🟢 Chrome: tested & working 
+* 🟢 Brave - tested & working
 * 🟢 Firefox - tested & working (animations doesn`t work)
 * 🟡 Safari - tested & partially working (opening documents doesn’t work)
 
