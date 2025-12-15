@@ -371,4 +371,4 @@ virtualPage.define {
 
 
 ## Discussions to this library
-* [SilverBullet Community](https://community.silverbullet.md/t/image-gallery-browser-widget-for-silverbullet/3647?u=mr.red)
+* [SilverBullet Community](https://community.silverbullet.md/t/document-explorer-image-gallery-for-silverbullet/3647?u=mr.red)
