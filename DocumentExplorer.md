@@ -302,11 +302,11 @@ virtualPage.define {
 }
 
 .image-thumb {
-  height: 160px;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  padding: 5px;
 }
 
 .image-thumb img {
@@ -316,7 +316,7 @@ virtualPage.define {
 }
 
 .image-title {
-  padding: 6px 8px;
+  padding: 5px 8px;
   font-size: 0.75em;
   text-align: center;
 
