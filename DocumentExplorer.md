@@ -7,7 +7,7 @@ pageDecoration.prefix: "🗂️ "
 
 ### Currently supported extension:
 * Pages: .md
-* Images: .png, .jpg, .jpeg, .webp, .gif
+* Images: .png, .jpg, .jpeg, .webp, .gif, .svg
 * Documents: .pdf
 
 ### Supported Browsers:
@@ -62,7 +62,7 @@ function widgets.documentExplorer(folderPrefix, height)
       if not rest:find("/") then
         if rest:match("%.png$") or rest:match("%.jpg$")
           or rest:match("%.jpeg$") or rest:match("%.webp$")
-          or rest:match("%.gif$") then
+          or rest:match("%.gif$") or rest:match("%.svg$") then
           table.insert(images, { full = file.name, name = rest })
         elseif rest:match("%.md$") then
           table.insert(mds, { full = file.name, name = rest:gsub("%.md$", "") })
@@ -331,10 +331,12 @@ virtualPage.define {
   background-color: oklch(0.65 0 0 / 0.3); /* neutral grey */
 }
 
+/*
 .image-tile:hover img {
   transform: scale(1.05);
   transition: transform 0.25s ease;
 }
+*/
 
 /* ---------- ANIMATION (SAFE) ---------- */
 @supports (animation-timeline: view()) {
