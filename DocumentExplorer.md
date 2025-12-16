@@ -159,9 +159,9 @@ for _, unk in ipairs(unknowns) do
 
   html = html ..
     "<a class='image-tile unknown-tile' data-ext='" .. ext .. "'" ..
-    " data-ref='/" .. unk.full .. "'" ..
+   -- " data-ref='/" .. unk.full .. "'" ..
     " href='/.fs/" .. unk.full .. "'" ..
-    " title='" .. unk.full .. "'>" ..
+    "target='_blank' title='" .. unk.full .. "'>" ..
       "<div class='unknown-icon'>❔</div>" ..
       "<div class='image-title'>" .. unk.name .. "</div>" ..
     "</a>"
