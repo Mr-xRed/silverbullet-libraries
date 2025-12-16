@@ -12,10 +12,10 @@ pageDecoration.prefix: "🗂️ "
 * Every other extension is rendered as:❔ (opened as raw file if browser supports it)
 
 ### Supported Browsers:
-* 🟢 Chrome:  tested & working 
-* 🟢 Edge:    tested & working
-* 🟢 Brave:   tested & working
-* 🟢 Firefox: tested & working (animations doesn`t work)
+* 🟢 Chrome:  tested(Mac&Win) & working 
+* 🟢 Edge:    tested(Win) & working
+* 🟢 Brave:   tested(Mac) & working
+* 🟢 Firefox: tested(Mac) & working (animations doesn`t work)
 * 🟡 Safari:  tested & partially working (opening documents doesn’t work)
 
 ## GoTo: ${widgets.commandButton("Document Explorer","Navigate: Document Explorer")}
