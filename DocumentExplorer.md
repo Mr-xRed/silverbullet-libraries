@@ -399,24 +399,24 @@ virtualPage.define {
 
 @keyframes fly-in {
   0% {
-    opacity: 0.6;
+    opacity: 0;
     transform: translateY(30px) scaleX(0.3);
-    filter: blur(5px);
+/*    filter: blur(5px); */
   }
   11% {
     opacity: 1;
     transform: translateY(0) scaleX(1);
-    filter: blur(0);
+ /*   filter: blur(0); */
   }
   90% {
     opacity: 1;
     transform: translateY(0) scaleX(1);
-    filter: blur(0);
+/*    filter: blur(0); */
   }
   100% {
-    opacity: 0.6;
+    opacity: 0;
     transform: translateY(-30px) scaleX(0.3);
-    filter: blur(5px);
+/*    filter: blur(5px); */
   }
 }
 
