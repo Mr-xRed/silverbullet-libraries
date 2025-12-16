@@ -72,7 +72,6 @@ function widgets.documentExplorer(folderPrefix, height)
           table.insert(pdfs, { full = file.name, name = rest:gsub("%.pdf$", "") })
         else
           table.insert(unknowns, { full = file.name, name = rest })
-          table.sort(unknowns, function(a,b) return a.name < b.name end)
         end
       end
     end
@@ -82,17 +81,23 @@ function widgets.documentExplorer(folderPrefix, height)
   table.sort(images, function(a,b) return a.name < b.name end)
   table.sort(mds, function(a,b) return a.name < b.name end)
   table.sort(pdfs, function(a,b) return a.name < b.name end)
+  table.sort(unknowns, function(a,b) return a.name < b.name end)
 
   -- ---------- BREADCRUMBS ----------
   local crumbs = {}
   local path = ""
-  table.insert(crumbs, "<a data-ref='/explorer:' href='/explorer:'>root</a>")
+
+  table.insert(crumbs,
+    "<a href='/explorer' data-ref='/explorer'>🏠 Home</a>"
+  )
+
   for part in folderPrefix:gmatch("([^/]+)/") do
     path = path .. part .. "/"
     table.insert(crumbs,
-      "<a data-ref='/explorer:" .. path .. "' href='/explorer:" .. path .. "'>" .. part .. "</a>"
+      "<a href='/explorer/" .. path .. "' data-ref='/explorer/" .. path .. "'>" .. part .. "</a>"
     )
   end
+
   local breadcrumbHtml =
     "<div class='explorer-breadcrumbs'>" ..
       table.concat(crumbs, "<span class='sep'>/</span>") ..
@@ -108,7 +113,7 @@ function widgets.documentExplorer(folderPrefix, height)
   if folderPrefix ~= "" then
     local parent = folderPrefix:gsub("[^/]+/$", "")
     html = html ..
-      "<a class='image-tile folder-tile' data-ref='/explorer:" .. parent .. "' href='/explorer:" .. parent .. "'>" ..
+      "<a class='image-tile folder-tile' href='/explorer/" .. parent .. "' data-ref='/explorer/" .. parent .. "'>" ..
         "<div class='folder-icon'>📂</div>" ..
         "<div class='image-title'>..</div>" ..
       "</a>"
@@ -116,8 +121,9 @@ function widgets.documentExplorer(folderPrefix, height)
 
   -- Folders
   for _, f in ipairs(folders) do
+    local p = folderPrefix .. f .. "/"
     html = html ..
-      "<a class='image-tile folder-tile' data-ref='/explorer:" .. folderPrefix .. f .. "/' href='/explorer:" .. folderPrefix .. f .. "/'>" ..
+      "<a class='image-tile folder-tile' href='/explorer/" .. p .. "' data-ref='/explorer/" .. p .. "'>" ..
         "<div class='folder-icon'>📁</div>" ..
         "<div class='image-title'>" .. f .. "</div>" ..
       "</a>"
@@ -125,8 +131,9 @@ function widgets.documentExplorer(folderPrefix, height)
 
   -- Markdown files
   for _, md in ipairs(mds) do
+    local target = "/" .. md.full:gsub("%.md$", "")
     html = html ..
-      "<a class='image-tile md-tile' data-ref='/" .. md.full:gsub("%.md$", "") .. "' href='/" .. md.full:gsub("%.md$", "") .. "' title='" .. md.full .. "'>" ..
+      "<a class='image-tile md-tile' href='" .. target .. "' data-ref='" .. target .. "' title='" .. md.full .. "'>" ..
         "<div class='md-icon'>📝</div>" ..
         "<div class='image-title'>" .. md.name .. "</div>" ..
       "</a>"
@@ -134,8 +141,9 @@ function widgets.documentExplorer(folderPrefix, height)
 
   -- PDF files
   for _, pdf in ipairs(pdfs) do
+    local target = "/" .. pdf.full
     html = html ..
-      "<a class='image-tile pdf-tile' data-ref='/" .. pdf.full .. "' href='/" .. pdf.full .. "' title='" .. pdf.full .. "'>" ..
+      "<a class='image-tile pdf-tile' href='" .. target .. "' data-ref='" .. target .. "' title='" .. pdf.full .. "'>" ..
         "<div class='pdf-icon'>📄</div>" ..
         "<div class='image-title'>" .. pdf.name .. "</div>" ..
       "</a>"
@@ -143,30 +151,25 @@ function widgets.documentExplorer(folderPrefix, height)
 
   -- Images
   for _, img in ipairs(images) do
+    local fs = "/.fs/" .. img.full
     html = html ..
-      "<a class='image-tile' data-ref='/" .. img.full .. "' href='/.fs/" .. img.full .. "' title='" .. img.full .. "'>" ..
-        "<div class='image-thumb'>" ..
-          "<img src='/.fs/" .. img.full .. "' loading='lazy' />" ..
-        "</div>" ..
+      "<a class='image-tile' href='" .. fs .. "' data-ref='/" .. img.full .. "' title='" .. img.full .. "'>" ..
+        "<div class='image-thumb'><img src='" .. fs .. "' loading='lazy' /></div>" ..
         "<div class='image-title'>" .. img.name .. "</div>" ..
       "</a>"
   end
-  
--- Unknown files
-for _, unk in ipairs(unknowns) do
-  local ext = unk.name:match("%.([^.]+)$")
-  ext = ext and ext:upper() or "?"
 
-  html = html ..
-    "<a class='image-tile unknown-tile' data-ext='" .. ext .. "'" ..
-   -- " data-ref='/" .. unk.full .. "'" ..
-    " href='/.fs/" .. unk.full .. "'" ..
-    "target='_blank' title='" .. unk.full .. "'>" ..
-      "<div class='unknown-icon'>❔</div>" ..
-      "<div class='image-title'>" .. unk.name .. "</div>" ..
-    "</a>"
-end
+  -- Unknown files
+  for _, unk in ipairs(unknowns) do
+    local ext = unk.name:match("%.([^.]+)$")
+    ext = ext and ext:upper() or "?"
 
+    html = html ..
+      "<a class='image-tile unknown-tile' data-ext='" .. ext .. "' href='/.fs/" .. unk.full .. "' target='_blank' title='" .. unk.full .. "'>" ..
+        "<div class='unknown-icon'>❔</div>" ..
+        "<div class='image-title'>" .. unk.name .. "</div>" ..
+      "</a>"
+  end
 
   html = html .. "</div></div>"
 
@@ -175,21 +178,26 @@ end
     html = html
   }
 end
-
-
 ```
 
 ### VirtualPage
 
 ```space-lua
 
+
 virtualPage.define {
-  pattern = "explorer:?(.*)",
+  pattern = "explorer/?(.*)",
   run = function(path)
     local folder = path or ""
+
+    -- normalise
     if folder ~= "" and not folder:match("/$") then
       folder = folder .. "/"
     end
+
+    -- prevent traversal
+    folder = folder:gsub("%.%.", "")
+
     return "\n${widgets.documentExplorer(\"" .. folder .. "\", \"75vh\")}\n"
   end
 }
