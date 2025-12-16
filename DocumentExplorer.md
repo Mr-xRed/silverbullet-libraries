@@ -9,12 +9,14 @@ pageDecoration.prefix: "🗂️ "
 * Pages: .md
 * Images: .png, .jpg, .jpeg, .webp, .gif, .svg
 * Documents: .pdf
+* Every other extension is rendered as:❔ (opened as raw file if browser supports it)
 
 ### Supported Browsers:
-* 🟢 Chrome: tested & working 
-* 🟢 Brave - tested & working
-* 🟢 Firefox - tested & working (animations doesn`t work)
-* 🟡 Safari - tested & partially working (opening documents doesn’t work)
+* 🟢 Chrome:  tested & working 
+* 🟢 Edge:    tested & working
+* 🟢 Brave:   tested & working
+* 🟢 Firefox: tested & working (animations doesn`t work)
+* 🟡 Safari:  tested & partially working (opening documents doesn’t work)
 
 ## GoTo: ${widgets.commandButton("Document Explorer","Navigate: Document Explorer")}
 
@@ -40,7 +42,7 @@ function widgets.documentExplorer(folderPrefix, height)
   folderPrefix = folderPrefix or ""
 
   local files = space.listFiles()
-  local folders, images, mds, pdfs = {}, {}, {}, {}
+  local folders, images, mds, pdfs, unknowns = {}, {}, {}, {}, {}
   local seen = {}
 
   -- ---------- COLLECT DIRECT CHILDREN ----------
@@ -68,6 +70,9 @@ function widgets.documentExplorer(folderPrefix, height)
           table.insert(mds, { full = file.name, name = rest:gsub("%.md$", "") })
         elseif rest:match("%.pdf$") then
           table.insert(pdfs, { full = file.name, name = rest:gsub("%.pdf$", "") })
+        else
+          table.insert(unknowns, { full = file.name, name = rest })
+          table.sort(unknowns, function(a,b) return a.name < b.name end)
         end
       end
     end
@@ -146,6 +151,14 @@ function widgets.documentExplorer(folderPrefix, height)
         "<div class='image-title'>" .. img.name .. "</div>" ..
       "</a>"
   end
+  -- Unknown files
+  for _, unk in ipairs(unknowns) do
+    html = html ..
+      "<a class='image-tile unknown-tile' data-ref='/" .. unk.full .. "' href='/.fs/" .. unk.full .. "' title='" .. unk.full .. "'>" ..
+        "<div class='unknown-icon'>❔</div>" ..
+        "<div class='image-title'>" .. unk.name .. "</div>" ..
+      "</a>"
+  end
 
   html = html .. "</div></div>"
 
@@ -178,6 +191,18 @@ virtualPage.define {
 ## Styling:
 
 ```space-style
+
+/* ---------- UNKNOWN FILE TILE ---------- */
+.unknown-tile {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+}
+
+.unknown-icon {
+  font-size: 4rem;
+  margin-top: 26px;
+}
 
 /* ---------- FILE EXTENSION LABEL ---------- */
 .md-tile,
