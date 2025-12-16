@@ -151,14 +151,22 @@ function widgets.documentExplorer(folderPrefix, height)
         "<div class='image-title'>" .. img.name .. "</div>" ..
       "</a>"
   end
-  -- Unknown files
-  for _, unk in ipairs(unknowns) do
-    html = html ..
-      "<a class='image-tile unknown-tile' data-ref='/" .. unk.full .. "' href='/.fs/" .. unk.full .. "' title='" .. unk.full .. "'>" ..
-        "<div class='unknown-icon'>❔</div>" ..
-        "<div class='image-title'>" .. unk.name .. "</div>" ..
-      "</a>"
-  end
+  
+-- Unknown files
+for _, unk in ipairs(unknowns) do
+  local ext = unk.name:match("%.([^.]+)$")
+  ext = ext and ext:upper() or "?"
+
+  html = html ..
+    "<a class='image-tile unknown-tile' data-ext='" .. ext .. "'" ..
+    " data-ref='/" .. unk.full .. "'" ..
+    " href='/.fs/" .. unk.full .. "'" ..
+    " title='" .. unk.full .. "'>" ..
+      "<div class='unknown-icon'>❔</div>" ..
+      "<div class='image-title'>" .. unk.name .. "</div>" ..
+    "</a>"
+end
+
 
   html = html .. "</div></div>"
 
@@ -204,9 +212,26 @@ virtualPage.define {
   margin-top: 26px;
 }
 
+.unknown-tile::after {
+  content: attr(data-ext);
+  position: absolute;
+  top: 4px;
+  right: 6px;
+
+  color: oklch(1 0 0);
+  font-size: 0.65em;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 4px;
+  pointer-events: none;
+
+  background: oklch(0.45 0 0 / 0.6); /* neutral grey */
+}
+
 /* ---------- FILE EXTENSION LABEL ---------- */
 .md-tile,
-.pdf-tile {
+.pdf-tile,
+.unknown-tile {
   position: relative; 
 }
 
