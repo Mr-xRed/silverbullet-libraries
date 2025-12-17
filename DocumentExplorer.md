@@ -16,8 +16,8 @@ pageDecoration.prefix: "🗂️ "
 * 🟢 Chrome:  tested(Mac&Win) & working 
 * 🟢 Edge:    tested(Win) & working
 * 🟢 Brave:   tested(Mac) & working
-* 🟢 Firefox: tested(Mac) & working (animations doesn`t work)
-* 🟢 Safari:  tested(Mac) & working on latest edge 
+* 🟢 Firefox: tested(Mac) & working
+* 🟢 Safari:  tested(Mac) & working (on latest edge)
 
 
 ## GoTo: ${widgets.commandButton("Document Explorer","Navigate: Document Explorer")} or use shortcut: `Ctrl-Alt-d`
@@ -27,6 +27,7 @@ pageDecoration.prefix: "🗂️ "
 * `widgetHeight`   - Height of the widget in the VirtualPage (default: "75vh")
 * `tileSize`       - the tile size, recommanded between 100px-200px (default: "160px") 
 * `goToCurrentDir` - start navigation in the Directory of the currently opened page (default: true)
+* `listView`       - switch to listView (default: false)
 
 
 ```lua
@@ -35,6 +36,7 @@ config.set( "explorer", {
             widgetHeight = "75vh",
             tileSize = "160px", 
             goToCurrentDir = true,
+            listView = false
 }) 
 ```
 
@@ -52,6 +54,7 @@ config.define("explorer", {
     widgetHeight = schema.string(),
     homeDirName = schema.string(),
     goToCurrentDir = schema.boolean(),
+    listView = schema.boolean()
    }
 })
 ```
@@ -89,17 +92,18 @@ command.define {
 ### Document Explorer Widget
 ```space-lua
 
---Defining Config Defaults
- local expConf = config.get("explorer") or {}
- local tileSize = expConf.tileSize or "160px"
- local homeDirName = expConf.homeDirName or "🏠 Home"
-  
-function widgets.documentExplorer(folderPrefix, height)
-  if not height or height == "" then
-    height = "75vh"
-  end
+-- Defining Config Defaults
+local expConf = config.get("explorer") or {}
+local tileSize = expConf.tileSize or "160px"
+local homeDirName = expConf.homeDirName or "🏠 Home"
 
+-- Document Explorer Widget
+function widgets.documentExplorer(folderPrefix, height, listView)
+  height = height or "75vh"
   folderPrefix = folderPrefix or ""
+  listView = listView or false  -- default false (grid view)
+
+  local wrapperClass = listView and "document-explorer-wrapper list-view" or "document-explorer-wrapper grid-view"
 
   local files = space.listFiles()
   local folders, images, mds, pdfs, unknowns = {}, {}, {}, {}, {}
@@ -148,7 +152,7 @@ function widgets.documentExplorer(folderPrefix, height)
   local path = ""
 
   table.insert(crumbs,
-    "<a href='/explorer' data-ref='/explorer'>".. homeDirName .."</a>"
+    "<a href='/explorer' data-ref='/explorer'>" .. homeDirName .. "</a>"
   )
 
   for part in folderPrefix:gmatch("([^/]+)/") do
@@ -165,7 +169,7 @@ function widgets.documentExplorer(folderPrefix, height)
 
   -- ---------- EXPLORER ----------
   local html =
-    "<div class='document-explorer-wrapper' style='--tile-size:" .. tileSize .. "'>" ..
+    "<div class='" .. wrapperClass .. "' style='--tile-size:" .. tileSize .. ";--icon-size-grid: calc(var(--tile-size) * 0.4); --icon-size-list: 1.5em;'>" ..
       breadcrumbHtml ..
       "<div class='document-explorer' style='max-height:" .. height .. ";'>"
 
@@ -238,12 +242,14 @@ function widgets.documentExplorer(folderPrefix, height)
     html = html
   }
 end
+
 ```
 
 ### VirtualPage
 ```space-lua
  local expConf = config.get("explorer") or {}
  local widgetHeight = expConf.widgetHeight or "75vh"
+ local listView = expConf.listView or false
  
 virtualPage.define {
   pattern = "explorer/?(.*)",
@@ -258,91 +264,15 @@ virtualPage.define {
     -- prevent traversal
     folder = folder:gsub("%.%.", "")
 
-    return "\n${widgets.documentExplorer(\"" .. folder .. "\", \""..widgetHeight.."\")}\n"
+    return "\n${widgets.documentExplorer(\"" .. folder .. "\", \"" .. widgetHeight .. "\"," .. (listView and "true" or "false") .. ")}\n"
   end
 }
 
 ```
 
 ## Styling:
+
 ```space-style
-
-/* -------------- ICON SIZE -------------- */
-.folder-icon,
-.md-icon,
-.pdf-icon,
-.unknown-icon {
-  font-size: calc(var(--tile-size) * 0.4);
-  margin-top: calc(var(--tile-size) * 0.15);
-}
-
-
-/* ---------- UNKNOWN FILE TILE ---------- */
-.unknown-tile {
-  width: 100%;
-  text-align: center;
-  justify-content: center;
-}
-
-.unknown-tile::after {
-  content: attr(data-ext);
-  position: absolute;
-  top: 4px;
-  right: 6px;
-
-  color: oklch(1 0 0);
-  font-size: 0.65em;
-  font-weight: bold;
-  padding: 1px 4px;
-  border-radius: 4px;
-  pointer-events: none;
-
-  background: oklch(0.45 0 0 / 0.6); /* neutral grey */
-}
-
-/* ---------- PDF TILE ---------- */
-.pdf-tile {
-  width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-  justify-content: center;
-}
-
-/* ---------- MARKDOWN TILE ---------- */
-.md-tile {
-  width: 100%;
-  background: oklch(0 0 0 / 0); /* transparent */
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-
-  text-align: center;
-  justify-content: center;
-}
-
-/* ---------- FILE EXTENSION LABEL ---------- */
-
-.md-tile, .pdf-tile, .unknown-tile { position: relative; }
-
-.md-tile::after,
-.pdf-tile::after {
-  content: attr(data-ext);
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  color: oklch(1 0 0); /* white */
-  font-size: 0.65em;
-  font-weight: bold;
-  padding: 1px 4px;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.md-tile::after { content: "MD"; background: oklch(0.55 0.23 260 / 0.6); /* blue */ }
-.pdf-tile::after { content: "PDF"; background: oklch(0.55 0.23 30 / 0.6); /* red */ }
 
 /* ---------- BREADCRUMBS ---------- */
 .explorer-breadcrumbs {
@@ -367,53 +297,159 @@ virtualPage.define {
   opacity: 0.8;
 }
 
-/* ---------- EXPLORER ---------- */
-.document-explorer {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile-size) - 30px), 1fr));
-  grid-auto-rows: var(--tile-size);
-  gap: 14px;
+/* ---------- TILE BASE STYLE ---------- */
+.image-tile {
+  display: flex;
+  flex-direction: column; /* default: grid */
+  text-decoration: none;
+  color: inherit;
+  background-color: oklch(0.75 0 0 / 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: background-color 0.2s;
+}
 
+.image-tile:hover {
+  background-color: oklch(0.85 0 0 / 0.5);
+}
+
+/* ---------- ICONS ---------- */
+.folder-icon,
+.md-icon,
+.pdf-icon,
+.unknown-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------- FILE EXTENSION LABELS ---------- */
+.md-tile, .pdf-tile, .unknown-tile { position: relative; }
+
+.md-tile::after { content: "MD"; background: oklch(0.55 0.23 260 / 0.6); }
+.pdf-tile::after { content: "PDF"; background: oklch(0.55 0.23 30 / 0.6); }
+.unknown-tile::after {
+  content: attr(data-ext);
+  background: oklch(0.45 0 0 / 0.6);
+}
+
+.md-tile::after,
+.pdf-tile::after,
+.unknown-tile::after {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: oklch(1 0 0);
+  font-size: 0.65em;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* ---------- TITLES ---------- */
+.image-title {
+  flex: 1 1 auto;
+  min-width: 0; /* needed for ellipsis */
+  padding: 0 6px;
+  font-size: 0.75em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  position: relative;
+}
+
+/* ---------- FOLDER TOOLTIP ---------- */
+.folder-tile .image-title:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--bg_2);
+  color: var(--text-color_1);
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 0.75em;
+  z-index: 10;
+}
+
+/* ---------- GRID VIEW ---------- */
+.document-explorer-wrapper.grid-view .document-explorer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-size), 1fr));
+  grid-auto-rows: var(--tile-size);
+  gap: 12px;
   padding: 1em;
   overflow-y: auto;
   align-content: start;
 }
 
-/* ---------- TILE ---------- */
-.image-tile {
+.document-explorer-wrapper.grid-view .image-tile {
+  flex-direction: column;
+  justify-content: space-between; /* title at bottom */
+  box-shadow: 0 2px 6px oklch(0 0 0 / 0.15);
+}
+
+.document-explorer-wrapper.grid-view .image-title {
+  text-align: center;
+}
+
+.document-explorer-wrapper.grid-view .folder-icon,
+.document-explorer-wrapper.grid-view .md-icon,
+.document-explorer-wrapper.grid-view .pdf-icon,
+.document-explorer-wrapper.grid-view .unknown-icon {
+  font-size: var(--icon-size-grid);
+  margin-top: calc((var(--tile-size) - var(--icon-size-grid)) / 2 - 10px);
+}
+
+.document-explorer-wrapper.grid-view .image-tile .image-thumb {
+  width: 100%;
+  height: calc(var(--tile-size) - 40px);
+}
+
+/* ---------- LIST VIEW ---------- */
+.document-explorer-wrapper.list-view .document-explorer {
   display: flex;
   flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-
-  background: oklch(0.85 0 0 / 0.2);
-
-  border-radius: 8px;
-  overflow: hidden;
-
-  box-shadow: 0 2px 6px oklch(0 0 0 / 0.25);
+  gap: 0; /* removed gap */
+  padding: 1em;
+  overflow-y: auto;
 }
 
-.folder-tile .image-title {
-  position: relative;
+.document-explorer-wrapper.list-view .image-tile {
+  flex-direction: row;
+  border-radius: 0;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 8px;
+  box-shadow: none; /* removed shadow */
 }
 
-.folder-tile {
-    width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
-    justify-content: center;
+.document-explorer-wrapper.list-view .image-title {
+  text-align: left;
 }
 
+.document-explorer-wrapper.list-view .folder-icon,
+.document-explorer-wrapper.list-view .md-icon,
+.document-explorer-wrapper.list-view .pdf-icon,
+.document-explorer-wrapper.list-view .unknown-icon {
+  font-size: var(--icon-size-list);
+  margin-top: 0;
+}
 
+/* ---------- IMAGE vs FILE ICONS ---------- */
+.image-tile:not(.folder-tile) .image-thumb { display: flex; }
+.image-tile.folder-tile .image-thumb { display: none; }
+
+/* ---------- THUMBNAILS ---------- */
 .image-thumb {
-  height: calc(var(--tile-size) - 40px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 5px;
 }
 
 .image-thumb img {
@@ -422,39 +458,21 @@ virtualPage.define {
   object-fit: contain;
 }
 
-.image-title {
-  padding: 5px 8px;
-  font-size: 0.75em;
-  text-align: center;
-
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* Grid view: thumbnail fills available space */
+.document-explorer-wrapper.grid-view .image-thumb {
+  width: 100%;
+  height: calc(var(--tile-size) - 40px);
 }
 
-/* ---------- HOVER ---------- */
-.image-tile:hover {
-  background-color: oklch(0.85 0 0 / 0.6); /* neutral grey */
-}
-
-
-/* ---------- ANIMATION (SAFE) ---------- */
-@supports (animation-timeline: view()) {
-  .image-tile {
-    animation: fly-in linear both;
-    animation-timeline: view();
-    animation-range: entry 0% cover 100%;
-  }
-}
-
-@keyframes fly-in {
-  0%   { opacity: 0; transform: translateY(30px) scaleX(0.3); }
-  11%  { opacity: 1; transform: translateY(0) scaleX(1); }
-  90%  { opacity: 1; transform: translateY(0) scaleX(1); }
-  100% { opacity: 0; transform: translateY(-30px) scaleX(0.3); }
+/* List view: square thumbnail */
+.document-explorer-wrapper.list-view .image-thumb {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
 }
 
 ```
+
 
 
 ## Discussions to this library
