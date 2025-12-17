@@ -3,37 +3,97 @@ name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
 pageDecoration.prefix: "🗂️ "
 ---
+
 # Document Explorer
 
-### Currently supported extension:
+## Currently supported extension:
 * Pages: .md
 * Images: .png, .jpg, .jpeg, .webp, .gif, .svg
 * Documents: .pdf
-* Every other extension is rendered as:❔ (opened as raw file if browser supports it)
+* Every other extension is rendered as `❔` and opened as raw file if browser supports it
 
-### Supported Browsers:
+## Supported Browsers:
 * 🟢 Chrome:  tested(Mac&Win) & working 
 * 🟢 Edge:    tested(Win) & working
 * 🟢 Brave:   tested(Mac) & working
 * 🟢 Firefox: tested(Mac) & working (animations doesn`t work)
-* 🟡 Safari:  tested & partially working (opening documents doesn’t work)
+* 🟢 Safari:  tested(Mac) & working on latest edge 
 
-## GoTo: ${widgets.commandButton("Document Explorer","Navigate: Document Explorer")}
 
+## GoTo: ${widgets.commandButton("Document Explorer","Navigate: Document Explorer")} or use shortcut: `Ctrl-Alt-d`
+
+## Configuration Options and Defaults:
+* `homeDirName`    - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
+* `widgetHeight`   - Height of the widget in the VirtualPage (default: "75vh")
+* `tileSize`       - the tile size, recommanded between 100px-200px (default: "160px") 
+* `goToCurrentDir` - start navigation in the Directory of the currently opened page (default: true)
+
+
+```lua
+config.set( "explorer", {
+            homeDirName = "🏠 Home",
+            widgetHeight = "75vh"
+            tileSize = "160px", 
+            goToCurrentDir = true,
+}) 
+```
+
+> **note** Note
+> Copy this into a `space-lua` block on your config page to change default values
+
+## Integration:
+
+### Config Init
+```space-lua
+config.define("explorer", {
+  type = "object",
+  properties = {
+    tileSize = schema.string(),
+    widgetHeight = schema.string(),
+    homeDirName = schema.string(),
+    goToCurrentDir = schema.boolean(),
+   }
+})
+```
+
+### Command
 ```space-lua
 command.define {
   name = "Navigate: Document Explorer",
   key = "Ctrl-Alt-d",
   run = function()
-    editor.navigate("explorer")
+    local current = editor.getCurrentPath() or ""
+    local cfg = config.get("explorer") or {}
+    local goToCurrentDir = cfg.goToCurrentDir ~= false
+    local path = ""
+ 
+    if current == "explorer" or current:match("^explorer/") then
+      editor.navigate(current)
+      return
+    end
+    
+   if goToCurrentDir then
+      path = current:match("^(.*)/") or ""
+    end
+
+    if path ~= "" then
+      editor.navigate("explorer/" .. path)
+    else
+      editor.navigate("explorer")
+    end
   end
 }
-```
 
-## Integration:
+```
 
 ### Document Explorer Widget
 ```space-lua
+
+--Defining Config Defaults
+ local expConf = config.get("explorer") or {}
+ local tileSize = expConf.tileSize or "160px"
+ local homeDirName = expConf.homeDirName or "🏠 Home"
+  
 function widgets.documentExplorer(folderPrefix, height)
   if not height or height == "" then
     height = "75vh"
@@ -60,7 +120,7 @@ function widgets.documentExplorer(folderPrefix, height)
         end
       end
 
-      -- files only (no deeper paths)
+      -- files only
       if not rest:find("/") then
         if rest:match("%.png$") or rest:match("%.jpg$")
           or rest:match("%.jpeg$") or rest:match("%.webp$")
@@ -88,7 +148,7 @@ function widgets.documentExplorer(folderPrefix, height)
   local path = ""
 
   table.insert(crumbs,
-    "<a href='/explorer' data-ref='/explorer'>🏠 Home</a>"
+    "<a href='/explorer' data-ref='/explorer'>".. homeDirName .."</a>"
   )
 
   for part in folderPrefix:gmatch("([^/]+)/") do
@@ -105,7 +165,7 @@ function widgets.documentExplorer(folderPrefix, height)
 
   -- ---------- EXPLORER ----------
   local html =
-    "<div class='document-explorer-wrapper'>" ..
+    "<div class='document-explorer-wrapper' style='--tile-size:" .. tileSize .. "'>" ..
       breadcrumbHtml ..
       "<div class='document-explorer' style='max-height:" .. height .. ";'>"
 
@@ -181,10 +241,10 @@ end
 ```
 
 ### VirtualPage
-
 ```space-lua
-
-
+ local expConf = config.get("explorer") or {}
+ local widgetHeight = expConf.widgetHeight or "75vh"
+ 
 virtualPage.define {
   pattern = "explorer/?(.*)",
   run = function(path)
@@ -198,26 +258,30 @@ virtualPage.define {
     -- prevent traversal
     folder = folder:gsub("%.%.", "")
 
-    return "\n${widgets.documentExplorer(\"" .. folder .. "\", \"75vh\")}\n"
+    return "\n${widgets.documentExplorer(\"" .. folder .. "\", \""..widgetHeight.."\")}\n"
   end
 }
 
 ```
 
 ## Styling:
-
 ```space-style
+
+/* -------------- ICON SIZE -------------- */
+.folder-icon,
+.md-icon,
+.pdf-icon,
+.unknown-icon {
+  font-size: calc(var(--tile-size) * 0.4);
+  margin-top: calc(var(--tile-size) * 0.15);
+}
+
 
 /* ---------- UNKNOWN FILE TILE ---------- */
 .unknown-tile {
   width: 100%;
   text-align: center;
   justify-content: center;
-}
-
-.unknown-icon {
-  font-size: 4rem;
-  margin-top: 26px;
 }
 
 .unknown-tile::after {
@@ -236,38 +300,6 @@ virtualPage.define {
   background: oklch(0.45 0 0 / 0.6); /* neutral grey */
 }
 
-/* ---------- FILE EXTENSION LABEL ---------- */
-.md-tile,
-.pdf-tile,
-.unknown-tile {
-  position: relative; 
-}
-
-.md-tile::after,
-.pdf-tile::after {
-  content: attr(data-ext);
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  color: oklch(1 0 0); /* white */
-  font-size: 0.65em;
-  font-weight: bold;
-  padding: 1px 4px;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-.md-tile::after {
-  content: "MD";
-  background: oklch(0.55 0.23 260 / 0.6); /* blue */
-}
-
-.pdf-tile::after {
-  content: "PDF";
-  background: oklch(0.55 0.23 30 / 0.6); /* red */
-}
-
-
 /* ---------- PDF TILE ---------- */
 .pdf-tile {
   width: 100%;
@@ -276,11 +308,6 @@ virtualPage.define {
   text-overflow: ellipsis;
   text-align: center;
   justify-content: center;
-}
-
-.pdf-icon {
-  font-size: 4rem;
-  margin-top: 26px;
 }
 
 /* ---------- MARKDOWN TILE ---------- */
@@ -296,10 +323,26 @@ virtualPage.define {
   justify-content: center;
 }
 
-.md-icon {
-  font-size: 4rem;
-  margin-top: 26px;
+/* ---------- FILE EXTENSION LABEL ---------- */
+
+.md-tile, .pdf-tile, .unknown-tile { position: relative; }
+
+.md-tile::after,
+.pdf-tile::after {
+  content: attr(data-ext);
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  color: oklch(1 0 0); /* white */
+  font-size: 0.65em;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 4px;
+  pointer-events: none;
 }
+
+.md-tile::after { content: "MD"; background: oklch(0.55 0.23 260 / 0.6); /* blue */ }
+.pdf-tile::after { content: "PDF"; background: oklch(0.55 0.23 30 / 0.6); /* red */ }
 
 /* ---------- BREADCRUMBS ---------- */
 .explorer-breadcrumbs {
@@ -327,8 +370,8 @@ virtualPage.define {
 /* ---------- EXPLORER ---------- */
 .document-explorer {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  grid-auto-rows: 190px;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--tile-size) - 30px), 1fr));
+  grid-auto-rows: var(--tile-size);
   gap: 14px;
 
   padding: 1em;
@@ -343,25 +386,30 @@ virtualPage.define {
   text-decoration: none;
   color: inherit;
 
-  background: var(--editor-code-background-color);
+  background: oklch(0.85 0 0 / 0.2);
+
   border-radius: 8px;
   overflow: hidden;
 
   box-shadow: 0 2px 6px oklch(0 0 0 / 0.25);
 }
 
-.folder-tile {
-  align-items: center;
-  justify-content: center;
+.folder-tile .image-title {
+  position: relative;
 }
 
-.folder-icon {
-  font-size: 4rem;
-  margin-top: 26px;
+.folder-tile {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: center;
+    justify-content: center;
 }
+
 
 .image-thumb {
-  height: 150px;
+  height: calc(var(--tile-size) - 40px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -386,15 +434,9 @@ virtualPage.define {
 
 /* ---------- HOVER ---------- */
 .image-tile:hover {
-  background-color: oklch(0.65 0 0 / 0.3); /* neutral grey */
+  background-color: oklch(0.85 0 0 / 0.6); /* neutral grey */
 }
 
-/*
-.image-tile:hover img {
-  transform: scale(1.05);
-  transition: transform 0.25s ease;
-}
-*/
 
 /* ---------- ANIMATION (SAFE) ---------- */
 @supports (animation-timeline: view()) {
@@ -406,26 +448,10 @@ virtualPage.define {
 }
 
 @keyframes fly-in {
-  0% {
-    opacity: 0;
-    transform: translateY(30px) scaleX(0.3);
-/*    filter: blur(5px); */
-  }
-  11% {
-    opacity: 1;
-    transform: translateY(0) scaleX(1);
- /*   filter: blur(0); */
-  }
-  90% {
-    opacity: 1;
-    transform: translateY(0) scaleX(1);
-/*    filter: blur(0); */
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-30px) scaleX(0.3);
-/*    filter: blur(5px); */
-  }
+  0%   { opacity: 0; transform: translateY(30px) scaleX(0.3); }
+  11%  { opacity: 1; transform: translateY(0) scaleX(1); }
+  90%  { opacity: 1; transform: translateY(0) scaleX(1); }
+  100% { opacity: 0; transform: translateY(-30px) scaleX(0.3); }
 }
 
 ```
