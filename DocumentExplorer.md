@@ -34,7 +34,7 @@ pageDecoration.prefix: "🗂️ "
 ```lua
 config.set( "explorer", {
             homeDirName = "🏠 Home",
-            virtualPagePattern = "🗂️ Explorer"
+            virtualPagePattern = "🗂️ Explorer",
             widgetHeight = "75vh",
             tileSize = "120px", 
             goToCurrentDir = true,
