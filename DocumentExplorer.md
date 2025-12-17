@@ -26,7 +26,7 @@ pageDecoration.prefix: "🗂️ "
 * `homeDirName`        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
 * `virtulaPagePattern` - Virtual page pattern (default: "🗂️ Explorer")
 * `widgetHeight`       - Height of the widget in the VirtualPage (default: "75vh")
-* `tileSize`           - Tile size, recommanded between 100px-200px (default: "120px") 
+* `tileSize`           - Tile size, recommended between 100px-200px (default: "120px") 
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
 * `listView`           - Switch to listView (default: false)
 
