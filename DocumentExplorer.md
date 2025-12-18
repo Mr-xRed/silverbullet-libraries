@@ -28,18 +28,18 @@ pageDecoration.prefix: "🗂️ "
 * `widgetHeight`       - Height of the widget in the VirtualPage (default: "75vh")
 * `tileSize`           - Tile size, recommended between 100px-200px (default: "120px") 
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
-* `listView`           - Switch to listView (default: false)
-
+* `viewMode`           - Choose between “grid” and “list” (default: grid)
 
 ```lua
-config.set( "explorer", {
-            homeDirName = "🏠 Home",
-            virtualPagePattern = "🗂️ Explorer",
-            widgetHeight = "75vh",
-            tileSize = "120px", 
-            goToCurrentDir = true,
-            listView = false
-}) 
+config.set("explorer", {
+  homeDirName = "🏠 Home",
+  virtualPagePattern = "🗂️ Explorer",
+  widgetHeight = "75vh",
+  tileSize = "120px",
+  goToCurrentDir = true,
+  viewMode = "grid"
+})
+
 ```
 
 > **note** Note
@@ -57,9 +57,10 @@ config.define("explorer", {
     homeDirName = schema.string(),
     virtualPagePattern = schema.string(),
     goToCurrentDir = schema.boolean(),
-    listView = schema.boolean()
-   }
+    viewMode = schema.string() -- "grid" | "list"
+  }
 })
+
 ```
 
 
@@ -74,19 +75,19 @@ command.define {
     local goToCurrentDir = cfg.goToCurrentDir ~= false
     local path = ""
     local virtualPagePattern = cfg.virtualPagePattern or "🗂️ Explorer"
-    local virtualPagePatternMatch = "^"..virtualPagePattern.."/"
-    
+    local virtualPagePatternMatch = "^" .. virtualPagePattern .. "/"
+
     if current == virtualPagePattern or current:match(virtualPagePatternMatch) then
       editor.navigate(current)
       return
     end
-    
-   if goToCurrentDir then
+
+    if goToCurrentDir then
       path = current:match("^(.*)/") or ""
     end
 
     if path ~= "" then
-      editor.navigate(virtualPagePattern.."/" .. path)
+      editor.navigate(virtualPagePattern .. "/" .. path)
     else
       editor.navigate(virtualPagePattern)
     end
@@ -104,13 +105,13 @@ local tileSize = cfg.tileSize or "120px"
 local homeDirName = cfg.homeDirName or "🏠 Home"
 local virtualPagePattern = cfg.virtualPagePattern or "🗂️ Explorer"
 
--- Document Explorer Widget
-function widgets.documentExplorer(folderPrefix, height, listView)
+function widgets.documentExplorer(folderPrefix, height, viewMode)
   height = height or "75vh"
   folderPrefix = folderPrefix or ""
-  listView = listView or false  -- default false (grid view)
+  viewMode = (viewMode == "list") and "list" or "grid"
 
-  local wrapperClass = listView and "document-explorer-wrapper list-view" or "document-explorer-wrapper grid-view"
+  local wrapperClass =
+    "document-explorer-wrapper " .. viewMode .. "-view"
 
   local files = space.listFiles()
   local folders, images, mds, pdfs, unknowns = {}, {}, {}, {}, {}
@@ -121,7 +122,6 @@ function widgets.documentExplorer(folderPrefix, height, listView)
     if folderPrefix == "" or file.name:sub(1, #folderPrefix) == folderPrefix then
       local rest = file.name:sub(#folderPrefix + 1)
 
-      -- subfolders
       local slashPos = rest:find("/")
       if slashPos then
         local sub = rest:sub(1, slashPos - 1)
@@ -131,7 +131,6 @@ function widgets.documentExplorer(folderPrefix, height, listView)
         end
       end
 
-      -- files only
       if not rest:find("/") then
         if rest:match("%.png$") or rest:match("%.jpg$")
           or rest:match("%.jpeg$") or rest:match("%.webp$")
@@ -159,15 +158,17 @@ function widgets.documentExplorer(folderPrefix, height, listView)
   local path = ""
 
   table.insert(crumbs,
-    "<a href='/"..virtualPagePattern..
-    "' data-ref='/"..virtualPagePattern.."'>" .. homeDirName .. "</a>"
+    "<a href='/" .. virtualPagePattern ..
+    "' data-ref='/" .. virtualPagePattern .. "'>" ..
+    homeDirName .. "</a>"
   )
 
   for part in folderPrefix:gmatch("([^/]+)/") do
     path = path .. part .. "/"
     table.insert(crumbs,
-      "<a href='/"..virtualPagePattern.."/" .. path .. 
-      "' data-ref='/"..virtualPagePattern.."/" .. path .. "'>" .. part .. "</a>"
+      "<a href='/" .. virtualPagePattern .. "/" .. path ..
+      "' data-ref='/" .. virtualPagePattern .. "/" .. path .. "'>" ..
+      part .. "</a>"
     )
   end
 
@@ -179,16 +180,18 @@ function widgets.documentExplorer(folderPrefix, height, listView)
   -- ---------- EXPLORER ----------
   local html =
     "<div class='" .. wrapperClass ..
-    "' style='--tile-size:" .. tileSize .. 
-    ";--icon-size-grid: calc(var(--tile-size) * 0.4); --icon-size-list: 1.5em;'>" .. breadcrumbHtml ..
+    "' style='--tile-size:" .. tileSize ..
+    ";--icon-size-grid: calc(var(--tile-size) * 0.4); --icon-size-list: 1.5em;'>" ..
+    breadcrumbHtml ..
     "<div class='document-explorer' style='max-height:" .. height .. ";'>"
 
   -- Parent folder
   if folderPrefix ~= "" then
     local parent = folderPrefix:gsub("[^/]+/$", "")
     html = html ..
-      "<a class='image-tile folder-tile' href='/" .. virtualPagePattern .. "/" .. parent ..
-      "' data-ref='/"..virtualPagePattern.."/" .. parent .. "'>" ..
+      "<a class='image-tile folder-tile' href='/" ..
+      virtualPagePattern .. "/" .. parent ..
+      "' data-ref='/" .. virtualPagePattern .. "/" .. parent .. "'>" ..
       "<div class='folder-icon'>📂</div>" ..
       "<div class='image-title'>..</div>" ..
       "</a>"
@@ -198,14 +201,15 @@ function widgets.documentExplorer(folderPrefix, height, listView)
   for _, f in ipairs(folders) do
     local p = folderPrefix .. f .. "/"
     html = html ..
-      "<a class='image-tile folder-tile' href='/"..virtualPagePattern.."/" .. p ..
-      "' data-ref='/"..virtualPagePattern.."/" .. p .. "'>" ..
+      "<a class='image-tile folder-tile' href='/" ..
+      virtualPagePattern .. "/" .. p ..
+      "' data-ref='/" .. virtualPagePattern .. "/" .. p .. "'>" ..
       "<div class='folder-icon'>📁</div>" ..
       "<div class='image-title'>" .. f .. "</div>" ..
       "</a>"
   end
 
-  -- Markdown files
+  -- Markdown
   for _, md in ipairs(mds) do
     local target = "/" .. md.full:gsub("%.md$", "")
     html = html ..
@@ -216,7 +220,7 @@ function widgets.documentExplorer(folderPrefix, height, listView)
       "</a>"
   end
 
-  -- PDF files
+  -- PDFs
   for _, pdf in ipairs(pdfs) do
     local target = "/" .. pdf.full
     html = html ..
@@ -231,21 +235,22 @@ function widgets.documentExplorer(folderPrefix, height, listView)
   for _, img in ipairs(images) do
     local fs = "/.fs/" .. img.full
     html = html ..
-      "<a class='image-tile' href='" .. fs .. 
+      "<a class='image-tile' href='" .. fs ..
       "' data-ref='/" .. img.full .. "' title='" .. img.full .. "'>" ..
       "<div class='image-thumb'><img src='" .. fs .. "' loading='lazy' /></div>" ..
       "<div class='image-title'>" .. img.name .. "</div>" ..
       "</a>"
   end
 
-  -- Unknown files
+  -- Unknown
   for _, unk in ipairs(unknowns) do
     local ext = unk.name:match("%.([^.]+)$")
     ext = ext and ext:upper() or "?"
 
     html = html ..
       "<a class='image-tile unknown-tile' data-ext='" .. ext ..
-      "' href='/.fs/" .. unk.full .. "' target='_blank' title='" .. unk.full .. "'>" ..
+      "' href='/.fs/" .. unk.full ..
+      "' target='_blank' title='" .. unk.full .. "'>" ..
       "<div class='unknown-icon'>❔</div>" ..
       "<div class='image-title'>" .. unk.name .. "</div>" ..
       "</a>"
@@ -263,27 +268,59 @@ end
 
 ### VirtualPage
 ```space-lua
- local cfg = config.get("explorer") or {}
- local widgetHeight = cfg.widgetHeight or "75vh"
- local virtualPagePattern = cfg.virtualPagePattern or "🗂️ Explorer"
- local listView = cfg.listView or false
- 
+command.define {
+  name = "Explorer: Toggle View Mode",
+  run = function()
+    local cfg = config.get("explorer") or {}
+    local currentMode = cfg.viewMode or "grid"
+    local newMode = (currentMode == "list") and "grid" or "list"
+
+    cfg.viewMode = newMode
+    config.set("explorer", cfg)
+    
+    local current = editor.getCurrentPath()
+    if current then
+      editor.navigate(current)
+    end
+  end
+}
+
+local cfg = config.get("explorer") or {}
+local widgetHeight = cfg.widgetHeight or "75vh"
+local virtualPagePattern = cfg.virtualPagePattern or "🗂️ Explorer"
+
 virtualPage.define {
-  pattern = virtualPagePattern.."/?(.*)",
+  pattern = virtualPagePattern .. "/?(.*)",
   run = function(path)
+    -- READ CONFIG HERE, NOT OUTSIDE
+    local cfg = config.get("explorer") or {}
+    local viewMode = cfg.viewMode or "grid"
+
     local folder = path or ""
 
-    -- normalise
     if folder ~= "" and not folder:match("/$") then
       folder = folder .. "/"
     end
 
-    -- prevent traversal
     folder = folder:gsub("%.%.", "")
 
-    return "\n${widgets.documentExplorer(\"" .. folder .. "\", \"" .. widgetHeight .. "\"," .. (listView and "true" or "false") .. ")}\n"
+    local toggleLabel =
+      (viewMode == "list") and "Switch to Grid" or "Switch to List"
+
+    local toolbar =
+      "\n${widgets.commandButton(\"" ..
+      toggleLabel ..
+      "\", \"Explorer: Toggle View Mode\")}\n"
+
+    return "\n" ..
+      toolbar ..
+      "\n${widgets.documentExplorer(\"" ..
+      folder .. "\", \"" ..
+      widgetHeight .. "\", \"" ..
+      viewMode .. "\")}\n"
   end
 }
+
 
 ```
 
@@ -490,7 +527,6 @@ virtualPage.define {
 }
 
 ```
-
 
 
 ## Discussions to this library
