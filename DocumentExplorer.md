@@ -9,7 +9,7 @@ pageDecoration.prefix: "🗂️ "
 ## Currently supported extension:
 * Pages: .md
 * Images: .png, .jpg, .jpeg, .webp, .gif, .svg
-* Documents: .pdf
+* Documents: .pdf, .excalidraw, .drawio
 * Every other extension is rendered as `❔` and opened as raw file if browser supports it
 
 ## Supported Browsers:
@@ -114,7 +114,7 @@ function widgets.documentExplorer(folderPrefix, height, viewMode)
     "document-explorer-wrapper " .. viewMode .. "-view"
 
   local files = space.listFiles()
-  local folders, images, mds, pdfs, unknowns = {}, {}, {}, {}, {}
+  local folders, images, mds, pdfs, excalidraws, drawios, unknowns = {}, {}, {}, {}, {}, {}, {}
   local seen = {}
 
   -- ---------- COLLECT DIRECT CHILDREN ----------
@@ -140,6 +140,10 @@ function widgets.documentExplorer(folderPrefix, height, viewMode)
           table.insert(mds, { full = file.name, name = rest:gsub("%.md$", "") })
         elseif rest:match("%.pdf$") then
           table.insert(pdfs, { full = file.name, name = rest:gsub("%.pdf$", "") })
+        elseif rest:match("%.excalidraw$") then
+          table.insert(excalidraws, { full = file.name, name = rest:gsub("%.excalidraw$", "") })
+        elseif rest:match("%.drawio$") then
+          table.insert(drawios, { full = file.name, name = rest:gsub("%.drawio$", "") })
         else
           table.insert(unknowns, { full = file.name, name = rest })
         end
@@ -151,6 +155,8 @@ function widgets.documentExplorer(folderPrefix, height, viewMode)
   table.sort(images, function(a,b) return a.name < b.name end)
   table.sort(mds, function(a,b) return a.name < b.name end)
   table.sort(pdfs, function(a,b) return a.name < b.name end)
+  table.sort(excalidraws, function(a,b) return a.name < b.name end)
+  table.sort(drawios, function(a,b) return a.name < b.name end)
   table.sort(unknowns, function(a,b) return a.name < b.name end)
 
   -- ---------- BREADCRUMBS ----------
@@ -228,6 +234,28 @@ function widgets.documentExplorer(folderPrefix, height, viewMode)
       "' data-ref='" .. target .. "' title='" .. pdf.full .. "'>" ..
       "<div class='pdf-icon'>📄</div>" ..
       "<div class='image-title'>" .. pdf.name .. "</div>" ..
+      "</a>"
+  end
+
+  -- Excalidraw
+  for _, ex in ipairs(excalidraws) do
+    local target = "/" .. ex.full
+    html = html ..
+      "<a class='image-tile excalidraw-tile' href='" .. target ..
+      "' data-ref='" .. target .. "' title='" .. ex.full .. "'>" ..
+      "<div class='excalidraw-icon'>🔲</div>" ..
+      "<div class='image-title'>" .. ex.name .. "</div>" ..
+      "</a>"
+  end
+
+  -- Draw.io
+  for _, d in ipairs(drawios) do
+    local target = "/" .. d.full
+    html = html ..
+      "<a class='image-tile drawio-tile' href='" .. target ..
+      "' data-ref='" .. target .. "' title='" .. d.full .. "'>" ..
+      "<div class='drawio-icon'>📐</div>" ..
+      "<div class='image-title'>" .. d.name .. "</div>" ..
       "</a>"
   end
 
@@ -371,6 +399,8 @@ virtualPage.define {
 .folder-icon,
 .md-icon,
 .pdf-icon,
+.excalidraw-icon,
+.drawio-icon,
 .unknown-icon {
   display: flex;
   align-items: center;
@@ -378,10 +408,12 @@ virtualPage.define {
 }
 
 /* ---------- FILE EXTENSION LABELS ---------- */
-.md-tile, .pdf-tile, .unknown-tile { position: relative; }
+.md-tile, .pdf-tile, .excalidraw-tile, .drawio-tile, .unknown-tile { position: relative; }
 
 .md-tile::after { content: "MD"; background: oklch(0.55 0.23 260 / 0.6); }
 .pdf-tile::after { content: "PDF"; background: oklch(0.55 0.23 30 / 0.6); }
+.excalidraw-tile::after { content: "EX";  background: oklch(0.55 0.14 300 / 0.65); }
+.drawio-tile::after { content: "DIO";  background: oklch(0.55 0.23 90 / 0.6); }
 .unknown-tile::after {
   content: attr(data-ext);
   background: oklch(0.45 0 0 / 0.6);
@@ -389,6 +421,8 @@ virtualPage.define {
 
 .md-tile::after,
 .pdf-tile::after,
+.excalidraw-tile::after,
+.drawio-tile::after,
 .unknown-tile::after {
   position: absolute;
   top: 4px;
@@ -454,6 +488,8 @@ virtualPage.define {
 .document-explorer-wrapper.grid-view .folder-icon,
 .document-explorer-wrapper.grid-view .md-icon,
 .document-explorer-wrapper.grid-view .pdf-icon,
+.document-explorer-wrapper.grid-view .excalidraw-icon,
+.document-explorer-wrapper.grid-view .drawio-icon,
 .document-explorer-wrapper.grid-view .unknown-icon {
   font-size: var(--icon-size-grid);
   margin-top: calc((var(--tile-size) - var(--icon-size-grid)) / 2 - 10px);
@@ -491,6 +527,8 @@ virtualPage.define {
 .document-explorer-wrapper.list-view .folder-icon,
 .document-explorer-wrapper.list-view .md-icon,
 .document-explorer-wrapper.list-view .pdf-icon,
+.document-explorer-wrapper.list-view .excalidraw-icon,
+.document-explorer-wrapper.list-view .drawio-icon,
 .document-explorer-wrapper.list-view .unknown-icon {
   font-size: var(--icon-size-list);
   margin-top: 0;
