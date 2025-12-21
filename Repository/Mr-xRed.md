@@ -21,10 +21,15 @@ uri: github:Mr-xRed/silverbullet-libraries/OpenWeatherMap_Widgets.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/OpenWeatherMap_Widgets.md
 description: "OpenWeatherMap Widget and slash commands"
 ---
-name: "🗂️ Document Explorer"
+name: "☠️ Virtual Page Document Explorer (Deprecated)"
+uri: github:Mr-xRed/silverbullet-libraries/VirtualPageDocumentExplorer.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/VirtualPageDocumentExplorer.md
+description: "VirtualPage Document Explorer"
+---
+name: "🗂️ Document Explorer for the Side Panel"
 uri: github:Mr-xRed/silverbullet-libraries/DocumentExplorer.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DocumentExplorer.md
-description: "Document Explorer VirtualPage"
+description: "Document Explorer Side Panel"
 ```
 
 ## Productivity Shortcuts
