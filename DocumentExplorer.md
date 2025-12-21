@@ -6,6 +6,9 @@ pageDecoration.prefix: "🗂️ "
 
 # 🗂️ Document Explorer for the Side Panel
 
+> **warning** WORK IN PROGRESS
+> Not all features from the OLD (VirtualPage) version are present. Currently only GridView is available
+
 ## Currently supported extension:
 * Pages: .md
 * Images: .png, .jpg, .jpeg, .webp, .gif, .svg
@@ -21,9 +24,9 @@ pageDecoration.prefix: "🗂️ "
 ## Configuration Options and Defaults:
 * `homeDirName`        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
-* `tileSize`           - Tile size, recommended between 100px-200px (default: "120px") 
-* `viewMode`           - Choose between “grid” and “list” (default: grid)
+* `tileSize`           - Tile size, recommended between 60px-160px (default: "80px") 
 * enableContextMenu  - Enable the Right-Click for Files & Folders: Rename & Delete (default: false)
+* _`viewMode`           - CURRENTLY NOT SUPPORTED - Choose between “grid” and “list” (default: grid)_
 
 ```lua
 config.set("explorer", {
