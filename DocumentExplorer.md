@@ -21,7 +21,7 @@ pageDecoration.prefix: "🗂️ "
 ## or use the shortcuts: 
 
 > **tip** New ShortCut Keys
-> `Ctrl-Alt-d`          - Toggle Document Explorer
+> `Ctrl-Alt-d`          - Toggle Document Explorer in the Side Panel
 > `Ctrl-Alt-w`          - Toggle Document Explorer in Drag&Resize Window
 > `Ctrl-Alt-ArrotRight` - Increase Document Explorer Width in 10% increments
 > `Ctrl-Alt-ArrotLeft`  - Decrease Document Explorer Width in 10% increments
