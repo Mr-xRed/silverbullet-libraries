@@ -17,8 +17,8 @@ pageDecoration.prefix: "🗂️ "
 * Documents: .pdf, .excalidraw, .drawio (if Plugs installed)
 * Every other extension is rendered as `❔` and opened as raw file if browser supports it
 
-## GoTo: ${widgets.commandButton("Toggle Document Explorer","Navigate: Document Explorer")} or use shortcuts: 
-
+## GoTo: ${widgets.commandButton("Document Explorer in SidePanel","Navigate: Document Explorer")} or ${widgets.commandButton("Document Explorer Move&Resize","Navigate: Document Explorer Move&Resize")}
+## or use the shortcuts: 
 
 > **tip** New ShortCut Keys
 > `Ctrl-Alt-d`          - Toggle Document Explorer
