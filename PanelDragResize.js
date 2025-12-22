@@ -131,7 +131,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   // --- NEW BOUNDS & SNAPPING HELPER ---
   const applyBounds = (x, y, w, h) => {
     const minW = 310;
-    const minH = 300;
+    const minH = 400;
     const snapThreshold = 15;
     
     // Constrain size
