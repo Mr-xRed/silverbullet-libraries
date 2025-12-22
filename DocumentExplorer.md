@@ -718,6 +718,21 @@ color: var(--explorer-text-color);
 }
 ```
 
+## For the Drag&Resize
+
+```space-style
+:root{
+    --header-height: 20px;         /* Header height, drag-area */
+ 
+    --frame-width: 5px;           /* frame thickness */
+    --frame-color: rgba(64, 64, 64, 0.2);         /* frame color */
+
+    --window-border: 2px;         /* solid border width (aesthetic) */
+    --window-border-radius: 10px; /* inner iframe border radius */
+    --window-border-color: #5558; /* solid border color (aesthetic) */
+}
+
+```
 
 ## Discussions to this library
 * [SilverBullet Community](https://community.silverbullet.md/t/document-explorer-image-gallery-for-silverbullet/3647?u=mr.red)
