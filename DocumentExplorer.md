@@ -1,6 +1,8 @@
 ---
 name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
+files:
+- PanelDragResize.js
 pageDecoration.prefix: "🗂️ "
 ---
 
@@ -17,9 +19,12 @@ pageDecoration.prefix: "🗂️ "
 
 ## GoTo: ${widgets.commandButton("Toggle Document Explorer","Navigate: Document Explorer")} or use shortcuts: 
 
-`Ctrl-Alt-d`          - Toggle Document Explorer
-`Ctrl-Alt-ArrotRight` - Increase Document Explorer Width in 10% increments
-`Ctrl-Alt-ArrotLeft`  - Decrease Document Explorer Width in 10% increments
+
+> **tip** New ShortCut Keys
+> `Ctrl-Alt-d`          - Toggle Document Explorer
+> `Ctrl-Alt-w`          - Toggle Document Explorer in Drag&Resize Window
+> `Ctrl-Alt-ArrotRight` - Increase Document Explorer Width in 10% increments
+> `Ctrl-Alt-ArrotLeft`  - Decrease Document Explorer Width in 10% increments
 
 ## Configuration Options and Defaults:
 * `homeDirName`        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
@@ -587,16 +592,14 @@ color: var(--explorer-text-color);
 
 /* IMAGE TILE THUMBNAILS */
 
-/* Add this to your existing space-style block */
-
 .tile-thumb {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* This crops the image to fill the icon area */
+  object-fit: cover; 
   border-radius: 4px;
 }
 
-/* Adjust the icon container for image tiles to use more space */
+
 .image-tile .icon {
   margin-top: 0;
   height: 100%;
@@ -605,7 +608,6 @@ color: var(--explorer-text-color);
   overflow: hidden;
 }
 
-/* Ensure the title stays visible over/under the image if needed */
 .image-tile .grid-title {
   background: oklch(0 0 0 / 0.6);
   color: white;
@@ -712,7 +714,7 @@ color: var(--explorer-text-color);
 
 :root {
    --tile-bg: oklch(0.75 0 0 / 0.1);
-   font-family: "Segoe UI", Roboto, Helvetica, sans-serif;
+   font-family: Monaco, Menlo, Consolas, "Courier New", Courier, monospace;
 }
 ```
 

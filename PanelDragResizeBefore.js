@@ -2,8 +2,10 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   const panel = document.querySelector(panelSelector);
   if (!panel || panel.parentElement.classList.contains('sb-panel-container')) return;
 
+  // 1. Capture Original Styles for Reset
   const originalInlineStyles = panel.getAttribute("style") || "";
 
+  // 2. Global Style Injection (Targets the Main HTML Head)
   if (!document.getElementById("sb-global-drag-styles")) {
     const style = document.createElement("style");
     style.id = "sb-global-drag-styles";
@@ -68,16 +70,11 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         position: absolute !important;
         right: 0 !important;
         bottom: 0 !important;
-        width: 25px !important;
-        height: 25px !important;
+        width: 15px !important;
+        height: 15px !important;
         cursor: nwse-resize !important;
         z-index: 10001 !important;
-        background: linear-gradient(135deg, transparent 50%, rgba(128,128,128,0.1) 50%) !important;
-        border-bottom-right-radius: var(--window-border-radius) !important;
-      }
-      
-      .sb-resize-handle:hover {
-        background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%) !important;
+        background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.1) 50%) !important;
         border-bottom-right-radius: var(--window-border-radius) !important;
       }
 
@@ -94,12 +91,12 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         box-sizing: border-box !important;
         border: var(--window-border) solid var(--window-border-color) !important;
         border-radius: var(--window-border-radius) !important;
-        background: transparent !important;
       }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
 
+  // 3. Create Container Elements
   const container = document.createElement("div");
   container.className = "sb-panel-container";
   const header = document.createElement("div");
@@ -107,12 +104,14 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   const resizer = document.createElement("div");
   resizer.className = "sb-resize-handle";
 
+  // 4. Wrap the Panel
   panel.parentNode.insertBefore(container, panel);
   container.appendChild(header);
   container.appendChild(panel);
   container.appendChild(resizer);
   panel.classList.add('is-drag-active');
 
+  // 5. Cleanup Observer
   const observer = new MutationObserver(() => {
     if (!document.body.contains(panel)) {
       panel.classList.remove('is-drag-active');
@@ -123,36 +122,11 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
+  // 6. Movement & Resize Logic
   let isDragging = false, isResizing = false;
   let startX, startY, startW, startH, offsetX, offsetY;
   const setIframesPointer = (val) => 
     container.querySelectorAll("iframe").forEach(f => f.style.pointerEvents = val);
-
-  // --- NEW BOUNDS & SNAPPING HELPER ---
-  const applyBounds = (x, y, w, h) => {
-    const minW = 310;
-    const minH = 400;
-    const snapThreshold = 15;
-    
-    // Constrain size
-    const finalW = Math.max(minW, w);
-    const finalH = Math.max(minH, h);
-
-    // Calculate available movement area
-    const maxX = window.innerWidth - finalW;
-    const maxY = window.innerHeight - finalH;
-
-    let finalX = Math.max(0, Math.min(x, maxX));
-    let finalY = Math.max(0, Math.min(y, maxY));
-
-    // Snapping logic
-    if (finalX < snapThreshold) finalX = 0;
-    if (maxX - finalX < snapThreshold) finalX = maxX;
-    if (finalY < snapThreshold) finalY = 0;
-    if (maxY - finalY < snapThreshold) finalY = maxY;
-
-    return { x: finalX, y: finalY, w: finalW, h: finalH };
-  };
 
   header.addEventListener("pointerdown", (e) => {
     isDragging = true;
@@ -174,39 +148,14 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
     document.body.style.userSelect = "none";
   });
 
-  // --- UPDATED POINTERMOVE WITH SNAPPING ---
   window.addEventListener("pointermove", (e) => {
     if (isDragging) {
-      const coords = applyBounds(
-        e.clientX - offsetX, 
-        e.clientY - offsetY, 
-        container.offsetWidth, 
-        container.offsetHeight
-      );
-      container.style.left = `${coords.x}px`;
-      container.style.top = `${coords.y}px`;
+      container.style.left = `${e.clientX - offsetX}px`;
+      container.style.top = `${e.clientY - offsetY}px`;
     } else if (isResizing) {
-      const coords = applyBounds(
-        container.offsetLeft, 
-        container.offsetTop, 
-        startW + (e.clientX - startX), 
-        startH + (e.clientY - startY)
-      );
-      container.style.width = `${coords.w}px`;
-      container.style.height = `${coords.h}px`;
+      container.style.width = `${Math.max(250, startW + (e.clientX - startX))}px`;
+      container.style.height = `${Math.max(250, startH + (e.clientY - startY))}px`;
     }
-  });
-
-  // Keep window in view during browser resize
-  window.addEventListener("resize", () => {
-    const coords = applyBounds(
-      container.offsetLeft, 
-      container.offsetTop, 
-      container.offsetWidth, 
-      container.offsetHeight
-    );
-    container.style.left = `${coords.x}px`;
-    container.style.top = `${coords.y}px`;
   });
 
   const stopAction = () => {
@@ -221,14 +170,13 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   };
 
   window.addEventListener("pointerup", stopAction);
-  window.addEventListener("pointercancel", stopAction);
 
+  // 7. Load Persistence
   const saved = JSON.parse(localStorage.getItem("sb_dims_v1") || "null");
   if (saved) {
-    const coords = applyBounds(saved.x, saved.y, saved.w, saved.h);
-    container.style.left = `${coords.x}px`;
-    container.style.top = `${coords.y}px`;
-    container.style.width = `${coords.w}px`;
-    container.style.height = `${coords.h}px`;
+    container.style.left = `${saved.x}px`;
+    container.style.top = `${saved.y}px`;
+    container.style.width = `${saved.w}px`;
+    container.style.height = `${saved.h}px`;
   }
 }

@@ -5,17 +5,19 @@ files:
 - PanelDragResize.js
 pageDecoration.prefix: "📎 "
 ---
-# Treeview Extension to Drag & Resize
-
-> **warning** Experimental
-> This Extension is still experimental and it might not work on all your Devices/Mobiles/Tablets/Browsers as intended.
+# Treeview or Document Explorer Extension to Drag & Resize
 
 > **warning** Dependencies
 > You must have TreeView Plug installed: [Treeview Plug](https://github.com/joekrill/silverbullet-treeview)
+> to use it with [Document Explorer](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DocumentExplorer.md) you don’t need to install this Extension, it is already included in that Library.
+
+> **tip** New ShortCut Keys
+> `Ctrl-Alt-a` / `Cmd-Alt-a` - Toggle Tree View with Move&Resize
+> `Ctrl-Alt-b` / `Cmd-Alt-b` - Toggle Tree View 
 
 ## How to Install?
 
-### Step 1. Replace your Treeview ActionButton, with new command:
+### Step 1. Replace your Tree View ActionButton, with the new command:
 
 > **note** Important
 > Replace the old command: `"Tree View: Toggle"` with this one: `"Tree View: Toggle Move&Resize"`
@@ -38,105 +40,44 @@ Here is an example how your ActionButton Config should look like this:
 > **success** Success
 > Now you have a Movable and Resizable TreeView
 
+
 ## How does this work:
-> **warning** This is currently more like a hack than a real-world implementation
->   1.  **Selection of elements:** It grabs the two panel `<div>` (primary and secondary) and the primary is used as the header element and as the drag handle.
->   2.  **State tracking:** Maintains flags (`isDragging`, `isResizing`) and initial offsets/positions for calculating movement or resizing.
->   3.  **Edge detection:** Determines if the pointer is near the right or bottom edges to switch between drag mode and resize mode.
->   4.  **Dragging logic:** Calculates the new top-left position of the primary panel based on cursor movement and applies the same relative delta to the secondary panel.
->   5.  **Resizing logic:** Computes width/height changes from pointer movement and updates both panels dimensions while keeping their relative sizes.
->   6.  **Cursor management:** Dynamically updates the cursor style (`grab`, `move`, `resize`) depending on hover or active action.
->   7.  **Iframe handling:** Temporarily disables `pointer-events` on any nested iframes while dragging/resizing to prevent event capture issues.
->   8.  **Bounds and snapping:** Ensures panels stay within screen limits, respect minimum width/height, and snap to edges if near.
->   9.  **Persistence:** Stores panel positions and sizes in `localStorage` so the layout survives reloads.
->   10. **Global pointer management:** Uses `window` event listeners for pointermove and pointerup to ensure smooth dragging/resizing even if the cursor leaves the header, cleaning up afterward.
->  
-> ==This is essentially a two-panel windowing system built on top of elements never intended for it.==
+
+> **success** Fixed
+>   * **DOM Encapsulation:** Instead of linking two panels, it dynamically "kidnaps" the existing `.sb-panel` and wraps it inside a new `.sb-container` parent, creating a self-contained window unit. 
+> >  *  **Shadow Header Injection:** It generates a dedicated `.sb-header` element that acts as a structural handle. This separates the "Drag Zone" from the "Content Zone," preventing accidental interactions with the UI inside the panel.
+>   *  **Stateful Persistence:** Uses a unified JSON object in `localStorage` to preserve the window's "geometry" (X, Y, Width, Height) across sessions.
+>   *  **Style Virtualization:** It captures the panel’s original inline styles before the transformation and stores them in a constant, allowing for a perfect "factory reset" when the window is closed.
+> >  *  **Overlay Protection:** Automatically manages `pointer-events` on nested iframes during movement. This prevents the "Iframe Trap" where the cursor gets "swallowed" by the internal content, causing the drag to stutter or fail.
+>   *  **Edge-Independent Resizing:** Uses a dedicated `.sb-resize-handle` anchor in the bottom-right corner rather than simple edge detection, providing a much more reliable target for resizing on high-resolution screens.
+>   *  **Auto-Cleanup Observer:** Employs a `MutationObserver` to watch the global DOM. If the original panel is removed (e.g., by the system closing the panel), the script detects this and automatically destroys the container to prevent "ghost" elements.
+>   *  **Priority Style Injection:** Injects a CSS block directly into the main document’s `<head>` with `!important` flags to override hardcoded system styles that would otherwise force the panel back to its original position.
+>   *  **Pointer Capture API:** Utilizes `setPointerCapture` so that even if the user moves the mouse faster than the window can follow, the browser keeps the "focus" on the drag/resize action.
+> >  *  **Context-Aware Global Fixes:** Targets external elements (like `#sb-top .panel`) via the main HTML head to ensure the entire workspace adapts to the floating window layout.
 
 
-## Implementation
-### Visual Customization & Style
+## Visual Customization & Style
+
 ```space-style
-
 :root{
-    --sb-panel-width: 400px;      /* Default panel width */
-    --sb-panel-height: 400px;     /* Default panel height */
-
-    --min-sb-panel-height: 250px; /* Minimal panel height */
-    --min-sb-panel-width: 250px;  /* Minimal panel width */
-
-    --header-height: 30px;        /* Header height, drag-area */
-    --top-offset: 70px;           /* Initial position */
-    --left-offset: 10px;          /* Initial position */
-
-    --frame-width: 5px;           /* frame thickness, you need to clear local storage to take effect*/
+    --header-height: 20px;         /* Header height, drag-area */
+ 
+    --frame-width: 5px;           /* frame thickness */
     --frame-color: rgba(64, 64, 64, 0.2);         /* frame color */
 
     --window-border: 2px;         /* solid border width (aesthetic) */
-    --window-border-radius: 10px; /* inner iframe border radius*/
+    --window-border-radius: 10px; /* inner iframe border radius */
     --window-border-color: #5558; /* solid border color (aesthetic) */
 }
 
-#sb-top .panel{
-  display: block;
-  position: fixed;
-
-  box-sizing: border-box ; 
-
-  width: var(--sb-panel-width);
-  height: var(--sb-panel-height);
-
-  top: calc(var(--top-offset));
-  left: calc(var(--left-offset));
-
-  min-height: var(--min-sb-panel-width);
-  min-width: var(--min-sb-panel-height);
-
-  background: var(--frame-color) !important;
-  border: var(--window-border) solid var(--window-border-color);
-
-  backdrop-filter: blur(10px);
-  box-shadow:0px 0px 20px #0008;
-
-  border-radius: calc(var(--window-border-radius) + (var(--frame-width)));
-  z-index: 20;
-}
-
-#sb-main .sb-panel {
-  display: block;
-  position: fixed;
-  overflow: hidden;
-
-  box-sizing: border-box ; 
-
-  min-width: calc(var(--min-sb-panel-width) - 2 * (var(--frame-width) + var(--window-border)));
-  min-height: calc(var(--min-sb-panel-height) - var(--header-height) - var(--frame-width) - var(--window-border));
-
-  width: calc(var(--sb-panel-width) - 2 * (var(--frame-width) + var(--window-border)));
-  height: calc(var(--sb-panel-height) - var(--header-height) - var(--frame-width) - var(--window-border));
-  top: calc(var(--top-offset) + (var(--header-height)));
-  left: calc(var(--left-offset) + 2px + var(--frame-width));
-
-  background: #0000;
-  border: var(--window-border) solid var(--window-border-color) !important;
-  border-radius: var(--window-border-radius);
-  z-index: 20;
-}
 ```
 
-## Redefine Keybindings and Command
+## Define Command with Move&Resize JS
 ```space-lua
-command.update {
-  name = "Tree View: Toggle",
-  key = "",
-  mac = "",
-  hide = true
-}
-
 command.define {
   name = "Tree View: Toggle Move&Resize",
-  key = "Ctrl-Alt-b",
-  mac = "Cmd-Alt-b",
+  key = "Ctrl-Alt-a",
+  mac = "Cmd-Alt-a",
   run = function()
         editor.invokeCommand "Tree View: Toggle"
         js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
