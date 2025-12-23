@@ -80,25 +80,31 @@ local PATH_KEY = "gridExplorer.cwd"
 local function fileTile(icon, name, target, ext)
   local tileClass = "grid-tile"
   local onClickAction
-  local dragData = target:gsub("^/", "") -- Remove leading slash for SB paths
+  local rawPath = target:gsub("^/", "") 
+  local dragData = rawPath 
   
+  -- Handle Drag Data formatting
   if ext == "md" then 
       tileClass = tileClass .. " md-tile"
-      dragData = "[[" .. dragData .. "]]"
-  elseif ext == "pdf" then
+      dragData = "[[" .. rawPath .. "]]"
+  elseif ext == "pdf" then 
       tileClass = tileClass .. " pdf-tile"
-      dragData = "[[" .. dragData .. "]]"   
+      dragData = "[[" .. rawPath .. "]]"
   elseif ext == "img" then 
       tileClass = tileClass .. " image-tile"
-      dragData = "![[" .. dragData .. "]]"
-  elseif ext == "excalidraw" then
+      dragData = "![[" .. rawPath .. "]]"
+  elseif ext == "excalidraw" then 
       tileClass = tileClass .. " excalidraw-tile"
       dragData = "```excalidraw\n" .. rawPath .. "\n```"
   elseif ext == "drawio" then 
       tileClass = tileClass .. " drawio-tile"
       dragData = "```drawio\nurl:" .. rawPath .. "\n```"
-  else tileClass = tileClass .. " unknown-tile"
+  else 
+      tileClass = tileClass .. " unknown-tile"
   end
+  
+  -- Encode dragData to Base64 to avoid quote/backtick conflicts in HTML
+  local encodedDrag = encoding.base64Encode(dragData)
 
   if ext ~= "md" and ext ~= "pdf" and ext ~= "drawio" and ext ~= "excalidraw" and ext ~= "img" then
       onClickAction = "window.open('" .. target .. "', '_blank')"
@@ -112,11 +118,10 @@ local function fileTile(icon, name, target, ext)
   end
 
   return "<div class='" .. tileClass .. "' " ..
-    "draggable='true' ondragstart='handleDragStart(event, `" .. dragData .. "`)' " ..
+    "draggable='true' ondragstart='handleDragStart(event, \"" .. encodedDrag .. "\")' " ..
     "data-ext='" .. (ext or "?"):upper() .. "' title='" .. name .. "' onclick=\"" .. onClickAction .. "\">" ..
     "<div class='icon'>" .. iconContent .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
-
 
 -- ---------- drawPanel function ----------
 
@@ -217,17 +222,17 @@ local script = [[
 (function() {
 
 // ---------------- Drag & Drop Logic ----------------
-    window.handleDragStart = function(event, dragData) {
-        event.dataTransfer.setData("text/plain", dragData);
+    window.handleDragStart = function(event, encodedData) {
+        const decodedData = atob(encodedData);
+        event.dataTransfer.setData("text/plain", decodedData);
         event.dataTransfer.effectAllowed = "copy";
         
         const tile = event.target.closest('.grid-tile');
         if (tile) {
-            tile.style.opacity = "0.2";
-            setTimeout(() => { tile.style.opacity = "1"; }, 2000);
+            tile.style.opacity = "0.4";
+            setTimeout(() => { tile.style.opacity = "1"; }, 1000);
         }
     };
-
 // ---------------- Context Menu ----------------
     const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
     
