@@ -20,7 +20,7 @@ pageDecoration.prefix: "🗂️ "
 ## or use the shortcuts: 
 
 > **tip** New ShortCut Keys
-> `Ctrl-Alt-d`          - Toggle Document Explorer in the Side Panel
+> `Ctrl-Alt-e`          - Toggle Document Explorer in the Side Panel
 > `Ctrl-Alt-w`          - Toggle Document Explorer in Drag&Resize Window
 > `Ctrl-Alt-ArrotRight` - Increase Document Explorer Width in 10% increments
 > `Ctrl-Alt-ArrotLeft`  - Decrease Document Explorer Width in 10% increments
@@ -362,7 +362,7 @@ command.define {
 
 command.define {
   name = "Navigate: Document Explorer",
-  key = "Ctrl-Alt-d",
+  key = "Ctrl-Alt-e",
   run = function()
     if PANEL_VISIBLE then
       editor.hidePanel(PANEL_ID)
