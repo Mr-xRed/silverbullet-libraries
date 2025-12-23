@@ -578,7 +578,7 @@ color: var(--explorer-text-color);
   justify-content: space-between;
   border-radius: 8px;
   overflow: hidden;
-  cursor: grab; /* Added grab cursor */
+  cursor: pointer; /* Added grab cursor */
   transition: all 0.25s ease;
   color: var(--explorer-text-color);
   user-select: none;
