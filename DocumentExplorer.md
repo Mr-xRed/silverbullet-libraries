@@ -30,7 +30,7 @@ pageDecoration.prefix: "🗂️ "
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
 * `tileSize`           - Tile size, recommended between 60px-160px (default: "80px") 
 * `enableContextMenu`  - **Enable the Right-Click** for Files & Folders: Rename & Delete (default: false)
-* _`viewMode`           - **CURRENTLY NOT SUPPORTED** - Choose between “grid” and “list” (default: grid)_
+* _`viewMode`           - **CURRENTLY NOT SUPPORTED** - Choose “grid”|“list”|“tree” (default: grid)_
 
 ```lua
 config.set("explorer", {
@@ -80,12 +80,23 @@ local PATH_KEY = "gridExplorer.cwd"
 local function fileTile(icon, name, target, ext)
   local tileClass = "grid-tile"
   local onClickAction
+  local dragData = target:gsub("^/", "") -- Remove leading slash for SB paths
   
-  if ext == "md" then tileClass = tileClass .. " md-tile"
-  elseif ext == "pdf" then tileClass = tileClass .. " pdf-tile"
-  elseif ext == "img" then tileClass = tileClass .. " image-tile"
-  elseif ext == "excalidraw" then tileClass = tileClass .. " excalidraw-tile"
-  elseif ext == "drawio" then tileClass = tileClass .. " drawio-tile"
+  if ext == "md" then 
+      tileClass = tileClass .. " md-tile"
+      dragData = "[[" .. dragData .. "]]"
+  elseif ext == "pdf" then
+      tileClass = tileClass .. " pdf-tile"
+      dragData = "[[" .. dragData .. "]]"   
+  elseif ext == "img" then 
+      tileClass = tileClass .. " image-tile"
+      dragData = "![[" .. dragData .. "]]"
+  elseif ext == "excalidraw" then
+      tileClass = tileClass .. " excalidraw-tile"
+      dragData = "```excalidraw\n" .. rawPath .. "\n```"
+  elseif ext == "drawio" then 
+      tileClass = tileClass .. " drawio-tile"
+      dragData = "```drawio\nurl:" .. rawPath .. "\n```"
   else tileClass = tileClass .. " unknown-tile"
   end
 
@@ -100,8 +111,9 @@ local function fileTile(icon, name, target, ext)
       iconContent = "<img src='/.fs" .. target .. "' loading='lazy' class='tile-thumb' />"
   end
 
-  
-  return "<div class='" .. tileClass .. "' data-ext='" .. (ext or "?"):upper() .. "' title='" .. name .. "' onclick=\"" .. onClickAction .. "\">" ..
+  return "<div class='" .. tileClass .. "' " ..
+    "draggable='true' ondragstart='handleDragStart(event, `" .. dragData .. "`)' " ..
+    "data-ext='" .. (ext or "?"):upper() .. "' title='" .. name .. "' onclick=\"" .. onClickAction .. "\">" ..
     "<div class='icon'>" .. iconContent .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
 
@@ -201,13 +213,20 @@ local function drawPanel()
 
   html = html .. "</div></div>"
 
--- --------------- JavaScript for: --------------------
-   -- Context Menu
-   -- Live Filter
-   -- Space Style import
-   
 local script = [[
 (function() {
+
+// ---------------- Drag & Drop Logic ----------------
+    window.handleDragStart = function(event, dragData) {
+        event.dataTransfer.setData("text/plain", dragData);
+        event.dataTransfer.effectAllowed = "copy";
+        
+        const tile = event.target.closest('.grid-tile');
+        if (tile) {
+            tile.style.opacity = "0.2";
+            setTimeout(() => { tile.style.opacity = "1"; }, 2000);
+        }
+    };
 
 // ---------------- Context Menu ----------------
     const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
@@ -262,8 +281,6 @@ local script = [[
             menu.style.left = posX + 'px';
             menu.style.top = posY + 'px';
 
-// ---------------- Rename & Delete ----------------
-
             document.getElementById('ctx-rename').onclick = async () => {
                 menu.style.display = 'none';
                 const currentDir = document.getElementById("explorerGrid").getAttribute("data-current-path");
@@ -298,7 +315,6 @@ local script = [[
         const wrapper = input.closest('.input-wrapper');
         const query = input.value.toLowerCase();
         
-        // Toggle Clear Button and Padding Class
         if (query.length > 0) {
             clearBtn.style.display = "flex";
             wrapper.classList.add("has-clear");
@@ -320,7 +336,6 @@ local script = [[
         });
     };
 
-// ---------------- Clear Filter ----------------      
     window.clearFilter = function(event) {
         if (event) {
             event.preventDefault(); 
@@ -328,16 +343,12 @@ local script = [[
         }
         const input = document.getElementById("tileSearch");
         input.value = "";
-        
-        // Explicitly remove class on clear
         const wrapper = input.closest('.input-wrapper');
         wrapper.classList.remove("has-clear");
-        
         filterTiles(); 
         input.focus(); 
     };
 
-// ---- Apply custom styles from SilverBullet ----
     const customStyles = parent.document.getElementById("custom-styles")?.innerHTML;
     if (customStyles) {
         const styleEl = document.createElement("style");
@@ -416,11 +427,7 @@ command.define {
 body {
 color: var(--explorer-text-color);
 }
-/*
-#sb-top .panel {
-  position: fixed;
-}
-*/
+
 .explorer-panel {
   display: flex;
   flex-direction: column;
@@ -444,7 +451,6 @@ color: var(--explorer-text-color);
   border-color: var(--ui-accent-color);
   box-shadow: 0px 2px 6px 0 oklch(0 0 0 / 0.3);
 }
-
 
 .explorer-search {
   display: flex;
@@ -567,9 +573,14 @@ color: var(--explorer-text-color);
   justify-content: space-between;
   border-radius: 8px;
   overflow: hidden;
-  cursor: pointer;
+  cursor: grab; /* Added grab cursor */
   transition: all 0.25s ease;
   color: var(--explorer-text-color);
+  user-select: none;
+}
+
+.grid-tile:active {
+  cursor: grabbing;
 }
 
 .grid-tile::after {
@@ -589,13 +600,12 @@ color: var(--explorer-text-color);
   background: oklch(0.75 0 0 / 0.5);
 }
 
-/* IMAGE TILE THUMBNAILS */
-
 .tile-thumb {
   width: 100%;
   height: 100%;
   object-fit: cover; 
   border-radius: 4px;
+  pointer-events: none; /* Prevent thumb from interfering with drag */
 }
 
 
@@ -619,39 +629,34 @@ color: var(--explorer-text-color);
 .image-tile:hover { 
   outline: 3px solid var(--ui-accent-color);
 }
+
 /* ---------- FILE EXTENSION LABELS ---------- */
 
-/* MD Files */
 .md-tile::after { 
   content: "MD"; 
   background: oklch(0.55 0.23 260 / 0.8); 
 }
 
-/* PDF Files */
 .pdf-tile::after { 
   content: "PDF"; 
   background: oklch(0.55 0.23 30 / 0.8); 
 }
 
-/* Excalidraw */
 .excalidraw-tile::after { 
   content: "EX"; 
   background: oklch(0.55 0.14 300 / 0.8); 
 }
 
-/* DrawIO */
 .drawio-tile::after { 
   content: "DIO"; 
   background: oklch(0.55 0.23 90 / 0.8); 
 }
 
-/* The Extension Label (e.g., JS, TXT) */
 .unknown-tile::after {
   content: attr(data-ext);
   background: oklch(0.45 0 0 / 0.8);
  }
 
-/* The Globe Icon */
 .unknown-tile::before {
   content: "🌐";
   position: absolute;
@@ -669,6 +674,7 @@ color: var(--explorer-text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 
@@ -678,13 +684,14 @@ color: var(--explorer-text-color);
   display: flex;
   justify-content: center;
   align-items: center;
+  pointer-events: none;
 }
 
 #explorer-context-menu {
   font-weight: bold;
   background: oklch(0.50 0 0 / 0.5);
   border: 1px solid oklch(0.5 0 0);
-  border-radius: 6px;
+  border-radius: 6px;r
   box-shadow: 0 4px 15px 0 oklch(0 0 0 / 0.5);
   padding: 4px;
   width: 80px;
@@ -715,6 +722,7 @@ color: var(--explorer-text-color);
    --tile-bg: oklch(0.75 0 0 / 0.1);
    font-family: Monaco, Menlo, Consolas, "Courier New", Courier, monospace;
 }
+
 ```
 
 ## For the Drag&Resize
