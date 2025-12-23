@@ -5,7 +5,6 @@ files:
 - PanelDragResize.js
 pageDecoration.prefix: "🗂️ "
 ---
-
 # 🗂️ Document Explorer for the Side Panel
 
 > **warning** WORK IN PROGRESS
@@ -30,8 +29,8 @@ pageDecoration.prefix: "🗂️ "
 * `homeDirName`        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
 * `tileSize`           - Tile size, recommended between 60px-160px (default: "80px") 
-* enableContextMenu  - Enable the Right-Click for Files & Folders: Rename & Delete (default: false)
-* _`viewMode`           - CURRENTLY NOT SUPPORTED - Choose between “grid” and “list” (default: grid)_
+* `enableContextMenu`  - **Enable the Right-Click** for Files & Folders: Rename & Delete (default: false)
+* _`viewMode`           - **CURRENTLY NOT SUPPORTED** - Choose between “grid” and “list” (default: grid)_
 
 ```lua
 config.set("explorer", {
