@@ -36,7 +36,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         touch-action: none;
       }
 
-      .sb-header {
+      .sb-panel-header {
         height: var(--header-height) !important;
         width: 100% !important;
         cursor: grab !important;
@@ -48,9 +48,9 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         transition: background 0.2s ease;
       }
 
-      .sb-header:hover { background: rgba(255, 255, 255, 0.2) !important; }
+      .sb-panel-header:hover { background: rgba(255, 255, 255, 0.2) !important; }
 
-      .sb-header::after {
+      .sb-panel-header::after {
         content: "" !important;
         width: 60px !important;
         height: 12px !important;
@@ -103,7 +103,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   const container = document.createElement("div");
   container.className = "sb-panel-container";
   const header = document.createElement("div");
-  header.className = "sb-header";
+  header.className = "sb-panel-header";
   const resizer = document.createElement("div");
   resizer.className = "sb-resize-handle";
 
