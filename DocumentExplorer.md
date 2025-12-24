@@ -204,6 +204,9 @@ local function drawPanel()
   local viewMode = clientStore.get(VIEW_MODE_KEY) or config.get("explorer.viewMode") or "grid"
   
   local folderPrefix = clientStore.get(PATH_KEY) or ""
+  if viewMode == "tree" then
+      folderPrefix = "" -- Force root directory for tree view
+  end
   if folderPrefix ~= "" and not folderPrefix:match("/$") then
     folderPrefix = folderPrefix .. "/"
   end
