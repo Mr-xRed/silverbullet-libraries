@@ -67,7 +67,7 @@ config.define("explorer", {
 ```space-lua
 local cfg = config.get("explorer") or {}
 local tileSize = cfg.tileSize or "80px"
-local homeDirName = cfg.homeDirName or "🏠 Home"
+local homeDirName = cfg.homeDirName or "🎄 Home"
 local goToCurrentDir = cfg.goToCurrentDir ~= false
 local enableContextMenu = cfg.enableContextMenu == true
 
@@ -210,7 +210,7 @@ local function drawPanel()
 
   local files = space.listFiles()
   
-  local crumbs = {"<a onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
+  local crumbs = {"<a title=\"Merry Christmas\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
   local pathAccum = ""
   for part in folderPrefix:gmatch("([^/]+)/") do
     pathAccum = pathAccum .. part .. "/"
@@ -231,9 +231,9 @@ local function drawPanel()
               <div id="clearSearch" class="clear-btn" onmousedown="clearFilter(event)">✕</div>
             </div>
             <div class="view-switcher">
-              <button class="]]..(viewMode=="grid" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'grid'})">⊞</button>
-              <button class="]]..(viewMode=="list" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">≡</button>
-              <button class="]]..(viewMode=="tree" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">⑃</button>
+              <button title="Grid View" class="]]..(viewMode=="grid" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'grid'})">⊞</button>
+              <button title="List View" class="]]..(viewMode=="list" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">≡</button>
+              <button title="Tree View" class="]]..(viewMode=="tree" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">↦</button>
             </div>
             <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">✕</div>
           </div>
