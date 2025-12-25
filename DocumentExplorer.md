@@ -30,8 +30,7 @@ pageDecoration.prefix: "🗂️ "
 ## or use the shortcuts: 
 
 > **tip** New ShortCut Keys
-> `Ctrl-Alt-e`           - Toggle Document Explorer in the Side Panel
-> `Ctrl-Alt-w`           - Toggle Document Explorer in Drag&Resize Window
+> `Ctrl-Alt-e`          - Toggle Document Explorer
 > `Ctrl-Alt-ArrotRight` - Increase Document Explorer Width in 10% increments
 > `Ctrl-Alt-ArrotLeft`  - Decrease Document Explorer Width in 10% increments
 
@@ -40,7 +39,6 @@ pageDecoration.prefix: "🗂️ "
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
 * `tileSize`           - Tile size, recommended between 60px-160px (default: "80px") 
 * `enableContextMenu`  - **Enable the Right-Click** for Files & Folders: Rename & Delete (default: false)
-* `viewMode`           - Choose “grid”|“list”|“tree” (default: grid)
 
 ```lua
 config.set("explorer", {
@@ -207,6 +205,26 @@ local function renderTree(files, prefix)
     return finalHtml .. "</div>"
 end
 
+-- ---------- deleteFile function ----------
+
+function deleteFileWithConfirm(path)  
+  if not path then   
+    return   
+  end  
+  if editor.confirm("Are you sure you want to delete " .. path .. "?") then  
+    local fileToDelete = path  
+    -- Add .md if it's a page (no extension)  
+    if not path:match("%.[^.]+$") then  
+        fileToDelete = path .. ".md"  
+    end       
+    -- Delete the file using space.deleteFile  
+    space.deleteFile(fileToDelete)  
+    -- Refresh the explorer to show the deletion  
+    local currentDir = clientStore.get("gridExplorer.cwd") or ""  
+    editor.invokeCommand("DocumentExplorer: Open Folder", {path = currentDir}) 
+  end  
+end 
+
 -- ---------- drawPanel function ----------
 
 local function drawPanel()
@@ -321,19 +339,24 @@ local function drawPanel()
 
 local script = [[
 (function() {
-
 // ---------------- Drag & Drop Logic ----------------
-    window.handleDragStart = function(event, encodedData) {
-        const decodedData = atob(encodedData);
-        event.dataTransfer.setData("text/plain", decodedData);
-        event.dataTransfer.effectAllowed = "copy";
+window.handleDragStart = function(event, encodedData) {
+    const decodedData = atob(encodedData);
+    event.dataTransfer.setData("text/plain", decodedData);
+    event.dataTransfer.effectAllowed = "copy";
+    
+    const tile = event.target.closest('.grid-tile');
+    if (tile) {
+        tile.classList.add("is-dragging");
+
+        tile.addEventListener('dragend', function cleanup() {
+            tile.classList.remove("is-dragging");
+            // No need to manually clear styles here anymore!
+            tile.removeEventListener('dragend', cleanup);
+        }, { once: true });
+    }
+};
         
-        const tile = event.target.closest('.grid-tile');
-        if (tile) {
-            tile.style.opacity = "0.4";
-            setTimeout(() => { tile.style.opacity = "1"; }, 1000);
-        }
-    };
 // ---------------- Context Menu ----------------
     const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
     
@@ -396,33 +419,14 @@ local script = [[
                 await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
                 await syscall("editor.invokeCommand", "DocumentExplorer: Open Folder", { path: currentDir }); 
             };
-
-            const deleteBtn = document.getElementById('ctx-delete');
-            if (deleteBtn) {
-                deleteBtn.onclick = async () => {
-                    menu.style.display = 'none';
-                    const currentDir = document.getElementById("explorerGrid").getAttribute("data-current-path");
-                    
-                    if (confirm("Are you sure you want to delete " + internalPath + "?")) {
-                        try {
-                            // Ensure we are targeting the actual file
-                            let fileToDelete = internalPath;
-                            
-                            // If it's a markdown page (no extension), append .md
-                            if (!isFolder && !fileToDelete.match(/\.[^.]+$/)) {
-                                fileToDelete += ".md";
-                            }
-                            
-                            await syscall("space.deleteFile", fileToDelete);
-                            
-                            // Refresh the panel
-                            await syscall("editor.invokeCommand", "DocumentExplorer: Open Folder", { path: currentDir });
-                        } catch (e) {
-                            console.error("Delete failed", e);
-                            alert("Delete failed: " + e.message);
-                        }
-                    }
-                };
+            const deleteBtn = document.getElementById('ctx-delete');  
+            if (deleteBtn) {  
+                deleteBtn.onclick = async () => {  
+                    menu.style.display = 'none';  
+                      
+                    // Call the Lua function via lua.evalExpression  
+                    await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);  
+                };  
             }
         };
 
@@ -534,7 +538,7 @@ command.define {
   hide = true,
   run = function()
     local cur = clientStore.get("explorer.panelWidth") or 0.8
-    clientStore.set("explorer.panelWidth", math.min(cur + 0.1, 1))
+    clientStore.set("explorer.panelWidth", math.min(cur + 0.05, 1))
     drawPanel()
   end
 }
@@ -545,7 +549,7 @@ command.define {
   hide = true,
   run = function()
     local cur = clientStore.get("explorer.panelWidth") or 0.8
-    clientStore.set("explorer.panelWidth", math.max(cur - 0.1, 0.2))
+    clientStore.set("explorer.panelWidth", math.max(cur - 0.05, 0.35))
     drawPanel()
   end
 }
@@ -821,6 +825,13 @@ body {
   border-radius: 4px;
   pointer-events: none;
   z-index: 5;
+}
+
+.grid-tile.is-dragging {
+    background-color: color-mix(in oklch, oklch(0.75 0 0 / 0.5), transparent 20%) !important;
+    outline: 3px dashed var(--ui-accent-color) !important;
+    outline-offset: 3px;
+    z-index: 100;
 }
 
 .grid-title { 
