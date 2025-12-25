@@ -775,9 +775,12 @@ body {
 
 /* Main Content Area */
 .document-explorer {
+  box-sizing: border-box; 
   flex: 1 1 auto; 
+  overflow-x: hidden;  
   overflow-y: auto !important;
-  padding: 1em;
+  padding: 0.5em;
+  width: 100%;        
   gap: 8px;
   align-content: start;
   scroll-behavior: smooth;
@@ -856,7 +859,7 @@ body {
 .mode-tree .grid-tile {
   flex-direction: row;
   height: 32px;
-  padding: 0 20px 0 8px;
+  padding: 0 4px 0 4px;
   align-items: center;
   gap: 10px;
   justify-content: flex-start;
