@@ -160,16 +160,13 @@ local function renderTree(files, prefix)
         if prefix == "" or f.name:sub(1, #prefix) == prefix then
             local rel = f.name:sub(#prefix + 1)
             local current = tree
-            -- ---------- Tree Logic (Fixed) ----------
-            for part in rel:gmatch("[^/]+") do
-                current[part] = current[part] or {} 
-                
-                -- Added '1, true' to treat 'part' as plain text and avoid Regex errors
-                if not rel:find(part .. "/", 1, true) then 
-                    current[part]._path = f.name 
-                end
-                current = current[part]
-            end
+              for part in rel:gmatch("[^/]+") do
+                  current[part] = current[part] or {} 
+                      if not rel:find(part .. "/", 1, true) then 
+                      current[part]._path = f.name 
+                  end
+                  current = current[part]
+              end
         end
     end
 
