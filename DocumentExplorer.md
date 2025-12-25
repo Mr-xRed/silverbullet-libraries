@@ -402,10 +402,25 @@ local script = [[
                 deleteBtn.onclick = async () => {
                     menu.style.display = 'none';
                     const currentDir = document.getElementById("explorerGrid").getAttribute("data-current-path");
+                    
                     if (confirm("Are you sure you want to delete " + internalPath + "?")) {
-                        await syscall("space.deleteFile", internalPath);
-                        if (!internalPath.match(/\.[^.]+$/)) await syscall("space.deleteFile", internalPath + ".md");
-                        await syscall("editor.invokeCommand", "DocumentExplorer: Open Folder", { path: currentDir });
+                        try {
+                            // Ensure we are targeting the actual file
+                            let fileToDelete = internalPath;
+                            
+                            // If it's a markdown page (no extension), append .md
+                            if (!isFolder && !fileToDelete.match(/\.[^.]+$/)) {
+                                fileToDelete += ".md";
+                            }
+                            
+                            await syscall("space.deleteFile", fileToDelete);
+                            
+                            // Refresh the panel
+                            await syscall("editor.invokeCommand", "DocumentExplorer: Open Folder", { path: currentDir });
+                        } catch (e) {
+                            console.error("Delete failed", e);
+                            alert("Delete failed: " + e.message);
+                        }
                     }
                 };
             }
