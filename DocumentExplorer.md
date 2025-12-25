@@ -8,7 +8,17 @@ pageDecoration.prefix: "🗂️ "
 # 🗂️ Document Explorer for the Side Panel
 
 > **warning** WORK IN PROGRESS
-> Not all features from the OLD (VirtualPage) version are present. Currently only GridView is available
+
+## Features
+* Multi-Format Support: Pages, PDFs, Images, Excalidraw and Drawio, with unique icons and color-coded tags for each.
+• Dynamic View Modes:
+  * Grid: Large thumbnails (with image previews) for a visual gallery experience.
+  * List: Compact, vertical view for high-density file management.
+  * Tree: Hierarchical navigation with folder nesting and expansion logic.
+• Real-Time Filtering by filename or extension
+• Drag & Drop: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
+• Context Menu: Right-click support for quick File/Folder renaming and deletion (if enabled in config).
+• Responsive design: Adjustable panel width using keyboard shortcuts.
 
 ## Currently supported extension:
 * Pages: .md
@@ -83,7 +93,6 @@ local function fileTile(icon, name, target, ext, viewMode)
   local rawPath = target:gsub("^/", "") 
   local dragData = rawPath 
   
-  -- Normalize extension and determine category
   local originalExt = (ext or "?"):lower()
   local category = originalExt
   
@@ -92,7 +101,7 @@ local function fileTile(icon, name, target, ext, viewMode)
       category = "img"
   end
 
-  -- Assign CSS classes and Drag&Drop data based on category
+  -- CSS classes and Drag&Drop data based on category
   if category == "md" then 
       tileClass = tileClass .. " md-tile"
       dragData = "[[" .. rawPath .. "]]"
@@ -442,7 +451,7 @@ local script = [[
         input.focus(); 
     };
 
-    // --- UPDATED: Load EVERYTHING from Parent ---
+// ---------------- Load Custom Style Sheets ----------------
     const customStyles = parent.document.getElementById("custom-styles")?.innerHTML;
     if (customStyles) {
         const styleEl = document.createElement("style");
