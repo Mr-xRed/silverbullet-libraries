@@ -13,7 +13,7 @@ pageDecoration.prefix: "🖌️ "
 ```space-style
 #sb-top{
   border: none;
-  height: 0px;
+  height: 80px;
 }
 
 #sb-top .main {

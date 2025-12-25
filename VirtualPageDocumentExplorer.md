@@ -56,7 +56,7 @@ config.set("vpexplorer", {
 ## Integration:
 
 ### Config Init
-```space-lua
+```lua
 config.define("vpexplorer", {
   type = "object",
   properties = {
@@ -73,7 +73,7 @@ config.define("vpexplorer", {
 
 
 ### Command
-```space-lua
+```lua
 command.define {
   name = "Navigate: Virtual Page Document Explorer",
   key = "Ctrl-Alt-e",
@@ -105,7 +105,7 @@ command.define {
 ```
 
 ### Document Explorer Widget
-```space-lua
+```lua
 
 -- Defining Config Defaults
 local cfg = config.get("vpexplorer") or {}
@@ -303,7 +303,7 @@ end
 ```
 
 ### VirtualPage
-```space-lua
+```lua
 command.define {
   name = "Explorer: Toggle View Mode",
   run = function()
@@ -362,7 +362,7 @@ virtualPage.define {
 
 ## Styling:
 
-```space-style
+```css
 
 /* ---------- BREADCRUMBS ---------- */
 .explorer-breadcrumbs {

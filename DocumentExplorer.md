@@ -10,15 +10,15 @@ pageDecoration.prefix: "🗂️ "
 > **warning** WORK IN PROGRESS
 
 ## Features
-* Multi-Format Support: Pages, PDFs, Images, Excalidraw and Drawio, with unique icons and color-coded tags for each.
 • Dynamic View Modes:
-  * Grid: Large thumbnails (with image previews) for a visual gallery experience.
-  * List: Compact, vertical view for high-density file management.
-  * Tree: Hierarchical navigation with folder nesting and expansion logic.
-• Real-Time Filtering by filename or extension
-• Drag & Drop: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
+  * ==Grid== Large thumbnails (with image previews) for a visual gallery experience.
+  * ==List==: Compact, vertical view for high-density file management.
+  * ==Tree==: Hierarchical navigation with folder nesting and expansion logic.
+* Easily switch between ==Window== or ==SidePanel== 
+• Real-Time ==Filtering== by filename or extension
+• ==Drag & Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
 • Context Menu: Right-click support for quick File/Folder renaming and deletion (if enabled in config).
-• Responsive design: Adjustable panel width using keyboard shortcuts.
+• ==Responsive design==: Adjustable panel width using keyboard shortcuts.
 
 ## Currently supported extension:
 * Pages: .md
@@ -75,9 +75,10 @@ config.define("explorer", {
 ## Side Panel Integration
 
 ```space-lua
+-- priority: 0
 local cfg = config.get("explorer") or {}
 local tileSize = cfg.tileSize or "80px"
-local homeDirName = cfg.homeDirName or "🎄 Home"
+local homeDirName = cfg.homeDirName or "🏠 Home"
 local goToCurrentDir = cfg.goToCurrentDir ~= false
 local enableContextMenu = cfg.enableContextMenu == true
 
@@ -159,9 +160,12 @@ local function renderTree(files, prefix)
         if prefix == "" or f.name:sub(1, #prefix) == prefix then
             local rel = f.name:sub(#prefix + 1)
             local current = tree
+            -- ---------- Tree Logic (Fixed) ----------
             for part in rel:gmatch("[^/]+") do
                 current[part] = current[part] or {} 
-                if not rel:find(part .. "/") then 
+                
+                -- Added '1, true' to treat 'part' as plain text and avoid Regex errors
+                if not rel:find(part .. "/", 1, true) then 
                     current[part]._path = f.name 
                 end
                 current = current[part]
@@ -180,7 +184,7 @@ local function renderTree(files, prefix)
         if node._path then
             local ext = node._path:match("%.([^.]+)$") or "md"
             html = "<div class='tree-file'>" .. 
-                   fileTile("📄", name, "/" .. node._path:gsub("%.md$",""), ext, "tree") .. 
+                   fileTile("📄", name:gsub("%.md$",""), "/" .. node._path:gsub("%.md$",""), ext, "tree") .. 
                    "</div>"
         else
             html = "<details open class='tree-folder'>" ..
@@ -222,7 +226,7 @@ local function drawPanel()
 
   local files = space.listFiles()
   
-  local crumbs = {"<a title=\"Merry Christmas\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
+  local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
   local pathAccum = ""
   for part in folderPrefix:gmatch("([^/]+)/") do
     pathAccum = pathAccum .. part .. "/"
@@ -247,7 +251,10 @@ local function drawPanel()
               <button title="List View" class="]]..(viewMode=="list" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">≡</button>
               <button title="Tree View" class="]]..(viewMode=="tree" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">↦</button>
             </div>
-            <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">✕</div>
+            <div class="action-buttons" style="display: flex; gap: 4px;">
+              <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">⇆</div>
+              <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">✕</div>
+            </div>
           </div>
           ]] .. breadcrumbHtml .. [[
         </div>
@@ -475,6 +482,15 @@ command.define {
 }
 
 command.define {
+  name = "DocumentExplorer: Open Folder",
+  hide = true,
+  run = function(args)
+    clientStore.set(PATH_KEY, args and args.path or "")
+    drawPanel()
+  end
+}
+
+command.define {
   name = "DocumentExplorer: Change View Mode",
   hide = true,
   run = function(args)
@@ -485,7 +501,7 @@ command.define {
 
 command.define {
   name = "Navigate: Document Explorer",
-  key = "Ctrl-Alt-e",
+  hide = true,
   run = function()
     if PANEL_VISIBLE then
       editor.hidePanel(PANEL_ID)
@@ -524,11 +540,55 @@ command.define {
 
 command.define {
   name = "Navigate: Document Explorer Move&Resize",
-  key = "Ctrl-Alt-w",
+  hide = true,
   run = function()
         editor.invokeCommand "Navigate: Document Explorer"
         js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
        end
+}
+
+
+command.define {
+  name = "DocumentExplorer: Toggle Window Mode",
+  hide = true,
+  run = function()
+    local currentMode = clientStore.get("explorer.currentDisplayMode") or "panel"    
+    -- Close current view
+    if currentMode == "window" then
+      -- If in window, we just call the toggle which will hide it
+      editor.hidePanel(PANEL_ID) 
+      PANEL_VISIBLE = false
+      clientStore.set("explorer.currentDisplayMode", "panel")
+      editor.invokeCommand("Navigate: Document Explorer")
+    else
+      -- If in panel, hide panel and open window
+      editor.hidePanel(PANEL_ID)
+      PANEL_VISIBLE = false
+      clientStore.set("explorer.currentDisplayMode", "window")
+      editor.invokeCommand("Navigate: Document Explorer Move&Resize")
+    end
+  end
+}
+
+
+command.define {
+  name = "Navigate: Toggle Document Explorer",
+  key = "Ctrl-Alt-e",
+  run = function()
+    -- Check if a panel is currently visible at all
+    if PANEL_VISIBLE then
+        editor.hidePanel(PANEL_ID)
+        PANEL_VISIBLE = false
+    else
+        local lastMode = clientStore.get("explorer.currentDisplayMode") or "panel"
+        
+        if lastMode == "window" then
+            editor.invokeCommand("Navigate: Document Explorer Move&Resize")
+        else
+            editor.invokeCommand("Navigate: Document Explorer")
+        end
+    end
+  end
 }
 
 ```
@@ -573,7 +633,7 @@ body {
   border-radius: 6px;
   display: flex;
   align-items: center;
-  width: 4.5em; 
+  width: 4em; 
   flex-grow: 0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -592,9 +652,14 @@ body {
   font-size: 0.95em;
   outline: none;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
+.explorer-search input:hover {
+ background: oklch(0.75 0 0 / 0.25);
+}
 .explorer-search input:focus {
+   cursor: text;
   border: 2px solid color-mix(in oklch, var(--ui-accent-color), transparent 30%);
 }
 
@@ -634,10 +699,36 @@ body {
   opacity: 0.6;
 }
 
+.view-switcher button:hover {
+  opacity: 1;
+  background: oklch(0.75 0 0 / 0.15); 
+}
+
 .view-switcher button.active {
   background: var(--ui-accent-color);
   color: white;
   opacity: 1;
+}
+
+.explorer-action-btn {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tile-bg);
+  border: 1px solid oklch(0.75 0 0 / 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1em;
+}
+
+.explorer-action-btn:hover {
+  background: oklch(0.80 0.22 140 / 0.7);
+}
+.explorer-close-btn:hover {
+  background: oklch(0.65 0.18 30/ 0.7);
 }
 
 .explorer-close-btn {
