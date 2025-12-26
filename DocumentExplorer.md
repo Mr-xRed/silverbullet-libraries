@@ -9,7 +9,7 @@ pageDecoration.prefix: "🗂️ "
 
 > **warning** WORK IN PROGRESS
 
-![["https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DocumentExplorer_Screenshot.png]]
+![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DocumentExplorer_Screenshot.png)
 
 ## Features
 • Dynamic View Modes:
