@@ -5,9 +5,11 @@ files:
 - PanelDragResize.js
 pageDecoration.prefix: "🗂️ "
 ---
-# 🗂️ Document Explorer for the Side Panel
+# 🗂️ Document Explorer
 
 > **warning** WORK IN PROGRESS
+
+![["https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DocumentExplorer_Screenshot.png]]
 
 ## Features
 • Dynamic View Modes:
@@ -39,7 +41,7 @@ pageDecoration.prefix: "🗂️ "
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
 * `tileSize`           - Grid Tile size, recommended between 60px-120px (default: "80px") 
 * `listHeight`         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
-* `enableContextMenu`  - **Enable the Right-Click** for Files & Folders: Rename & Delete (default: false)
+* `enableContextMenu`  - ==**Enable the Right-Click**== for Files & Folders: Rename & Delete (default: false)
 
 ```lua
 config.set("explorer", {
