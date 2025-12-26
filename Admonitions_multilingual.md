@@ -249,7 +249,7 @@ Licensed under the ISC and MIT licenses.
 ### Multilingual SlashCommands
 
 ```space-lua
--- prioity: 9
+-- prioity: 0
 config.define("admonLang", {
     type = "string",
     enum = {"en", "de", "fr", "it", "zh", "es", "hu", "ro", "cs", "pl", "pt"}
@@ -503,9 +503,9 @@ local lang_map = {
 
 -- Select language first
 local lang = config.get("admonLang") or ""
-if lang == "" then 
-  editor.flashNotification("⚠️ Admonition lang. not set. Default: English", "info")
-end
+--if lang == "" then 
+--  editor.flashNotification("⚠️ Admonition lang. not set. Default: English", "info")
+--end
 
 local admonitions = lang_map[lang] or admonitions_en
 

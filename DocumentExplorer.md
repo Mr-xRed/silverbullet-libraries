@@ -17,7 +17,7 @@ pageDecoration.prefix: "🗂️ "
 * Easily switch between ==Window== or ==SidePanel== 
 • Real-Time ==Filtering== by filename or extension
 • ==Drag & Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
-• Context Menu: Right-click support for quick File/Folder renaming and deletion (if enabled in config).
+• Context Menu: ==Right-click== for quick File/Folder renaming and deletion (if enabled in config).
 • ==Responsive design==: Adjustable panel width using keyboard shortcuts.
 
 ## Currently supported extension:
@@ -37,7 +37,8 @@ pageDecoration.prefix: "🗂️ "
 ## Configuration Options and Defaults:
 * `homeDirName`        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
-* `tileSize`           - Tile size, recommended between 60px-160px (default: "80px") 
+* `tileSize`           - Grid Tile size, recommended between 60px-120px (default: "80px") 
+* `listHeight`         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
 * `enableContextMenu`  - **Enable the Right-Click** for Files & Folders: Rename & Delete (default: false)
 
 ```lua
@@ -45,7 +46,8 @@ config.set("explorer", {
   homeDirName = "🏠 Home",
   goToCurrentDir = true,
   tileSize = "80px",
-  enableContextMenu = false
+  enableContextMenu = false,
+  listHeight = "24px"
 })
 ```
 
@@ -63,6 +65,7 @@ config.define("explorer", {
   properties = {
     homeDirName = schema.string(),
     tileSize = schema.string(),
+    listHeight = schema.string(),
     panelWidth = schema.number(),
     goToCurrentDir = schema.boolean(),
     enableContextMenu = schema.boolean()
@@ -76,6 +79,7 @@ config.define("explorer", {
 -- priority: 0
 local cfg = config.get("explorer") or {}
 local tileSize = cfg.tileSize or "80px"
+local listHeight = cfg.listHeight or "24px"
 local homeDirName = cfg.homeDirName or "🏠 Home"
 local goToCurrentDir = cfg.goToCurrentDir ~= false
 local enableContextMenu = cfg.enableContextMenu == true
@@ -100,7 +104,7 @@ local function fileTile(icon, name, target, ext, viewMode)
       category = "img"
   end
 
-  -- CSS classes and Drag&Drop data based on category
+  -- ---------- CSS classes and Drag&Drop data ----------
   if category == "md" then 
       tileClass = tileClass .. " md-tile"
       dragData = "[[" .. rawPath .. "]]"
@@ -122,14 +126,14 @@ local function fileTile(icon, name, target, ext, viewMode)
   
   local encodedDrag = encoding.base64Encode(dragData)
 
-  -- Navigation Logic
+  -- ---------- Navigation Logic ----------
   if category ~= "md" and category ~= "pdf" and category ~= "drawio" and category ~= "excalidraw" and category ~= "img" then
       onClickAction = "window.open('" .. target .. "', '_blank')"
   else
       onClickAction = "syscall('editor.navigate','" .. target .. "',false,false)"
   end
 
-  -- Icon & Thumbnail Logic
+  -- ---------- Icon & Thumbnail Logic ----------
   local finalIcon = icon
   if viewMode ~= "grid" then
       if category == "md" then finalIcon = "📝"
@@ -183,8 +187,8 @@ local function renderTree(files, prefix)
                    "</div>"
         else
             html = "<details open class='tree-folder'>" ..
-                   "<summary class='grid-tile folder-tile'>" ..
-                   "<div class='icon'><span class='chevron'>›</span>📁</div><div class='grid-title'>"..name.."</div>"..               
+                   "<summary class='grid-tile folder-tile' title='"..name.."' >" ..
+                   "<div class='icon'>📁</div><div class='grid-title'>"..name.."</div>"..
                    "</summary>" ..
                    "<div class='tree-content'>"
             for _, k in ipairs(sorted) do 
@@ -249,14 +253,14 @@ local function drawPanel()
   end
   local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
 
-  local style = ":root { --tile-size:" .. tileSize .. "; --icon-size-grid: calc(var(--tile-size) * 0.4); }"
+  local style = ":root { --tile-size:" .. tileSize .. "; --list-tile-height:" .. listHeight .. "; --icon-size-grid: calc(var(--tile-size) * 0.6); }"
 
   local html = [[
       <link rel="stylesheet" href="/.client/main.css" />
       <style>]] .. style .. [[</style>
       <div class="explorer-panel mode-]] .. viewMode .. [[">
         <div class="explorer-header">
-          <div class="explorer-search">          
+          <div class="explorer-toolbar">          
             <div class="input-wrapper">
               <input type="text" title="e.g.: user man pdf" id="tileSearch" placeholder="Filter..." oninput="filterTiles()">
               <div id="clearSearch" class="clear-btn" onmousedown="clearFilter(event)">✕</div>
@@ -610,22 +614,50 @@ command.define {
 ```
 
 ```space-style
+/*
+==========================================================================
+   1. VARIABLES & BASE STYLES
+==========================================================================
+*/
+
 body {
   color: var(--explorer-text-color);
 }
 
-/* Layout Container */
+/*
+==========================================================================
+   2. LAYOUT CONTAINER
+==========================================================================
+*/
+
 .explorer-panel {
   display: flex;
   flex-direction: column;
-  height: 100vh; 
+  height: 100vh;
   width: 100%;
   overflow: hidden;
 }
 
-/* Header & Search */
+.document-explorer {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  padding: 0.5em;
+  width: 100%;
+  gap: 8px;
+  align-content: start;
+  scroll-behavior: smooth;
+}
+
+/*
+==========================================================================
+   3. HEADER & NAVIGATION
+==========================================================================
+*/
+
 .explorer-header {
-  flex: 0 0 auto; 
+  flex: 0 0 auto;
   background: var(--explorer-bg-color);
   position: sticky;
   top: 0;
@@ -634,12 +666,13 @@ body {
   box-shadow: 0px 2px 6px 0 oklch(0 0 0 / 0.3);
 }
 
-.explorer-search {
+/* --- Tool Bar --- */
+.explorer-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between; 
+  justify-content: space-between;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px 3px 8px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -649,7 +682,7 @@ body {
   border-radius: 6px;
   display: flex;
   align-items: center;
-  width: 4em; 
+  width: 4em;
   flex-grow: 0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -659,9 +692,9 @@ body {
   box-shadow: 0px 2px 6px 0 oklch(0 0 0 / 0.3);
 }
 
-.explorer-search input {
-  width: 100%; 
-  padding: 4px 7px; 
+.explorer-toolbar input {
+  width: 100%;
+  padding: 4px 7px;
   border-radius: 6px;
   border: 1px solid oklch(0.75 0 0 / 0.2);
   color: inherit;
@@ -671,31 +704,29 @@ body {
   cursor: pointer;
 }
 
-.explorer-search input:hover {
- background: oklch(0.75 0 0 / 0.25);
-}
-.explorer-search input:focus {
-   cursor: text;
+.explorer-toolbar input:hover { background: oklch(0.75 0 0 / 0.25); }
+.explorer-toolbar input:focus {
+  cursor: text;
   border: 2px solid color-mix(in oklch, var(--ui-accent-color), transparent 30%);
 }
 
 .clear-btn {
   position: absolute;
-  right: 8px; 
+  right: 8px;
   top: 50%;
-  transform: translateY(-50%); 
+  transform: translateY(-50%);
   width: 14px;
   height: 14px;
   background: oklch(0.5 0 0);
   border-radius: 50%;
-  display: none; 
+  display: none;
   align-items: center;
   justify-content: center;
   font-size: 10px;
   cursor: pointer;
 }
 
-/* View Switcher & Close */
+/* --- View Switcher --- */
 .view-switcher {
   display: flex;
   background: oklch(0.75 0 0 / 0.1);
@@ -717,7 +748,7 @@ body {
 
 .view-switcher button:hover {
   opacity: 1;
-  background: oklch(0.75 0 0 / 0.15); 
+  background: oklch(0.75 0 0 / 0.15);
 }
 
 .view-switcher button.active {
@@ -726,27 +757,8 @@ body {
   opacity: 1;
 }
 
-.explorer-action-btn {
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--tile-bg);
-  border: 1px solid oklch(0.75 0 0 / 0.2);
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1.1em;
-}
-
-.explorer-action-btn:hover {
-  background: oklch(0.80 0.22 140 / 0.7);
-}
-.explorer-close-btn:hover {
-  background: oklch(0.65 0.18 30/ 0.7);
-}
-
+/* --- Action Buttons --- */
+.explorer-action-btn, 
 .explorer-close-btn {
   flex-shrink: 0;
   width: 26px;
@@ -760,45 +772,38 @@ body {
   cursor: pointer;
 }
 
-/* Breadcrumbs */
+.explorer-action-btn { font-size: 1.1em; }
+.explorer-action-btn:hover { background: oklch(0.80 0.22 140 / 0.7); }
+.explorer-close-btn:hover { background: oklch(0.65 0.18 30/ 0.7); }
+
+/* --- Breadcrumbs --- */
 .explorer-breadcrumbs {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  padding: 8px;
-  font-size: 1em;
-  align-items: center; 
+  gap: 2px;
+  padding: 4px 8px 6px 8px;
+  font-size: 0.8em;
+  align-items: center;
 }
 
-.explorer-breadcrumbs a { 
-  text-decoration: none; 
-  color: var(--link-color); 
+.explorer-breadcrumbs a {
+  text-decoration: none;
+  color: var(--link-color);
 }
 
-.explorer-breadcrumbs a:hover { text-decoration: underline; cursor: pointer; }
-
-/* Main Content Area */
-.document-explorer {
-  box-sizing: border-box; 
-  flex: 1 1 auto; 
-  overflow-x: hidden;  
-  overflow-y: auto !important;
-  padding: 0.5em;
-  width: 100%;        
-  gap: 8px;
-  align-content: start;
-  scroll-behavior: smooth;
+.explorer-breadcrumbs a:hover {
+  text-decoration: underline;
+  cursor: pointer;
 }
 
-/* --- GRID MODE --- */
-.mode-grid .document-explorer {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--tile-size), 1fr));
-  grid-auto-rows: var(--tile-size); 
-}
+/*
+==========================================================================
+   4. SHARED TILE COMPONENTS (Icon, Title, Thumbnails)
+==========================================================================
+*/
 
 .grid-tile {
-  position: relative; 
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -810,54 +815,72 @@ body {
   user-select: none;
 }
 
-.grid-tile:hover {
-  background: oklch(0.75 0 0 / 0.5);
-}
-
-.grid-tile::after {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  color: white;
-  font-size: 0.6em;
-  font-weight: bold;
-  padding: 1px 4px;
-  border-radius: 4px;
-  pointer-events: none;
-  z-index: 5;
-}
+.grid-tile:hover { background: oklch(0.75 0 0 / 0.5); }
 
 .grid-tile.is-dragging {
-    background-color: color-mix(in oklch, oklch(0.75 0 0 / 0.5), transparent 20%) !important;
-    outline: 3px dashed var(--ui-accent-color) !important;
-    outline-offset: 3px;
-    z-index: 100;
+  background-color: color-mix(in oklch, oklch(0.75 0 0 / 0.5), transparent 20%) !important;
+  outline: 3px dashed var(--ui-accent-color) !important;
+  outline-offset: 3px;
+  z-index: 100;
 }
 
-.grid-title { 
+.grid-title {
+  height: calc(var(--tile-size) * 0.3);
   text-align: center;
-  font-size: 0.75em;
-  padding: 5px 5px;
+  font-size: clamp(0.6em, calc((var(--tile-size) / 80px) * 0.8em), 1.0em);         
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .icon {
-  font-size: var(--icon-size-grid);
-  height: calc(var(--tile-size) * 0.6); 
-  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  font-size: calc((var(--tile-size) / 80px) * 3em);
+  height: calc(var(--tile-size) * 0.7);
   pointer-events: none;
-  overflow: hidden; /* This crops the image */
-  margin-top: 5px;  /* Reduced margin to give title more room */
+  box-sizing: border-box;
 }
 
-/* --- LIST & TREE MODE COMMON (Fixes Compression) --- */
-.mode-list .document-explorer, 
+.tile-thumb {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  object-fit: cover;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/*
+==========================================================================
+   5. GRID MODE SPECIFIC
+==========================================================================
+*/
+
+.mode-grid .document-explorer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-size), 1fr));
+  grid-auto-rows: var(--tile-size);
+}
+
+.mode-grid .image-tile .icon {
+  margin-top: 0;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  overflow: hidden;
+}
+
+/*
+==========================================================================
+   6. LIST & TREE MODE (Shared Styles)
+==========================================================================
+*/
+
+.mode-list .document-explorer,
 .mode-tree .document-explorer {
   display: flex;
   flex-direction: column;
@@ -866,120 +889,166 @@ body {
   align-items: stretch;
 }
 
-.mode-list .grid-tile, 
+.mode-list .grid-tile,
 .mode-tree .grid-tile {
   flex-direction: row;
-  height: 32px;
-  padding: 0 4px 0 4px;
-  align-items: center;
-  gap: 10px;
+  height: var(--list-tile-height);
+  padding: 0 2px 0 0px;
+  align-content: center;
+  gap: calc((var(--list-tile-height) / 24px) * 8px);
   justify-content: flex-start;
   flex-shrink: 0;
   width: auto;
 }
 
-.mode-list .icon, 
+
+.mode-list .icon,
 .mode-tree .icon {
   margin-top: 0 !important;
-  font-size: 1.2em;
-  width: auto; /* Changed to accommodate chevron */
-  min-width: 24px;
+  font-size: calc((var(--list-tile-height) / 24px) * 18px);
+  width: var(--list-tile-height);
+  height: var(--list-tile-height);
   flex-shrink: 0;
   overflow: visible;
 }
 
 .mode-list .grid-title, 
 .mode-tree .grid-title {
-  text-align: left;
-  font-size: 0.9em;
-  flex-grow: 1;
-  padding: 0;
+    display: block;
+    align-content: center;
+    height: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: calc((var(--list-tile-height) / 24px) * 16px);
 }
 
-.mode-list .grid-tile::after, 
-.mode-tree .grid-tile::after {
-  position: relative;
-  top: auto;
-  right: auto;
-  margin-left: auto;
-  flex-shrink: 0;
-}
+/*
+==========================================================================
+   7. TREE VIEW SPECIFIC
+==========================================================================
+*/
 
-/* --- TREE VIEW SPECIFIC (Fixes Alignment & Lines) --- */
-.mode-tree .tree-view-container {
-  padding-left: 5px;
+.mode-tree .tree-view-container { padding-left: 5px; }
+
+.mode-tree { 
+ --left-padding: 15px;
+ --icon-center: calc((var(--list-tile-height) / 2));
+ --tree-indent: calc((var(--icon-center) + var(--left-padding)));
 }
 
 .mode-tree .tree-content {
-  margin-left: 18px; 
-  position: relative;
-  display: flex;
-  flex-direction: column;
+ margin-left: var(--tree-indent) !important;
+ position: relative;
+ display: flex;
+ flex-direction: column;
 }
 
-/* Vertical line aligned with parent folder icon */
+/* Vertical Tree Lines */
 .mode-tree .tree-content::before {
   content: "";
   position: absolute;
   top: 0;
-  left: -10px; 
-  bottom: 16px; 
-  border-left: 2px solid oklch(0.5 0 0);
+  left: -2px;
+  bottom: calc(var(--icon-center) - 2px); 
+  border-left: 2px solid oklch(0.5 0 0 / 0.5);
 }
 
-/* Horizontal branch ticks */
-.mode-tree .tree-file::before, 
-.mode-tree .tree-folder::before {
+/* Horizontal Tree Lines */
+.mode-tree .tree-file::before {
   content: "";
   position: absolute;
-  left: -10px; 
-  top: 16px;
-  width: 10px; 
-  border-top: 2px solid oklch(0.5 0 0);
+  left: 0px;
+  top: var(--icon-center);
+  width: var(--left-padding);
+  border-top: 2px solid oklch(0.5 0 0 / 0.5);
 }
 
-/* Hide lines for root elements */
 .tree-view-container > .tree-file::before,
 .tree-view-container > .tree-folder::before {
-  display: none;
+ display: none;
 }
 
 .mode-tree .tree-file {
-  position: relative;
-  padding-left: 0px !important;
+ position: relative;
+ padding-left: var(--left-padding) !important;
 }
 
-.mode-tree .tree-folder {
-  position: relative;
+.mode-tree .tree-folder { position: relative;}
+.mode-tree .folder-tile {}
+
+/* Details/Summary overrides */
+.mode-tree details,
+.mode-tree summary { list-style: none; }
+.mode-tree summary::-webkit-details-marker { display: none; }
+
+/* --- Tree Chevron via Pseudo-element --- */
+.mode-tree summary.folder-tile {
+ position: relative;
+ padding-left: var(--left-padding);
 }
 
-.mode-tree .folder-tile {
-  margin-left: -3px; 
+.mode-tree summary.folder-tile::before {
+    content: "➤";
+    position: absolute;
+    top: 0;
+    height: 100%;
+    line-height: var(--list-tile-height); 
+    left: 4px;
+    width: var(--left-padding);
+    text-align: center;
+    font-size: calc(var(--left-padding)); 
+    transition: transform 0.2s ease;
+    display: inline-block;
+    opacity: 1;
+    z-index: 2;
 }
 
-.mode-tree details, .mode-tree summary {
-  list-style: none;
+/* Chevron Animation */
+.mode-tree details[open] > summary.folder-tile::before { transform: rotate(90deg);}
+
+
+/*
+==========================================================================
+   8. FILE EXTENSIONS & BADGES
+==========================================================================
+*/
+
+/* Shared badge style */
+.grid-tile::after {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  color: white;
+  font-size: clamp(0.4em, calc((var(--tile-size) / 80px) * 0.6em), 0.8em);
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 5;
 }
 
-.mode-tree summary::-webkit-details-marker {
-  display: none;
+/* List/Tree badge repositioning */
+.mode-list .grid-tile::after, 
+.mode-tree .grid-tile::after {
+    position: relative;
+    width: max-content; 
+    height: fit-content;
+    align-self: center; 
+    margin-left: auto; 
+    margin-right: 2px;   
+    top: auto;
+    right: auto;
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;    
+    white-space: nowrap; 
+    line-height: 1;      
+    font-size: clamp(8px, calc((var(--list-tile-height) / 24px) * 12px), 20px);
 }
 
-/* --- CHEVRON ANIMATION --- */
-.chevron {
-  display: inline-block;
-  font-size: 1.2em;
-  margin-right: 4px;
-  transition: transform 0.2s ease;
-  width: 12px;
-  text-align: center;
-}
-
-details[open] > summary .chevron {
-  transform: rotate(90deg);
-}
-
-/* --- FILE EXTENSION COLORS --- */
+/* Extension specific colors */
 .md-tile::after { content: "MD"; background: oklch(0.55 0.23 260 / 0.8); }
 .pdf-tile::after { content: "PDF"; background: oklch(0.55 0.23 30 / 0.8); }
 .excalidraw-tile::after { content: "EX"; background: oklch(0.55 0.14 300 / 0.8); }
@@ -987,7 +1056,12 @@ details[open] > summary .chevron {
 .unknown-tile::after { content: attr(data-ext); background: oklch(0.45 0 0 / 0.8); }
 .image-tile::after { content: "IMG"; background: oklch(0.65 0.25 180 / 0.8); }
 
-/* --- CONTEXT MENU --- */
+/* 
+==========================================================================
+   9. OVERLAYS (Context Menu)
+==========================================================================
+*/
+
 #explorer-context-menu {
   font-weight: bold;
   background: oklch(0.50 0 0 / 0.5);
@@ -1014,27 +1088,14 @@ details[open] > summary .chevron {
 }
 
 #explorer-context-menu .menu-item.delete { color: oklch(0.75 0.3 30); }
-#explorer-context-menu .menu-item.delete:hover { background: red; color: white;}
+#explorer-context-menu .menu-item.delete:hover { background: red; color: white; }
 
-/* Image Thumbnails */
-.tile-thumb {
-  width: 100%;
-  height: 100%;
-  object-fit: cover; 
-  border-radius: 4px;
-  pointer-events: none; /* Prevent thumb from interfering with drag */
-}
+/*
+==========================================================================
+   10. ROOT (Variables)
+==========================================================================
+*/
 
-
-.mode-grid .image-tile .icon {
-  margin-top: 0;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  overflow: hidden;
-}
-
-/* Base Variables & Font */
 :root {
   --tile-bg: oklch(0.75 0 0 / 0.1);
   --header-height: 20px;
@@ -1045,7 +1106,6 @@ details[open] > summary .chevron {
   --window-border-color: #5558;
   font-family: Monaco, Menlo, Consolas, "Courier New", Courier, monospace;
 }
-
 ```
 
 ## Discussions to this library
