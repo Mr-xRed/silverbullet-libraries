@@ -1,4 +1,4 @@
-🚧---
+---
 name: "Library/Mr-xRed/TopPageBanner"
 tags: meta/library
 banner: ["https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/banner/welcome.jpg"]
