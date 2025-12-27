@@ -1,12 +1,9 @@
 ---
-name: "Library/Mr-xRed/OpenFloatingPage"
+name: "Library/Mr-xRed/FloatingPage"
 tags: meta/library
 files:
 - FloatingPage.js
 pageDecoration.prefix: "📃 "
-share.uri: "github:Mr-xRed/silverbullet-libraries/FloatingPage.md"
-share.hash: 9b2005d2
-share.mode: pull
 ---
 # Open Floating Page (Proof of Concept)
 
@@ -22,7 +19,7 @@ Try it out: ${widgets.commandButton("Floating: Open")}
 
 # How to Use it:
 
-```lua
+```spalua
 
 -- Mode 1: Internal SilverBullet Page
 command.define {

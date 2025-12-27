@@ -52,6 +52,16 @@ export function show(content, titleLabel = null) {
       }
 
       .sb-floating-title {
+        white-space: nowrap;      
+        overflow: hidden;        
+        text-overflow: ellipsis; 
+        
+
+        max-width: 100%;         
+        padding: 0 35px;          
+        box-sizing: border-box;   
+        text-align: center;     
+
         font-size: 11px;
         font-family: sans-serif;
         color: rgba(255, 255, 255, 0.5);
