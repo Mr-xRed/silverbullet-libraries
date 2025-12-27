@@ -10,11 +10,11 @@ pageDecoration.prefix: "📃 "
 This command opens a page, picked from the page navigation picker, in the panel
 on the right hand side.
 
-Try it out: ${widgets.commandButton("Sidebar: Open Page")}
+Try it out: ${widgets.commandButton("FloatingPage: Open")} ${widgets.commandButton("FloatingPage: Close")}
 
 ```space-lua
 command.define {
-  name = "Sidebar: Open Page",
+  name = "FloatingPage: Open",
   key = "Ctrl-Alt-o",
   run = function()
     local allPages = query[[
@@ -37,11 +37,11 @@ command.define {
 
 ## Close Floating Page
 
-To easily close this panel, the command ${widgets.commandButton("Sidebar: Close")} is provided.
+To easily close this panel, following command is provided.
 
 ```space-lua
 command.define {
-  name = "Sidebar: Close",
+  name = "FloatingPage: Close",
   key = "Ctrl-Alt-x",
   run = function()
     editor.hidePanel("rhs")
