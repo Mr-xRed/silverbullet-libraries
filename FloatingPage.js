@@ -1,14 +1,15 @@
-// Global state to keep track of the window
-let container = null;
+// Keep track of the highest z-index to bring windows to front
+let highestZ = 10000;
 
 export function show(pageName) {
-  const windowId = "sb-floating-window";
-  container = document.getElementById(windowId);
+  // 1. Create a unique ID for this specific page
+  const sanitizedId = "sb-float-" + pageName.replace(/[^a-zA-Z0-9]/g, "_");
+  let container = document.getElementById(sanitizedId);
 
-  // 1. Setup Global Styles
-  if (!document.getElementById("sb-global-drag-styles")) {
+  // 2. Setup Global Styles (Only once)
+  if (!document.getElementById("sb-floating-page-styles")) {
     const style = document.createElement("style");
-    style.id = "sb-global-drag-styles";
+    style.id = "sb-floating-page-styles";
     style.textContent = `
       .sb-floating-container {
         position: fixed !important;
@@ -38,15 +39,6 @@ export function show(pageName) {
         align-items: center !important;
         justify-content: center !important;
         position: relative;
-      }
-
-      /* Drag handle indicator in middle */
-      .sb-floating-header::after {
-        content: "";
-        width: 30px;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 2px;
       }
 
       .sb-floating-close-btn {
@@ -93,60 +85,75 @@ export function show(pageName) {
     document.head.appendChild(style);
   }
 
-  // 2. Create the window if it doesn't exist
-  if (!container) {
-    container = document.createElement("div");
-    container.id = windowId;
-    container.className = "sb-floating-container";
-    
-    const header = document.createElement("div");
-    header.className = "sb-floating-header";
-    
-    // Create the Close Button
-    const closeBtn = document.createElement("div");
-    closeBtn.className = "sb-floating-close-btn";
-    closeBtn.innerHTML = "✕";
-    closeBtn.title = "Close Window";
-    closeBtn.onclick = (e) => {
-      e.stopPropagation(); // Prevent drag trigger
-      close();
-    };
-    
-    const iframe = document.createElement("iframe");
-    iframe.className = "sb-floating-iframe";
-    iframe.name = "floating-iframe";
-
-    const resizer = document.createElement("div");
-    resizer.className = "sb-floating-resizer";
-
-    header.appendChild(closeBtn); // Add button to header
-    container.appendChild(header);
-    container.appendChild(iframe);
-    container.appendChild(resizer);
-    document.body.appendChild(container);
-
-    setupEvents(container, header, resizer);
-    
-    const saved = JSON.parse(localStorage.getItem("sb_floating_dims") || "null");
-    if (saved) {
-      container.style.left = `${saved.x}px`;
-      container.style.top = `${saved.y}px`;
-      container.style.width = `${saved.w}px`;
-      container.style.height = `${saved.h}px`;
-    }
+  // 3. If window exists, bring to front and exit
+  if (container) {
+    focusWindow(container);
+    return;
   }
 
-  // 3. Update iframe source
-  const iframe = container.querySelector('iframe');
+  // 4. Create New Window
+  container = document.createElement("div");
+  container.id = sanitizedId;
+  container.className = "sb-floating-container";
+  container.style.zIndex = ++highestZ;
+
+  const header = document.createElement("div");
+  header.className = "sb-floating-header";
+
+  const title = document.createElement("div");
+  title.className = "sb-floating-title";
+  title.innerText = pageName;
+
+  const closeBtn = document.createElement("div");
+  closeBtn.className = "sb-floating-close-btn";
+  closeBtn.innerHTML = "✕";
+  closeBtn.onclick = (e) => { e.stopPropagation(); container.remove(); };
+
+  const iframe = document.createElement("iframe");
+  iframe.className = "sb-floating-iframe";
   iframe.src = window.location.origin + "/" + encodeURIComponent(pageName);
+
+  const resizer = document.createElement("div");
+  resizer.className = "sb-floating-resizer";
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+  container.appendChild(header);
+  container.appendChild(iframe);
+  container.appendChild(resizer);
+
+  const target = document.querySelector("#sb-main") || document.body;
+  target.appendChild(container);
+
+  // Focus on click
+  container.addEventListener("pointerdown", () => focusWindow(container));
+
+  setupEvents(container, header, resizer, sanitizedId);
+
+  // Load saved dimensions specific to THIS page
+  const saved = JSON.parse(localStorage.getItem(`sb_dim_${sanitizedId}`) || "null");
+  if (saved) {
+    container.style.left = `${saved.x}px`;
+    container.style.top = `${saved.y}px`;
+    container.style.width = `${saved.w}px`;
+    container.style.height = `${saved.h}px`;
+  } else {
+    // Default staggered position so they don't stack perfectly
+    const offset = document.querySelectorAll('.sb-floating-container').length * 30;
+    container.style.left = `${100 + offset}px`;
+    container.style.top = `${100 + offset}px`;
+  }
 }
 
-export function close() {
-  const win = document.getElementById("sb-floating-window");
-  if (win) win.remove();
+function focusWindow(win) {
+  win.style.zIndex = ++highestZ;
 }
 
-function setupEvents(container, header, resizer) {
+export function closeAll() {
+  document.querySelectorAll(".sb-floating-container").forEach(win => win.remove());
+}
+
+function setupEvents(container, header, resizer, storageKey) {
   let isDragging = false, isResizing = false;
   let startX, startY, startW, startH, offsetX, offsetY;
 
@@ -154,9 +161,7 @@ function setupEvents(container, header, resizer) {
     container.querySelectorAll("iframe").forEach(f => f.style.pointerEvents = val);
 
   header.addEventListener("pointerdown", (e) => {
-    // Don't drag if clicking the close button
     if (e.target.classList.contains('sb-floating-close-btn')) return;
-
     isDragging = true;
     const rect = container.getBoundingClientRect();
     offsetX = e.clientX - rect.left;
@@ -188,7 +193,7 @@ function setupEvents(container, header, resizer) {
     if (!isDragging && !isResizing) return;
     isDragging = false; isResizing = false;
     setIframesPointer("auto");
-    localStorage.setItem("sb_floating_dims", JSON.stringify({
+    localStorage.setItem(`sb_dim_${storageKey}`, JSON.stringify({
       x: container.offsetLeft, y: container.offsetTop,
       w: container.offsetWidth, h: container.offsetHeight
     }));
