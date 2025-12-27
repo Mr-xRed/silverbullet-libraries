@@ -1,17 +1,26 @@
-// Keep track of the highest z-index to bring windows to front
 let highestZ = 10000;
 
-export function show(pageName) {
-  // 1. Create a unique ID for this specific page
-  const sanitizedId = "sb-float-" + pageName.replace(/[^a-zA-Z0-9]/g, "_");
+export function show(content, titleLabel = null) {
+  // 1. Detect Content Type and assign a shared Storage Key
+  const isUrl = content.startsWith("http://") || content.startsWith("https://");
+  const isHtml = content.trim().startsWith("<") && content.trim().endsWith(">");
+  
+  let storageKey = "sb_dim_mode_page"; // Mode 1
+  if (isHtml) storageKey = "sb_dim_mode_html"; // Mode 3
+  else if (isUrl) storageKey = "sb_dim_mode_url"; // Mode 2
+
+  // The ID must remain unique per-content so we can open multiple separate windows
+  const nameForId = titleLabel || content;
+  const sanitizedId = "sb-float-" + nameForId.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 50);
+  
   let container = document.getElementById(sanitizedId);
 
-  // 2. Setup Global Styles (Only once)
+  // 2. Setup Global Styles (unchanged)
   if (!document.getElementById("sb-floating-page-styles")) {
     const style = document.createElement("style");
     style.id = "sb-floating-page-styles";
     style.textContent = `
-      .sb-floating-container {
+.sb-floating-container {
         position: fixed !important;
         z-index: 10000 !important;
         display: flex !important;
@@ -82,16 +91,15 @@ export function show(pageName) {
         z-index: 10001;
       }
     `;
-    document.head.appendChild(style);
+  document.head.appendChild(style);
   }
 
-  // 3. If window exists, bring to front and exit
   if (container) {
     focusWindow(container);
     return;
   }
 
-  // 4. Create New Window
+  // 3. Create New Window
   container = document.createElement("div");
   container.id = sanitizedId;
   container.className = "sb-floating-container";
@@ -102,7 +110,7 @@ export function show(pageName) {
 
   const title = document.createElement("div");
   title.className = "sb-floating-title";
-  title.innerText = pageName;
+  title.innerText = titleLabel || (isUrl ? "Web" : (isHtml ? "HTML" : content));
 
   const closeBtn = document.createElement("div");
   closeBtn.className = "sb-floating-close-btn";
@@ -111,7 +119,10 @@ export function show(pageName) {
 
   const iframe = document.createElement("iframe");
   iframe.className = "sb-floating-iframe";
-  iframe.src = window.location.origin + "/" + encodeURIComponent(pageName);
+
+  if (isHtml) iframe.srcdoc = content;
+  else if (isUrl) iframe.src = content;
+  else iframe.src = window.location.origin + "/" + encodeURIComponent(content);
 
   const resizer = document.createElement("div");
   resizer.className = "sb-floating-resizer";
@@ -125,20 +136,19 @@ export function show(pageName) {
   const target = document.querySelector("#sb-main") || document.body;
   target.appendChild(container);
 
-  // Focus on click
   container.addEventListener("pointerdown", () => focusWindow(container));
+  
+  // Pass the shared mode-based storageKey instead of the unique sanitizedId
+  setupEvents(container, header, resizer, storageKey);
 
-  setupEvents(container, header, resizer, sanitizedId);
-
-  // Load saved dimensions specific to THIS page
-  const saved = JSON.parse(localStorage.getItem(`sb_dim_${sanitizedId}`) || "null");
+  // Load saved dimensions based on the MODE
+  const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
   if (saved) {
     container.style.left = `${saved.x}px`;
     container.style.top = `${saved.y}px`;
     container.style.width = `${saved.w}px`;
     container.style.height = `${saved.h}px`;
   } else {
-    // Default staggered position so they don't stack perfectly
     const offset = document.querySelectorAll('.sb-floating-container').length * 30;
     container.style.left = `${100 + offset}px`;
     container.style.top = `${100 + offset}px`;
@@ -193,7 +203,8 @@ function setupEvents(container, header, resizer, storageKey) {
     if (!isDragging && !isResizing) return;
     isDragging = false; isResizing = false;
     setIframesPointer("auto");
-    localStorage.setItem(`sb_dim_${storageKey}`, JSON.stringify({
+    // Saves to the MODE key (e.g., sb_dim_mode_page)
+    localStorage.setItem(storageKey, JSON.stringify({
       x: container.offsetLeft, y: container.offsetTop,
       w: container.offsetWidth, h: container.offsetHeight
     }));

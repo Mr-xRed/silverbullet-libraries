@@ -4,23 +4,64 @@ tags: meta/library
 files:
 - FloatingPage.js
 pageDecoration.prefix: "📃 "
+share.uri: "github:Mr-xRed/silverbullet-libraries/FloatingPage.md"
+share.hash: 9b2005d2
+share.mode: pull
 ---
 # Open Floating Page (Proof of Concept)
 
 > **warning** PROOF OF CONCEPT - EXPERIMENTAL ONLY
  
-This command opens a page, picked from the page navigation picker, in the panel
-in a floating resizable window.
+This JS opens a page, a website, direct HTML into a Floating Resizable window. See Examples below.
 
 > **success** Shortcut Keys
-> `Ctrl-Alt-o` - Open a page in a Window
-> `Ctrl-Alt-x` - Close the Window
+> `Ctrl-Alt-o` - Opens the Page Picker to chose the Page
 
-Try it out: ${widgets.commandButton("FloatingPage: Open")} ${widgets.commandButton("FloatingPage: Close")}
+
+Try it out: ${widgets.commandButton("Floating: Open")}
+
+# How to Use it:
+
+```lua
+
+-- Mode 1: Internal SilverBullet Page
+command.define {
+  name = "Floating: EXAMPLE: Open Internal Page",
+  run = function()
+    js.import("/.fs/Library/Mr-xRed/FloatingPage.js").show("CONFIG", "Configuration")
+  end
+}
+
+-- Mode 2: External Website
+command.define {
+  name = "Floating: EXAMPLE: Open Webpage ",
+  run = function()
+    -- Note: Some sites like Google/GitHub block iframes for security. 
+    -- Wikipedia and personal sites usually work fine.
+    js.import("/.fs/Library/Mr-xRed/FloatingPage.js").show("https://en.wikipedia.org", "Wikipedia")
+  end
+}
+
+-- Mode 3: Direct HTML Code
+command.define {
+  name = "Floating: EXAMPLE: Open Custom HTML",
+  run = function()
+    local myHtml = [[
+      <body style="background: #1a1a1a; color: white; font-family: sans-serif; padding: 20px;">
+        <h1>Hello from Lua!</h1>
+        <p>This is a floating window rendered directly from a string.</p>
+        <button onclick="alert('It works!')">Click Me</button>
+      </body>
+    ]]
+    js.import("/.fs/Library/Mr-xRed/FloatingPage.js").show(myHtml, "Custom App")
+  end
+}
+
+```
 
 ```space-lua
 command.define {
-  name = "FloatingPage: Open",
+  name = "Floating: Open",
   key = "Ctrl-Alt-o",
   run = function()
     local allPages = query[[
@@ -30,14 +71,6 @@ command.define {
     if page != nil then
       js.import("/.fs/Library/Mr-xRed/FloatingPage.js").show(page.name)
     end
-  end
-}
-
-command.define {
-  name = "FloatingPage: Close",
-  key = "Ctrl-Alt-x",
-  run = function()
-    js.import("/.fs/Library/Mr-xRed/FloatingPage.js").close()
   end
 }
 ```
