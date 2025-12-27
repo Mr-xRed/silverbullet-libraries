@@ -19,7 +19,7 @@ Try it out: ${widgets.commandButton("Floating: Open")}
 
 # How to Use it:
 
-```spalua
+```lua
 
 -- Mode 1: Internal SilverBullet Page
 command.define {
