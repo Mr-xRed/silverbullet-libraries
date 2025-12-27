@@ -2,7 +2,7 @@
 name: "Library/Mr-xRed/OpenFloatingPage"
 tags: meta/library
 files:
-- PanelDragResize.js
+- FloatingPage.js
 pageDecoration.prefix: "📃 "
 ---
 # Open Floating Page (Proof of Concept)
@@ -26,31 +26,18 @@ command.define {
     local allPages = query[[
       from index.tag "page"
       order by _.lastModified desc]]
-    local page = editor.filterBox('🔍', allPages, "Select the page to open aside")
+    local page = editor.filterBox('🔍', allPages, "Select page")
     if page != nil then
-      editor.flashNotification(page.name)
-      editor.showPanel("rhs",1,[[
-      <style>
-      html, body {margin: 0;padding: 0;width: 100%;height: 100%;}
-      iframe {width: 100%;height: 100%;border: none;}
-      </style>
-      <iframe src="]] .. page.name .. [[" />]])
-      js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag();
+      js.import("/.fs/Library/Mr-xRed/FloatingPage.js").show(page.name)
     end
   end
 }
-```
 
-## Close Floating Page
-
-To easily close this panel, following command is provided.
-
-```space-lua
 command.define {
   name = "FloatingPage: Close",
   key = "Ctrl-Alt-x",
   run = function()
-    editor.hidePanel("rhs")
+    js.import("/.fs/Library/Mr-xRed/FloatingPage.js").close()
   end
 }
 ```
