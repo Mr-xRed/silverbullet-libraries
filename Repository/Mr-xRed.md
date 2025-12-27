@@ -16,8 +16,8 @@ website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PrintPrevie
 description: "Adds PrintPreview with custom HTML/CSS styling for SilverBullet"
 ---
 name: "📃 Floating Page(Proof of Concept)"
-uri: github:Mr-xRed/silverbullet-libraries/OpenFloatingPage.md
-website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/OpenFloatingPage.md
+uri: github:Mr-xRed/silverbullet-libraries/FloatingPage.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingPage.md
 description: "Open any page in a Floating Window inside Silverbullet"
 ```
 
