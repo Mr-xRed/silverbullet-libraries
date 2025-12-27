@@ -1,42 +1,43 @@
 let highestZ = 10000;
 
 export function show(content, titleLabel = null) {
-  // 1. Detect Content Type and assign a shared Storage Key
   const isUrl = content.startsWith("http://") || content.startsWith("https://");
   const isHtml = content.trim().startsWith("<") && content.trim().endsWith(">");
   
-  let storageKey = "sb_dim_mode_page"; // Mode 1
-  if (isHtml) storageKey = "sb_dim_mode_html"; // Mode 3
-  else if (isUrl) storageKey = "sb_dim_mode_url"; // Mode 2
+  let storageKey = "sb_dim_mode_page";
+  if (isHtml) storageKey = "sb_dim_mode_html";
+  else if (isUrl) storageKey = "sb_dim_mode_url";
 
-  // The ID must remain unique per-content so we can open multiple separate windows
   const nameForId = titleLabel || content;
   const sanitizedId = "sb-float-" + nameForId.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 50);
   
   let container = document.getElementById(sanitizedId);
 
-  // 2. Setup Global Styles (unchanged)
   if (!document.getElementById("sb-floating-page-styles")) {
     const style = document.createElement("style");
     style.id = "sb-floating-page-styles";
     style.textContent = `
-.sb-floating-container {
+      .sb-floating-container {
         position: fixed !important;
-        z-index: 10000 !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
         background: var(--frame-color, #222);
         border: var(--window-border, 1px) solid var(--window-border-color, #444);
         backdrop-filter: blur(10px);
-        box-shadow: 0px 10px 30px #000a;
+        box-shadow: 0px 5px 15px #0008;
         border-radius: 12px;
         padding: 6px;
         width: 600px;
         height: 500px;
-        top: 100px;
-        left: 100px;
         touch-action: none;
+        transition: box-shadow 0.2s, border-color 0.2s;
+      }
+      
+      /* Visual feedback for focused window */
+      .sb-floating-container.is-focused {
+        box-shadow: 0px 10px 30px #000a;
+        border-color: var(--ui-accent-color, #007bff);
       }
 
       .sb-floating-header {
@@ -45,53 +46,65 @@ export function show(content, titleLabel = null) {
         cursor: grab !important;
         flex-shrink: 0 !important;
         display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
+        align-items: center;
+        justify-content: center;
         position: relative;
+      }
+
+      .sb-floating-title {
+        font-size: 11px;
+        font-family: sans-serif;
+        color: rgba(255, 255, 255, 0.5);
+        pointer-events: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
       .sb-floating-close-btn {
         position: absolute;
         right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 22px;
-        height: 22px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        border-radius: 6px;
-        font-family: sans-serif;
-        font-size: 14px;
+        width: 22px; height: 22px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer; border-radius: 6px;
+        font-family: sans-serif; font-size: 14px;
         color: rgba(255, 255, 255, 0.6);
         transition: all 0.2s;
         z-index: 10002;
       }
+      .sb-floating-close-btn:hover { background: #ff4d4d; color: white; }
 
-      .sb-floating-close-btn:hover {
-        background: #ff4d4d;
-        color: white;
+      .sb-floating-iframe-wrapper {
+        flex: 1;
+        position: relative;
+        border-radius: 6px;
+        overflow: hidden;
       }
 
       .sb-floating-iframe {
-        flex: 1;
+        width: 100%; height: 100%;
         border: none;
-        border-radius: 6px;
         background: var(--background, white);
+      }
+
+      /* The "Shield" prevents the iframe from stealing focus clicks */
+      .sb-iframe-shield {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        z-index: 1000;
+        background: transparent;
+        display: block;
+      }
+      .is-focused .sb-iframe-shield {
+        display: none;
       }
 
       .sb-floating-resizer {
         position: absolute;
-        right: 0;
-        bottom: 0;
-        width: 20px;
-        height: 20px;
-        cursor: nwse-resize;
-        z-index: 10001;
+        right: 0; bottom: 0; width: 20px; height: 20px;
+        cursor: nwse-resize; z-index: 10001;
       }
     `;
-  document.head.appendChild(style);
+    document.head.appendChild(style);
   }
 
   if (container) {
@@ -99,11 +112,9 @@ export function show(content, titleLabel = null) {
     return;
   }
 
-  // 3. Create New Window
   container = document.createElement("div");
   container.id = sanitizedId;
   container.className = "sb-floating-container";
-  container.style.zIndex = ++highestZ;
 
   const header = document.createElement("div");
   header.className = "sb-floating-header";
@@ -117,6 +128,13 @@ export function show(content, titleLabel = null) {
   closeBtn.innerHTML = "✕";
   closeBtn.onclick = (e) => { e.stopPropagation(); container.remove(); };
 
+  // New wrapper for iframe and shield
+  const wrapper = document.createElement("div");
+  wrapper.className = "sb-floating-iframe-wrapper";
+
+  const shield = document.createElement("div");
+  shield.className = "sb-iframe-shield";
+
   const iframe = document.createElement("iframe");
   iframe.className = "sb-floating-iframe";
 
@@ -129,19 +147,20 @@ export function show(content, titleLabel = null) {
 
   header.appendChild(title);
   header.appendChild(closeBtn);
+  wrapper.appendChild(shield);
+  wrapper.appendChild(iframe);
   container.appendChild(header);
-  container.appendChild(iframe);
+  container.appendChild(wrapper);
   container.appendChild(resizer);
 
   const target = document.querySelector("#sb-main") || document.body;
   target.appendChild(container);
 
-  container.addEventListener("pointerdown", () => focusWindow(container));
-  
-  // Pass the shared mode-based storageKey instead of the unique sanitizedId
+  // Focus triggers
+  container.addEventListener("pointerdown", (e) => focusWindow(container), true);
+
   setupEvents(container, header, resizer, storageKey);
 
-  // Load saved dimensions based on the MODE
   const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
   if (saved) {
     container.style.left = `${saved.x}px`;
@@ -153,9 +172,18 @@ export function show(content, titleLabel = null) {
     container.style.left = `${100 + offset}px`;
     container.style.top = `${100 + offset}px`;
   }
+
+  focusWindow(container);
 }
 
 function focusWindow(win) {
+  // 1. Clear focus from all windows
+  document.querySelectorAll(".sb-floating-container").forEach(c => {
+    c.classList.remove("is-focused");
+  });
+
+  // 2. Apply focus to this window
+  win.classList.add("is-focused");
   win.style.zIndex = ++highestZ;
 }
 
@@ -167,16 +195,12 @@ function setupEvents(container, header, resizer, storageKey) {
   let isDragging = false, isResizing = false;
   let startX, startY, startW, startH, offsetX, offsetY;
 
-  const setIframesPointer = (val) => 
-    container.querySelectorAll("iframe").forEach(f => f.style.pointerEvents = val);
-
   header.addEventListener("pointerdown", (e) => {
     if (e.target.classList.contains('sb-floating-close-btn')) return;
     isDragging = true;
     const rect = container.getBoundingClientRect();
     offsetX = e.clientX - rect.left;
     offsetY = e.clientY - rect.top;
-    setIframesPointer("none");
     header.setPointerCapture(e.pointerId);
   });
 
@@ -184,7 +208,6 @@ function setupEvents(container, header, resizer, storageKey) {
     isResizing = true;
     startX = e.clientX; startY = e.clientY;
     startW = container.offsetWidth; startH = container.offsetHeight;
-    setIframesPointer("none");
     resizer.setPointerCapture(e.pointerId);
     e.stopPropagation();
   });
@@ -202,8 +225,6 @@ function setupEvents(container, header, resizer, storageKey) {
   const stopAction = () => {
     if (!isDragging && !isResizing) return;
     isDragging = false; isResizing = false;
-    setIframesPointer("auto");
-    // Saves to the MODE key (e.g., sb_dim_mode_page)
     localStorage.setItem(storageKey, JSON.stringify({
       x: container.offsetLeft, y: container.offsetTop,
       w: container.offsetWidth, h: container.offsetHeight
