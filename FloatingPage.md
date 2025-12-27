@@ -7,8 +7,14 @@ pageDecoration.prefix: "📃 "
 ---
 # Open Floating Page (Proof of Concept)
 
+> **warning** PROOF OF CONCEPT - EXPERIMENTAL ONLY
+ 
 This command opens a page, picked from the page navigation picker, in the panel
-on the right hand side.
+in a floating resizable window.
+
+> **success** Shortcut Keys
+> `Ctrl-Alt-o` - Open a page in a Window
+> `Ctrl-Alt-x` - Close the Window
 
 Try it out: ${widgets.commandButton("FloatingPage: Open")} ${widgets.commandButton("FloatingPage: Close")}
 
