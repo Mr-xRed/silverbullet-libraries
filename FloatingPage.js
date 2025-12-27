@@ -1,4 +1,6 @@
 let highestZ = 10000;
+const SNAP_THRESHOLD = 15;
+const TOP_OFFSET = 65;
 
 export function show(content, titleLabel = null) {
   const isUrl = content.startsWith("http://") || content.startsWith("https://");
@@ -17,6 +19,11 @@ export function show(content, titleLabel = null) {
     const style = document.createElement("style");
     style.id = "sb-floating-page-styles";
     style.textContent = `
+      body.sb-dragging-active {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+      }
+
       .sb-floating-container {
         position: fixed !important;
         display: flex !important;
@@ -31,7 +38,8 @@ export function show(content, titleLabel = null) {
         width: 600px;
         height: 500px;
         touch-action: none;
-        transition: box-shadow 0.2s, border-color 0.2s;
+        max-width: 100vw;
+        max-height: calc(100vh - ${TOP_OFFSET}px);
       }
       
       /* Visual feedback for focused window */
@@ -123,7 +131,11 @@ export function show(content, titleLabel = null) {
       .resizer-bl { bottom: 0; left: 0; width: 12px; height: 12px; cursor: nesw-resize; }
       .resizer-br { bottom: 0; right: 0; width: 12px; height: 12px; cursor: nwse-resize; }
     `;
- document.head.appendChild(style);
+document.head.appendChild(style);
+
+    window.addEventListener("resize", () => {
+      document.querySelectorAll(".sb-floating-container").forEach(win => clampToViewport(win));
+    });
   }
 
   if (container) {
@@ -131,35 +143,28 @@ export function show(content, titleLabel = null) {
     return;
   }
 
+  // ... (Keep existing container/header/iframe creation) ...
   container = document.createElement("div");
   container.id = sanitizedId;
   container.className = "sb-floating-container";
-
   const header = document.createElement("div");
   header.className = "sb-floating-header";
-
   const title = document.createElement("div");
   title.className = "sb-floating-title";
   title.innerText = titleLabel || (isUrl ? "Web" : (isHtml ? "HTML" : content));
-
   const closeBtn = document.createElement("div");
   closeBtn.className = "sb-floating-close-btn";
   closeBtn.innerHTML = "✕";
   closeBtn.onclick = (e) => { e.stopPropagation(); container.remove(); };
-
   const wrapper = document.createElement("div");
   wrapper.className = "sb-floating-iframe-wrapper";
-
   const shield = document.createElement("div");
   shield.className = "sb-iframe-shield";
-
   const iframe = document.createElement("iframe");
   iframe.className = "sb-floating-iframe";
-
   if (isHtml) iframe.srcdoc = content;
   else if (isUrl) iframe.src = content;
   else iframe.src = window.location.origin + "/" + encodeURIComponent(content);
-
   header.appendChild(title);
   header.appendChild(closeBtn);
   wrapper.appendChild(shield);
@@ -167,9 +172,7 @@ export function show(content, titleLabel = null) {
   container.appendChild(header);
   container.appendChild(wrapper);
 
-  // Add 8 resizer handles
-  const directions = ['t', 'b', 'l', 'r', 'tl', 'tr', 'bl', 'br'];
-  directions.forEach(dir => {
+  ['t', 'b', 'l', 'r', 'tl', 'tr', 'bl', 'br'].forEach(dir => {
     const handle = document.createElement("div");
     handle.className = `sb-resizer resizer-${dir}`;
     handle.dataset.direction = dir;
@@ -178,24 +181,37 @@ export function show(content, titleLabel = null) {
 
   const target = document.querySelector("#sb-main") || document.body;
   target.appendChild(container);
-
   container.addEventListener("pointerdown", () => focusWindow(container), true);
 
   setupEvents(container, header, storageKey);
-
+  
+  // (Keep clamping and loading logic same)
   const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
   if (saved) {
     container.style.left = `${saved.x}px`;
     container.style.top = `${saved.y}px`;
     container.style.width = `${saved.w}px`;
     container.style.height = `${saved.h}px`;
+    clampToViewport(container);
   } else {
     const offset = document.querySelectorAll('.sb-floating-container').length * 30;
     container.style.left = `${100 + offset}px`;
-    container.style.top = `${100 + offset}px`;
+    container.style.top = `${TOP_OFFSET + 35 + offset}px`;
   }
-
   focusWindow(container);
+}
+
+// ... (Keep clampToViewport and focusWindow same) ...
+function clampToViewport(win) {
+  const rect = win.getBoundingClientRect();
+  let left = rect.left, top = rect.top, width = rect.width, height = rect.height;
+  if (width > window.innerWidth) width = window.innerWidth;
+  if (height > window.innerHeight - TOP_OFFSET) height = window.innerHeight - TOP_OFFSET;
+  if (left < 0) left = 0;
+  if (top < TOP_OFFSET) top = TOP_OFFSET;
+  if (left + width > window.innerWidth) left = window.innerWidth - width;
+  if (top + height > window.innerHeight) top = window.innerHeight - height;
+  win.style.left = `${left}px`; win.style.top = `${top}px`; win.style.width = `${width}px`; win.style.height = `${height}px`;
 }
 
 function focusWindow(win) {
@@ -205,26 +221,24 @@ function focusWindow(win) {
 }
 
 function setupEvents(container, header, storageKey) {
-  let activeAction = null; // 'drag' or direction like 'tl', 'br'
+  let activeAction = null;
   let startX, startY, startW, startH, startL, startT;
 
   container.addEventListener("pointerdown", (e) => {
     const resizer = e.target.closest('.sb-resizer');
     const isHeader = e.target.closest('.sb-floating-header');
-    const isClose = e.target.closest('.sb-floating-close-btn');
-
-    if (isClose) return;
+    if (e.target.closest('.sb-floating-close-btn')) return;
 
     if (resizer || isHeader) {
       activeAction = resizer ? resizer.dataset.direction : 'drag';
       
-      startX = e.clientX;
-      startY = e.clientY;
-      startW = container.offsetWidth;
-      startH = container.offsetHeight;
-      startL = container.offsetLeft;
-      startT = container.offsetTop;
-
+      // NEW: Apply global selection lock
+      document.body.classList.add("sb-dragging-active");
+      
+      startX = e.clientX; startY = e.clientY;
+      startW = container.offsetWidth; startH = container.offsetHeight;
+      startL = container.offsetLeft; startT = container.offsetTop;
+      
       e.target.setPointerCapture(e.pointerId);
       e.stopPropagation();
     }
@@ -233,37 +247,42 @@ function setupEvents(container, header, storageKey) {
   window.addEventListener("pointermove", (e) => {
     if (!activeAction) return;
 
+    let newLeft = startL, newTop = startT, newWidth = startW, newHeight = startH;
     const dx = e.clientX - startX;
     const dy = e.clientY - startY;
 
     if (activeAction === 'drag') {
-      container.style.left = `${startL + dx}px`;
-      container.style.top = `${startT + dy}px`;
+      newLeft = startL + dx;
+      newTop = startT + dy;
+      if (newLeft < SNAP_THRESHOLD) newLeft = 0;
+      if (newTop < TOP_OFFSET + SNAP_THRESHOLD) newTop = TOP_OFFSET; 
+      if (newLeft + startW > window.innerWidth - SNAP_THRESHOLD) newLeft = window.innerWidth - startW;
+      if (newTop + startH > window.innerHeight - SNAP_THRESHOLD) newTop = window.innerHeight - startH;
+      newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - startW));
+      newTop = Math.max(TOP_OFFSET, Math.min(newTop, window.innerHeight - startH));
+      container.style.left = `${newLeft}px`;
+      container.style.top = `${newTop}px`;
     } else {
-      // Logic for all 8 resize directions
-      if (activeAction.includes('r')) container.style.width = `${startW + dx}px`;
-      if (activeAction.includes('b')) container.style.height = `${startH + dy}px`;
-      
-      if (activeAction.includes('l')) {
-        const newWidth = startW - dx;
-        if (newWidth > 150) { // Minimum width constraint
-          container.style.width = `${newWidth}px`;
-          container.style.left = `${startL + dx}px`;
-        }
-      }
-      if (activeAction.includes('t')) {
-        const newHeight = startH - dy;
-        if (newHeight > 100) { // Minimum height constraint
-          container.style.height = `${newHeight}px`;
-          container.style.top = `${startT + dy}px`;
-        }
-      }
+      if (activeAction.includes('r')) newWidth = startW + dx;
+      if (activeAction.includes('b')) newHeight = startH + dy;
+      if (activeAction.includes('l')) { newWidth = startW - dx; newLeft = startL + dx; }
+      if (activeAction.includes('t')) { newHeight = startH - dy; newTop = startT + dy; }
+      if (newLeft < 0) { newWidth += newLeft; newLeft = 0; }
+      if (newTop < TOP_OFFSET) { newHeight -= (TOP_OFFSET - newTop); newTop = TOP_OFFSET; }
+      if (newLeft + newWidth > window.innerWidth) newWidth = window.innerWidth - newLeft;
+      if (newTop + newHeight > window.innerHeight) newHeight = window.innerHeight - newTop;
+      if (newWidth > 150) { container.style.width = `${newWidth}px`; container.style.left = `${newLeft}px`; }
+      if (newHeight > 100) { container.style.height = `${newHeight}px`; container.style.top = `${newTop}px`; }
     }
   });
 
   const stopAction = () => {
     if (!activeAction) return;
     activeAction = null;
+    
+    // NEW: Remove global selection lock
+    document.body.classList.remove("sb-dragging-active");
+    
     localStorage.setItem(storageKey, JSON.stringify({
       x: container.offsetLeft, y: container.offsetTop,
       w: container.offsetWidth, h: container.offsetHeight

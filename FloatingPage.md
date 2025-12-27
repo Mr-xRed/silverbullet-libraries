@@ -12,18 +12,18 @@ pageDecoration.prefix: "📃 "
 > **success** Shortcut Keys
 > `Ctrl-Alt-o` - Opens the Page Picker to chose the Page
 
-Try it out: ${widgets.commandButton("Floating: Open")}
+Try it out here 👉 ${widgets.commandButton("Floating: Open")}${widgets.commandButton("Page","Floating: EXAMPLE: Open Internal Page")}${widgets.commandButton("External Website","Floating: EXAMPLE: Open Webpage")}${widgets.commandButton("Custom HTML","Floating: EXAMPLE: Open Custom HTML")}
 
 This JS opens a page, a website, direct HTML into a Floating Resizable window.
-
-See Examples below.
+See Examples below
 
 # Examples:
 
-```lua
+```space-lua
 -- Mode 1: Internal SilverBullet Page
 command.define {
   name = "Floating: EXAMPLE: Open Internal Page",
+  hide = true,
   run = function()
     js.import("/.fs/Library/Mr-xRed/FloatingPage.js").show("CONFIG", "Configuration")
   end
@@ -31,7 +31,8 @@ command.define {
 
 -- Mode 2: External Website
 command.define {
-  name = "Floating: EXAMPLE: Open Webpage ",
+  name = "Floating: EXAMPLE: Open Webpage",
+  hide = true,
   run = function()
     -- Note: Some sites like Google/GitHub block iframes for security. 
     -- Wikipedia and personal sites usually work fine.
@@ -42,6 +43,7 @@ command.define {
 -- Mode 3: Direct HTML Code
 command.define {
   name = "Floating: EXAMPLE: Open Custom HTML",
+  hide = true,
   run = function()
     local myHtml = [[
       <body style="background: #1a1a1a; color: white; font-family: sans-serif; padding: 20px;">
