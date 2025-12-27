@@ -108,13 +108,22 @@ export function show(content, titleLabel = null) {
         display: none;
       }
 
-      .sb-floating-resizer {
-        position: absolute;
-        right: 0; bottom: 0; width: 20px; height: 20px;
-        cursor: nwse-resize; z-index: 10001;
-      }
+      /* Multi-side resizers */
+      .sb-resizer { position: absolute; z-index: 10001; }
+      
+      /* Sides */
+      .resizer-t { top: 0; left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
+      .resizer-b { bottom: 0; left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
+      .resizer-l { left: 0; top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
+      .resizer-r { right: 0; top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
+      
+      /* Corners */
+      .resizer-tl { top: 0; left: 0; width: 12px; height: 12px; cursor: nwse-resize; }
+      .resizer-tr { top: 0; right: 0; width: 12px; height: 12px; cursor: nesw-resize; }
+      .resizer-bl { bottom: 0; left: 0; width: 12px; height: 12px; cursor: nesw-resize; }
+      .resizer-br { bottom: 0; right: 0; width: 12px; height: 12px; cursor: nwse-resize; }
     `;
-    document.head.appendChild(style);
+ document.head.appendChild(style);
   }
 
   if (container) {
@@ -138,7 +147,6 @@ export function show(content, titleLabel = null) {
   closeBtn.innerHTML = "✕";
   closeBtn.onclick = (e) => { e.stopPropagation(); container.remove(); };
 
-  // New wrapper for iframe and shield
   const wrapper = document.createElement("div");
   wrapper.className = "sb-floating-iframe-wrapper";
 
@@ -152,24 +160,28 @@ export function show(content, titleLabel = null) {
   else if (isUrl) iframe.src = content;
   else iframe.src = window.location.origin + "/" + encodeURIComponent(content);
 
-  const resizer = document.createElement("div");
-  resizer.className = "sb-floating-resizer";
-
   header.appendChild(title);
   header.appendChild(closeBtn);
   wrapper.appendChild(shield);
   wrapper.appendChild(iframe);
   container.appendChild(header);
   container.appendChild(wrapper);
-  container.appendChild(resizer);
+
+  // Add 8 resizer handles
+  const directions = ['t', 'b', 'l', 'r', 'tl', 'tr', 'bl', 'br'];
+  directions.forEach(dir => {
+    const handle = document.createElement("div");
+    handle.className = `sb-resizer resizer-${dir}`;
+    handle.dataset.direction = dir;
+    container.appendChild(handle);
+  });
 
   const target = document.querySelector("#sb-main") || document.body;
   target.appendChild(container);
 
-  // Focus triggers
-  container.addEventListener("pointerdown", (e) => focusWindow(container), true);
+  container.addEventListener("pointerdown", () => focusWindow(container), true);
 
-  setupEvents(container, header, resizer, storageKey);
+  setupEvents(container, header, storageKey);
 
   const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
   if (saved) {
@@ -187,54 +199,71 @@ export function show(content, titleLabel = null) {
 }
 
 function focusWindow(win) {
-  // 1. Clear focus from all windows
-  document.querySelectorAll(".sb-floating-container").forEach(c => {
-    c.classList.remove("is-focused");
-  });
-
-  // 2. Apply focus to this window
+  document.querySelectorAll(".sb-floating-container").forEach(c => c.classList.remove("is-focused"));
   win.classList.add("is-focused");
   win.style.zIndex = ++highestZ;
 }
 
-export function closeAll() {
-  document.querySelectorAll(".sb-floating-container").forEach(win => win.remove());
-}
+function setupEvents(container, header, storageKey) {
+  let activeAction = null; // 'drag' or direction like 'tl', 'br'
+  let startX, startY, startW, startH, startL, startT;
 
-function setupEvents(container, header, resizer, storageKey) {
-  let isDragging = false, isResizing = false;
-  let startX, startY, startW, startH, offsetX, offsetY;
+  container.addEventListener("pointerdown", (e) => {
+    const resizer = e.target.closest('.sb-resizer');
+    const isHeader = e.target.closest('.sb-floating-header');
+    const isClose = e.target.closest('.sb-floating-close-btn');
 
-  header.addEventListener("pointerdown", (e) => {
-    if (e.target.classList.contains('sb-floating-close-btn')) return;
-    isDragging = true;
-    const rect = container.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
-    header.setPointerCapture(e.pointerId);
-  });
+    if (isClose) return;
 
-  resizer.addEventListener("pointerdown", (e) => {
-    isResizing = true;
-    startX = e.clientX; startY = e.clientY;
-    startW = container.offsetWidth; startH = container.offsetHeight;
-    resizer.setPointerCapture(e.pointerId);
-    e.stopPropagation();
+    if (resizer || isHeader) {
+      activeAction = resizer ? resizer.dataset.direction : 'drag';
+      
+      startX = e.clientX;
+      startY = e.clientY;
+      startW = container.offsetWidth;
+      startH = container.offsetHeight;
+      startL = container.offsetLeft;
+      startT = container.offsetTop;
+
+      e.target.setPointerCapture(e.pointerId);
+      e.stopPropagation();
+    }
   });
 
   window.addEventListener("pointermove", (e) => {
-    if (isDragging) {
-      container.style.left = `${e.clientX - offsetX}px`;
-      container.style.top = `${e.clientY - offsetY}px`;
-    } else if (isResizing) {
-      container.style.width = `${startW + (e.clientX - startX)}px`;
-      container.style.height = `${startH + (e.clientY - startY)}px`;
+    if (!activeAction) return;
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (activeAction === 'drag') {
+      container.style.left = `${startL + dx}px`;
+      container.style.top = `${startT + dy}px`;
+    } else {
+      // Logic for all 8 resize directions
+      if (activeAction.includes('r')) container.style.width = `${startW + dx}px`;
+      if (activeAction.includes('b')) container.style.height = `${startH + dy}px`;
+      
+      if (activeAction.includes('l')) {
+        const newWidth = startW - dx;
+        if (newWidth > 150) { // Minimum width constraint
+          container.style.width = `${newWidth}px`;
+          container.style.left = `${startL + dx}px`;
+        }
+      }
+      if (activeAction.includes('t')) {
+        const newHeight = startH - dy;
+        if (newHeight > 100) { // Minimum height constraint
+          container.style.height = `${newHeight}px`;
+          container.style.top = `${startT + dy}px`;
+        }
+      }
     }
   });
 
   const stopAction = () => {
-    if (!isDragging && !isResizing) return;
-    isDragging = false; isResizing = false;
+    if (!activeAction) return;
+    activeAction = null;
     localStorage.setItem(storageKey, JSON.stringify({
       x: container.offsetLeft, y: container.offsetTop,
       w: container.offsetWidth, h: container.offsetHeight
@@ -242,4 +271,8 @@ function setupEvents(container, header, resizer, storageKey) {
   };
 
   window.addEventListener("pointerup", stopAction);
+}
+
+export function closeAll() {
+  document.querySelectorAll(".sb-floating-container").forEach(win => win.remove());
 }

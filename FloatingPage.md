@@ -9,18 +9,18 @@ pageDecoration.prefix: "📃 "
 
 > **warning** PROOF OF CONCEPT - EXPERIMENTAL ONLY
  
-This JS opens a page, a website, direct HTML into a Floating Resizable window. See Examples below.
-
 > **success** Shortcut Keys
 > `Ctrl-Alt-o` - Opens the Page Picker to chose the Page
 
-
 Try it out: ${widgets.commandButton("Floating: Open")}
 
-# How to Use it:
+This JS opens a page, a website, direct HTML into a Floating Resizable window.
+
+See Examples below.
+
+# Examples:
 
 ```lua
-
 -- Mode 1: Internal SilverBullet Page
 command.define {
   name = "Floating: EXAMPLE: Open Internal Page",
