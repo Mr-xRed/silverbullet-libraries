@@ -56,9 +56,9 @@ uri: github:Mr-xRed/silverbullet-libraries/DatePicker.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DatePicker.md
 description: "Pick a date from a calendar and add it to your page as a WikiLink"
 ---
-name: "🗓️ Journal Calendar"
-uri: github:Mr-xRed/silverbullet-libraries/JournalCalendar.md
-website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/JournalCalendar.md
+name: "🗓️ Floating Journal Calendar"
+uri: github:Mr-xRed/silverbullet-libraries/FloatingJournalCalendar.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingJournalCalendar.md
 description: "The Journal Calendar is a lightweight, interactive navigation tool for SilverBullet. It provides a sleek, floating interface that allows users to quickly browse their journal entries."
 ```
 

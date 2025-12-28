@@ -1,10 +1,10 @@
 ---
-name: "Library/Mr-xRed/JournalCalendar"
+name: "Library/Mr-xRed/FloatingJournalCalendar"
 tags: meta/library
 pageDecoration.prefix: "🗓️ "
 ---
-# Journal Calendar & Page Navigation
-The **Journal Calendar** is a lightweight, interactive navigation tool for SilverBullet. It provides a sleek, floating interface that allows users to quickly browse their journal entries. By scanning existing pages against a customizable date pattern, it visually identifies days with active entries, enabling seamless one-click navigation through personal history.
+# Floating Journal Calendar & Page Navigation
+The **Floating Journal Calendar** is a lightweight, interactive navigation tool for SilverBullet. It provides a sleek, floating interface that allows users to quickly browse their journal entries. By scanning existing pages against a customizable date pattern, it visually identifies days with active entries, enabling seamless one-click navigation through personal history.
 
 ![JournalCalendar](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/JournalCalendar.png)
 
@@ -30,7 +30,7 @@ The **Journal Calendar** is a lightweight, interactive navigation tool for Silve
 
 ```lua
 -- priority: 1
-config.set("journalCalendar", {
+config.set("FloatingJournalCalendar", {
   journalPathPattern = 'Journal/#year#/#month#/#year#-#month#-#day#_#weekday#',
   monthNames = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
   dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
@@ -43,7 +43,7 @@ config.set("journalCalendar", {
 
 ```space-lua
 -- priority: 0
-config.define("journalCalendar", {
+config.define("FloatingJournalCalendar", {
   type = "object",
   properties = {
     journalPathPattern = schema.string(),
@@ -60,14 +60,14 @@ local function quote_list(t)
     return "[" .. table.concat(quoted, ", ") .. "]"
 end
 
-function toggleJournalCalendar()
+function toggleFloatingJournalCalendar()
     local existing_root = js.window.document.getElementById("sb-journal-root")
     if existing_root then 
         existing_root.remove() 
         return 
     end
 
-    local cfg = config.get("journalCalendar") or {}
+    local cfg = config.get("FloatingJournalCalendar") or {}
     local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#/#year#-#month#-#day#_#weekday#'
     local month_names = quote_list(cfg.monthNames or {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"})
     local day_names = quote_list(cfg.dayNames or {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
@@ -262,8 +262,8 @@ function toggleJournalCalendar()
 end
 
 command.define {
-    name = "Journal: Calendar",
-    run = function() toggleJournalCalendar() end
+    name = "Journal: Floating Calendar",
+    run = function() toggleFloatingJournalCalendar() end
 }
 ```
 
