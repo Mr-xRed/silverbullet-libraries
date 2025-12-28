@@ -267,7 +267,7 @@ command.define {
 }
 ```
 
-* [SilverBullet Community](https://community.silverbullet.md/t/sleek-interactive-journal-calendar/3680?u=mr.red)
+* [SilverBullet Community](https://community.silverbullet.md/t/sleek-interactive-floating-journal-calendar/3680/6?u=mr.red)
 
 
 
