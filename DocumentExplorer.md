@@ -41,7 +41,8 @@ pageDecoration.prefix: "🗂️ "
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
 * `tileSize`           - Grid Tile size, recommended between 60px-120px (default: "80px") 
 * `listHeight`         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
-* `enableContextMenu`  - ==**Enable the Right-Click**== for Files & Folders: Rename & Delete (default: true)
+* `enableContextMenu`  - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
+* `negativeFilter`     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: - ) 
 
 ```lua
 config.set("explorer", {
@@ -49,7 +50,8 @@ config.set("explorer", {
   goToCurrentDir = true,
   tileSize = "80px",
   enableContextMenu = true,
-  listHeight = "24px"
+  listHeight = "24px",
+  negativeFilter = {"Library/Std","*.zip","*.js","*.css", "*test*"}
 })
 ```
 
@@ -60,8 +62,10 @@ config.set("explorer", {
 
 ## Integration:
 
-### Config Init
 ```space-lua
+-- priority: 0
+
+-- ------------- Config Init -------------
 config.define("explorer", {
   type = "object",
   properties = {
@@ -70,26 +74,50 @@ config.define("explorer", {
     listHeight = schema.string(),
     panelWidth = schema.number(),
     goToCurrentDir = schema.boolean(),
-    enableContextMenu = schema.boolean()
+    enableContextMenu = schema.boolean(),
+    negativeFilter = { type = "array", items = { type = "string" } }
   }
 })
-```
 
-## Side Panel Integration
-
-```space-lua
--- priority: 0
+-- ------------- Load Config -------------
 local cfg = config.get("explorer") or {}
 local tileSize = cfg.tileSize or "80px"
 local listHeight = cfg.listHeight or "24px"
 local homeDirName = cfg.homeDirName or "🏠 Home"
 local goToCurrentDir = cfg.goToCurrentDir ~= false
 local enableContextMenu = cfg.enableContextMenu ~= false
+local negativeFilter = cfg.negativeFilter or {}
 
 local PANEL_ID = "lhs"
 local PANEL_VISIBLE = false
 local PATH_KEY = "gridExplorer.cwd"
 local VIEW_MODE_KEY = "gridExplorer.viewMode"
+
+-- ---------- Helper to check negative filters ----------
+local function isFiltered(path)
+  if clientStore.get("explorer.disableFilter") == "true" then return false end
+  
+  local lowPath = path:lower()
+  for _, pattern in ipairs(negativeFilter) do
+    local lowPattern = pattern:lower()
+    
+    -- Case 1: *word* (Internal Wildcard - matches if word exists anywhere)
+    if lowPattern:match("^%*.*%*$") then
+      local searchStr = lowPattern:sub(2, -2)
+      if lowPath:find(searchStr, 1, true) then return true end
+
+    -- Case 2: *.ext (Suffix Wildcard)
+    elseif lowPattern:sub(1, 2) == "*." then
+      local ext = lowPattern:sub(3)
+      if lowPath:match("%." .. ext .. "$") then return true end
+    
+    -- Case 3: Plain string / Prefix match
+    elseif lowPath:find(lowPattern, 1, true) then
+      return true
+    end
+  end
+  return false
+end
 
 -- ---------- Helper to build file tiles ----------
 local function fileTile(icon, name, target, ext, viewMode)
@@ -161,16 +189,19 @@ end
 local function renderTree(files, prefix)
     local tree = {}
     for _, f in ipairs(files) do
-        if prefix == "" or f.name:sub(1, #prefix) == prefix then
-            local rel = f.name:sub(#prefix + 1)
-            local current = tree
-              for part in rel:gmatch("[^/]+") do
-                  current[part] = current[part] or {} 
-                      if not rel:find(part .. "/", 1, true) then 
-                      current[part]._path = f.name 
+        -- Check negative filter before processing
+        if not isFiltered(f.name) then
+            if prefix == "" or f.name:sub(1, #prefix) == prefix then
+                local rel = f.name:sub(#prefix + 1)
+                local current = tree
+                  for part in rel:gmatch("[^/]+") do
+                      current[part] = current[part] or {} 
+                          if not rel:find(part .. "/", 1, true) then 
+                          current[part]._path = f.name 
+                      end
+                      current = current[part]
                   end
-                  current = current[part]
-              end
+            end
         end
     end
 
@@ -222,7 +253,7 @@ function deleteFileWithConfirm(path)
     -- Add .md if it's a page (no extension)  
     if not path:match("%.[^.]+$") then  
         fileToDelete = path .. ".md"  
-    end       
+    end        
     -- Delete the file using space.deleteFile  
     space.deleteFile(fileToDelete)  
     -- Refresh the explorer to show the deletion  
@@ -272,6 +303,12 @@ local function drawPanel()
               <button title="List View" class="]]..(viewMode=="list" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">≡</button>
               <button title="Tree View" class="]]..(viewMode=="tree" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">↦</button>
             </div>
+            <button title="Toggle Negative Filter" 
+                    class="explorer-action-btn" 
+                    style="margin-left: 4px; background: ]] .. (clientStore.get("explorer.disableFilter") == "true" and "var(--ui-accent-color)" or "transparent") .. [[" 
+                    onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">
+              ]] .. (clientStore.get("explorer.disableFilter") == "true" and "👀" or "😎") .. [[
+            </button>
             <div class="action-buttons" style="display: flex; gap: 4px;">
               <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">⇆</div>
               <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">✕</div>
@@ -289,29 +326,32 @@ local function drawPanel()
       local seen = {}
 
       for _, file in ipairs(files) do
-        if folderPrefix == "" or file.name:sub(1, #folderPrefix) == folderPrefix then
-          local rest = file.name:sub(#folderPrefix + 1)
-          local slash = rest:find("/")
-          if slash then
-            local sub = rest:sub(1, slash - 1)
-            if not seen[sub] then
-              seen[sub] = true
-              table.insert(folders, sub)
+        -- Check negative filter
+        if not isFiltered(file.name) then
+            if folderPrefix == "" or file.name:sub(1, #folderPrefix) == folderPrefix then
+              local rest = file.name:sub(#folderPrefix + 1)
+              local slash = rest:find("/")
+              if slash then
+                local sub = rest:sub(1, slash - 1)
+                if not seen[sub] then
+                  seen[sub] = true
+                  table.insert(folders, sub)
+                end
+              elseif rest ~= "" then
+                if rest:match("%.md$") then table.insert(mds, rest)
+                elseif rest:match("%.pdf$") then table.insert(pdfs, rest)
+                elseif rest:match("%.drawio$") then table.insert(drawio, rest)
+                elseif rest:match("%.excalidraw$") then table.insert(excalidraw, rest)
+                elseif rest:match("%.png$") 
+                    or rest:match("%.jpg$")
+                    or rest:match("%.gif$")
+                    or rest:match("%.jpeg$")
+                    or rest:match("%.svg$")
+                    or rest:match("%.webp$") then table.insert(images, rest)
+                else table.insert(unknowns, rest)
+                end
+              end
             end
-          elseif rest ~= "" then
-            if rest:match("%.md$") then table.insert(mds, rest)
-            elseif rest:match("%.pdf$") then table.insert(pdfs, rest)
-            elseif rest:match("%.drawio$") then table.insert(drawio, rest)
-            elseif rest:match("%.excalidraw$") then table.insert(excalidraw, rest)
-            elseif rest:match("%.png$") 
-                or rest:match("%.jpg$")
-                or rest:match("%.gif$")
-                or rest:match("%.jpeg$")
-                or rest:match("%.svg$")
-                or rest:match("%.webp$") then table.insert(images, rest)
-            else table.insert(unknowns, rest)
-            end
-          end
         end
       end
 
@@ -357,7 +397,6 @@ window.handleDragStart = function(event, encodedData) {
 
         tile.addEventListener('dragend', function cleanup() {
             tile.classList.remove("is-dragging");
-            // No need to manually clear styles here anymore!
             tile.removeEventListener('dragend', cleanup);
         }, { once: true });
     }
@@ -604,6 +643,20 @@ command.define {
   end
 }
 
+command.define {
+  name = "DocumentExplorer: ToggleFilter",
+  hide = true,
+  run = function()
+    local current = clientStore.get("explorer.disableFilter")
+    if current == "true" then
+      clientStore.set("explorer.disableFilter", "false")
+    else
+      clientStore.set("explorer.disableFilter", "true")
+    end
+    drawPanel() -- Redraw to apply changes
+  end
+}
+
 ```
 
 ```space-style
@@ -768,6 +821,12 @@ body {
 .explorer-action-btn { font-size: 1.1em; }
 .explorer-action-btn:hover { background: oklch(0.80 0.22 140 / 0.7); }
 .explorer-close-btn:hover { background: oklch(0.65 0.18 30/ 0.7); }
+
+/* Styling for the new toggle button to match the theme */
+.explorer-header .explorer-action-btn[onclick*="ToggleFilter"] {
+  font-size: 0.9em;
+  transition: background 0.2s ease;
+}
 
 /* --- Breadcrumbs --- */
 .explorer-breadcrumbs {
