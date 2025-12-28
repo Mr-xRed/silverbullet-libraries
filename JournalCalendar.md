@@ -32,9 +32,9 @@ The **Journal Calendar** is a lightweight, interactive navigation tool for Silve
 -- priority: 1
 config.set("journalCalendar", {
   journalPathPattern = 'Journal/#year#/#month#/#year#-#month#-#day#_#weekday#',
-  monthNames = '["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]',
-  dayNames = '["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]'
-})
+  monthNames = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
+  dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+})    
 ```
 
 
@@ -43,8 +43,8 @@ config.define("journalCalendar", {
   type = "object",
   properties = {
     journalPathPattern = schema.string(),
-    monthNames = schema.string(),
-    dayNames = schema.string()
+    monthNames = { type = "array", items = { type = "string" } },
+    dayNames = { type = "array", items = { type = "string" } }
   }
 })
 ```
@@ -53,10 +53,13 @@ config.define("journalCalendar", {
 
 ```space-lua
 -- priority: 0
-local cfg = config.get("journalCalendar") or {}
-local journal_path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#/#year#-#month#-#day#_#weekday#'
-local month_names = cfg.monthNames or '["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]'
-local day_names = cfg.dayNames or '["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]'
+local function quote_list(t)
+    local quoted = {}
+    for i, v in ipairs(t) do
+        quoted[i] = '"' .. v .. '"'
+    end
+    return "[" .. table.concat(quoted, ", ") .. "]"
+end
 
 function toggleJournalCalendar()
     local existing_root = js.window.document.getElementById("sb-journal-root")
@@ -65,16 +68,24 @@ function toggleJournalCalendar()
         return 
     end
 
-    local sessionID = "jc_" .. tostring(math.floor(js.window.performance.now()))
-    
+    local cfg = config.get("journalCalendar") or {}
+    local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#/#year#-#month#-#day#_#weekday#'
+    local month_names = quote_list(cfg.monthNames or {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"})
+    local day_names = quote_list(cfg.dayNames or {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
+
+    local all_pages = space.listPages()
+    local page_map_items = {}
+    for _, p in ipairs(all_pages) do
+        table.insert(page_map_items, '"' .. p.name .. '":true')
+    end
+    local existing_pages_json = "{" .. table.concat(page_map_items, ",") .. "}"
+
+    local sessionID = "jc_" .. math.floor(os.time())
     local saved_top = clientStore.get("jc_pos_top") or "80px"
     local saved_left = clientStore.get("jc_pos_left") or "auto"
     local saved_right = (saved_left == "auto") and "20px" or "auto"
 
-    local all_pages = space.listPages()
-    local page_list_json = js.stringify(all_pages)
-
-    local function handler(e)
+    js.window.addEventListener("sb-journal-event", function(e)
         if e.detail.session == sessionID then
             if e.detail.action == "navigate" then
                 editor.navigate(e.detail.path)
@@ -83,21 +94,16 @@ function toggleJournalCalendar()
                 clientStore.set("jc_pos_left", e.detail.left)
             end
         end
-    end
-    js.window.addEventListener("sb-journal-event", handler)
+    end)
 
     local container = js.window.document.createElement("div")
     container.id = "sb-journal-root"
     container.innerHTML = [[
     <style>
-        body.sb-dragging-active {
-            user-select: none !important;
-            -webkit-user-select: none !important;
-        }
+        body.sb-dragging-active { user-select: none !important; -webkit-user-select: none !important; }
         #sb-journal-root {
             position: fixed; top: ]] .. saved_top .. [[; left: ]] .. saved_left .. [[; right: ]] .. saved_right .. [[;
-            width: 300px; z-index: 10000; font-family: system-ui, sans-serif; user-select: none;
-            touch-action: none;
+            width: 300px; z-index: 10000; font-family: system-ui, sans-serif; user-select: none; touch-action: none;
         }
         html[data-theme="dark"] #sb-journal-root {
             --jc-background: oklch(0.3 0 0); --jc-border-color: oklch(0.5 0 0 / 0.4);
@@ -146,150 +152,113 @@ function toggleJournalCalendar()
 
     js.window.document.body.appendChild(container)
 
-    local script = [[
+    local scriptEl = js.window.document.createElement("script")
+    scriptEl.innerHTML = [[
     (function() {
-        const session = "]] .. sessionID .. [[";
+        const session = "]]..sessionID..[[";
+        const months = ]]..month_names..[[;
+        const days = ]]..day_names..[[;
+        const existing = ]]..existing_pages_json..[[;
+        const pattern = "]]..path_pattern..[[";
         const root = document.getElementById("sb-journal-root");
-        const SNAP_THRESHOLD = 15;
+        
+        const SNAP = 15;
         const TOP_OFFSET = 65;
-        
-        const monthNames = ]]..month_names..[[;
-        const dayNames = ]]..day_names..[[;
-        const journalPattern = "]] .. journal_path_pattern .. [[";
-        const pagesRaw = ]] .. page_list_json .. [[;
-        const existingPages = new Set(pagesRaw.map(p => p.name));
-        
-        let viewDate = new Date();
-        const today = new Date();
+        let vDate = new Date();
 
-        function getJournalPath(y, m, d, dw) {
-            const mm = String(m + 1).padStart(2, '0');
-            const dd = String(d).padStart(2, '0');
-            const wd = dayNames[dw === 0 ? 6 : dw - 1];
-            return journalPattern.replace(/#year#/g, y).replace(/#month#/g, mm).replace(/#day#/g, dd).replace(/#weekday#/g, wd);
-        }
-
-        function clampToViewport(win) {
-            const rect = win.getBoundingClientRect();
-            let left = rect.left, top = rect.top, width = rect.width, height = rect.height;
+        function clamp() {
+            const rect = root.getBoundingClientRect();
+            let left = rect.left, top = rect.top;
             if (left < 0) left = 0;
             if (top < TOP_OFFSET) top = TOP_OFFSET;
-            if (left + width > window.innerWidth) left = window.innerWidth - width;
-            if (top + height > window.innerHeight) top = window.innerHeight - height;
-            win.style.left = `${left}px`; win.style.top = `${top}px`;
-            win.style.right = "auto";
+            if (left + rect.width > window.innerWidth) left = window.innerWidth - rect.width;
+            if (top + rect.height > window.innerHeight) top = window.innerHeight - rect.height;
+            root.style.left = left + "px";
+            root.style.top = top + "px";
+            root.style.right = "auto";
         }
 
         function render() {
-            const year = viewDate.getFullYear();
-            const month = viewDate.getMonth();
-            document.getElementById("jc-month").innerHTML = monthNames.map((n, i) => `<option value="${i}" ${i === month ? 'selected' : ''}>${n}</option>`).join('');
-            let years = [];
-            for(let i = year - 10; i <= year + 10; i++) years.push(i);
-            document.getElementById("jc-year").innerHTML = years.map(y => `<option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`).join('');
-            document.getElementById("jc-labels").innerHTML = dayNames.map((d, i) => `<div class="jc-lbl ${i === 6 ? 'sun' : ''}">${d}</div>`).join('');
-            
-            const dayGrid = document.getElementById("jc-days");
-            dayGrid.innerHTML = "";
-            let firstDay = new Date(year, month, 1).getDay();
-            let offset = (firstDay === 0) ? 6 : firstDay - 1;
-            let lastDay = new Date(year, month + 1, 0).getDate();
+            const y = vDate.getFullYear(), m = vDate.getMonth();
+            const now = new Date();
 
-            for (let i = 0; i < offset; i++) {
-                const b = document.createElement("div"); b.className = "jc-day empty"; dayGrid.appendChild(b);
-            }
+            document.getElementById("jc-month").innerHTML = months.map((n, i) => `<option value="${i}" ${i===m?'selected':''}>${n}</option>`).join('');
+            let years = []; for(let i=y-10; i<=y+10; i++) years.push(i);
+            document.getElementById("jc-year").innerHTML = years.map(v => `<option value="${v}" ${v===y?'selected':''}>${v}</option>`).join('');
+            document.getElementById("jc-labels").innerHTML = days.map((d, i) => `<div class="jc-lbl ${i===6?'sun':''}">${d}</div>`).join('');
 
-            for (let i = 1; i <= lastDay; i++) {
+            const grid = document.getElementById("jc-days");
+            grid.innerHTML = "";
+            const firstDay = new Date(y, m, 1).getDay();
+            const offset = (firstDay === 0) ? 6 : firstDay - 1;
+            const lastDay = new Date(y, m + 1, 0).getDate();
+
+            for(let i=0; i<offset; i++) grid.appendChild(Object.assign(document.createElement("div"), {className:"jc-day empty"}));
+
+            for(let i=1; i<=lastDay; i++) {
                 const d = document.createElement("div");
                 d.className = "jc-day";
-                const dayOfWeek = new Date(year, month, i).getDay();
-                if (dayOfWeek === 0) d.classList.add("sun");
-                if (i === today.getDate() && month === today.getMonth() && year === today.getFullYear()) d.classList.add("today");
-                
-                const path = getJournalPath(year, month, i, dayOfWeek);
-                if (existingPages.has(path)) {
-                    const dot = document.createElement("div");
-                    dot.className = "jc-dot";
-                    d.appendChild(dot);
+                const dateObj = new Date(y, m, i);
+                const isSun = dateObj.getDay() === 0;
+                if(isSun) d.classList.add("sun");
+                if(i===now.getDate() && m===now.getMonth() && y===now.getFullYear()) d.classList.add("today");
+
+                const path = pattern
+                    .replace(/#year#/g, y)
+                    .replace(/#month#/g, String(m+1).padStart(2,'0'))
+                    .replace(/#day#/g, String(i).padStart(2,'0'))
+                    .replace(/#weekday#/g, days[isSun ? 6 : dateObj.getDay()-1]);
+
+                if(existing[path]) {
+                    const dot = document.createElement("div"); dot.className = "jc-dot"; d.appendChild(dot);
                 }
-                const span = document.createElement("span");
-                span.innerText = i;
-                d.appendChild(span);
-                d.onclick = () => {
-                    window.dispatchEvent(new CustomEvent("sb-journal-event", { 
-                        detail: { action: "navigate", path: path, session: session } 
-                    }));
-                };
-                dayGrid.appendChild(d);
+                d.innerHTML += `<span>${i}</span>`;
+                d.onclick = () => window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action:"navigate", path, session }}));
+                grid.appendChild(d);
             }
         }
 
-        window.addEventListener("resize", () => clampToViewport(root));
-
-        document.getElementById("jc-prev").onclick = () => { viewDate.setMonth(viewDate.getMonth() - 1); render(); };
-        document.getElementById("jc-next").onclick = () => { viewDate.setMonth(viewDate.getMonth() + 1); render(); };
-        document.getElementById("jc-today").onclick = () => { viewDate = new Date(); render(); };
-        document.getElementById("jc-month").onchange = (e) => { viewDate.setMonth(parseInt(e.target.value)); render(); };
-        document.getElementById("jc-year").onchange = (e) => { viewDate.setFullYear(parseInt(e.target.value)); render(); };
+        window.addEventListener("resize", clamp);
+        document.getElementById("jc-prev").onclick = () => { vDate.setMonth(vDate.getMonth()-1); render(); };
+        document.getElementById("jc-next").onclick = () => { vDate.setMonth(vDate.getMonth()+1); render(); };
+        document.getElementById("jc-today").onclick = () => { vDate = new Date(); render(); };
+        document.getElementById("jc-month").onchange = (e) => { vDate.setMonth(parseInt(e.target.value)); render(); };
+        document.getElementById("jc-year").onchange = (e) => { vDate.setFullYear(parseInt(e.target.value)); render(); };
         document.getElementById("jc-close-btn").onclick = () => root.remove();
 
-        let startX, startY, startL, startT;
         const handle = document.getElementById("jc-handle");
-        
         handle.onpointerdown = (e) => {
             if (e.target.tagName === "SELECT" || e.target.tagName === "BUTTON") return;
-            e.preventDefault();
-            
             document.body.classList.add("sb-dragging-active");
-            startX = e.clientX; startY = e.clientY;
-            startL = root.offsetLeft; startT = root.offsetTop;
+            let sX = e.clientX - root.offsetLeft, sY = e.clientY - root.offsetTop;
             
-            handle.setPointerCapture(e.pointerId);
+            const move = (m) => {
+                let nL = m.clientX - sX, nT = m.clientY - sY;
+                const w = root.offsetWidth, h = root.offsetHeight;
 
-            const onMove = (moveEv) => {
-                let newLeft = startL + (moveEv.clientX - startX);
-                let newTop = startT + (moveEv.clientY - startY);
-                const width = root.offsetWidth;
-                const height = root.offsetHeight;
+                if (nL < SNAP) nL = 0;
+                if (nT < TOP_OFFSET + SNAP) nT = TOP_OFFSET;
+                if (nL + w > window.innerWidth - SNAP) nL = window.innerWidth - w;
+                if (nT + h > window.innerHeight - SNAP) nT = window.innerHeight - h;
 
-                // Snapping logic
-                if (newLeft < SNAP_THRESHOLD) newLeft = 0;
-                if (newTop < TOP_OFFSET + SNAP_THRESHOLD) newTop = TOP_OFFSET; 
-                if (newLeft + width > window.innerWidth - SNAP_THRESHOLD) newLeft = window.innerWidth - width;
-                if (newTop + height > window.innerHeight - SNAP_THRESHOLD) newTop = window.innerHeight - height;
-
-                // Hard boundaries (Clamping)
-                newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - width));
-                newTop = Math.max(TOP_OFFSET, Math.min(newTop, window.innerHeight - height));
-
-                root.style.left = `${newLeft}px`;
-                root.style.top = `${newTop}px`;
+                root.style.left = Math.max(0, Math.min(nL, window.innerWidth - w)) + "px";
+                root.style.top = Math.max(TOP_OFFSET, Math.min(nT, window.innerHeight - h)) + "px";
                 root.style.right = "auto";
             };
 
-            const onUp = () => {
+            const up = () => {
                 document.body.classList.remove("sb-dragging-active");
-                handle.releasePointerCapture(e.pointerId);
-                window.removeEventListener("pointermove", onMove);
-                window.removeEventListener("pointerup", onUp);
-                
-                window.dispatchEvent(new CustomEvent("sb-journal-event", { 
-                    detail: { action: "save_pos", top: root.style.top, left: root.style.left, session: session } 
-                }));
+                window.removeEventListener("pointermove", move);
+                window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action:"save_pos", top:root.style.top, left:root.style.left, session }}));
             };
-
-            window.addEventListener("pointermove", onMove);
-            window.addEventListener("pointerup", onUp);
+            window.addEventListener("pointermove", move);
+            window.addEventListener("pointerup", up, {once:true});
         };
 
         render();
-        // Run once to ensure it spawns inside the clamped area
-        setTimeout(() => clampToViewport(root), 10);
+        setTimeout(clamp, 50);
     })();
     ]]
-
-    local scriptEl = js.window.document.createElement("script")
-    scriptEl.innerHTML = script
     container.appendChild(scriptEl)
 end
 
