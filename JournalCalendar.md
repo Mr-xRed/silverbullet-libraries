@@ -36,9 +36,13 @@ config.set("journalCalendar", {
   dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
 })    
 ```
+> **note** Note
+> Copy this into a `space-lua` block on your config page to change default values
 
+## Side Panel Integration
 
 ```space-lua
+-- priority: 0
 config.define("journalCalendar", {
   type = "object",
   properties = {
@@ -47,12 +51,7 @@ config.define("journalCalendar", {
     dayNames = { type = "array", items = { type = "string" } }
   }
 })
-```
 
-## Side Panel Integration
-
-```space-lua
--- priority: 0
 local function quote_list(t)
     local quoted = {}
     for i, v in ipairs(t) do
