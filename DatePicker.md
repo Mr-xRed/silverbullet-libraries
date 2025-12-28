@@ -43,8 +43,10 @@ function openDatePicker()
       }
       .dp-card {
         background: #222; color: white;
-        border: 1px solid var(--ui-accent-color, #444); border-radius: 12px;
-        padding: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); 
+        border: 2px solid oklch(0.5 0 0 / 0.5); border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35), 0 12px 30px rgba(0, 0, 0, 0.18);
+      ; 
         width: 280px; user-select: none;
       }
       .dp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 5px; }
