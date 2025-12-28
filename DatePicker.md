@@ -4,7 +4,8 @@ tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---
 # Date Picker as Slash Command
-This slash command let’s you pick a date from a calendar and adds it to your page as a WikiLink.
+This simple slash command let’s you pick a date from a calendar and adds it to your page as a WikiLink.
+
 ![DatePicker](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DatePicker.png)
 
 
@@ -13,6 +14,7 @@ This slash command let’s you pick a date from a calendar and adds it to your p
 function insertDate(args)
   if args and args.date then
     editor.insertAtCursor("[[" .. args.date .. "]]")
+    editor.moveCursor(editor.getCursor())
   end
 end
 
