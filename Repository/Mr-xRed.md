@@ -50,6 +50,11 @@ name: "🛠 SelectionToCodeblockToggle"
 uri: github:Mr-xRed/silverbullet-libraries/SelectionToCodeblockToggle.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SelectionToCodeblockToggle.md
 description: "Shortcuts to wrap the current selection in custom codeblocks."
+---
+name: "🛠 DatePicker as SlashCommand"
+uri: github:Mr-xRed/silverbullet-libraries/DatePicker.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DatePicker.md
+description: "Pick a date from a calendar and add it to your page as a WikiLink"
 ```
 
 ## Styles and Visuals

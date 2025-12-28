@@ -504,15 +504,6 @@ command.define {
 }
 
 command.define {
-  name = "DocumentExplorer: Open Folder",
-  hide = true,
-  run = function(args)
-    clientStore.set(PATH_KEY, args and args.path or "")
-    drawPanel()
-  end
-}
-
-command.define {
   name = "DocumentExplorer: Change View Mode",
   hide = true,
   run = function(args)
