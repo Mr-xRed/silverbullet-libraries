@@ -3,20 +3,22 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   if (!panel || panel.parentElement.classList.contains('sb-panel-container')) return;
 
   const originalInlineStyles = panel.getAttribute("style") || "";
+  const SNAP_THRESHOLD = 15;
 
   if (!document.getElementById("sb-global-drag-styles")) {
     const style = document.createElement("style");
     style.id = "sb-global-drag-styles";
     style.textContent = `
-        #sb-top .panel, 
-        body #sb-top .panel { 
-          position: fixed !important; 
-          z-index: 10000 !important;
-        }
-        html, body {
-          background: transparent !important;
-          background-color: transparent !important;
-        } 
+      #sb-top .panel, 
+      body #sb-top .panel { 
+        position: fixed !important; 
+        z-index: 10000 !important;
+      }
+      html, body {
+        background: transparent !important;
+        background-color: transparent !important;
+      } 
+
       .sb-panel-container {
         position: fixed !important;
         z-index: 9999 !important;
@@ -36,7 +38,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         touch-action: none;
       }
 
-      .sb-panel-header {
+       .sb-panel-header {
         height: var(--header-height) !important;
         width: 100% !important;
         cursor: grab !important;
@@ -64,30 +66,26 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         opacity: 0.6 !important;
       }
 
-      .sb-resize-handle {
-        position: absolute !important;
-        right: 0 !important;
-        bottom: 0 !important;
-        width: 25px !important;
-        height: 25px !important;
-        cursor: nwse-resize !important;
-        z-index: 10001 !important;
-        background: linear-gradient(135deg, transparent 50%, rgba(128,128,128,0.1) 50%) !important;
-        border-bottom-right-radius: var(--window-border-radius) !important;
-      }
+      /* Resizer Handles */
+      .sb-resizer { position: absolute; z-index: 10001; }
       
-      .sb-resize-handle:hover {
-        background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%) !important;
-        border-bottom-right-radius: var(--window-border-radius) !important;
-      }
-
+      .sb-resizer { position: absolute; z-index: 10001; }
+      .resizer-t { top: 0; left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
+      .resizer-b { bottom: 0; left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
+      .resizer-l { left: 0; top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
+      .resizer-r { right: 0; top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
+      .resizer-tl { top: 0; left: 0; width: 12px; height: 12px; cursor: nwse-resize; }
+      .resizer-tr { top: 0; right: 0; width: 12px; height: 12px; cursor: nesw-resize; }
+      .resizer-bl { bottom: 0; left: 0; width: 12px; height: 12px; cursor: nesw-resize; }
+      .resizer-br { bottom: 0; right: 0; width: 12px; height: 12px; cursor: nwse-resize; }
+      
       #sb-main .sb-panel.is-drag-active {
         flex: 1 1 0% !important;
         position: relative !important;
         top: 0 !important;
         left: 0 !important;
         margin: 0 !important;
-        margin-top: 5px !important;
+        margin-top: 4px !important;
         width: 100% !important;
         height: 100% !important; 
         overflow: hidden !important;
@@ -97,20 +95,24 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         background: transparent !important;
       }
     `;
-    (document.head || document.documentElement).appendChild(style);
+(document.head || document.documentElement).appendChild(style);
   }
 
   const container = document.createElement("div");
   container.className = "sb-panel-container";
   const header = document.createElement("div");
   header.className = "sb-panel-header";
-  const resizer = document.createElement("div");
-  resizer.className = "sb-resize-handle";
+
+  ['t', 'b', 'l', 'r', 'tl', 'tr', 'bl', 'br'].forEach(dir => {
+    const handle = document.createElement("div");
+    handle.className = `sb-resizer resizer-${dir}`;
+    handle.dataset.direction = dir;
+    container.appendChild(handle);
+  });
 
   panel.parentNode.insertBefore(container, panel);
   container.appendChild(header);
   container.appendChild(panel);
-  container.appendChild(resizer);
   panel.classList.add('is-drag-active');
 
   const observer = new MutationObserver(() => {
@@ -123,95 +125,80 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   });
   observer.observe(document.body, { childList: true, subtree: true });
 
-  let isDragging = false, isResizing = false;
-  let startX, startY, startW, startH, offsetX, offsetY;
+  let activeAction = null;
+  let startX, startY, startW, startH, startL, startT;
+
   const setIframesPointer = (val) => 
     container.querySelectorAll("iframe").forEach(f => f.style.pointerEvents = val);
 
-  // --- NEW BOUNDS & SNAPPING HELPER ---
-  const applyBounds = (x, y, w, h) => {
-    const minW = 255;
-    const minH = 260;
-    const snapThreshold = 15;
+  // Unified Pointer Down handler
+  const handleDown = (e) => {
+    const resizer = e.target.closest('.sb-resizer');
+    const isHeader = e.target.closest('.sb-panel-header');
     
-    // Constrain size
-    const finalW = Math.max(minW, w);
-    const finalH = Math.max(minH, h);
-
-    // Calculate available movement area
-    const maxX = window.innerWidth - finalW;
-    const maxY = window.innerHeight - finalH;
-
-    let finalX = Math.max(0, Math.min(x, maxX));
-    let finalY = Math.max(0, Math.min(y, maxY));
-
-    // Snapping logic
-    if (finalX < snapThreshold) finalX = 0;
-    if (maxX - finalX < snapThreshold) finalX = maxX;
-    if (finalY < snapThreshold) finalY = 0;
-    if (maxY - finalY < snapThreshold) finalY = maxY;
-
-    return { x: finalX, y: finalY, w: finalW, h: finalH };
+    if (resizer || isHeader) {
+      activeAction = resizer ? resizer.dataset.direction : 'drag';
+      startX = e.clientX; startY = e.clientY;
+      startW = container.offsetWidth; startH = container.offsetHeight;
+      startL = container.offsetLeft; startT = container.offsetTop;
+      
+      setIframesPointer("none");
+      e.target.setPointerCapture(e.pointerId);
+      e.stopPropagation();
+      document.body.style.userSelect = "none";
+    }
   };
 
-  header.addEventListener("pointerdown", (e) => {
-    isDragging = true;
-    const rect = container.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
-    setIframesPointer("none");
-    header.setPointerCapture(e.pointerId);
-    document.body.style.userSelect = "none";
-  });
+  header.addEventListener("pointerdown", handleDown);
+  container.querySelectorAll('.sb-resizer').forEach(r => r.addEventListener("pointerdown", handleDown));
 
-  resizer.addEventListener("pointerdown", (e) => {
-    isResizing = true;
-    startX = e.clientX; startY = e.clientY;
-    startW = container.offsetWidth; startH = container.offsetHeight;
-    setIframesPointer("none");
-    resizer.setPointerCapture(e.pointerId);
-    e.stopPropagation();
-    document.body.style.userSelect = "none";
-  });
-
-  // --- UPDATED POINTERMOVE WITH SNAPPING ---
   window.addEventListener("pointermove", (e) => {
-    if (isDragging) {
-      const coords = applyBounds(
-        e.clientX - offsetX, 
-        e.clientY - offsetY, 
-        container.offsetWidth, 
-        container.offsetHeight
-      );
-      container.style.left = `${coords.x}px`;
-      container.style.top = `${coords.y}px`;
-    } else if (isResizing) {
-      const coords = applyBounds(
-        container.offsetLeft, 
-        container.offsetTop, 
-        startW + (e.clientX - startX), 
-        startH + (e.clientY - startY)
-      );
-      container.style.width = `${coords.w}px`;
-      container.style.height = `${coords.h}px`;
+    if (!activeAction) return;
+
+    let newLeft = startL, newTop = startT, newWidth = startW, newHeight = startH;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    if (activeAction === 'drag') {
+      newLeft = startL + dx;
+      newTop = startT + dy;
+      
+      // Snapping logic for drag
+      if (newLeft < SNAP_THRESHOLD) newLeft = 0;
+      if (newTop < SNAP_THRESHOLD) newTop = 0;
+      if (newLeft + startW > window.innerWidth - SNAP_THRESHOLD) newLeft = window.innerWidth - startW;
+      if (newTop + startH > window.innerHeight - SNAP_THRESHOLD) newTop = window.innerHeight - startH;
+      
+      container.style.left = `${newLeft}px`;
+      container.style.top = `${newTop}px`;
+    } else {
+      // Logic imported from your provided code
+      if (activeAction.includes('r')) newWidth = startW + dx;
+      if (activeAction.includes('b')) newHeight = startH + dy;
+      if (activeAction.includes('l')) { newWidth = startW - dx; newLeft = startL + dx; }
+      if (activeAction.includes('t')) { newHeight = startH - dy; newTop = startT + dy; }
+
+      // Viewport constraints
+      if (newLeft < 0) { newWidth += newLeft; newLeft = 0; }
+      if (newTop < 0) { newHeight += newTop; newTop = 0; }
+      if (newLeft + newWidth > window.innerWidth) newWidth = window.innerWidth - newLeft;
+      if (newTop + newHeight > window.innerHeight) newHeight = window.innerHeight - newTop;
+
+      // Min sizes
+      if (newWidth > 260) { 
+        container.style.width = `${newWidth}px`; 
+        container.style.left = `${newLeft}px`; 
+      }
+      if (newHeight > 260) { 
+        container.style.height = `${newHeight}px`; 
+        container.style.top = `${newTop}px`; 
+      }
     }
   });
 
-  // Keep window in view during browser resize
-  window.addEventListener("resize", () => {
-    const coords = applyBounds(
-      container.offsetLeft, 
-      container.offsetTop, 
-      container.offsetWidth, 
-      container.offsetHeight
-    );
-    container.style.left = `${coords.x}px`;
-    container.style.top = `${coords.y}px`;
-  });
-
   const stopAction = () => {
-    if (!isDragging && !isResizing) return;
-    isDragging = false; isResizing = false;
+    if (!activeAction) return;
+    activeAction = null;
     setIframesPointer("auto");
     document.body.style.userSelect = "";
     localStorage.setItem("sb_dims_v1", JSON.stringify({
@@ -223,12 +210,12 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   window.addEventListener("pointerup", stopAction);
   window.addEventListener("pointercancel", stopAction);
 
+  // Restore State
   const saved = JSON.parse(localStorage.getItem("sb_dims_v1") || "null");
   if (saved) {
-    const coords = applyBounds(saved.x, saved.y, saved.w, saved.h);
-    container.style.left = `${coords.x}px`;
-    container.style.top = `${coords.y}px`;
-    container.style.width = `${coords.w}px`;
-    container.style.height = `${coords.h}px`;
+    container.style.left = `${saved.x}px`;
+    container.style.top = `${saved.y}px`;
+    container.style.width = `${saved.w}px`;
+    container.style.height = `${saved.h}px`;
   }
 }

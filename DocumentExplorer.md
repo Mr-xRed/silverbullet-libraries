@@ -18,8 +18,8 @@ pageDecoration.prefix: "🗂️ "
   * ==Tree==: Hierarchical navigation with folder nesting and expansion logic.
 * Easily switch between ==Window== or ==SidePanel== 
 • Real-Time ==Filtering== by filename or extension
-• ==Drag & Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
-• Context Menu: ==Right-click== for quick File/Folder renaming and deletion (if enabled in config).
+• ==Drag&Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
+• Context Menu: ==Right-click== for quick File/Folder renaming and deletion.
 • ==Responsive design==: Adjustable panel width using keyboard shortcuts.
 
 ## Currently supported extension:
@@ -41,14 +41,14 @@ pageDecoration.prefix: "🗂️ "
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
 * `tileSize`           - Grid Tile size, recommended between 60px-120px (default: "80px") 
 * `listHeight`         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
-* `enableContextMenu`  - ==**Enable the Right-Click**== for Files & Folders: Rename & Delete (default: false)
+* `enableContextMenu`  - ==**Enable the Right-Click**== for Files & Folders: Rename & Delete (default: true)
 
 ```lua
 config.set("explorer", {
   homeDirName = "🏠 Home",
   goToCurrentDir = true,
   tileSize = "80px",
-  enableContextMenu = false,
+  enableContextMenu = true,
   listHeight = "24px"
 })
 ```
@@ -84,7 +84,7 @@ local tileSize = cfg.tileSize or "80px"
 local listHeight = cfg.listHeight or "24px"
 local homeDirName = cfg.homeDirName or "🏠 Home"
 local goToCurrentDir = cfg.goToCurrentDir ~= false
-local enableContextMenu = cfg.enableContextMenu == true
+local enableContextMenu = cfg.enableContextMenu ~= false
 
 local PANEL_ID = "lhs"
 local PANEL_VISIBLE = false
