@@ -187,7 +187,7 @@ slashCommand.define {
 }
 ```
 
-* [SilverBullet Community](https://community.silverbullet.md/t/?u=mr.red)
+* [SilverBullet Community](https://community.silverbullet.md/t/datepicker-add-on-as-slashcommand/3679?u=mr.red)
 
 
 
