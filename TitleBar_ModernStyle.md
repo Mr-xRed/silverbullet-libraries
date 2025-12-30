@@ -10,7 +10,7 @@ pageDecoration.prefix: "🖌️ "
 * this is a restyle for your Title Bar which will give it a modern look with frosted glass effect
 
 ## Implementation
-```space-style
+```css
 #sb-top{
   border: none;
   height: 80px;
