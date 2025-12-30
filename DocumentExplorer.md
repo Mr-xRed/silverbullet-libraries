@@ -73,7 +73,7 @@ Licensed under the ISC and MIT licenses.
 ## Space-Style Color Theming Example
 
 > **tip** Tip
-> Make sure you copy this as space-style so it not gets overwritten with future updates!
+> Make sure you copy this as space-style so it won’t get overwritten with future updates!
 
 ```css
 
