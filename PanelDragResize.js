@@ -58,8 +58,8 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         height: 12px !important;
         background: repeating-linear-gradient(
           to bottom,
-          rgba(255, 255, 255, 0.4) 0px,
-          rgba(255, 255, 255, 0.4) 2px,
+          rgba(128, 128, 128, 0.8) 0px,
+          rgba(128, 128, 128, 0.8) 2px,
           transparent 2px,
           transparent 5px
         ) !important;
@@ -79,6 +79,10 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
       .resizer-bl { bottom: 0; left: 0; width: 12px; height: 12px; cursor: nesw-resize; }
       .resizer-br { bottom: 0; right: 0; width: 12px; height: 12px; cursor: nwse-resize; }
       
+      #sb-main .sb-panel:last-child {
+       border-left: none;
+      }
+
       #sb-main .sb-panel.is-drag-active {
         flex: 1 1 0% !important;
         position: relative !important;
@@ -94,6 +98,14 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         border-radius: var(--window-border-radius) !important;
         background: transparent !important;
       }
+      :root{
+        --header-height: 20px;                         /* Header height, drag-area */
+        --frame-width: 5px;                            /* frame thickness */
+        --frame-color: oklch(0.4 0 0 / 0.2);          /* frame color */
+        --window-border: 2px;                          /* solid border width (aesthetic) */
+        --window-border-radius: 10px;                  /* inner iframe border radius */
+        --window-border-color: oklch(0.65 0 0 / 0.2);  /* solid border color (aesthetic) */
+      } 
     `;
 (document.head || document.documentElement).appendChild(style);
   }

@@ -45,30 +45,27 @@ Here is an example how your ActionButton Config should look like this:
 
 > **success** Fixed
 >   * **DOM Encapsulation:** Instead of linking two panels, it dynamically "kidnaps" the existing `.sb-panel` and wraps it inside a new `.sb-container` parent, creating a self-contained window unit. 
-> >  *  **Shadow Header Injection:** It generates a dedicated `.sb-header` element that acts as a structural handle. This separates the "Drag Zone" from the "Content Zone," preventing accidental interactions with the UI inside the panel.
->   *  **Stateful Persistence:** Uses a unified JSON object in `localStorage` to preserve the window's "geometry" (X, Y, Width, Height) across sessions.
->   *  **Style Virtualization:** It captures the panel’s original inline styles before the transformation and stores them in a constant, allowing for a perfect "factory reset" when the window is closed.
-> >  *  **Overlay Protection:** Automatically manages `pointer-events` on nested iframes during movement. This prevents the "Iframe Trap" where the cursor gets "swallowed" by the internal content, causing the drag to stutter or fail.
->   *  **Edge-Independent Resizing:** Uses a dedicated `.sb-resize-handle` anchor in the bottom-right corner rather than simple edge detection, providing a much more reliable target for resizing on high-resolution screens.
->   *  **Auto-Cleanup Observer:** Employs a `MutationObserver` to watch the global DOM. If the original panel is removed (e.g., by the system closing the panel), the script detects this and automatically destroys the container to prevent "ghost" elements.
->   *  **Priority Style Injection:** Injects a CSS block directly into the main document’s `<head>` with `!important` flags to override hardcoded system styles that would otherwise force the panel back to its original position.
->   *  **Pointer Capture API:** Utilizes `setPointerCapture` so that even if the user moves the mouse faster than the window can follow, the browser keeps the "focus" on the drag/resize action.
-> >  *  **Context-Aware Global Fixes:** Targets external elements (like `#sb-top .panel`) via the main HTML head to ensure the entire workspace adapts to the floating window layout.
+> >  * **Shadow Header Injection:** It generates a dedicated `.sb-header` element that acts as a structural handle. This separates the "Drag Zone" from the "Content Zone," preventing accidental interactions with the UI inside the panel.
+>   * **Stateful Persistence:** Uses a unified JSON object in `localStorage` to preserve the window's "geometry" (X, Y, Width, Height) across sessions.
+> >  * **Overlay Protection:** Automatically manages `pointer-events` on nested iframes during movement. This prevents the "Iframe Trap" where the cursor gets "swallowed" by the internal content, causing the drag to stutter or fail.
+>   * **Edge-Independent Resizing:** Uses a dedicated `.sb-resize-handle` anchor in the bottom-right corner rather than simple edge detection, providing a much more reliable target for resizing on high-resolution screens.
+>   * **Auto-Cleanup Observer:** Employs a `MutationObserver` to watch the global DOM. If the original panel is removed (e.g., by the system closing the panel), the script detects this and automatically destroys the container to prevent "ghost" elements.
+>   * **Priority Style Injection:** Injects a CSS block directly into the main document’s `<head>` with `!important` flags to override hardcoded system styles that would otherwise force the panel back to its original position.
+>   * **Pointer Capture API:** Utilizes `setPointerCapture` so that even if the user moves the mouse faster than the window can follow, the browser keeps the "focus" on the drag/resize action.
+> >  * **Context-Aware Global Fixes:** Targets external elements (like `#sb-top .panel`) via the main HTML head to ensure the entire workspace adapts to the floating window layout.
 
 
 ## Visual Customization & Style
 
-```space-style
+```
 :root{
-    --header-height: 20px;         /* Header height, drag-area */
- 
-    --frame-width: 5px;           /* frame thickness */
-    --frame-color: rgba(64, 64, 64, 0.2);         /* frame color */
-
-    --window-border: 2px;         /* solid border width (aesthetic) */
-    --window-border-radius: 10px; /* inner iframe border radius */
-    --window-border-color: #5558; /* solid border color (aesthetic) */
-}
+  --header-height: 20px;          /* Header height, drag-area */
+  --frame-width: 5px;             /* frame thickness */
+  --frame-color: #f040401d;        /* frame color */
+  --window-border: 2px;           /* solid border width */
+  --window-border-radius: 10px;   /* inner iframe border radius */
+  --window-border-color: #00000000;   /* solid border color */
+} 
 
 ```
 

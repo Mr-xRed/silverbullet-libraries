@@ -77,7 +77,7 @@ button svg {
     drop-shadow(0 0 2px var(--root-background-color));
 }
 */
-button:hover svg {
+.sb-actions button:hover svg {
   filter: drop-shadow(0 0 1px currentColor);
   transform: scale(1.5);
 }

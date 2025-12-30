@@ -3,6 +3,7 @@ name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
 files:
 - PanelDragResize.js
+- docex_styles.css
 pageDecoration.prefix: "🗂️ "
 ---
 # 🗂️ Document Explorer
@@ -21,6 +22,7 @@ pageDecoration.prefix: "🗂️ "
 • ==Drag&Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
 • Context Menu: ==Right-click== for quick File/Folder renaming and deletion.
 • ==Responsive design==: Adjustable panel width using keyboard shortcuts.
+- Easy to create a Color Theme
 
 ## Currently supported extension:
 * Pages: .md
@@ -28,7 +30,7 @@ pageDecoration.prefix: "🗂️ "
 * Documents: .pdf, .excalidraw, .drawio (if Plugs installed)
 * Every other extension is rendered as `❔` and opened as raw file if browser supports it
 
-## GoTo: ${widgets.commandButton("Document Explorer in SidePanel","Navigate: Document Explorer")} or ${widgets.commandButton("Document Explorer Move&Resize","Navigate: Document Explorer Move&Resize")}
+## GoTo: ${widgets.commandButton("Document Explorer in SidePanel","Navigate: Document Explorer")} or ${widgets.commandButton("Document Explorer in Window","Navigate: Document Explorer Window")}
 ## or use the shortcuts: 
 
 > **tip** New ShortCut Keys
@@ -42,7 +44,7 @@ pageDecoration.prefix: "🗂️ "
 * `tileSize`           - Grid Tile size, recommended between 60px-120px (default: "80px") 
 * `listHeight`         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
 * `enableContextMenu`  - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
-* `negativeFilter`     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: - ) 
+* `negativeFilter`     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none ) 
 
 ```lua
 config.set("explorer", {
@@ -55,15 +57,74 @@ config.set("explorer", {
 })
 ```
 
-
-
 > **note** Note
-> Copy this into a `space-lua` block on your config page to change default values
+> Copy this into a `space-lua` block on your config page to change default values.
+
+### Styling: Icons
+
+```
+Icons from Lucide (https://lucide.dev)
+Copyright (c) Lucide Contributors 2025
+Portions Copyright (c) 2013–2023 Cole Bemis (Feather)
+Licensed under the ISC and MIT licenses.
+```
+
+## Space-Style Color Theming Example
+
+> **tip** Tip
+> Make sure you copy this as space-style so it not gets overwritten with future updates!
+
+```css
+
+:root{
+  --header-height: 20px;                         /* Header height, drag-area */
+  --frame-width: 5px;                            /* frame thickness */
+  --frame-color: oklch(0.4 0 0 / 0.3);           /* frame color */
+  --window-border: 2px;                          /* solid border width (aesthetic) */
+  --window-border-radius: 10px;                  /* inner iframe border radius */
+  --window-border-color: oklch(0.65 0 0 / 0.3);  /* solid border color (aesthetic) */
+} 
+      
+html[data-theme="dark"]{
+  --explorer-bg-color: oklch(0.25 0 0);
+  --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
+  --explorer-text-color: oklch(1 0 0);
+  --explorer-border-color: oklch(0.65 0 0 / 0.5);
+  --explorer-accent-color: oklch(0.75 0.25 230);
+  --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
+  --link-color:  oklch(0.85 0.1 260);
+  --folder-color: oklch(0.85 0.1 105);
+  --file-md-color:  oklch(0.85 0.1 260);
+  --file-pdf-color: oklch(0.85 0.1 30); 
+  --file-img-color: oklch(0.85 0.1 180); 
+  --file-ex-color:  oklch(0.85 0.1 300); 
+  --file-dio-color: oklch(0.85 0.1 90); 
+  --file-unk-color: oklch(0.85 0 0);
+}
+
+html[data-theme="light"]{
+  --explorer-bg-color: oklch(0.85 0 0);
+  --explorer-hover-bg: oklch(0.75 0 0 / 0.5);
+  --explorer-text-color: oklch(0 0 0);
+  --explorer-border-color: oklch(0.50 0 0 / 0.5);
+  --explorer-accent-color: oklch(0.80 0.18 230);
+  --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
+  --folder-color: oklch(0.65 0.15 105);
+  --file-md-color:  oklch(0.65 0.15 260);
+  --file-pdf-color: oklch(0.65 0.15 30); 
+  --file-img-color: oklch(0.65 0.15 180); 
+  --file-ex-color:  oklch(0.65 0.15 300); 
+  --file-dio-color: oklch(0.65 0.15 90); 
+  --file-unk-color: oklch(0.65 0 0);
+}
+
+```
+
 
 ## Integration:
 
 ```space-lua
--- priority: 0
+-- priority: -1
 
 -- ------------- Config Init -------------
 config.define("explorer", {
@@ -78,6 +139,63 @@ config.define("explorer", {
     negativeFilter = { type = "array", items = { type = "string" } }
   }
 })
+
+-- ------------- Lucide Icon Library -------------
+local ICONS = {
+
+ grid   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>]],
+
+ list   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>]],
+
+ tree   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-tree-icon lucide-folder-tree"><path d="M20 10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"/><path d="M20 21a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.9a1 1 0 0 1-.88-.55l-.42-.85a1 1 0 0 0-.92-.6H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"/><path d="M3 5a2 2 0 0 0 2 2h3"/><path d="M3 3v13a2 2 0 0 0 2 2h3"/></svg>]],
+
+ folder = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>]],
+
+ folderUp = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-up-icon lucide-folder-up"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6"/><path d="m9 13 3-3 3 3"/></svg>]],
+
+ fileMD   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-notebook-text-icon lucide-notebook-text"><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9.5 8h5"/><path d="M9.5 12H16"/><path d="M9.5 16H14"/></svg>]],
+
+ filePDF   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>]],
+
+ fileEX   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-ruler-icon lucide-pencil-ruler"><path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/><path d="m8 6 2-2"/><path d="m18 16 2-2"/><path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>]],
+
+ fileDIO   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-ruler-icon lucide-pencil-ruler"><path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/><path d="m8 6 2-2"/><path d="m18 16 2-2"/><path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>]],
+
+ file   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-question-mark-icon lucide-file-question-mark"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M12 17h.01"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/></svg>]],
+
+ fileIMG  = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>]],
+
+ home   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>]],
+
+ close  = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>]],
+
+ filterOff = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>]],
+
+ filterOn = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>]],
+
+  window = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg>]]
+
+}
+
+-- local ICONS = {
+--   grid      = "🗄️",
+--   list      = "📋",
+--   tree      = "🌲",
+--   folder    = "📁",
+--   folderUp  = "📂",
+--   fileMD    = "📝",
+--   filePDF   = "📄",
+--   fileEX    = "🔲",
+--   fileDIO   = "📐",
+--   file      = "❓",
+--   fileIMG   = "🖼️",
+--   home      = "🏠",
+--   close     = "❎",
+--   filterOff = "😎",
+--   filterOn  = "👀",
+--   window    = "🪟"
+-- }
+
 
 -- ------------- Load Config -------------
 local cfg = config.get("explorer") or {}
@@ -166,17 +284,17 @@ local function fileTile(icon, name, target, ext, viewMode)
   -- ---------- Icon & Thumbnail Logic ----------
   local finalIcon = icon
   if viewMode ~= "grid" then
-      if category == "md" then finalIcon = "📝"
-      elseif category == "pdf" then finalIcon = "📄"
-      elseif category == "excalidraw" then finalIcon = "🔳"
-      elseif category == "drawio" then finalIcon = "📐"
-      elseif category == "img" then finalIcon = "🖼️"
-      else finalIcon = "❔"
+      if category == "md" then finalIcon = ICONS.fileMD
+      elseif category == "pdf" then finalIcon = ICONS.filePDF
+      elseif category == "excalidraw" then finalIcon = ICONS.fileEX
+      elseif category == "drawio" then finalIcon = ICONS.fileDIO
+      elseif category == "img" then finalIcon = ICONS.fileIMG
+      else finalIcon = ICONS.file
       end
-      else
-          if category == "img" then
-        finalIcon = "<img src='/.fs" .. target .. "' loading='lazy' class='tile-thumb' />"
-          end
+  else
+      if category == "img" then
+          finalIcon = "<img src='/.fs" .. target .. "' loading='lazy' class='tile-thumb' />"
+      end
   end
 
   return "<div class='" .. tileClass .. "' " ..
@@ -216,13 +334,12 @@ local function renderTree(files, prefix)
         if node._path then
             local ext = node._path:match("%.([^.]+)$") or "md"
             html = "<div class='tree-file'>" .. 
-                   fileTile("📄", name:gsub("%.md$",""), "/" .. node._path:gsub("%.md$",""), ext, "tree") .. 
-                   "</div>"
+       fileTile(ICONS.file, name:gsub("%.md$",""), "/" .. node._path:gsub("%.md$",""), ext, "tree") .. "</div>"
         else
             html = "<details open class='tree-folder'>" ..
                    "<summary class='grid-tile folder-tile' title='"..name.."' >" ..
-                   "<div class='icon'>📁</div><div class='grid-title'>"..name.."</div>"..
-                   "</summary>" ..
+                    "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div>"..
+                    "</summary>" ..
                    "<div class='tree-content'>"
             for _, k in ipairs(sorted) do 
                 html = html .. traverse(node[k], k, level + 1) 
@@ -286,11 +403,7 @@ local function drawPanel()
   end
   local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
 
-  local style = ":root { --tile-size:" .. tileSize .. "; --list-tile-height:" .. listHeight .. "; --icon-size-grid: calc(var(--tile-size) * 0.6); }"
-
-  local html = [[
-      <link rel="stylesheet" href="/.client/main.css" />
-      <style>]] .. style .. [[</style>
+local html = [[
       <div class="explorer-panel mode-]] .. viewMode .. [[">
         <div class="explorer-header">
           <div class="explorer-toolbar">          
@@ -299,19 +412,19 @@ local function drawPanel()
               <div id="clearSearch" class="clear-btn" onmousedown="clearFilter(event)">✕</div>
             </div>
             <div class="view-switcher">
-              <button title="Grid View" class="]]..(viewMode=="grid" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'grid'})">⊞</button>
-              <button title="List View" class="]]..(viewMode=="list" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">≡</button>
-              <button title="Tree View" class="]]..(viewMode=="tree" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">↦</button>
+              <div title="Grid View" class="]]..(viewMode=="grid" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'grid'})">]]..ICONS.grid..[[</div>
+              <div title="List View" class="]]..(viewMode=="list" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">]]..ICONS.list..[[</div>
+              <div title="Tree View" class="]]..(viewMode=="tree" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">]]..ICONS.tree..[[</div>
             </div>
-            <button title="Toggle Negative Filter" 
-                    class="explorer-action-btn" 
-                    style="margin-left: 4px; background: ]] .. (clientStore.get("explorer.disableFilter") == "true" and "var(--ui-accent-color)" or "transparent") .. [[" 
+            <div title="Toggle Negative Filter" 
+                    class="explorer-action-btn" id="filter-btn" 
+                    style="background: ]] .. (clientStore.get("explorer.disableFilter") == "true" and "var(--explorer-accent-color)" or "var(--explorer-tile-bg)") .. [[" 
                     onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">
-              ]] .. (clientStore.get("explorer.disableFilter") == "true" and "👀" or "😎") .. [[
-            </button>
+              ]] .. (clientStore.get("explorer.disableFilter") == "true" and ICONS.filterOn or ICONS.filterOff) .. [[
+            </div>
             <div class="action-buttons" style="display: flex; gap: 4px;">
-              <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">⇆</div>
-              <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">✕</div>
+              <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">]]..ICONS.window..[[</div>
+              <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">]]..ICONS.close..[[</div>
             </div>
           </div>
           ]] .. breadcrumbHtml .. [[
@@ -360,24 +473,24 @@ local function drawPanel()
 
       if folderPrefix ~= "" then
         local parent = folderPrefix:gsub("[^/]+/$", "")
-        html = html .. "<div class='grid-tile' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..parent.."'} )\">" ..
-          "<div class='icon'>📂</div><div class='grid-title'>..</div></div>"
+        html = html .. "<div class='grid-tile folderup-tile' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..parent.."'} )\">" ..
+          "<div class='icon'>"..ICONS.folderUp.."</div><div class='grid-title'>..</div></div>"
       end
 
       for _, f in ipairs(folders) do
         local p = folderPrefix .. f .. "/"
         html = html .. "<div class='grid-tile folder-tile' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..p.."'} )\">" ..
-          "<div class='icon'>📁</div><div class='grid-title'>"..f.."</div></div>"
+          "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>"
       end
 
-      for _, f in ipairs(mds) do html = html .. fileTile("📝", f:gsub("%.md$",""), "/"..folderPrefix..f:gsub("%.md$",""), "md", viewMode) end
-      for _, f in ipairs(pdfs) do html = html .. fileTile("📄", f:gsub("%.pdf$",""), "/"..folderPrefix..f, "pdf", viewMode) end
-      for _, f in ipairs(drawio) do html = html .. fileTile("📐", f:gsub("%.drawio$",""), "/"..folderPrefix..f, "drawio", viewMode) end
-      for _, f in ipairs(excalidraw) do html = html .. fileTile("🔳", f:gsub("%.excalidraw$",""), "/"..folderPrefix..f, "excalidraw", viewMode) end
-      for _, f in ipairs(images) do html = html .. fileTile("🖼️", f, "/"..folderPrefix..f, "img", viewMode) end
+      for _, f in ipairs(mds) do html = html .. fileTile(ICONS.fileMD, f:gsub("%.md$",""), "/"..folderPrefix..f:gsub("%.md$",""), "md", viewMode) end
+      for _, f in ipairs(pdfs) do html = html .. fileTile(ICONS.filePDF, f:gsub("%.pdf$",""), "/"..folderPrefix..f, "pdf", viewMode) end
+      for _, f in ipairs(drawio) do html = html .. fileTile(ICONS.fileDIO, f:gsub("%.drawio$",""), "/"..folderPrefix..f, "drawio", viewMode) end
+      for _, f in ipairs(excalidraw) do html = html .. fileTile(ICONS.fileEX, f:gsub("%.excalidraw$",""), "/"..folderPrefix..f, "excalidraw", viewMode) end
+      for _, f in ipairs(images) do html = html .. fileTile(ICONS.fileIMG, f, "/"..folderPrefix..f, "img", viewMode) end
       for _, f in ipairs(unknowns) do 
           local extension = f:match("%.([^.]+)$") or "?"
-          html = html .. fileTile("❔", f, "/.fs/"..folderPrefix..f, extension, viewMode) 
+          html = html .. fileTile(ICONS.file, f, "/.fs/"..folderPrefix..f, extension, viewMode) 
       end
   end
 
@@ -482,20 +595,13 @@ window.handleDragStart = function(event, encodedData) {
     window.filterTiles = function() {
         const input = document.getElementById("tileSearch");
         const clearBtn = document.getElementById("clearSearch");
-        const wrapper = input.closest('.input-wrapper');
         const query = input.value.toLowerCase();
-        
-        if (query.length > 0) {
-            clearBtn.style.display = "flex";
-            wrapper.classList.add("has-clear");
-        } else {
-            clearBtn.style.display = "none";
-            wrapper.classList.remove("has-clear");
-        }
-    
         const terms = query.split(/\s+/).filter(t => t.length > 0);
         const tiles = document.querySelectorAll(".grid-tile");
     
+        if (query.length > 0) { clearBtn.style.display = "flex"; } 
+        else { clearBtn.style.display = "none"; }
+
         tiles.forEach(tile => {
             if (tile.innerText === "..") return;
             const title = (tile.getAttribute("title") || "").toLowerCase();
@@ -507,26 +613,51 @@ window.handleDragStart = function(event, encodedData) {
     };
 
     window.clearFilter = function(event) {
-        if (event) {
-            event.preventDefault(); 
-            event.stopPropagation();
-        }
+        if (event) { event.preventDefault(); event.stopPropagation(); }
         const input = document.getElementById("tileSearch");
         input.value = "";
-        const wrapper = input.closest('.input-wrapper');
-        wrapper.classList.remove("has-clear");
         filterTiles(); 
         input.focus(); 
     };
 
-// ---------------- Load Custom Style Sheets ----------------
-    const customStyles = parent.document.getElementById("custom-styles")?.innerHTML;
-    if (customStyles) {
+// ---------------- Load Styles Once ----------------
+    function ensureElement(id, tag, attributes, content) {
+        if (document.getElementById(id)) return document.getElementById(id);
+        const el = document.createElement(tag);
+        el.id = id;
+        for (let key in attributes) el.setAttribute(key, attributes[key]);
+        if (content) el.innerHTML = content;
+        document.head.appendChild(el);
+        return el;
+    }
+
+    // Load main.css and Custom Styles once
+ensureElement("silverbullet-main-css", "link", { rel: "stylesheet", href: "/.client/main.css"});
+ensureElement("explorer-style-css", "link", { rel: "stylesheet", href: "/.fs/Library/Mr-xRed/docex_styles.css" });
+    
+    // ---------------- Load Custom Style Sheets ----------------
+    // We use a specific ID to check if we've already processed these
+    if (!document.getElementById("explorer-custom-styles-once")) {
+        const parentStyles = parent.document.getElementById("custom-styles")?.innerHTML || "";
+        const cleanStyles = parentStyles.replace(/<\/?style>/g, "");
+        
         const styleEl = document.createElement("style");
-        styleEl.innerHTML = customStyles;
+        styleEl.id = "explorer-custom-styles-once";
+        styleEl.innerHTML = cleanStyles;
         document.head.appendChild(styleEl);
     }
-})();
+
+    // ---------------- Load Dynamic Vars ----------------
+    // Note: We update .innerHTML every time because the values (tileSize) 
+    // might have changed in the config, but we don't create a new element.
+    const dynamicVars = `:root { 
+              --tile-size: ]] .. tileSize..[[;
+              --list-tile-height: ]]..listHeight..[[;
+              --icon-size-grid: calc(var(--tile-size) * 0.6); }`;
+    const varEl = ensureElement("explorer-dynamic-vars", "style", {});
+    varEl.innerHTML = dynamicVars;
+
+})(); 
 ]]
   
   editor.showPanel(PANEL_ID, currentWidth, html, script)
@@ -585,13 +716,13 @@ command.define {
   hide = true,
   run = function()
     local cur = clientStore.get("explorer.panelWidth") or 0.8
-    clientStore.set("explorer.panelWidth", math.max(cur - 0.05, 0.35))
+    clientStore.set("explorer.panelWidth", math.max(cur - 0.05, 0.45))
     drawPanel()
   end
 }
 
 command.define {
-  name = "Navigate: Document Explorer Move&Resize",
+  name = "Navigate: Document Explorer Window",
   hide = true,
   run = function()
         editor.invokeCommand "Navigate: Document Explorer"
@@ -617,7 +748,7 @@ command.define {
       editor.hidePanel(PANEL_ID)
       PANEL_VISIBLE = false
       clientStore.set("explorer.currentDisplayMode", "window")
-      editor.invokeCommand("Navigate: Document Explorer Move&Resize")
+      editor.invokeCommand("Navigate: Document Explorer Window")
     end
   end
 }
@@ -635,7 +766,7 @@ command.define {
         local lastMode = clientStore.get("explorer.currentDisplayMode") or "panel"
         
         if lastMode == "window" then
-            editor.invokeCommand("Navigate: Document Explorer Move&Resize")
+            editor.invokeCommand("Navigate: Document Explorer Window")
         else
             editor.invokeCommand("Navigate: Document Explorer")
         end
@@ -653,512 +784,13 @@ command.define {
     else
       clientStore.set("explorer.disableFilter", "true")
     end
-    drawPanel() -- Redraw to apply changes
+    drawPanel()
   end
 }
 
 ```
 
-```space-style
-/*
-==========================================================================
-   1. VARIABLES & BASE STYLES
-==========================================================================
-*/
 
-body {
-  color: var(--explorer-text-color);
-}
-
-/*
-==========================================================================
-   2. LAYOUT CONTAINER
-==========================================================================
-*/
-
-.explorer-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100%;
-  overflow: hidden;
-}
-
-.document-explorer {
-  box-sizing: border-box;
-  flex: 1 1 auto;
-  overflow-x: hidden;
-  overflow-y: auto !important;
-  padding: 0.5em;
-  width: 100%;
-  gap: 8px;
-  align-content: start;
-  scroll-behavior: smooth;
-}
-
-/*
-==========================================================================
-   3. HEADER & NAVIGATION
-==========================================================================
-*/
-
-.explorer-header {
-  flex: 0 0 auto;
-  background: var(--explorer-bg-color);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  border-bottom: 1px solid oklch(0.75 0 0 / 0.1);
-  box-shadow: 0px 2px 6px 0 oklch(0 0 0 / 0.3);
-}
-
-/* --- Tool Bar --- */
-.explorer-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 8px 3px 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.input-wrapper {
-  position: relative;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  width: 4em;
-  flex-grow: 0;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.input-wrapper:focus-within {
-  flex-grow: 1;
-  box-shadow: 0px 2px 6px 0 oklch(0 0 0 / 0.3);
-}
-
-.explorer-toolbar input {
-  width: 100%;
-  padding: 4px 7px;
-  border-radius: 6px;
-  border: 1px solid oklch(0.75 0 0 / 0.2);
-  color: inherit;
-  font-size: 0.95em;
-  outline: none;
-  box-sizing: border-box;
-  cursor: pointer;
-}
-
-.explorer-toolbar input:hover { background: oklch(0.75 0 0 / 0.25); }
-.explorer-toolbar input:focus {
-  cursor: text;
-  border: 2px solid color-mix(in oklch, var(--ui-accent-color), transparent 30%);
-}
-
-.clear-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
-  background: oklch(0.5 0 0);
-  border-radius: 50%;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  cursor: pointer;
-}
-
-/* --- View Switcher --- */
-.view-switcher {
-  display: flex;
-  background: oklch(0.75 0 0 / 0.1);
-  padding: 2px;
-  border-radius: 8px;
-  border: 1px solid oklch(0.75 0 0 / 0.1);
-}
-
-.view-switcher button {
-  background: transparent;
-  border: none;
-  padding: 2px 6px;
-  cursor: pointer;
-  border-radius: 6px;
-  font-size: 1em;
-  color: inherit;
-  opacity: 0.6;
-}
-
-.view-switcher button:hover {
-  opacity: 1;
-  background: oklch(0.75 0 0 / 0.15);
-}
-
-.view-switcher button.active {
-  background: var(--ui-accent-color);
-  color: white;
-  opacity: 1;
-}
-
-/* --- Action Buttons --- */
-.explorer-action-btn, 
-.explorer-close-btn {
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--tile-bg);
-  border: 1px solid oklch(0.75 0 0 / 0.2);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.explorer-action-btn { font-size: 1.1em; }
-.explorer-action-btn:hover { background: oklch(0.80 0.22 140 / 0.7); }
-.explorer-close-btn:hover { background: oklch(0.65 0.18 30/ 0.7); }
-
-/* Styling for the new toggle button to match the theme */
-.explorer-header .explorer-action-btn[onclick*="ToggleFilter"] {
-  font-size: 0.9em;
-  transition: background 0.2s ease;
-}
-
-/* --- Breadcrumbs --- */
-.explorer-breadcrumbs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px;
-  padding: 4px 8px 6px 8px;
-  font-size: 0.8em;
-  align-items: center;
-}
-
-.explorer-breadcrumbs a {
-  text-decoration: none;
-  color: var(--link-color);
-}
-
-.explorer-breadcrumbs a:hover {
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-/*
-==========================================================================
-   4. SHARED TILE COMPONENTS (Icon, Title, Thumbnails)
-==========================================================================
-*/
-
-.grid-tile {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  color: var(--explorer-text-color);
-  user-select: none;
-}
-
-.grid-tile:hover { background: oklch(0.75 0 0 / 0.5); }
-
-.grid-tile.is-dragging {
-  background-color: color-mix(in oklch, oklch(0.75 0 0 / 0.5), transparent 20%) !important;
-  outline: 3px dashed var(--ui-accent-color) !important;
-  outline-offset: 3px;
-  z-index: 100;
-}
-
-.grid-title {
-  height: calc(var(--tile-size) * 0.3);
-  text-align: center;
-  font-size: clamp(0.6em, calc((var(--tile-size) / 80px) * 0.8em), 1.0em);         
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  pointer-events: none;
-  box-sizing: border-box;
-}
-
-.icon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: calc((var(--tile-size) / 80px) * 3em);
-  height: calc(var(--tile-size) * 0.7);
-  pointer-events: none;
-  box-sizing: border-box;
-}
-
-.tile-thumb {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  object-fit: cover;
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-/*
-==========================================================================
-   5. GRID MODE SPECIFIC
-==========================================================================
-*/
-
-.mode-grid .document-explorer {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--tile-size), 1fr));
-  grid-auto-rows: var(--tile-size);
-}
-
-.mode-grid .image-tile .icon {
-  margin-top: 0;
-  height: 100%;
-  width: 100%;
-  display: flex;
-  overflow: hidden;
-}
-
-/*
-==========================================================================
-   6. LIST & TREE MODE (Shared Styles)
-==========================================================================
-*/
-
-.mode-list .document-explorer,
-.mode-tree .document-explorer {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  width: 100%;
-  align-items: stretch;
-}
-
-.mode-list .grid-tile,
-.mode-tree .grid-tile {
-  flex-direction: row;
-  height: var(--list-tile-height);
-  padding: 0 2px 0 0px;
-  align-content: center;
-  gap: calc((var(--list-tile-height) / 24px) * 8px);
-  justify-content: flex-start;
-  flex-shrink: 0;
-  width: auto;
-}
-
-
-.mode-list .icon,
-.mode-tree .icon {
-  margin-top: 0 !important;
-  font-size: calc((var(--list-tile-height) / 24px) * 18px);
-  width: var(--list-tile-height);
-  height: var(--list-tile-height);
-  flex-shrink: 0;
-  overflow: visible;
-}
-
-.mode-list .grid-title, 
-.mode-tree .grid-title {
-    display: block;
-    align-content: center;
-    height: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: calc((var(--list-tile-height) / 24px) * 16px);
-}
-
-/*
-==========================================================================
-   7. TREE VIEW SPECIFIC
-==========================================================================
-*/
-
-.mode-tree .tree-view-container { padding-left: 5px; }
-
-.mode-tree { 
- --left-padding: 15px;
- --icon-center: calc((var(--list-tile-height) / 2));
- --tree-indent: calc((var(--icon-center) + var(--left-padding)));
-}
-
-.mode-tree .tree-content {
- margin-left: var(--tree-indent) !important;
- position: relative;
- display: flex;
- flex-direction: column;
-}
-
-/* Vertical Tree Lines */
-.mode-tree .tree-content::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -2px;
-  bottom: calc(var(--icon-center) - 2px); 
-  border-left: 2px solid oklch(0.5 0 0 / 0.5);
-}
-
-/* Horizontal Tree Lines */
-.mode-tree .tree-file::before {
-  content: "";
-  position: absolute;
-  left: 0px;
-  top: var(--icon-center);
-  width: var(--left-padding);
-  border-top: 2px solid oklch(0.5 0 0 / 0.5);
-}
-
-.tree-view-container > .tree-file::before,
-.tree-view-container > .tree-folder::before {
- display: none;
-}
-
-.mode-tree .tree-file {
- position: relative;
- padding-left: var(--left-padding) !important;
-}
-
-.mode-tree .tree-folder { position: relative;}
-.mode-tree .folder-tile {}
-
-/* Details/Summary overrides */
-.mode-tree details,
-.mode-tree summary { list-style: none; }
-.mode-tree summary::-webkit-details-marker { display: none; }
-
-/* --- Tree Chevron via Pseudo-element --- */
-.mode-tree summary.folder-tile {
- position: relative;
- padding-left: var(--left-padding);
-}
-
-.mode-tree summary.folder-tile::before {
-    content: "➤";
-    position: absolute;
-    top: 0;
-    height: 100%;
-    line-height: var(--list-tile-height); 
-    left: 4px;
-    width: var(--left-padding);
-    text-align: center;
-    font-size: calc(var(--left-padding)); 
-    transition: transform 0.2s ease;
-    display: inline-block;
-    opacity: 1;
-    z-index: 2;
-}
-
-/* Chevron Animation */
-.mode-tree details[open] > summary.folder-tile::before { transform: rotate(90deg);}
-
-
-/*
-==========================================================================
-   8. FILE EXTENSIONS & BADGES
-==========================================================================
-*/
-
-/* Shared badge style */
-.grid-tile::after {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  color: white;
-  font-size: clamp(0.4em, calc((var(--tile-size) / 80px) * 0.6em), 0.8em);
-  font-weight: bold;
-  padding: 1px 4px;
-  border-radius: 4px;
-  pointer-events: none;
-  z-index: 5;
-}
-
-/* List/Tree badge repositioning */
-.mode-list .grid-tile::after, 
-.mode-tree .grid-tile::after {
-    position: relative;
-    width: max-content; 
-    height: fit-content;
-    align-self: center; 
-    margin-left: auto; 
-    margin-right: 2px;   
-    top: auto;
-    right: auto;
-    display: inline-flex; 
-    align-items: center;
-    justify-content: center;
-    padding: 2px 6px;    
-    white-space: nowrap; 
-    line-height: 1;      
-    font-size: clamp(8px, calc((var(--list-tile-height) / 24px) * 12px), 20px);
-}
-
-/* Extension specific colors */
-.md-tile::after { content: "MD"; background: oklch(0.55 0.23 260 / 0.8); }
-.pdf-tile::after { content: "PDF"; background: oklch(0.55 0.23 30 / 0.8); }
-.excalidraw-tile::after { content: "EX"; background: oklch(0.55 0.14 300 / 0.8); }
-.drawio-tile::after { content: "DIO"; background: oklch(0.55 0.23 90 / 0.8); }
-.unknown-tile::after { content: attr(data-ext); background: oklch(0.45 0 0 / 0.8); }
-.image-tile::after { content: "IMG"; background: oklch(0.65 0.25 180 / 0.8); }
-
-/* 
-==========================================================================
-   9. OVERLAYS (Context Menu)
-==========================================================================
-*/
-
-#explorer-context-menu {
-  font-weight: bold;
-  background: oklch(0.50 0 0 / 0.5);
-  border: 1px solid oklch(0.5 0 0);
-  border-radius: 6px;
-  box-shadow: 0 4px 15px 0 oklch(0 0 0 / 0.5);
-  padding: 4px;
-  width: 80px;
-  backdrop-filter: blur(10px);
-}
-
-#explorer-context-menu .menu-item {
-  padding: 4px;
-  cursor: pointer;
-  font-size: 0.85em;
-  color: var(--explorer-text-color);
-  text-align: center;
-}
-
-#explorer-context-menu .menu-item:hover {
-  color: white;
-  background: var(--ui-accent-color);
-  border-radius: 4px;
-}
-
-#explorer-context-menu .menu-item.delete { color: oklch(0.75 0.3 30); }
-#explorer-context-menu .menu-item.delete:hover { background: red; color: white; }
-
-/*
-==========================================================================
-   10. ROOT (Variables)
-==========================================================================
-*/
-
-:root {
-  --tile-bg: oklch(0.75 0 0 / 0.1);
-  --header-height: 20px;
-  --frame-width: 5px;
-  --frame-color: rgba(64, 64, 64, 0.2);
-  --window-border: 2px;
-  --window-border-radius: 10px;
-  --window-border-color: #5558;
-  font-family: Monaco, Menlo, Consolas, "Courier New", Courier, monospace;
-}
-```
 
 ## Discussions to this library
 * [SilverBullet Community](https://community.silverbullet.md/t/document-explorer-image-gallery-for-silverbullet/3647?u=mr.red)
