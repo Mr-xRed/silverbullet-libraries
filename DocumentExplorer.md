@@ -232,6 +232,7 @@ local negativeFilter = cfg.negativeFilter or {}
 
 local PANEL_ID = "lhs"
 local PANEL_VISIBLE = false
+local cachedFiles = nil
 local PATH_KEY = "gridExplorer.cwd"
 local VIEW_MODE_KEY = "gridExplorer.viewMode"
 
@@ -386,22 +387,21 @@ end
 -- ---------- deleteFile function ----------
 
 function deleteFileWithConfirm(path)  
-  if not path then   
-    return   
-  end  
+  if not path then return end  
   if editor.confirm("Are you sure you want to delete " .. path .. "?") then  
     local fileToDelete = path  
-    -- Add .md if it's a page (no extension)  
     if not path:match("%.[^.]+$") then  
         fileToDelete = path .. ".md"  
     end        
-    -- Delete the file using space.deleteFile  
     space.deleteFile(fileToDelete)  
-    -- Refresh the explorer to show the deletion  
+    
+    -- REFRESH CACHE AFTER DELETION
+    cachedFiles = space.listFiles() 
+    
     local currentDir = clientStore.get("gridExplorer.cwd") or ""  
     editor.invokeCommand("DocumentExplorer: Open Folder", {path = currentDir}) 
   end  
-end 
+end
 
 -- ---------- drawPanel function ----------
 
@@ -417,7 +417,10 @@ local function drawPanel()
     folderPrefix = folderPrefix .. "/"
   end
 
-  local files = space.listFiles()
+  if not cachedFiles then
+      cachedFiles = space.listFiles()
+  end
+  local files = cachedFiles
   
   local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
   local pathAccum = ""
@@ -711,11 +714,14 @@ command.define {
     if PANEL_VISIBLE then
       editor.hidePanel(PANEL_ID)
       PANEL_VISIBLE = false
+      cachedFiles = nil -- CLEAR CACHE ON CLOSE
     else
       if goToCurrentDir then
         local current = editor.getCurrentPath() or ""
         clientStore.set(PATH_KEY, current:match("^(.*)/") or "")
       end
+      -- FETCH CACHE ON OPEN
+      cachedFiles = space.listFiles() 
       drawPanel()
     end
   end
