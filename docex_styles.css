@@ -170,6 +170,16 @@
   opacity: 1;
 }
 
+/* --- Action Buttons --- */
+.explorer-button-group {
+    display: flex;
+    align-items: center;
+    gap: 2px; 
+    background: var(--explorer-tile-bg);
+    border-radius: 6px;
+    padding: 2px;
+}
+
 .explorer-action-btn, 
 .explorer-close-btn {
   flex-shrink: 0;
@@ -182,6 +192,9 @@
   border: 1px solid var(--explorer-border-color);
   border-radius: 6px;
   cursor: pointer;
+
+
+
 }
 
 .explorer-action-btn { font-size: 1.1em; }
@@ -189,22 +202,29 @@
 .explorer-close-btn:hover { background: oklch(0.65 0.22 30); }
 .explorer-close-btn svg:hover { stroke: white; }
 
+#tree-toggle-btn:hover,
 #filter-btn:hover {
   background: var(--explorer-hover-bg) !important;
 }
 
 
+#tree-toggle-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+}
+
 /*--------- Hide Action Buttons when Filter in focus ------------- */
 
-
 .view-switcher, 
-#filter-btn, 
+.explorer-button-group,
+/*#filter-btn, #tree-toggle-btn,*/
 .action-buttons .explorer-action-btn {
   max-width: 200px; 
   opacity: 1;
   display: flex;
-/*  overflow: hidden;
-  white-space: nowrap;*/
   transition: 
     max-width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
@@ -213,7 +233,9 @@
 
 
 .input-wrapper:focus-within ~ .view-switcher,
-.input-wrapper:focus-within ~ #filter-btn,
+.input-wrapper:focus-within ~ .explorer-button-group,
+/*.input-wrapper:focus-within ~ #filter-btn,
+.input-wrapper:focus-within ~ #tree-toggle-btn,*/
 .input-wrapper:focus-within ~ .action-buttons > .explorer-action-btn {
   max-width: 0;
   opacity: 0;
@@ -238,44 +260,6 @@
   gap: 0px;
   transition: gap 0.4s ease;
 }
-
-/*
-
-.input-wrapper:focus-within ~ .view-switcher {
-  margin-left: -4px; 
-}
-*/
-
-
-/*
-.input-wrapper {
-  transition: 
-    flex-grow 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
-    width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.input-wrapper:focus-within ~ .view-switcher,
-.input-wrapper:focus-within ~ #filter-btn,
-.input-wrapper:focus-within ~ .action-buttons > .explorer-action-btn {
-  opacity: 0;
-  max-width: 0;
-  display: none;
-}
-
-.input-wrapper:focus-within ~ .action-buttons > .explorer-action-btn {
-  display: none;
-}
-
-.explorer-toolbar {
-  transition: gap 0.4s ease;
-}
-
-.input-wrapper:focus-within {
-  flex-grow: 1;
-  width: auto; 
-}
-
-*/
 
 
 /* --- Breadcrumbs --- */
@@ -501,7 +485,7 @@
     text-align: center;
     font-size: calc(var(--left-padding)); 
     transition: transform 0.2s ease;
-    transform: translateY(-2px);
+   /* transform: translateY(-2px); */
     display: inline-block;
     opacity: 1;
     z-index: 2;

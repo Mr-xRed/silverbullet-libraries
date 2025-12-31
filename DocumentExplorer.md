@@ -126,7 +126,6 @@ html[data-theme="light"]{
 
 ```space-lua
 -- priority: -1
-
 -- ------------- Config Init -------------
 config.define("explorer", {
   type = "object",
@@ -141,51 +140,15 @@ config.define("explorer", {
   }
 })
 
--- ------------- Lucide Icon Library -------------
--- local ICONS = { 
-
--- grid   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>]], 
-
--- list   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></svg>]], 
-
--- tree   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-tree-icon lucide-folder-tree"><path d="M20 10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2.5a1 1 0 0 1-.8-.4l-.9-1.2A1 1 0 0 0 15 3h-2a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"/><path d="M20 21a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1h-2.9a1 1 0 0 1-.88-.55l-.42-.85a1 1 0 0 0-.92-.6H13a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1Z"/><path d="M3 5a2 2 0 0 0 2 2h3"/><path d="M3 3v13a2 2 0 0 0 2 2h3"/></svg>]], 
-
--- folder = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>]], 
-
--- folderUp = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-up-icon lucide-folder-up"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/><path d="M12 10v6"/><path d="m9 13 3-3 3 3"/></svg>]], 
-
--- fileMD   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-notebook-text-icon lucide-notebook-text"><path d="M2 6h4"/><path d="M2 10h4"/><path d="M2 14h4"/><path d="M2 18h4"/><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9.5 8h5"/><path d="M9.5 12H16"/><path d="M9.5 16H14"/></svg>]], 
-
--- filePDF   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text-icon lucide-file-text"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>]], 
-
--- fileEX   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-ruler-icon lucide-pencil-ruler"><path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/><path d="m8 6 2-2"/><path d="m18 16 2-2"/><path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>]], 
-
--- fileDIO   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-ruler-icon lucide-pencil-ruler"><path d="M13 7 8.7 2.7a2.41 2.41 0 0 0-3.4 0L2.7 5.3a2.41 2.41 0 0 0 0 3.4L7 13"/><path d="m8 6 2-2"/><path d="m18 16 2-2"/><path d="m17 11 4.3 4.3c.94.94.94 2.46 0 3.4l-2.6 2.6c-.94.94-2.46.94-3.4 0L11 17"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>]], 
-
--- file   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-question-mark-icon lucide-file-question-mark"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M12 17h.01"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3"/></svg>]], 
-
--- fileIMG  = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>]], 
-
--- home   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>]], 
-
--- close  = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>]], 
-
--- filterOff = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>]], 
-
--- filterOn = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>]], 
-
---  window = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg>]]
-
--- }
-
-
-
 local ICONS = {
 grid  = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-grid"></use></svg>',
 list  = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-list"></use></svg>',
 tree  = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-tree"></use></svg>',
 folder = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folder"></use></svg>',
-folderUp = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderUp"></use></svg>',
+folderUp = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderOpened"></use></svg>',
+folderCollapse = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderCollapse"></use></svg>',
+folderExpand = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderExpand"></use></svg>',
+refresh = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-refresh"></use></svg>',
 fileMD = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileMD"></use></svg>',
 filePDF = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-filePDF"></use></svg>',
 fileEX = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileEX"></use></svg>',
@@ -199,9 +162,7 @@ filterOn = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.s
 window = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-window"></use></svg>'
  }
 
-
-
- local OLD_ICONS = {
+ local EMOJI_ICONS = {
    grid      = "🗄️",
    list      = "📋",
    tree      = "🌲",
@@ -219,7 +180,6 @@ window = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg
    filterOn  = "👀",
    window    = "🪟"
 }
-
 
 -- ------------- Load Config -------------
 local cfg = config.get("explorer") or {}
@@ -328,27 +288,58 @@ local function fileTile(icon, name, target, ext, viewMode)
     "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
 
+-- ---------- Refresh Button ----------
+function refreshExplorer()
+    cachedFiles = nil
+    drawPanel()
+end
+
+function refreshExplorerButton()
+    cachedFiles = nil
+    drawPanel()
+    editor.flashNotification("Document Explorer Refreshed.")
+end
+
 -- ---------- Tree Logic ----------
 local function renderTree(files, prefix)
     local tree = {}
+    local prefixLen = #prefix
+    local s_find = string.find
+    local s_sub = string.sub
+
+    -- 1. Build the tree structure efficiently
     for _, f in ipairs(files) do
-        -- Check negative filter before processing
-        if not isFiltered(f.name) then
-            if prefix == "" or f.name:sub(1, #prefix) == prefix then
-                local rel = f.name:sub(#prefix + 1)
+        local name = f.name
+        -- Fast Prefix Check
+        if prefix == "" or s_sub(name, 1, prefixLen) == prefix then
+            -- Negative Filter Check
+            if not isFiltered(name) then
+                local rel = s_sub(name, prefixLen + 1)
                 local current = tree
-                  for part in rel:gmatch("[^/]+") do
-                      current[part] = current[part] or {} 
-                          if not rel:find(part .. "/", 1, true) then 
-                          current[part]._path = f.name 
-                      end
-                      current = current[part]
-                  end
+                local start = 1
+                
+                while true do
+                    local stop = s_find(rel, "/", start)
+                    if not stop then
+                        -- It's a file (leaf node)
+                        local part = s_sub(rel, start)
+                        current[part] = current[part] or {}
+                        current[part]._path = name
+                        break
+                    else
+                        -- It's a directory (branch node)
+                        local part = s_sub(rel, start, stop - 1)
+                        if not current[part] then current[part] = {} end
+                        current = current[part]
+                        start = stop + 1
+                    end
+                end
             end
         end
     end
 
-    local function traverse(node, name, level)
+    -- 2. Recursive Traversal for HTML generation
+    local function traverse(node, name)
         local sorted = {}
         for k in pairs(node) do 
             if k:sub(1,1) ~= "_" then table.insert(sorted, k) end 
@@ -357,30 +348,37 @@ local function renderTree(files, prefix)
         
         local html = ""
         if node._path then
+            -- File Rendering
             local ext = node._path:match("%.([^.]+)$") or "md"
             html = "<div class='tree-file'>" .. 
-       fileTile(ICONS.file, name:gsub("%.md$",""), "/" .. node._path:gsub("%.md$",""), ext, "tree") .. "</div>"
+                   fileTile(ICONS.file, name:gsub("%.md$",""), "/" .. node._path:gsub("%.md$",""), ext, "tree") .. 
+                   "</div>"
         else
-            html = "<details open class='tree-folder'>" ..
+            -- Folder Rendering
+            html = "<details class='tree-folder'>" ..
                    "<summary class='grid-tile folder-tile' title='"..name.."' >" ..
-                    "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div>"..
-                    "</summary>" ..
+                   "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div>"..
+                   "</summary>" ..
                    "<div class='tree-content'>"
             for _, k in ipairs(sorted) do 
-                html = html .. traverse(node[k], k, level + 1) 
+                html = html .. traverse(node[k], k) 
             end
             html = html .. "</div></details>"
         end
         return html
     end
 
-    local finalHtml = "<div class='tree-view-container'>"
+    -- 3. Final Assembly
     local rootKeys = {}
     for k in pairs(tree) do 
         if k:sub(1,1) ~= "_" then table.insert(rootKeys, k) end 
     end
     table.sort(rootKeys)
-    for _, k in ipairs(rootKeys) do finalHtml = finalHtml .. traverse(tree[k], k, 0) end
+
+    local finalHtml = "<div class='tree-view-container'>"
+    for _, k in ipairs(rootKeys) do 
+        finalHtml = finalHtml .. traverse(tree[k], k) 
+    end
     return finalHtml .. "</div>"
 end
 
@@ -396,15 +394,14 @@ function deleteFileWithConfirm(path)
     space.deleteFile(fileToDelete)  
     
     -- REFRESH CACHE AFTER DELETION
-    cachedFiles = space.listFiles() 
+    --cachedFiles = space.listFiles() 
     
-    local currentDir = clientStore.get("gridExplorer.cwd") or ""  
-    editor.invokeCommand("DocumentExplorer: Open Folder", {path = currentDir}) 
+    --local currentDir = clientStore.get("gridExplorer.cwd") or ""  
+    --editor.invokeCommand("DocumentExplorer: Open Folder", {path = currentDir}) 
   end  
 end
 
 -- ---------- drawPanel function ----------
-
 local function drawPanel()
   local currentWidth = clientStore.get("explorer.panelWidth") or config.get("explorer.panelWidth") or 0.8
   local viewMode = clientStore.get(VIEW_MODE_KEY) or config.get("explorer.viewMode") or "grid"
@@ -420,7 +417,6 @@ local function drawPanel()
   if not cachedFiles then
       cachedFiles = space.listFiles()
   end
-  local files = cachedFiles
   
   local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
   local pathAccum = ""
@@ -430,7 +426,7 @@ local function drawPanel()
   end
   local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
 
-local html = [[
+  local html = [[
       <div class="explorer-panel mode-]] .. viewMode .. [[">
         <div class="explorer-header">
           <div class="explorer-toolbar">          
@@ -442,14 +438,29 @@ local html = [[
               <div title="Grid View" class="]]..(viewMode=="grid" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'grid'})">]]..ICONS.grid..[[</div>
               <div title="List View" class="]]..(viewMode=="list" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">]]..ICONS.list..[[</div>
               <div title="Tree View" class="]]..(viewMode=="tree" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">]]..ICONS.tree..[[</div>
-            </div>
-            <div title="Toggle Negative Filter" 
+  </div>
+         <div class="explorer-button-group">
+              <div title="Expand/Collapse All" 
+                   class="explorer-action-btn" id="tree-toggle-btn"
+                   style="display: ]] .. (viewMode == "tree" and "flex" or "none") .. [[" 
+                   onclick="toggleTreeExpansion()">
+                <span id="tree-toggle-icon">]] .. ICONS.folderExpand .. [[</span>
+              </div>
+  
+              <div title="Refresh View" 
+                   class="explorer-action-btn" 
+                   id="refresh-btn" 
+                   onclick="syscall('lua.evalExpression', 'refreshExplorerButton()')">]]..ICONS.refresh..[[
+              </div>
+  
+              <div title="Toggle Negative Filter" 
                     class="explorer-action-btn" id="filter-btn" 
                     style="background: ]] .. (clientStore.get("explorer.disableFilter") == "true" and "var(--explorer-accent-color)" or "var(--explorer-tile-bg)") .. [[" 
                     onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">
               ]] .. (clientStore.get("explorer.disableFilter") == "true" and ICONS.filterOn or ICONS.filterOff) .. [[
-            </div>
-            <div class="action-buttons" style="display: flex; gap: 4px;">
+               </div>
+          </div>  
+              <div class="action-buttons" style="display: flex; gap: 4px;">
               <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">]]..ICONS.window..[[</div>
               <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">]]..ICONS.close..[[</div>
             </div>
@@ -460,24 +471,35 @@ local html = [[
   ]]
 
   if viewMode == "tree" then
-      html = html .. renderTree(files, folderPrefix)
+      html = html .. renderTree(cachedFiles, folderPrefix)
   else
       local folders, mds, pdfs, drawio, excalidraw ,images, unknowns = {}, {}, {}, {}, {}, {}, {}
       local seen = {}
+      local prefixLen = #folderPrefix
 
-      for _, file in ipairs(files) do
-        -- Check negative filter
-        if not isFiltered(file.name) then
-            if folderPrefix == "" or file.name:sub(1, #folderPrefix) == folderPrefix then
-              local rest = file.name:sub(#folderPrefix + 1)
-              local slash = rest:find("/")
-              if slash then
-                local sub = rest:sub(1, slash - 1)
-                if not seen[sub] then
+      for _, file in ipairs(cachedFiles) do
+        local name = file.name
+        
+        -- 1. FAST PREFIX CHECK: Does it start with our current folder?
+        if folderPrefix == "" or name:sub(1, prefixLen) == folderPrefix then
+          local rest = name:sub(prefixLen + 1)
+          
+          if rest ~= "" then
+            local slash = rest:find("/")
+            
+            if slash then
+              -- IT IS A SUBFOLDER
+              -- Only process the top-level folder name
+              local sub = rest:sub(1, slash - 1)
+              if not seen[sub] then
+                -- Check filter ONLY for the folder name
+                if not isFiltered(folderPrefix .. sub) then
                   seen[sub] = true
                   table.insert(folders, sub)
                 end
-              elseif rest ~= "" then
+              end
+            else
+              if not isFiltered(name) then
                 if rest:match("%.md$") then table.insert(mds, rest)
                 elseif rest:match("%.pdf$") then table.insert(pdfs, rest)
                 elseif rest:match("%.drawio$") then table.insert(drawio, rest)
@@ -492,9 +514,11 @@ local html = [[
                 end
               end
             end
+          end
         end
       end
 
+      -- Sort only the tiny subset of files we actually found
       table.sort(folders); table.sort(mds); table.sort(pdfs);
       table.sort(drawio); table.sort(excalidraw); table.sort(images); table.sort(unknowns)
 
@@ -602,22 +626,39 @@ window.handleDragStart = function(event, encodedData) {
                 const isPage = !isFolder && !internalPath.match(/\.[^.]+$/);
                 if (isPage) renamePath += ".md";
                 await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
-                await syscall("editor.invokeCommand", "DocumentExplorer: Open Folder", { path: currentDir }); 
+                await syscall('lua.evalExpression', 'refreshExplorer()');
             };
             const deleteBtn = document.getElementById('ctx-delete');  
             if (deleteBtn) {  
                 deleteBtn.onclick = async () => {  
                     menu.style.display = 'none';  
-                      
-                    // Call the Lua function via lua.evalExpression  
-                    await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);  
+                       
+                    await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+                    await syscall('lua.evalExpression', 'refreshExplorer()');
                 };  
             }
         };
 
         window.onclick = () => { menu.style.display = 'none'; };
     }
+// ---------------- Tree Expansion Logic ----------------
+const ICON_COLLAPSE = `]] .. ICONS.folderCollapse .. [[`;   // Icon to show when expanded (click to collapse)
+const ICON_EXPAND   = `]] .. ICONS.folderExpand .. [[`; // Icon to show when collapsed (click to expand)
 
+window.toggleTreeExpansion = function() {
+    const explorer = document.getElementById("explorerGrid");
+    const details = explorer.querySelectorAll("details.tree-folder");
+    const iconContainer = document.getElementById("tree-toggle-icon");
+    if (details.length === 0) return;
+
+    const isAnyOpen = Array.from(details).some(d => d.open);
+    
+    details.forEach(d => {
+        d.open = !isAnyOpen;
+    });
+
+    iconContainer.innerHTML = !isAnyOpen ? ICON_COLLAPSE : ICON_EXPAND;
+};
 // ---------------- Filter Logic ----------------
     window.filterTiles = function() {
         const input = document.getElementById("tileSearch");
