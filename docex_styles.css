@@ -193,9 +193,6 @@
   border: 1px solid var(--explorer-border-color);
   border-radius: 6px;
   cursor: pointer;
-
-
-
 }
 
 .explorer-action-btn { font-size: 1.1em; }
@@ -208,6 +205,21 @@
   background: var(--explorer-hover-bg) !important;
 }
 
+/*--------- Negative Filter Toggle ------------- */
+
+/* Instant Negative Filter Toggle */
+.document-explorer.hide-filtered .filtered-item {
+    background: red !important;
+    color: red !important;
+/*    display: none !important;*/
+}
+
+/* Optional: Smooth the transition when toggling */
+.grid-tile {
+    transition: opacity 0.15s ease-in-out;
+}
+
+
 
 #tree-toggle-icon {
     display: flex;
@@ -216,6 +228,7 @@
     height: 100%;
     width: 100%;
 }
+
 
 /*--------- Hide Action Buttons when Filter in focus ------------- */
 
@@ -300,6 +313,12 @@
   transition: all 0.25s ease;
   color: var(--explorer-text-color);
   user-select: none;
+}
+
+.grid-tile.is-focused {
+  outline: 2px solid var(--ui-accent-color);
+  outline-offset: -2px;
+  background: oklch(0.75 0 0 / 0.15);
 }
 
 .grid-tile:hover { background: var(--explorer-hover-bg); }
