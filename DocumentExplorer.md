@@ -209,9 +209,12 @@ local function isFiltered(path)
       local searchStr = lowPattern:sub(2, -2)
       if lowPath:find(searchStr, 1, true) then return true end
 
-    -- Case 2: *.ext (Suffix Wildcard)
+    -- Case 2: *.ext or *.* (Suffix Wildcard)
     elseif lowPattern:sub(1, 2) == "*." then
       local ext = lowPattern:sub(3)
+      if ext:sub(1, 1) == "*" then
+        ext = "[^%.]+%" .. ext:sub(2)
+      end
       if lowPath:match("%." .. ext .. "$") then return true end
     
     -- Case 3: Plain string / Prefix match
