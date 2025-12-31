@@ -205,6 +205,15 @@
   background: var(--explorer-hover-bg) !important;
 }
 
+/* Instant Negative Filter Toggle */
+.document-explorer.hide-filtered .filtered-item {
+    display: none !important;
+}
+
+/* Optional: Smooth the transition when toggling */
+.grid-tile {
+    transition: opacity 0.15s ease-in-out;
+}
 
 
 #tree-toggle-icon {

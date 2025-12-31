@@ -140,7 +140,7 @@ config.define("explorer", {
   }
 })
 
-local ICONS = {
+local SVG_ICONS = {
 grid  = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-grid"></use></svg>',
 list  = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-list"></use></svg>',
 tree  = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-tree"></use></svg>',
@@ -162,7 +162,7 @@ filterOn = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.s
 window = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-window"></use></svg>'
  }
 
- local EMOJI_ICONS = {
+ local ICONS = {
    grid      = "🗄️",
    list      = "📋",
    tree      = "🌲",
@@ -198,18 +198,15 @@ local VIEW_MODE_KEY = "gridExplorer.viewMode"
 
 -- ---------- Helper to check negative filters ----------
 local function isFiltered(path)
-  if clientStore.get("explorer.disableFilter") == "true" then return false end
-  
+  -- We always calculate this so we can "tag" the item in HTML
   local lowPath = path:lower()
   for _, pattern in ipairs(negativeFilter) do
     local lowPattern = pattern:lower()
     
-    -- Case 1: *word* (Internal Wildcard)
     if lowPattern:match("^%*.*%*$") then
       local searchStr = lowPattern:sub(2, -2)
       if lowPath:find(searchStr, 1, true) then return true end
 
-    -- Case 2: *.ext or *.* (Suffix Wildcard)
     elseif lowPattern:sub(1, 2) == "*." then
       local ext = lowPattern:sub(3)
       if ext:sub(1, 1) == "*" then
@@ -217,7 +214,6 @@ local function isFiltered(path)
       end
       if lowPath:match("%." .. ext .. "$") then return true end
     
-    -- Case 3: Plain string / Prefix match
     elseif lowPath:find(lowPattern, 1, true) then
       return true
     end
@@ -227,7 +223,14 @@ end
 
 -- ---------- Helper to build file tiles ----------
 local function fileTile(icon, name, target, ext, viewMode)
+  local isThisFileFiltered = isFiltered(target)
   local tileClass = "grid-tile"
+  
+  -- Add the class so CSS can hide/show it
+  if isThisFileFiltered then
+      tileClass = tileClass .. " filtered-item"
+  end
+
   local onClickAction
   local rawPath = target:gsub("^/", "") 
   local dragData = rawPath 
@@ -288,7 +291,7 @@ local function fileTile(icon, name, target, ext, viewMode)
     "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
 
--- ---------- Refresh Logic ----------
+-- ---------- Refresh Button ----------
 function refreshExplorer()
     cachedFiles = space.listFiles()
     drawPanel()
@@ -300,7 +303,7 @@ function refreshExplorerButton()
     editor.flashNotification("Document Explorer Refreshed.")
 end
 
--- ---------- Tree Logic (Optimized) ----------
+-- ---------- Tree Logic ----------
 local function renderTree(files, prefix)
     local tree = {}
     local prefixLen = #prefix
@@ -310,23 +313,21 @@ local function renderTree(files, prefix)
     for _, f in ipairs(files) do
         local name = f.name
         if prefix == "" or s_sub(name, 1, prefixLen) == prefix then
-            if not isFiltered(name) then
-                local rel = s_sub(name, prefixLen + 1)
-                local current = tree
-                local start = 1
-                while true do
-                    local stop = s_find(rel, "/", start)
-                    if not stop then
-                        local part = s_sub(rel, start)
-                        current[part] = current[part] or {}
-                        current[part]._path = name
-                        break
-                    else
-                        local part = s_sub(rel, start, stop - 1)
-                        if not current[part] then current[part] = {} end
-                        current = current[part]
-                        start = stop + 1
-                    end
+            local rel = s_sub(name, prefixLen + 1)
+            local current = tree
+            local start = 1
+            while true do
+                local stop = s_find(rel, "/", start)
+                if not stop then
+                    local part = s_sub(rel, start)
+                    current[part] = current[part] or {}
+                    current[part]._path = name
+                    break
+                else
+                    local part = s_sub(rel, start, stop - 1)
+                    if not current[part] then current[part] = {} end
+                    current = current[part]
+                    start = stop + 1
                 end
             end
         end
@@ -345,11 +346,14 @@ local function renderTree(files, prefix)
             table.insert(buffer, fileTile(ICONS.file, name:gsub("%.md$",""), "/" .. node._path:gsub("%.md$",""), ext, "tree"))
             table.insert(buffer, "</div>")
         else
-            table.insert(buffer, "<details class='tree-folder'><summary class='grid-tile folder-tile' title='"..name.."'>")
+            local fClass = "grid-tile folder-tile"
+            if isFiltered(name) then fClass = fClass .. " filtered-item" end
+
+            table.insert(buffer, "<details class='tree-folder'><summary class='" .. fClass .. "' title='"..name.."'>")
             table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></summary>")
             table.insert(buffer, "<div class='tree-content'>")
             for _, k in ipairs(sorted) do 
-                traverse(node[k], k, buffer)
+                traverse(node[k], k, buffer) 
             end
             table.insert(buffer, "</div></details>")
         end
@@ -377,7 +381,7 @@ function deleteFileWithConfirm(path)
         fileToDelete = path .. ".md"  
     end        
     space.deleteFile(fileToDelete)  
-    refreshExplorer() -- Correctly invalidates and re-renders
+    refreshExplorer()
   end  
 end
 
@@ -386,19 +390,17 @@ local function drawPanel()
   local currentWidth = clientStore.get("explorer.panelWidth") or config.get("explorer.panelWidth") or 0.8
   local viewMode = clientStore.get(VIEW_MODE_KEY) or config.get("explorer.viewMode") or "grid"
   
+  -- Logic Toggle check
+  local filterEnabled = clientStore.get("explorer.disableFilter") ~= "true"
+
   local folderPrefix = clientStore.get(PATH_KEY) or ""
   if viewMode == "tree" then folderPrefix = "" end
   if folderPrefix ~= "" and not folderPrefix:match("/$") then
     folderPrefix = folderPrefix .. "/"
   end
 
-  if not cachedFiles then
-      cachedFiles = space.listFiles()
-  end
+  if not cachedFiles then cachedFiles = space.listFiles() end
   
-  local h = {} -- Main HTML Buffer
-  
-  -- Breadcrumbs
   local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
   local pathAccum = ""
   for part in folderPrefix:gmatch("([^/]+)/") do
@@ -407,6 +409,8 @@ local function drawPanel()
   end
   local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
 
+  local h = {} 
+  
   table.insert(h, [[<div class="explorer-panel mode-]])
   table.insert(h, viewMode)
   table.insert(h, [[">
@@ -471,7 +475,13 @@ local function drawPanel()
             </div>
           </div>]])
   table.insert(h, breadcrumbHtml)
-  table.insert(h, [[</div><div class="document-explorer" id="explorerGrid" data-current-path="]])
+  table.insert(h, [[</div>]])
+  
+  -- Container setup for CSS toggle
+  local gridClass = "document-explorer"
+  if filterEnabled then gridClass = gridClass .. " hide-filtered" end
+
+  table.insert(h, [[<div class="]] .. gridClass .. [[" id="explorerGrid" data-current-path="]])
   table.insert(h, folderPrefix)
   table.insert(h, [[">]])
 
@@ -491,13 +501,10 @@ local function drawPanel()
             if slash then
               local sub = rest:sub(1, slash - 1)
               if not seen[sub] then
-                if not isFiltered(folderPrefix .. sub) then
                   seen[sub] = true
                   table.insert(folders, sub)
-                end
               end
             else
-              if not isFiltered(name) then
                 local ext = rest:match("%.([^.]+)$")
                 if ext then ext = ext:lower() end 
       
@@ -509,7 +516,6 @@ local function drawPanel()
                        ext == "gif" or ext == "svg" or ext == "webp" then table.insert(images, rest)
                 else table.insert(unknowns, rest)
                 end
-              end
             end
           end
         end
@@ -526,7 +532,10 @@ local function drawPanel()
 
       for _, f in ipairs(folders) do
         local p = folderPrefix .. f .. "/"
-        table.insert(h, "<div class='grid-tile folder-tile' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..p.."'} )\">")
+        local fClass = "grid-tile folder-tile"
+        if isFiltered(p) then fClass = fClass .. " filtered-item" end
+
+        table.insert(h, "<div class='" .. fClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..p.."'} )\">")
         table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
       end
 
@@ -545,24 +554,34 @@ local function drawPanel()
 
 local script = [[
 (function() {
+
+// ---------------- Keyboard Navigation ----------------
 let focusedIndex = -1;
 
 window.addEventListener('keydown', function(e) {
     if (!document.getElementById("explorerGrid") || document.activeElement.id === "tileSearch") {
-        if (e.key === "Escape" && document.activeElement.id === "tileSearch") document.activeElement.blur();
+        if (e.key === "Escape" && document.activeElement.id === "tileSearch") {
+            document.activeElement.blur();
+        }
         return; 
     }
 
-    const tiles = Array.from(document.querySelectorAll(".grid-tile:not([style*='display: none'])"));
+    // UPDATED: Only navigate through items that are VISIBLE (not hidden by CSS)
+    const tiles = Array.from(document.querySelectorAll(".grid-tile")).filter(t => {
+        return window.getComputedStyle(t).display !== 'none';
+    });
+
     if (tiles.length === 0) return;
 
     const grid = document.getElementById("explorerGrid");
     const firstTile = grid.querySelector(".grid-tile");
     let cols = 1;
     
-    // Fixed: Only use multi-column logic in mode-grid
     if (document.querySelector(".mode-grid") && firstTile) {
-        cols = Math.floor((grid.clientWidth + 10) / (firstTile.offsetWidth + 10)) || 1;
+        const tileWidth = firstTile.offsetWidth;
+        const gridWidth = grid.clientWidth;
+        cols = Math.floor((gridWidth + 10) / (tileWidth + 10)); 
+        if (cols < 1) cols = 1;
     }
 
     if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Enter", "Backspace"].includes(e.key)) {
@@ -577,7 +596,7 @@ window.addEventListener('keydown', function(e) {
 
         tiles.forEach(t => t.classList.remove("is-focused"));
         const target = tiles[focusedIndex];
-        if(target) {
+        if (target) {
             target.classList.add("is-focused");
             target.scrollIntoView({ block: "nearest" });
 
@@ -602,123 +621,172 @@ window.addEventListener('keydown', function(e) {
     }
 });
   
+// ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
     const decodedData = atob(encodedData);
     event.dataTransfer.setData("text/plain", decodedData);
     event.dataTransfer.effectAllowed = "copy";
+    
     const tile = event.target.closest('.grid-tile');
     if (tile) {
         tile.classList.add("is-dragging");
-        tile.addEventListener('dragend', () => tile.classList.remove("is-dragging"), { once: true });
+        tile.addEventListener('dragend', function cleanup() {
+            tile.classList.remove("is-dragging");
+            tile.removeEventListener('dragend', cleanup);
+        }, { once: true });
     }
 };
         
-const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
-if (contextMenuEnabled) {
-    const menu = document.createElement('div');
-    menu.id = 'explorer-context-menu';
-    menu.style.display = 'none';
-    menu.style.position = 'fixed';
-    menu.style.zIndex = '1000';
-    document.body.appendChild(menu);
+// ---------------- Context Menu ----------------
+    const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
+    
+    if (contextMenuEnabled) {
+        const menu = document.createElement('div');
+        menu.id = 'explorer-context-menu';
+        menu.style.display = 'none';
+        menu.style.position = 'fixed';
+        menu.style.zIndex = '1000';
+        document.body.appendChild(menu);
 
-    window.oncontextmenu = function(e) {
-        const tile = e.target.closest('.grid-tile');
-        if (!tile || tile.innerText.includes("..")) return; 
-        e.preventDefault();
-        
-        let targetPath = "";
-        const onClickAttr = tile.getAttribute('onclick') || "";
-        const isFolder = tile.classList.contains('folder-tile');
-        
-        const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-        const simpleArgMatch = onClickAttr.match(/syscall\s*\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]/);
-        const winOpenMatch = onClickAttr.match(/window\.open\s*\(\s*['"]([^'"]+)['"]/);
-        
-        if (multiArgMatch) targetPath = multiArgMatch[1];
-        else if (simpleArgMatch) targetPath = simpleArgMatch[1];
-        else if (winOpenMatch) targetPath = winOpenMatch[1];
-        else targetPath = tile.getAttribute('title') || "";
+        window.oncontextmenu = function(e) {
+            const tile = e.target.closest('.grid-tile');
+            if (!tile || tile.innerText.includes("..")) return; 
+            
+            e.preventDefault();
+            
+            let targetPath = "";
+            const onClickAttr = tile.getAttribute('onclick') || "";
+            const isFolder = tile.classList.contains('folder-tile');
+            
+            const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
+            const simpleArgMatch = onClickAttr.match(/syscall\s*\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]/);
+            const winOpenMatch = onClickAttr.match(/window\.open\s*\(\s*['"]([^'"]+)['"]/);
+            
+            if (multiArgMatch) targetPath = multiArgMatch[1];
+            else if (simpleArgMatch) targetPath = simpleArgMatch[1];
+            else if (winOpenMatch) targetPath = winOpenMatch[1];
+            else targetPath = tile.getAttribute('title') || "";
 
-        let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
-        if (isFolder) internalPath = internalPath.replace(/\/$/, "");
+            let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
+            if (isFolder) internalPath = internalPath.replace(/\/$/, "");
 
-        let menuContent = `<div class="menu-item" id="ctx-rename">Rename</div>`;
-        if (!isFolder) menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
-        menu.innerHTML = menuContent;
+            let menuContent = `<div class="menu-item" id="ctx-rename">Rename</div>`;
+            if (!isFolder) {
+                menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
+            }
+            menu.innerHTML = menuContent;
 
-        menu.style.display = 'block';
-        const menuWidth = menu.offsetWidth;
-        const menuHeight = menu.offsetHeight;
-        let posX = e.clientX;
-        if (posX + menuWidth > window.innerWidth) posX -= menuWidth;
-        let posY = e.clientY;
-        if (posY + menuHeight > window.innerHeight) posY -= menuHeight;
+            menu.style.display = 'block';
+            const menuWidth = menu.offsetWidth;
+            const menuHeight = menu.offsetHeight;
+            const winWidth = window.innerWidth;
+            const winHeight = window.innerHeight;
 
-        menu.style.left = posX + 'px';
-        menu.style.top = posY + 'px';
+            let posX = e.clientX;
+            if (posX + menuWidth > winWidth) posX = posX - menuWidth;
+            let posY = e.clientY;
+            if (posY + menuHeight > winHeight) posY = posY - menuHeight;
 
-        document.getElementById('ctx-rename').onclick = async () => {
-            menu.style.display = 'none';
-            let renamePath = internalPath;
-            if (!isFolder && !internalPath.match(/\.[^.]+$/)) renamePath += ".md";
-            await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
-            await syscall('lua.evalExpression', 'refreshExplorer()');
+            menu.style.left = posX + 'px';
+            menu.style.top = posY + 'px';
+
+            document.getElementById('ctx-rename').onclick = async () => {
+                menu.style.display = 'none';
+                const currentDir = document.getElementById("explorerGrid").getAttribute("data-current-path");
+                let renamePath = internalPath;
+                const isPage = !isFolder && !internalPath.match(/\.[^.]+$/);
+                if (isPage) renamePath += ".md";
+                await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
+                await syscall('lua.evalExpression', 'refreshExplorer()');
+            };
+            const deleteBtn = document.getElementById('ctx-delete');  
+            if (deleteBtn) {  
+                deleteBtn.onclick = async () => {  
+                    menu.style.display = 'none';  
+                    await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+                    await syscall('lua.evalExpression', 'refreshExplorer()');
+                };  
+            }
         };
-        const dBtn = document.getElementById('ctx-delete');  
-        if (dBtn) dBtn.onclick = async () => {  
-            menu.style.display = 'none';  
-            await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
-        };  
-    };
-    window.onclick = () => { menu.style.display = 'none'; };
-}
+
+        window.onclick = () => { menu.style.display = 'none'; };
+    }
+// ---------------- Tree Expansion Logic ----------------
+const ICON_COLLAPSE = `]] .. ICONS.folderCollapse .. [[`;   
+const ICON_EXPAND   = `]] .. ICONS.folderExpand .. [[`; 
 
 window.toggleTreeExpansion = function() {
     const explorer = document.getElementById("explorerGrid");
     const details = explorer.querySelectorAll("details.tree-folder");
     const iconContainer = document.getElementById("tree-toggle-icon");
     if (details.length === 0) return;
+
     const isAnyOpen = Array.from(details).some(d => d.open);
-    details.forEach(d => d.open = !isAnyOpen);
-    iconContainer.innerHTML = !isAnyOpen ? `]] .. ICONS.folderCollapse .. [[` : `]] .. ICONS.folderExpand .. [[`;
+    details.forEach(d => { d.open = !isAnyOpen; });
+    iconContainer.innerHTML = !isAnyOpen ? ICON_COLLAPSE : ICON_EXPAND;
 };
 
-window.filterTiles = function() {
-    const input = document.getElementById("tileSearch");
-    const query = input.value.toLowerCase();
-    const terms = query.split(/\s+/).filter(t => t.length > 0);
-    const tiles = document.querySelectorAll(".grid-tile");
-    document.getElementById("clearSearch").style.display = query.length > 0 ? "flex" : "none";
-    tiles.forEach(tile => {
-        if (tile.innerText === "..") return;
-        const combined = (tile.getAttribute("title") || "").toLowerCase() + " " + (tile.getAttribute("data-ext") || "").toLowerCase();
-        tile.style.display = terms.every(term => combined.includes(term)) ? "flex" : "none";
-    });
-};
+// ---------------- Filter Logic with Debounce ----------------
+    let cachedTiles = [];
+    function initializeTiles() { cachedTiles = Array.from(document.querySelectorAll(".grid-tile")); }
+      
+    window.filterTiles = function() {
+          const input = document.getElementById("tileSearch");
+          const query = input.value.toLowerCase().trim();
+          const clearBtn = document.getElementById("clearSearch");
+          clearBtn.style.display = query.length > 0 ? "flex" : "none";
+      
+          clearTimeout(window.filterDebounceTimer);
+          window.filterDebounceTimer = setTimeout(() => {
+              if (cachedTiles.length === 0) initializeTiles();
+              const terms = query.split(/\s+/);
+              const grid = document.getElementById("explorerGrid");
+              grid.style.display = "none"; 
+      
+              cachedTiles.forEach(tile => {
+                  if (tile.classList.contains("folderup-tile")) return;
+                  const title = (tile.getAttribute("title") || "").toLowerCase();
+                  const ext = (tile.getAttribute("data-ext") || "").toLowerCase();
+                  const isMatch = terms.every(term => title.includes(term) || ext.includes(term));
+                  tile.style.display = isMatch ? "flex" : "none";
+              });
+      
+              grid.style.display = "grid"; 
+              focusedIndex = -1;
+          }, 300); 
+    };
 
-window.clearFilter = function(e) {
-    if (e) { e.preventDefault(); e.stopPropagation(); }
-    const input = document.getElementById("tileSearch");
-    input.value = "";
-    filterTiles(); input.focus(); 
-};
-
-function ensureElement(id, tag, attr, content) {
-    if (document.getElementById(id)) return document.getElementById(id);
-    const el = document.createElement(tag); el.id = id;
-    for (let k in attr) el.setAttribute(k, attr[k]);
-    if (content) el.innerHTML = content;
-    document.head.appendChild(el); return el;
-}
+// ---------------- Load Styles Once ----------------
+    function ensureElement(id, tag, attributes, content) {
+        if (document.getElementById(id)) return document.getElementById(id);
+        const el = document.createElement(tag);
+        el.id = id;
+        for (let key in attributes) el.setAttribute(key, attributes[key]);
+        if (content) el.innerHTML = content;
+        document.head.appendChild(el);
+        return el;
+    }
 
 ensureElement("silverbullet-main-css", "link", { rel: "stylesheet", href: "/.client/main.css"});
 ensureElement("explorer-style-css", "link", { rel: "stylesheet", href: "/.fs/Library/Mr-xRed/docex_styles.css" });
-if (!document.getElementById("explorer-custom-styles-once")) {
-    const pStyles = parent.document.getElementById("custom-styles")?.innerHTML || "";
-    ensureElement("explorer-custom-styles-once", "style", {}, pStyles.replace(/<\/?style>/g, ""));
-} 
-ensureElement("explorer-dynamic-vars", "style", {}, `:root { --tile-size: ]]..tileSize..[[; --list-tile-height: ]]..listHeight..[[; --icon-size-grid: calc(var(--tile-size) * 0.6); }`);
+    
+    if (!document.getElementById("explorer-custom-styles-once")) {
+        const parentStyles = parent.document.getElementById("custom-styles")?.innerHTML || "";
+        const cleanStyles = parentStyles.replace(/<\/?style>/g, "");
+        const styleEl = document.createElement("style");
+        styleEl.id = "explorer-custom-styles-once";
+        styleEl.innerHTML = cleanStyles;
+        document.head.appendChild(styleEl);
+    }   
+
+    const dynamicVars = `:root { 
+              --tile-size: ]] .. tileSize..[[;
+              --list-tile-height: ]]..listHeight..[[;
+              --icon-size-grid: calc(var(--tile-size) * 0.6); 
+    }`;
+    const varEl = ensureElement("explorer-dynamic-vars", "style", {});
+    varEl.innerHTML = dynamicVars;
+
 })(); 
 ]]
 
