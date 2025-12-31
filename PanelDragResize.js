@@ -197,11 +197,11 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
       if (newTop + newHeight > window.innerHeight) newHeight = window.innerHeight - newTop;
 
       // Min sizes
-      if (newWidth > 260) { 
+      if (newWidth > 320) { 
         container.style.width = `${newWidth}px`; 
         container.style.left = `${newLeft}px`; 
       }
-      if (newHeight > 260) { 
+      if (newHeight > 310) { 
         container.style.height = `${newHeight}px`; 
         container.style.top = `${newTop}px`; 
       }

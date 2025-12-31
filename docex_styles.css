@@ -89,7 +89,8 @@
   border-radius: 6px;
   display: flex;
   align-items: center;
-  width: 4em;
+  min-width: 24px;
+  width: 64px;
   flex-grow: 0;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
