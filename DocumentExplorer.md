@@ -917,35 +917,101 @@ if (window.highlightWatchdog) clearInterval(window.highlightWatchdog);
 window.highlightWatchdog = setInterval(watchdog, 500);
   
 // ---------------- Filter Logic with Debounce ----------------
-    let cachedTiles = [];
-    function initializeTiles() { cachedTiles = Array.from(document.querySelectorAll(".grid-tile")); }
-      
-    window.filterTiles = function() {
-          const input = document.getElementById("tileSearch");
-          const query = input.value.toLowerCase().trim();
-          const clearBtn = document.getElementById("clearSearch");
-          clearBtn.style.display = query.length > 0 ? "flex" : "none";
-      
-          clearTimeout(window.filterDebounceTimer);
-          window.filterDebounceTimer = setTimeout(() => {
-              if (cachedTiles.length === 0) initializeTiles();
-              const terms = query.split(/\s+/);
-              const grid = document.getElementById("explorerGrid");
-              grid.style.display = "none"; 
-      
-              cachedTiles.forEach(tile => {
-                  if (tile.classList.contains("folderup-tile")) return;
-                  const title = (tile.getAttribute("title") || "").toLowerCase();
-                  const ext = (tile.getAttribute("data-ext") || "").toLowerCase();
-                  const isMatch = terms.every(term => title.includes(term) || ext.includes(term));
-                  tile.style.display = isMatch ? "flex" : "none";
-              });
-      
-              grid.style.display = "grid"; 
-              focusedIndex = -1;
-          }, 300); 
-    };
+let cachedTiles = [];
 
+function initializeTiles() { 
+    // Target all possible containers across Grid, List, and Tree
+    cachedTiles = Array.from(document.querySelectorAll(".grid-tile, .tree-folder, .tree-file, .hybrid-tile")); 
+}
+
+window.filterTiles = function() {
+    const input = document.getElementById("tileSearch");
+    if (!input) return;
+    
+    const query = input.value.toLowerCase().trim();
+    const clearBtn = document.getElementById("clearSearch");
+    if (clearBtn) clearBtn.style.display = query.length > 0 ? "flex" : "none";
+
+    clearTimeout(window.filterDebounceTimer);
+    window.filterDebounceTimer = setTimeout(() => {
+        initializeTiles();
+        const terms = query.split(/\s+/);
+        const panel = document.querySelector(".explorer-panel");
+        const isTreeView = panel.classList.contains("mode-tree");
+        const isListView = panel.classList.contains("mode-list");
+
+        // Step 1: Force hide everything 
+        // We use !important in JS to ensure we override any rogue List View CSS
+        cachedTiles.forEach(item => {
+            if (!item.classList.contains("folderup-tile")) {
+                item.style.setProperty('display', 'none', 'important');
+            } else {
+                item.style.display = ""; 
+            }
+        });
+
+        // If empty query, restore original visibility
+        if (query === "") {
+            cachedTiles.forEach(item => item.style.display = "");
+            if (isTreeView) restoreTreeState();
+            return;
+        }
+
+        // Step 2: Match and Reveal Logic
+        cachedTiles.forEach(item => {
+            let target = item;
+            
+            // Map the search target based on structure
+            if (item.classList.contains("tree-folder")) target = item.querySelector("summary");
+            if (item.classList.contains("tree-file")) target = item.querySelector(".grid-tile");
+
+            if (!target) return;
+
+            // Gather metadata for search
+            const title = (target.getAttribute("title") || "").toLowerCase();
+            let ext = (target.getAttribute("data-ext") || "").toLowerCase();
+            
+            // HYBRID FIX: Explicitly check for hybrid markers in all views
+            const isHybrid = target.classList.contains("hybrid-tile") || 
+                             item.classList.contains("hybrid-tile") ||
+                             target.querySelector(".hybrid-tile"); // Deep check for list rows
+
+            if (isHybrid) {
+                ext += " md folder hybrid";
+            }
+
+            const isMatch = terms.every(term => title.includes(term) || ext.includes(term));
+
+            if (isMatch) {
+                // Reveal the item
+                // Using "" lets the CSS decide if it should be flex (grid) or block (list)
+                item.style.display = ""; 
+                
+                // For Tree View: handle the nested parent reveal
+                if (isTreeView) {
+                    let parent = item.parentElement.closest('.tree-folder');
+                    while (parent) {
+                        parent.style.display = ""; 
+                        parent.open = true;
+                        parent = parent.parentElement.closest('.tree-folder');
+                    }
+                }
+            }
+        });
+
+        focusedIndex = -1;
+    }, 300); 
+};
+
+window.clearFilter = function(event) {
+    if (event) { event.preventDefault(); event.stopPropagation(); }
+    const input = document.getElementById("tileSearch");
+    if (input) {
+        input.value = "";
+        filterTiles();
+        input.focus();
+    }
+};
 // ---------------- Load Styles Once ----------------
     function ensureElement(id, tag, attributes, content) {
         if (document.getElementById(id)) return document.getElementById(id);
