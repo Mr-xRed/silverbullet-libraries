@@ -339,13 +339,10 @@ local function renderTree(files, prefix)
                     local baseName = part:gsub("%.md$", "")
                     
                     if part:match("%.md$") then
-                        -- If a folder with this name already exists, or we need to prepare it
                         current[baseName] = current[baseName] or {}
-                        current[baseName]._path = name -- Attach the file path to this node
+                        current[baseName]._path = name 
                     else
-                        -- It's a folder or a non-md file
                         current[part] = current[part] or {}
-                        -- Only set _path if it's not already set by a folder-matching MD
                         if not current[part]._path then
                             current[part]._path = name
                         end
@@ -353,7 +350,6 @@ local function renderTree(files, prefix)
                     break
                 else
                     local part = s_sub(rel, start, stop - 1)
-                    -- Ensure the folder node exists as we walk down the path
                     current[part] = current[part] or {}
                     current = current[part]
                     start = stop + 1
@@ -362,7 +358,7 @@ local function renderTree(files, prefix)
         end
     end
 
-    -- 2. DEFINE TRAVERSE (Inside renderTree to access scope)
+    -- 2. DEFINE TRAVERSE
     local function traverse(node, name, buffer, currentPath)
         currentPath = currentPath or ""
         local sorted = {}
@@ -371,9 +367,12 @@ local function renderTree(files, prefix)
         end
         table.sort(sorted)
         
-        local fullPath = (currentPath == "" and name or currentPath .. "/" .. name)
+        -- Path Logic: Ensure we don't get double slashes or leading slashes at root
+        local fullPath = name
+        if currentPath ~= "" then
+            fullPath = currentPath .. "/" .. name
+        end
         
-        -- Hybrid logic: Has children AND has a direct _path
         local isHybrid = (node._path ~= nil) and (#sorted > 0)
         local isFolder = (#sorted > 0) and (node._path == nil)
 
@@ -413,9 +412,12 @@ local function renderTree(files, prefix)
     end
     table.sort(rootKeys)
 
+    -- Clean the prefix (remove trailing slash) to use as the base for the recursion
+    local basePrefix = prefix:gsub("/$", "")
+
     local htmlParts = {"<div class='tree-view-container'>"}
     for _, k in ipairs(rootKeys) do 
-        traverse(tree[k], k, htmlParts, "") 
+        traverse(tree[k], k, htmlParts, basePrefix) 
     end
     table.insert(htmlParts, "</div>")
     
@@ -443,7 +445,9 @@ local function drawPanel()
   local filterEnabled = clientStore.get("explorer.disableFilter") ~= "true"
 
   local folderPrefix = clientStore.get(PATH_KEY) or ""
-  if viewMode == "tree" then folderPrefix = "" end
+  if viewMode == "tree" then 
+    folderPrefix = clientStore.get(PATH_KEY) or "" 
+  end
   if folderPrefix ~= "" and not folderPrefix:match("/$") then
     folderPrefix = folderPrefix .. "/"
   end
@@ -743,93 +747,89 @@ if (contextMenuEnabled) {
     document.body.appendChild(menu);
 
     window.oncontextmenu = function(e) {
-        const tile = e.target.closest('.grid-tile');
-        if (!tile || tile.innerText.includes("..")) return; 
-        
-        e.preventDefault();
-        
-        // --- NEW: Detect if we are right-clicking the MD badge specifically ---
-        const isBadgeClick = e.target.closest('.hybrid-md-badge');
-        let isFolder = tile.classList.contains('folder-tile') || tile.classList.contains('hybrid-tile');
-        
-        // If clicking the badge on a hybrid tile, treat it as a file
-        if (isBadgeClick) {
-            isFolder = false;
-        }
+    const tile = e.target.closest('.grid-tile, .tree-folder'); // Added .tree-folder selector
+    if (!tile || tile.innerText.includes("..")) return; 
+    
+    e.preventDefault();
+    
+    const panel = document.querySelector(".explorer-panel");
+    const isTreeView = panel.classList.contains("mode-tree");
+    const isBadgeClick = e.target.closest('.hybrid-md-badge');
+    
+    // Determine if it's a folder
+    let isFolder = tile.classList.contains('folder-tile') || 
+                   tile.classList.contains('tree-folder') || 
+                   tile.classList.contains('hybrid-tile');
+    
+    if (isBadgeClick) isFolder = false;
 
-        let targetPath = "";
+    // --- Path Extraction ---
+    let targetPath = "";
+    // Priority 1: data-path (used in Tree View summary)
+    const summary = tile.querySelector('summary') || (tile.tagName === 'SUMMARY' ? tile : null);
+    if (summary && summary.getAttribute('data-path')) {
+        targetPath = summary.getAttribute('data-path');
+    } else {
+        // Priority 2: Standard attributes
         const onClickAttr = tile.getAttribute('onclick') || "";
-        
-        // --- Logic to extract path ---
         const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-        const simpleArgMatch = onClickAttr.match(/syscall\s*\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]/);
-        const winOpenMatch = onClickAttr.match(/window\.open\s*\(\s*['"]([^'"]+)['"]/);
-        
         if (multiArgMatch) targetPath = multiArgMatch[1];
-        else if (simpleArgMatch) targetPath = simpleArgMatch[1];
-        else if (winOpenMatch) targetPath = winOpenMatch[1];
         else targetPath = tile.getAttribute('title') || "";
+    }
 
-        let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
-        
-        // --- Path Adjustment for Hybrid Files ---
-        // If it's a folder-type click, strip trailing slash
-        if (isFolder) {
-            internalPath = internalPath.replace(/\/$/, "");
-        } 
-        // If it's the badge click on a hybrid tile, ensure it targets the .md file
-        else if (isBadgeClick) {
-            internalPath = internalPath.replace(/\/$/, "");
-            if (!internalPath.endsWith(".md")) {
-                internalPath += ".md";
-            }
-        }
+    let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
+    if (isFolder) internalPath = internalPath.replace(/\/$/, "");
 
-        // --- Build Menu Content ---
-        let menuContent = `<div class="menu-item" id="ctx-rename">Rename</div>`;
-        // Only show "Delete" for files (or badge clicks)
-        if (!isFolder) {
-            menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
-        }
-        menu.innerHTML = menuContent;
+    // --- Build Menu Content ---
+    let menuContent = "";
+    
+    // ADDED: Open option for folders in Tree View
+    if (isFolder && isTreeView) {
+        menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold; color:var(--explorer-accent-color)">Open</div>`;
+    }
 
-        // --- Position Menu ---
-        menu.style.display = 'block';
-        const menuWidth = menu.offsetWidth;
-        const menuHeight = menu.offsetHeight;
-        const winWidth = window.innerWidth;
-        const winHeight = window.innerHeight;
+    menuContent += `<div class="menu-item" id="ctx-rename">Rename</div>`;
+    if (!isFolder || isBadgeClick) {
+        menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
+    }
+    menu.innerHTML = menuContent;
 
-        let posX = e.clientX;
-        if (posX + menuWidth > winWidth) posX = posX - menuWidth;
-        let posY = e.clientY;
-        if (posY + menuHeight > winHeight) posY = posY - menuHeight;
+    // --- Position Menu ---
+    menu.style.display = 'block';
+    let posX = e.clientX;
+    let posY = e.clientY;
+    if (posX + menu.offsetWidth > window.innerWidth) posX -= menu.offsetWidth;
+    if (posY + menu.offsetHeight > window.innerHeight) posY -= menu.offsetHeight;
+    menu.style.left = posX + 'px';
+    menu.style.top = posY + 'px';
 
-        menu.style.left = posX + 'px';
-        menu.style.top = posY + 'px';
-
-        // --- Action Handlers ---
-        document.getElementById('ctx-rename').onclick = async () => {
+    // --- Action Handlers ---
+    
+    // NEW: Handle the Open command
+    if (document.getElementById('ctx-open')) {
+        document.getElementById('ctx-open').onclick = async () => {
             menu.style.display = 'none';
-            let renamePath = internalPath;
-            
-            // If it's a markdown page but doesn't have the extension, add it for the rename command
-            const isPage = !isFolder && !internalPath.match(/\.[^.]+$/);
-            if (isPage) renamePath += ".md";
-            
-            await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
-            await syscall('lua.evalExpression', 'refreshExplorer()');
+            let openPath = internalPath;
+            if (openPath !== "" && !openPath.endsWith("/")) openPath += "/";
+            await syscall('editor.invokeCommand', 'DocumentExplorer: Open Folder', { path: openPath });
         };
+    }
 
-        const deleteBtn = document.getElementById('ctx-delete');  
-        if (deleteBtn) {  
-            deleteBtn.onclick = async () => {  
-                menu.style.display = 'none';  
-                await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
-                await syscall('lua.evalExpression', 'refreshExplorer()');
-            };  
-        }
+    document.getElementById('ctx-rename').onclick = async () => {
+        menu.style.display = 'none';
+        let renamePath = internalPath;
+        if (!isFolder && !internalPath.match(/\.[^.]+$/)) renamePath += ".md";
+        await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
+        await syscall('lua.evalExpression', 'refreshExplorer()');
     };
+
+    if (document.getElementById('ctx-delete')) {
+        document.getElementById('ctx-delete').onclick = async () => {
+            menu.style.display = 'none';
+            await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+        };
+    }
+};
 
     window.onclick = () => { menu.style.display = 'none'; };
 }
