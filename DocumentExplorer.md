@@ -300,22 +300,20 @@ function triggerHighlightUpdate()
     clientStore.set("explorer.lastUpdate", os.time())
 end
 
-event.listen {
-    name = "editor:pageLoaded",
-    run = triggerHighlightUpdate
-}
+event.listen { name = "editor:pageLoaded", run = triggerHighlightUpdate}
+event.listen { name = "editor:documentLoaded", run = triggerHighlightUpdate }
 
 function refreshExplorerButton()
     cachedFiles = nil
     drawPanel()
-    triggerHighlightUpdate() -- Trigger the JS logic
+    triggerHighlightUpdate()
     editor.flashNotification("Document Explorer Refreshed.")
 end
 
 function refreshExplorer()
     cachedFiles = space.listFiles()
     drawPanel()
-    editor.sendPanelMessage(PANEL_ID, { type = "updateHighlight" })
+--    editor.sendPanelMessage(PANEL_ID, { type = "updateHighlight" })
 end
 
 -- ---------- Tree Logic ----------
@@ -863,7 +861,7 @@ async function refreshActiveHighlight() {
 
   lastKnownPage = activePage; // Update the tracker
   console.log("Page changed to:", activePage); // Debugging
-
+  
   const normActive = activePage.toLowerCase().replace(/^\//, "").replace(/\.md$/, "");
   const tiles = document.querySelectorAll('.grid-tile');
   
@@ -892,29 +890,31 @@ async function refreshActiveHighlight() {
 
 let lastUpdateToken = "";
 
-async function checkReloadTrigger() {
-    // We check the clientStore for the timestamp Lua just set
-    const currentUpdateToken = await syscall("clientStore.get", "explorer.lastUpdate");
+async function watchdog() {
+    // This syscall is extremely fast
+    const currentToken = await syscall("clientStore.get", "explorer.lastUpdate");
     
-    // Only run the heavy highlighting logic if the token has actually changed
-    if (currentUpdateToken && currentUpdateToken !== lastUpdateToken) {
-        lastUpdateToken = currentUpdateToken;
-        await refreshActiveHighlight();
-    }
+    // GATEKEEPER: If the token hasn't changed, do nothing.
+    if (!currentToken || currentToken === lastUpdateToken) return;
+    
+    lastUpdateToken = currentToken;
+    console.log("Explorer update triggered by Lua event...");
+    
+    // Now perform the heavier work of identifying and highlighting
+    await refreshActiveHighlight();
 }
 
 // ---------------- Execution ----------------
-
 setTimeout(() => {
     restoreTreeState(); 
     initTreePersistence();
     refreshActiveHighlight(); 
 }, 50);
 
-// We still check frequently, but 'checkReloadTrigger' is nearly 
-// instant and does 0 DOM work unless Lua tells it to via the token.
-if (window.highlightWatcher) clearInterval(window.highlightWatcher);
-window.highlightWatcher = setInterval(checkReloadTrigger, 500);
+// Clear any existing watchdog to prevent memory leaks on panel redraw
+if (window.highlightWatchdog) clearInterval(window.highlightWatchdog);
+// 500ms is responsive enough for humans but very light on the CPU
+window.highlightWatchdog = setInterval(watchdog, 500);
   
 // ---------------- Filter Logic with Debounce ----------------
     let cachedTiles = [];
