@@ -814,7 +814,8 @@ if (contextMenuEnabled) {
         else targetPath = tile.getAttribute('title') || "";
     }
 
-    let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
+    // FIXED: Handle both .fs/ and /.fs/ prefixes
+    let internalPath = targetPath.replace(/^[\/]?\.fs\//, "").replace(/^\//, "");
     if (isFolder) internalPath = internalPath.replace(/\/$/, "");
 
     // --- Build Menu Content ---
