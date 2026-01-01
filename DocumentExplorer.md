@@ -657,53 +657,95 @@ local script = [[
 let focusedIndex = -1;
 
 window.addEventListener('keydown', function(e) {
-    if (!document.getElementById("explorerGrid") || document.activeElement.id === "tileSearch") {
-        if (e.key === "Escape" && document.activeElement.id === "tileSearch") {
-            document.activeElement.blur();
+    const menu = document.getElementById('explorer-context-menu');
+    
+    // 1. ESCAPE: High Priority Close
+    if (e.key === "Escape") {
+        if (menu && menu.style.display === 'block') {
+            menu.style.display = 'none';
+            e.preventDefault();
+            return;
         }
-        return; 
+        if (document.activeElement.id === "tileSearch") {
+            document.activeElement.blur();
+            e.preventDefault();
+            return;
+        }
     }
 
-    // UPDATED: Only navigate through items that are VISIBLE (not hidden by CSS)
+    // 2. SEARCH FOCUS: "/" key
+    if (e.key === "/" && document.activeElement.id !== "tileSearch") {
+        e.preventDefault();
+        const searchInput = document.getElementById("tileSearch");
+        if (searchInput) {
+            searchInput.focus();
+            focusedIndex = -1; // Reset focus when starting a search
+        }
+        return;
+    }
+
+    // 3. NAVIGATION GATEKEEPER
+    // Don't run nav logic if search is focused (except for ArrowDown to exit search)
+    if (!document.getElementById("explorerGrid")) return;
+    if (document.activeElement.id === "tileSearch" && e.key !== "ArrowDown") return;
+
+    // 4. GET VISIBLE TILES (Cached for this specific keypress)
     const tiles = Array.from(document.querySelectorAll(".grid-tile")).filter(t => {
         return window.getComputedStyle(t).display !== 'none';
     });
 
     if (tiles.length === 0) return;
 
+    // 5. GRID CALCULATIONS
     const grid = document.getElementById("explorerGrid");
     const firstTile = grid.querySelector(".grid-tile");
     let cols = 1;
-    
     if (document.querySelector(".mode-grid") && firstTile) {
         const tileWidth = firstTile.offsetWidth;
         const gridWidth = grid.clientWidth;
-        cols = Math.floor((gridWidth + 10) / (tileWidth + 10)); 
-        if (cols < 1) cols = 1;
+        cols = Math.floor((gridWidth + 10) / (tileWidth + 10)) || 1;
     }
 
-    if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Enter", "Backspace"].includes(e.key)) {
+    // 6. KEY HANDLING
+    const navKeys = ["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Enter", "Backspace"];
+    if (navKeys.includes(e.key)) {
         e.preventDefault();
 
-        if (e.key === "ArrowRight") focusedIndex = Math.min(focusedIndex + 1, tiles.length - 1);
-        if (e.key === "ArrowLeft") focusedIndex = Math.max(focusedIndex - 1, 0);
-        if (e.key === "ArrowUp") focusedIndex = Math.max(focusedIndex - cols, 0);
-        if (e.key === "ArrowDown") focusedIndex = Math.min(focusedIndex + cols, tiles.length - 1);
-        
-        if (focusedIndex === -1) focusedIndex = 0;
+        // ArrowDown from search bar jumps to first tile
+        if (document.activeElement.id === "tileSearch" && e.key === "ArrowDown") {
+            document.activeElement.blur();
+            focusedIndex = 0;
+        } else {
+            if (e.key === "ArrowRight") focusedIndex = Math.min(focusedIndex + 1, tiles.length - 1);
+            else if (e.key === "ArrowLeft") focusedIndex = Math.max(focusedIndex - 1, 0);
+            else if (e.key === "ArrowUp") focusedIndex = Math.max(focusedIndex - cols, 0);
+            else if (e.key === "ArrowDown") focusedIndex = Math.min(focusedIndex + cols, tiles.length - 1);
+            
+            if (focusedIndex === -1) focusedIndex = 0;
+        }
 
-        tiles.forEach(t => t.classList.remove("is-focused"));
         const target = tiles[focusedIndex];
-        if (target) {
-            target.classList.add("is-focused");
-            target.scrollIntoView({ block: "nearest" });
+        if (!target) return;
 
-            if (e.key === "Enter") {
-                target.click();
+        // Visual Update
+        document.querySelectorAll(".is-focused").forEach(el => el.classList.remove("is-focused"));
+        target.classList.add("is-focused");
+        target.scrollIntoView({ block: "nearest", behavior: "auto" }); // "auto" is faster than "smooth"
+
+        // SPEEDY ENTER LOGIC
+        if (e.key === "Enter") {
+            // Trigger the click immediately
+            target.click();
+            
+            // Clean up state in the background so it doesn't block the UI thread
+            setTimeout(() => {
                 focusedIndex = -1;
-            }
+                target.classList.remove("is-focused");
+            }, 0);
+            return;
         }
         
+        // BACKSPACE: Go Up
         if (e.key === "Backspace") {
             const upBtn = document.querySelector(".folderup-tile");
             if (upBtn) {
@@ -711,11 +753,6 @@ window.addEventListener('keydown', function(e) {
                 upBtn.click();
             }
         }
-    }
-    
-    if (e.key === "/" && document.activeElement.id !== "tileSearch") {
-        e.preventDefault();
-        document.getElementById("tileSearch").focus();
     }
 });
   
@@ -943,7 +980,7 @@ setTimeout(() => {
 // Clear any existing watchdog to prevent memory leaks on panel redraw
 if (window.highlightWatchdog) clearInterval(window.highlightWatchdog);
 // 500ms is responsive enough for humans but very light on the CPU
-window.highlightWatchdog = setInterval(watchdog, 500);
+window.highlightWatchdog = setInterval(watchdog, 1000);
   
 // ---------------- Filter Logic with Debounce ----------------
 let cachedTiles = [];
