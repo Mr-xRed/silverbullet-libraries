@@ -5,6 +5,7 @@ files:
 - PanelDragResize.js
 - docex_styles.css
 - lucide-icons.svg
+- hybrid-cursor.svg
 pageDecoration.prefix: "🗂️ "
 ---
 # 🗂️ Document Explorer
@@ -731,79 +732,107 @@ window.handleDragStart = function(event, encodedData) {
 };
         
 // ---------------- Context Menu ----------------
-    const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
-    
-    if (contextMenuEnabled) {
-        const menu = document.createElement('div');
-        menu.id = 'explorer-context-menu';
-        menu.style.display = 'none';
-        menu.style.position = 'fixed';
-        menu.style.zIndex = '1000';
-        document.body.appendChild(menu);
+const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
 
-        window.oncontextmenu = function(e) {
-            const tile = e.target.closest('.grid-tile');
-            if (!tile || tile.innerText.includes("..")) return; 
-            
-            e.preventDefault();
-            
-            let targetPath = "";
-            const onClickAttr = tile.getAttribute('onclick') || "";
-            const isFolder = tile.classList.contains('folder-tile');
-            
-            const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-            const simpleArgMatch = onClickAttr.match(/syscall\s*\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]/);
-            const winOpenMatch = onClickAttr.match(/window\.open\s*\(\s*['"]([^'"]+)['"]/);
-            
-            if (multiArgMatch) targetPath = multiArgMatch[1];
-            else if (simpleArgMatch) targetPath = simpleArgMatch[1];
-            else if (winOpenMatch) targetPath = winOpenMatch[1];
-            else targetPath = tile.getAttribute('title') || "";
+if (contextMenuEnabled) {
+    const menu = document.createElement('div');
+    menu.id = 'explorer-context-menu';
+    menu.style.display = 'none';
+    menu.style.position = 'fixed';
+    menu.style.zIndex = '1000';
+    document.body.appendChild(menu);
 
-            let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
-            if (isFolder) internalPath = internalPath.replace(/\/$/, "");
+    window.oncontextmenu = function(e) {
+        const tile = e.target.closest('.grid-tile');
+        if (!tile || tile.innerText.includes("..")) return; 
+        
+        e.preventDefault();
+        
+        // --- NEW: Detect if we are right-clicking the MD badge specifically ---
+        const isBadgeClick = e.target.closest('.hybrid-md-badge');
+        let isFolder = tile.classList.contains('folder-tile') || tile.classList.contains('hybrid-tile');
+        
+        // If clicking the badge on a hybrid tile, treat it as a file
+        if (isBadgeClick) {
+            isFolder = false;
+        }
 
-            let menuContent = `<div class="menu-item" id="ctx-rename">Rename</div>`;
-            if (!isFolder) {
-                menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
+        let targetPath = "";
+        const onClickAttr = tile.getAttribute('onclick') || "";
+        
+        // --- Logic to extract path ---
+        const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
+        const simpleArgMatch = onClickAttr.match(/syscall\s*\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]/);
+        const winOpenMatch = onClickAttr.match(/window\.open\s*\(\s*['"]([^'"]+)['"]/);
+        
+        if (multiArgMatch) targetPath = multiArgMatch[1];
+        else if (simpleArgMatch) targetPath = simpleArgMatch[1];
+        else if (winOpenMatch) targetPath = winOpenMatch[1];
+        else targetPath = tile.getAttribute('title') || "";
+
+        let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
+        
+        // --- Path Adjustment for Hybrid Files ---
+        // If it's a folder-type click, strip trailing slash
+        if (isFolder) {
+            internalPath = internalPath.replace(/\/$/, "");
+        } 
+        // If it's the badge click on a hybrid tile, ensure it targets the .md file
+        else if (isBadgeClick) {
+            internalPath = internalPath.replace(/\/$/, "");
+            if (!internalPath.endsWith(".md")) {
+                internalPath += ".md";
             }
-            menu.innerHTML = menuContent;
+        }
 
-            menu.style.display = 'block';
-            const menuWidth = menu.offsetWidth;
-            const menuHeight = menu.offsetHeight;
-            const winWidth = window.innerWidth;
-            const winHeight = window.innerHeight;
+        // --- Build Menu Content ---
+        let menuContent = `<div class="menu-item" id="ctx-rename">Rename</div>`;
+        // Only show "Delete" for files (or badge clicks)
+        if (!isFolder) {
+            menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
+        }
+        menu.innerHTML = menuContent;
 
-            let posX = e.clientX;
-            if (posX + menuWidth > winWidth) posX = posX - menuWidth;
-            let posY = e.clientY;
-            if (posY + menuHeight > winHeight) posY = posY - menuHeight;
+        // --- Position Menu ---
+        menu.style.display = 'block';
+        const menuWidth = menu.offsetWidth;
+        const menuHeight = menu.offsetHeight;
+        const winWidth = window.innerWidth;
+        const winHeight = window.innerHeight;
 
-            menu.style.left = posX + 'px';
-            menu.style.top = posY + 'px';
+        let posX = e.clientX;
+        if (posX + menuWidth > winWidth) posX = posX - menuWidth;
+        let posY = e.clientY;
+        if (posY + menuHeight > winHeight) posY = posY - menuHeight;
 
-            document.getElementById('ctx-rename').onclick = async () => {
-                menu.style.display = 'none';
-                const currentDir = document.getElementById("explorerGrid").getAttribute("data-current-path");
-                let renamePath = internalPath;
-                const isPage = !isFolder && !internalPath.match(/\.[^.]+$/);
-                if (isPage) renamePath += ".md";
-                await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
-                await syscall('lua.evalExpression', 'refreshExplorer()');
-            };
-            const deleteBtn = document.getElementById('ctx-delete');  
-            if (deleteBtn) {  
-                deleteBtn.onclick = async () => {  
-                    menu.style.display = 'none';  
-                    await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
-                    await syscall('lua.evalExpression', 'refreshExplorer()');
-                };  
-            }
+        menu.style.left = posX + 'px';
+        menu.style.top = posY + 'px';
+
+        // --- Action Handlers ---
+        document.getElementById('ctx-rename').onclick = async () => {
+            menu.style.display = 'none';
+            let renamePath = internalPath;
+            
+            // If it's a markdown page but doesn't have the extension, add it for the rename command
+            const isPage = !isFolder && !internalPath.match(/\.[^.]+$/);
+            if (isPage) renamePath += ".md";
+            
+            await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
+            await syscall('lua.evalExpression', 'refreshExplorer()');
         };
 
-        window.onclick = () => { menu.style.display = 'none'; };
-    }
+        const deleteBtn = document.getElementById('ctx-delete');  
+        if (deleteBtn) {  
+            deleteBtn.onclick = async () => {  
+                menu.style.display = 'none';  
+                await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+                await syscall('lua.evalExpression', 'refreshExplorer()');
+            };  
+        }
+    };
+
+    window.onclick = () => { menu.style.display = 'none'; };
+}
 // ---------------- Tree Expansion Logic ----------------
 const ICON_COLLAPSE = `]] .. ICONS.folderCollapse .. [[`;   
 const ICON_EXPAND   = `]] .. ICONS.folderExpand .. [[`; 

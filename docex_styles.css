@@ -593,48 +593,55 @@ html[data-theme="light"] {
 .unknown-tile::after { content: attr(data-ext); background: oklch(from var(--file-unk-color) l c h); }
 }
 
-/*----- HYBRID TILE -----*/
 
+/* --- 1. BASE HYBRID LAYOUT --- */
 .hybrid-tile {
   position: relative;
+  display: flex !important;
+  align-items: center;
+  overflow: visible;
 }
 
 /* Zone that acts like a folder click */
 .hybrid-folder-zone {
   display: flex;
-  flex: 1;
   align-items: center;
-  width: 100%;
+  gap: calc((var(--list-tile-height) / 24px) * 8px);
+  flex: 1;
+  min-width: 0; /* Allows text truncation */
   height: 100%;
+  z-index: 1;
 }
 
-.mode-grid .hybrid-folder-zone {
-  flex-direction: column;
-  justify-content: center;
-}
-
-/* The MD Badge Appearance */
+/* --- 2. THE MD BADGE --- */
 .hybrid-md-badge {
   background: oklch(from var(--file-md-color) 0.5 c h);
   color: white;
   font-weight: bold;
   border-radius: 4px;
-  cursor: pointer;
-  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  z-index: 20;
   transition: transform 0.1s ease;
+  cursor: url("/.fs/Library/Mr-xRed/hybrid-cursor.svg") 2 2, pointer !important;
 }
 
+/* Badge Hover/Drag State */
 .hybrid-md-badge:hover {
-  filter: brightness(1.2);
-  transform: scale(1.5);
+  filter: brightness(1.1);
+  transform: scale(1.4);
+  z-index: 30;
+  cursor: url("/.fs/Library/Mr-xRed/hybrid-cursor.svg") 2 2, pointer !important;
 }
 
-/* --- Mode Specific Badge Positioning --- */
+/* --- 3. GRID MODE --- */
+.mode-grid .hybrid-folder-zone {
+  flex-direction: column;
+  justify-content: center;
+}
 
-/* 1. Grid View Badge */
 .mode-grid .hybrid-md-badge {
   position: absolute;
   top: 5px;
@@ -643,43 +650,31 @@ html[data-theme="light"] {
   padding: 2px 5px;
 }
 
-/* 2. List & Tree View Badge */
+/* --- 4. LIST & TREE MODES --- */
 .mode-list .hybrid-tile,
 .mode-tree .hybrid-tile {
-  display: flex !important;
   flex-direction: row !important;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
 }
 
 .mode-list .hybrid-md-badge,
 .mode-tree .hybrid-md-badge {
-    position: relative;
-    width: max-content; 
-    height: fit-content;
-    align-self: center; 
-    margin-left: auto; 
-    margin-right: 2px;   
-    top: auto;
-    right: auto;
-    display: inline-flex; 
-    align-items: center;
-    justify-content: center;
-    padding: 2px 6px;    
-    white-space: nowrap; 
-    line-height: 1;      
-    font-size: clamp(8px, calc((var(--list-tile-height) / 24px) * 12px), 20px);
+  position: relative;
+  margin-left: auto; 
+  margin-right: 2px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  font-size: clamp(8px, calc((var(--list-tile-height) / 24px) * 12px), 20px);
 }
 
-/* Fix Tree View summary layout for hybrid */
+/* Tree Specific Resets */
 .mode-tree summary.hybrid-tile {
   display: flex !important;
+  list-style: none;
 }
-
-.mode-tree .hybrid-folder-zone {
-  gap: 8px;
+.mode-tree summary.hybrid-tile::-webkit-details-marker { 
+  display: none; 
 }
-
 /* 
 ==========================================================================
    9. OVERLAYS (Context Menu)
@@ -790,7 +785,7 @@ html[data-theme="dark"]{
   --explorer-accent-color: oklch(0.75 0.25 230);
   --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
   --folder-color: oklch(0.85 0.1 105);
-  --file-md-color:  oklch(0.85 0.1 260);
+  --file-md-color:  hsl(213, 100%, 83%);
   --file-pdf-color: oklch(0.85 0.1 30); 
   --file-img-color: oklch(0.85 0.1 180); 
   --file-ex-color:  oklch(0.85 0.1 300); 
