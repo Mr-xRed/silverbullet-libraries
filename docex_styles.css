@@ -571,6 +571,94 @@ html[data-theme="light"] {
 .drawio-tile::after { content: "DIO"; background: oklch(from var(--file-dio-color) l c h); }
 .unknown-tile::after { content: attr(data-ext); background: oklch(from var(--file-unk-color) l c h); }
 }
+
+/*----- HYBRID TILE -----*/
+
+.hybrid-tile {
+  position: relative;
+}
+
+/* Zone that acts like a folder click */
+.hybrid-folder-zone {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.mode-grid .hybrid-folder-zone {
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* The MD Badge Appearance */
+.hybrid-md-badge {
+  background: oklch(from var(--file-md-color) 0.5 c h);
+  color: white;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease;
+}
+
+.hybrid-md-badge:hover {
+  filter: brightness(1.2);
+  transform: scale(1.5);
+}
+
+/* --- Mode Specific Badge Positioning --- */
+
+/* 1. Grid View Badge */
+.mode-grid .hybrid-md-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 10px;
+  padding: 2px 5px;
+}
+
+/* 2. List & Tree View Badge */
+.mode-list .hybrid-tile,
+.mode-tree .hybrid-tile {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mode-list .hybrid-md-badge,
+.mode-tree .hybrid-md-badge {
+    position: relative;
+    width: max-content; 
+    height: fit-content;
+    align-self: center; 
+    margin-left: auto; 
+    margin-right: 2px;   
+    top: auto;
+    right: auto;
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+    padding: 2px 6px;    
+    white-space: nowrap; 
+    line-height: 1;      
+    font-size: clamp(8px, calc((var(--list-tile-height) / 24px) * 12px), 20px);
+}
+
+/* Fix Tree View summary layout for hybrid */
+.mode-tree summary.hybrid-tile {
+  display: flex !important;
+}
+
+.mode-tree .hybrid-folder-zone {
+  gap: 8px;
+}
+
 /* 
 ==========================================================================
    9. OVERLAYS (Context Menu)

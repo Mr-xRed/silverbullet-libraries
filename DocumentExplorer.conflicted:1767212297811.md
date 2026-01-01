@@ -204,7 +204,7 @@ local function isFiltered(path)
   for _, pattern in ipairs(negativeFilter) do
     local lowPattern = pattern:lower()
     
-    -- Case 1: *word* (Internal Wildcard - matches if word exists anywhere)
+    -- Case 1: *word* (Internal Wildcard)
     if lowPattern:match("^%*.*%*$") then
       local searchStr = lowPattern:sub(2, -2)
       if lowPath:find(searchStr, 1, true) then return true end
@@ -240,7 +240,6 @@ local function fileTile(icon, name, target, ext, viewMode)
       category = "img"
   end
 
-  -- ---------- CSS classes and Drag&Drop data ----------
   if category == "md" then 
       tileClass = tileClass .. " md-tile"
       dragData = "[[" .. rawPath .. "]]"
@@ -262,14 +261,12 @@ local function fileTile(icon, name, target, ext, viewMode)
   
   local encodedDrag = encoding.base64Encode(dragData)
 
-  -- ---------- Navigation Logic ----------
   if category ~= "md" and category ~= "pdf" and category ~= "drawio" and category ~= "excalidraw" and category ~= "img" then
       onClickAction = "window.open('" .. target .. "', '_blank')"
   else
       onClickAction = "syscall('editor.navigate','" .. target .. "',false,false)"
   end
 
-  -- ---------- Icon & Thumbnail Logic ----------
   local finalIcon = icon
   if viewMode ~= "grid" then
       if category == "md" then finalIcon = ICONS.fileMD
@@ -291,9 +288,9 @@ local function fileTile(icon, name, target, ext, viewMode)
     "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
 
--- ---------- Refresh Button ----------
+-- ---------- Refresh Logic ----------
 function refreshExplorer()
-    cachedFiles = nil
+    cachedFiles = space.listFiles()
     drawPanel()
 end
 
@@ -303,14 +300,13 @@ function refreshExplorerButton()
     editor.flashNotification("Document Explorer Refreshed.")
 end
 
--- ---------- Tree Logic ----------
+-- ---------- Tree Logic (Optimized) ----------
 local function renderTree(files, prefix)
     local tree = {}
     local prefixLen = #prefix
     local s_find = string.find
     local s_sub = string.sub
 
-    -- 1. Build structure (Logic remains same, very fast)
     for _, f in ipairs(files) do
         local name = f.name
         if prefix == "" or s_sub(name, 1, prefixLen) == prefix then
@@ -336,7 +332,6 @@ local function renderTree(files, prefix)
         end
     end
 
-    -- 2. Recursive Traversal using Table Buffer
     local function traverse(node, name, buffer)
         local sorted = {}
         for k in pairs(node) do 
@@ -354,7 +349,7 @@ local function renderTree(files, prefix)
             table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></summary>")
             table.insert(buffer, "<div class='tree-content'>")
             for _, k in ipairs(sorted) do 
-                traverse(node[k], k, buffer) -- Pass the same buffer down
+                traverse(node[k], k, buffer)
             end
             table.insert(buffer, "</div></details>")
         end
@@ -374,8 +369,6 @@ local function renderTree(files, prefix)
     return table.concat(htmlParts)
 end
 
--- ---------- deleteFile function ----------
-
 function deleteFileWithConfirm(path)  
   if not path then return end  
   if editor.confirm("Are you sure you want to delete " .. path .. "?") then  
@@ -384,12 +377,7 @@ function deleteFileWithConfirm(path)
         fileToDelete = path .. ".md"  
     end        
     space.deleteFile(fileToDelete)  
-    
-    -- REFRESH CACHE AFTER DELETION
-    --cachedFiles = space.listFiles() 
-    
-    --local currentDir = clientStore.get("gridExplorer.cwd") or ""  
-    --editor.invokeCommand("DocumentExplorer: Open Folder", {path = currentDir}) 
+    refreshExplorer() -- Correctly invalidates and re-renders
   end  
 end
 
@@ -399,9 +387,7 @@ local function drawPanel()
   local viewMode = clientStore.get(VIEW_MODE_KEY) or config.get("explorer.viewMode") or "grid"
   
   local folderPrefix = clientStore.get(PATH_KEY) or ""
-  if viewMode == "tree" then
-      folderPrefix = "" -- Force root directory for tree view
-  end
+  if viewMode == "tree" then folderPrefix = "" end
   if folderPrefix ~= "" and not folderPrefix:match("/$") then
     folderPrefix = folderPrefix .. "/"
   end
@@ -410,6 +396,9 @@ local function drawPanel()
       cachedFiles = space.listFiles()
   end
   
+  local h = {} -- Main HTML Buffer
+  
+  -- Breadcrumbs
   local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
   local pathAccum = ""
   for part in folderPrefix:gmatch("([^/]+)/") do
@@ -418,8 +407,9 @@ local function drawPanel()
   end
   local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
 
-  local html = [[
-      <div class="explorer-panel mode-]] .. viewMode .. [[">
+  table.insert(h, [[<div class="explorer-panel mode-]])
+  table.insert(h, viewMode)
+  table.insert(h, [[">
         <div class="explorer-header">
           <div class="explorer-toolbar">          
             <div class="input-wrapper">
@@ -427,64 +417,80 @@ local function drawPanel()
               <div id="clearSearch" class="clear-btn" onmousedown="clearFilter(event)">✕</div>
             </div>
             <div class="view-switcher">
-              <div title="Grid View" class="]]..(viewMode=="grid" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'grid'})">]]..ICONS.grid..[[</div>
-              <div title="List View" class="]]..(viewMode=="list" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">]]..ICONS.list..[[</div>
-              <div title="Tree View" class="]]..(viewMode=="tree" and "active" or "")..[[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">]]..ICONS.tree..[[</div>
+              <div title="Grid View" class="]])
+  table.insert(h, (viewMode=="grid" and "active" or ""))
+  table.insert(h, [[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'grid'})">]])
+  table.insert(h, ICONS.grid)
+  table.insert(h, [[</div>
+              <div title="List View" class="]])
+  table.insert(h, (viewMode=="list" and "active" or ""))
+  table.insert(h, [[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'list'})">]])
+  table.insert(h, ICONS.list)
+  table.insert(h, [[</div>
+              <div title="Tree View" class="]])
+  table.insert(h, (viewMode=="tree" and "active" or ""))
+  table.insert(h, [[" onclick="syscall('editor.invokeCommand','DocumentExplorer: Change View Mode',{mode:'tree'})">]])
+  table.insert(h, ICONS.tree)
+  table.insert(h, [[</div>
   </div>
          <div class="explorer-button-group">
               <div title="Expand/Collapse All" 
                    class="explorer-action-btn" id="tree-toggle-btn"
-                   style="display: ]] .. (viewMode == "tree" and "flex" or "none") .. [[" 
+                   style="display: ]])
+  table.insert(h, (viewMode == "tree" and "flex" or "none"))
+  table.insert(h, [[" 
                    onclick="toggleTreeExpansion()">
-                <span id="tree-toggle-icon">]] .. ICONS.folderExpand .. [[</span>
+                <span id="tree-toggle-icon">]])
+  table.insert(h, ICONS.folderExpand)
+  table.insert(h, [[</span>
               </div>
   
               <div title="Refresh View" 
                    class="explorer-action-btn" 
                    id="refresh-btn" 
-                   onclick="syscall('lua.evalExpression', 'refreshExplorerButton()')">]]..ICONS.refresh..[[
-              </div>
+                   onclick="syscall('lua.evalExpression', 'refreshExplorerButton()')">]])
+  table.insert(h, ICONS.refresh)
+  table.insert(h, [[</div>
   
               <div title="Toggle Negative Filter" 
                     class="explorer-action-btn" id="filter-btn" 
-                    style="background: ]] .. (clientStore.get("explorer.disableFilter") == "true" and "var(--explorer-accent-color)" or "var(--explorer-tile-bg)") .. [[" 
-                    onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">
-              ]] .. (clientStore.get("explorer.disableFilter") == "true" and ICONS.filterOn or ICONS.filterOff) .. [[
-               </div>
+                    style="background: ]])
+  table.insert(h, (clientStore.get("explorer.disableFilter") == "true" and "var(--explorer-accent-color)" or "var(--explorer-tile-bg)"))
+  table.insert(h, [[" 
+                    onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">]])
+  table.insert(h, (clientStore.get("explorer.disableFilter") == "true" and ICONS.filterOn or ICONS.filterOff))
+  table.insert(h, [[</div>
           </div>  
               <div class="action-buttons" style="display: flex; gap: 4px;">
-              <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">]]..ICONS.window..[[</div>
-              <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">]]..ICONS.close..[[</div>
+              <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">]])
+  table.insert(h, ICONS.window)
+  table.insert(h, [[</div>
+              <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">]])
+  table.insert(h, ICONS.close)
+  table.insert(h, [[</div>
             </div>
-          </div>
-          ]] .. breadcrumbHtml .. [[
-        </div>
-        <div class="document-explorer" id="explorerGrid" data-current-path="]] .. folderPrefix .. [[">
-  ]]
+          </div>]])
+  table.insert(h, breadcrumbHtml)
+  table.insert(h, [[</div><div class="document-explorer" id="explorerGrid" data-current-path="]])
+  table.insert(h, folderPrefix)
+  table.insert(h, [[">]])
 
   if viewMode == "tree" then
-      html = html .. renderTree(cachedFiles, folderPrefix)
+      table.insert(h, renderTree(cachedFiles, folderPrefix))
   else
-      local folders, mds, pdfs, drawio, excalidraw ,images, unknowns = {}, {}, {}, {}, {}, {}, {}
+      local folders, mds, pdfs, drawio, excalidraw, images, unknowns = {}, {}, {}, {}, {}, {}, {}
       local seen = {}
       local prefixLen = #folderPrefix
 
       for _, file in ipairs(cachedFiles) do
         local name = file.name
-        
-        -- 1. FAST PREFIX CHECK: Does it start with our current folder?
         if folderPrefix == "" or name:sub(1, prefixLen) == folderPrefix then
           local rest = name:sub(prefixLen + 1)
-          
           if rest ~= "" then
             local slash = rest:find("/")
-            
             if slash then
-              -- IT IS A SUBFOLDER
-              -- Only process the top-level folder name
               local sub = rest:sub(1, slash - 1)
               if not seen[sub] then
-                -- Check filter ONLY for the folder name
                 if not isFiltered(folderPrefix .. sub) then
                   seen[sub] = true
                   table.insert(folders, sub)
@@ -492,16 +498,15 @@ local function drawPanel()
               end
             else
               if not isFiltered(name) then
-                if rest:match("%.md$") then table.insert(mds, rest)
-                elseif rest:match("%.pdf$") then table.insert(pdfs, rest)
-                elseif rest:match("%.drawio$") then table.insert(drawio, rest)
-                elseif rest:match("%.excalidraw$") then table.insert(excalidraw, rest)
-                elseif rest:match("%.png$") 
-                    or rest:match("%.jpg$")
-                    or rest:match("%.gif$")
-                    or rest:match("%.jpeg$")
-                    or rest:match("%.svg$")
-                    or rest:match("%.webp$") then table.insert(images, rest)
+                local ext = rest:match("%.([^.]+)$")
+                if ext then ext = ext:lower() end 
+      
+                if ext == "md" then table.insert(mds, rest)
+                elseif ext == "pdf" then table.insert(pdfs, rest)
+                elseif ext == "drawio" then table.insert(drawio, rest)
+                elseif ext == "excalidraw" then table.insert(excalidraw, rest)
+                elseif ext == "png" or ext == "jpg" or ext == "jpeg" or 
+                       ext == "gif" or ext == "svg" or ext == "webp" then table.insert(images, rest)
                 else table.insert(unknowns, rest)
                 end
               end
@@ -510,280 +515,218 @@ local function drawPanel()
         end
       end
 
-      -- Sort only the tiny subset of files we actually found
       table.sort(folders); table.sort(mds); table.sort(pdfs);
       table.sort(drawio); table.sort(excalidraw); table.sort(images); table.sort(unknowns)
 
       if folderPrefix ~= "" then
         local parent = folderPrefix:gsub("[^/]+/$", "")
-        html = html .. "<div class='grid-tile folderup-tile' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..parent.."'} )\">" ..
-          "<div class='icon'>"..ICONS.folderUp.."</div><div class='grid-title'>..</div></div>"
+        table.insert(h, "<div class='grid-tile folderup-tile' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..parent.."'} )\">")
+        table.insert(h, "<div class='icon'>"..ICONS.folderUp.."</div><div class='grid-title'>..</div></div>")
       end
 
       for _, f in ipairs(folders) do
         local p = folderPrefix .. f .. "/"
-        html = html .. "<div class='grid-tile folder-tile' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..p.."'} )\">" ..
-          "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>"
+        table.insert(h, "<div class='grid-tile folder-tile' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..p.."'} )\">")
+        table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
       end
 
-      for _, f in ipairs(mds) do html = html .. fileTile(ICONS.fileMD, f:gsub("%.md$",""), "/"..folderPrefix..f:gsub("%.md$",""), "md", viewMode) end
-      for _, f in ipairs(pdfs) do html = html .. fileTile(ICONS.filePDF, f:gsub("%.pdf$",""), "/"..folderPrefix..f, "pdf", viewMode) end
-      for _, f in ipairs(drawio) do html = html .. fileTile(ICONS.fileDIO, f:gsub("%.drawio$",""), "/"..folderPrefix..f, "drawio", viewMode) end
-      for _, f in ipairs(excalidraw) do html = html .. fileTile(ICONS.fileEX, f:gsub("%.excalidraw$",""), "/"..folderPrefix..f, "excalidraw", viewMode) end
-      for _, f in ipairs(images) do html = html .. fileTile(ICONS.fileIMG, f, "/"..folderPrefix..f, "img", viewMode) end
+      for _, f in ipairs(mds) do table.insert(h, fileTile(ICONS.fileMD, f:gsub("%.md$",""), "/"..folderPrefix..f:gsub("%.md$",""), "md", viewMode)) end
+      for _, f in ipairs(pdfs) do table.insert(h, fileTile(ICONS.filePDF, f:gsub("%.pdf$",""), "/"..folderPrefix..f, "pdf", viewMode)) end
+      for _, f in ipairs(drawio) do table.insert(h, fileTile(ICONS.fileDIO, f:gsub("%.drawio$",""), "/"..folderPrefix..f, "drawio", viewMode)) end
+      for _, f in ipairs(excalidraw) do table.insert(h, fileTile(ICONS.fileEX, f:gsub("%.excalidraw$",""), "/"..folderPrefix..f, "excalidraw", viewMode)) end
+      for _, f in ipairs(images) do table.insert(h, fileTile(ICONS.fileIMG, f, "/"..folderPrefix..f, "img", viewMode)) end
       for _, f in ipairs(unknowns) do 
           local extension = f:match("%.([^.]+)$") or "?"
-          html = html .. fileTile(ICONS.file, f, "/.fs/"..folderPrefix..f, extension, viewMode) 
+          table.insert(h, fileTile(ICONS.file, f, "/.fs/"..folderPrefix..f, extension, viewMode)) 
       end
   end
 
-  html = html .. "</div></div>"
+  table.insert(h, "</div></div>")
 
 local script = [[
 (function() {
-
-// ---------------- Keyboard Navigation ----------------
 let focusedIndex = -1;
 
 window.addEventListener('keydown', function(e) {
-    // Only intercept if the explorer is visible and search isn't focused
     if (!document.getElementById("explorerGrid") || document.activeElement.id === "tileSearch") {
-        if (e.key === "Escape" && document.activeElement.id === "tileSearch") {
-            document.activeElement.blur(); // Exit search focus
-        }
+        if (e.key === "Escape" && document.activeElement.id === "tileSearch") document.activeElement.blur();
         return; 
     }
 
     const tiles = Array.from(document.querySelectorAll(".grid-tile:not([style*='display: none'])"));
     if (tiles.length === 0) return;
 
-    // Calculate columns based on the first tile's width + the gap
     const grid = document.getElementById("explorerGrid");
     const firstTile = grid.querySelector(".grid-tile");
     let cols = 1;
     
+    // Fixed: Only use multi-column logic in mode-grid
     if (document.querySelector(".mode-grid") && firstTile) {
-        const tileWidth = firstTile.offsetWidth;
-        const gridWidth = grid.clientWidth;
-        // We use Math.floor but add a 10px buffer for the gap
-        cols = Math.floor((gridWidth + 10) / (tileWidth + 10)); 
-        if (cols < 1) cols = 1;
+        cols = Math.floor((grid.clientWidth + 10) / (firstTile.offsetWidth + 10)) || 1;
     }
 
     if (["ArrowRight", "ArrowLeft", "ArrowUp", "ArrowDown", "Enter", "Backspace"].includes(e.key)) {
         e.preventDefault();
 
-        if (e.key === "ArrowRight") focusedIndex = Math.min(focusedIndex + 1, tiles.length);
+        if (e.key === "ArrowRight") focusedIndex = Math.min(focusedIndex + 1, tiles.length - 1);
         if (e.key === "ArrowLeft") focusedIndex = Math.max(focusedIndex - 1, 0);
         if (e.key === "ArrowUp") focusedIndex = Math.max(focusedIndex - cols, 0);
-        if (e.key === "ArrowDown") focusedIndex = Math.min(focusedIndex + cols, tiles.length);
+        if (e.key === "ArrowDown") focusedIndex = Math.min(focusedIndex + cols, tiles.length - 1);
         
         if (focusedIndex === -1) focusedIndex = 0;
 
-        // Visual highlight
         tiles.forEach(t => t.classList.remove("is-focused"));
         const target = tiles[focusedIndex];
-        target.classList.add("is-focused");
-        target.scrollIntoView({ block: "nearest" });
+        if(target) {
+            target.classList.add("is-focused");
+            target.scrollIntoView({ block: "nearest" });
 
-        if (e.key === "Enter") {
-            target.click();
-            focusedIndex = -1; // Reset focus for the new view
+            if (e.key === "Enter") {
+                target.click();
+                focusedIndex = -1;
+            }
         }
         
         if (e.key === "Backspace") {
             const upBtn = document.querySelector(".folderup-tile");
-            if (upBtn) upBtn.click();
+            if (upBtn) {
+                focusedIndex = -1;
+                upBtn.click();
+            }
         }
     }
     
-    // Quick Focus Search
     if (e.key === "/" && document.activeElement.id !== "tileSearch") {
         e.preventDefault();
         document.getElementById("tileSearch").focus();
     }
 });
   
-// ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
     const decodedData = atob(encodedData);
     event.dataTransfer.setData("text/plain", decodedData);
     event.dataTransfer.effectAllowed = "copy";
-    
     const tile = event.target.closest('.grid-tile');
     if (tile) {
         tile.classList.add("is-dragging");
-
-        tile.addEventListener('dragend', function cleanup() {
-            tile.classList.remove("is-dragging");
-            tile.removeEventListener('dragend', cleanup);
-        }, { once: true });
+        tile.addEventListener('dragend', () => tile.classList.remove("is-dragging"), { once: true });
     }
 };
         
-// ---------------- Context Menu ----------------
-    const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
-    
-    if (contextMenuEnabled) {
-        const menu = document.createElement('div');
-        menu.id = 'explorer-context-menu';
-        menu.style.display = 'none';
-        menu.style.position = 'fixed';
-        menu.style.zIndex = '1000';
-        document.body.appendChild(menu);
+const contextMenuEnabled = ]] .. tostring(enableContextMenu) .. [[;
+if (contextMenuEnabled) {
+    const menu = document.createElement('div');
+    menu.id = 'explorer-context-menu';
+    menu.style.display = 'none';
+    menu.style.position = 'fixed';
+    menu.style.zIndex = '1000';
+    document.body.appendChild(menu);
 
-        window.oncontextmenu = function(e) {
-            const tile = e.target.closest('.grid-tile');
-            if (!tile || tile.innerText.includes("..")) return; 
-            
-            e.preventDefault();
-            
-            let targetPath = "";
-            const onClickAttr = tile.getAttribute('onclick') || "";
-            const isFolder = tile.classList.contains('folder-tile');
-            
-            const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-            const simpleArgMatch = onClickAttr.match(/syscall\s*\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]/);
-            const winOpenMatch = onClickAttr.match(/window\.open\s*\(\s*['"]([^'"]+)['"]/);
-            
-            if (multiArgMatch) targetPath = multiArgMatch[1];
-            else if (simpleArgMatch) targetPath = simpleArgMatch[1];
-            else if (winOpenMatch) targetPath = winOpenMatch[1];
-            else targetPath = tile.getAttribute('title') || "";
+    window.oncontextmenu = function(e) {
+        const tile = e.target.closest('.grid-tile');
+        if (!tile || tile.innerText.includes("..")) return; 
+        e.preventDefault();
+        
+        let targetPath = "";
+        const onClickAttr = tile.getAttribute('onclick') || "";
+        const isFolder = tile.classList.contains('folder-tile');
+        
+        const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
+        const simpleArgMatch = onClickAttr.match(/syscall\s*\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]/);
+        const winOpenMatch = onClickAttr.match(/window\.open\s*\(\s*['"]([^'"]+)['"]/);
+        
+        if (multiArgMatch) targetPath = multiArgMatch[1];
+        else if (simpleArgMatch) targetPath = simpleArgMatch[1];
+        else if (winOpenMatch) targetPath = winOpenMatch[1];
+        else targetPath = tile.getAttribute('title') || "";
 
-            let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
-            if (isFolder) internalPath = internalPath.replace(/\/$/, "");
+        let internalPath = targetPath.replace(/^\/\.fs\//, "").replace(/^\//, "");
+        if (isFolder) internalPath = internalPath.replace(/\/$/, "");
 
-            let menuContent = `<div class="menu-item" id="ctx-rename">Rename</div>`;
-            if (!isFolder) {
-                menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
-            }
-            menu.innerHTML = menuContent;
+        let menuContent = `<div class="menu-item" id="ctx-rename">Rename</div>`;
+        if (!isFolder) menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
+        menu.innerHTML = menuContent;
 
-            menu.style.display = 'block';
-            const menuWidth = menu.offsetWidth;
-            const menuHeight = menu.offsetHeight;
-            const winWidth = window.innerWidth;
-            const winHeight = window.innerHeight;
+        menu.style.display = 'block';
+        const menuWidth = menu.offsetWidth;
+        const menuHeight = menu.offsetHeight;
+        let posX = e.clientX;
+        if (posX + menuWidth > window.innerWidth) posX -= menuWidth;
+        let posY = e.clientY;
+        if (posY + menuHeight > window.innerHeight) posY -= menuHeight;
 
-            let posX = e.clientX;
-            if (posX + menuWidth > winWidth) posX = posX - menuWidth;
-            let posY = e.clientY;
-            if (posY + menuHeight > winHeight) posY = posY - menuHeight;
+        menu.style.left = posX + 'px';
+        menu.style.top = posY + 'px';
 
-            menu.style.left = posX + 'px';
-            menu.style.top = posY + 'px';
-
-            document.getElementById('ctx-rename').onclick = async () => {
-                menu.style.display = 'none';
-                const currentDir = document.getElementById("explorerGrid").getAttribute("data-current-path");
-                let renamePath = internalPath;
-                const isPage = !isFolder && !internalPath.match(/\.[^.]+$/);
-                if (isPage) renamePath += ".md";
-                await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
-                await syscall('lua.evalExpression', 'refreshExplorer()');
-            };
-            const deleteBtn = document.getElementById('ctx-delete');  
-            if (deleteBtn) {  
-                deleteBtn.onclick = async () => {  
-                    menu.style.display = 'none';  
-                       
-                    await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
-                    await syscall('lua.evalExpression', 'refreshExplorer()');
-                };  
-            }
+        document.getElementById('ctx-rename').onclick = async () => {
+            menu.style.display = 'none';
+            let renamePath = internalPath;
+            if (!isFolder && !internalPath.match(/\.[^.]+$/)) renamePath += ".md";
+            await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
+            await syscall('lua.evalExpression', 'refreshExplorer()');
         };
-
-        window.onclick = () => { menu.style.display = 'none'; };
-    }
-// ---------------- Tree Expansion Logic ----------------
-const ICON_COLLAPSE = `]] .. ICONS.folderCollapse .. [[`;   // Icon to show when expanded (click to collapse)
-const ICON_EXPAND   = `]] .. ICONS.folderExpand .. [[`; // Icon to show when collapsed (click to expand)
+        const dBtn = document.getElementById('ctx-delete');  
+        if (dBtn) dBtn.onclick = async () => {  
+            menu.style.display = 'none';  
+            await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+        };  
+    };
+    window.onclick = () => { menu.style.display = 'none'; };
+}
 
 window.toggleTreeExpansion = function() {
     const explorer = document.getElementById("explorerGrid");
     const details = explorer.querySelectorAll("details.tree-folder");
     const iconContainer = document.getElementById("tree-toggle-icon");
     if (details.length === 0) return;
-
     const isAnyOpen = Array.from(details).some(d => d.open);
-    
-    details.forEach(d => {
-        d.open = !isAnyOpen;
-    });
-
-    iconContainer.innerHTML = !isAnyOpen ? ICON_COLLAPSE : ICON_EXPAND;
+    details.forEach(d => d.open = !isAnyOpen);
+    iconContainer.innerHTML = !isAnyOpen ? `]] .. ICONS.folderCollapse .. [[` : `]] .. ICONS.folderExpand .. [[`;
 };
-// ---------------- Filter Logic ----------------
-    window.filterTiles = function() {
-        const input = document.getElementById("tileSearch");
-        const clearBtn = document.getElementById("clearSearch");
-        const query = input.value.toLowerCase();
-        const terms = query.split(/\s+/).filter(t => t.length > 0);
-        const tiles = document.querySelectorAll(".grid-tile");
-    
-        if (query.length > 0) { clearBtn.style.display = "flex"; } 
-        else { clearBtn.style.display = "none"; }
 
-        tiles.forEach(tile => {
-            if (tile.innerText === "..") return;
-            const title = (tile.getAttribute("title") || "").toLowerCase();
-            const ext = (tile.getAttribute("data-ext") || "").toLowerCase();
-            const combined = title + " " + ext;
-            const match = terms.every(term => combined.includes(term));
-            tile.style.display = match ? "flex" : "none";
-        });
-    };
+window.filterTiles = function() {
+    const input = document.getElementById("tileSearch");
+    const query = input.value.toLowerCase();
+    const terms = query.split(/\s+/).filter(t => t.length > 0);
+    const tiles = document.querySelectorAll(".grid-tile");
+    document.getElementById("clearSearch").style.display = query.length > 0 ? "flex" : "none";
+    tiles.forEach(tile => {
+        if (tile.innerText === "..") return;
+        const combined = (tile.getAttribute("title") || "").toLowerCase() + " " + (tile.getAttribute("data-ext") || "").toLowerCase();
+        tile.style.display = terms.every(term => combined.includes(term)) ? "flex" : "none";
+    });
+};
 
-    window.clearFilter = function(event) {
-        if (event) { event.preventDefault(); event.stopPropagation(); }
-        const input = document.getElementById("tileSearch");
-        input.value = "";
-        filterTiles(); 
-        input.focus(); 
-    };
+window.clearFilter = function(e) {
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    const input = document.getElementById("tileSearch");
+    input.value = "";
+    filterTiles(); input.focus(); 
+};
 
-// ---------------- Load Styles Once ----------------
-    function ensureElement(id, tag, attributes, content) {
-        if (document.getElementById(id)) return document.getElementById(id);
-        const el = document.createElement(tag);
-        el.id = id;
-        for (let key in attributes) el.setAttribute(key, attributes[key]);
-        if (content) el.innerHTML = content;
-        document.head.appendChild(el);
-        return el;
-    }
+function ensureElement(id, tag, attr, content) {
+    if (document.getElementById(id)) return document.getElementById(id);
+    const el = document.createElement(tag); el.id = id;
+    for (let k in attr) el.setAttribute(k, attr[k]);
+    if (content) el.innerHTML = content;
+    document.head.appendChild(el); return el;
+}
 
-    // Load main.css and Custom Styles once
 ensureElement("silverbullet-main-css", "link", { rel: "stylesheet", href: "/.client/main.css"});
 ensureElement("explorer-style-css", "link", { rel: "stylesheet", href: "/.fs/Library/Mr-xRed/docex_styles.css" });
-    
-    // ---------------- Load Custom Style Sheets ----------------
-    // We use a specific ID to check if we've already processed these
-    if (!document.getElementById("explorer-custom-styles-once")) {
-        const parentStyles = parent.document.getElementById("custom-styles")?.innerHTML || "";
-        const cleanStyles = parentStyles.replace(/<\/?style>/g, "");
-        
-        const styleEl = document.createElement("style");
-        styleEl.id = "explorer-custom-styles-once";
-        styleEl.innerHTML = cleanStyles;
-        document.head.appendChild(styleEl);
-    }   // ---------------- Load Dynamic Vars ----------------
-    // Note: We update .innerHTML every time because the values (tileSize) 
-    // might have changed in the config, but we don't create a new element.
-    const dynamicVars = `:root { 
-              --tile-size: ]] .. tileSize..[[;
-              --list-tile-height: ]]..listHeight..[[;
-              --icon-size-grid: calc(var(--tile-size) * 0.6); }`;
-    const varEl = ensureElement("explorer-dynamic-vars", "style", {});
-    varEl.innerHTML = dynamicVars;
-
+if (!document.getElementById("explorer-custom-styles-once")) {
+    const pStyles = parent.document.getElementById("custom-styles")?.innerHTML || "";
+    ensureElement("explorer-custom-styles-once", "style", {}, pStyles.replace(/<\/?style>/g, ""));
+} 
+ensureElement("explorer-dynamic-vars", "style", {}, `:root { --tile-size: ]]..tileSize..[[; --list-tile-height: ]]..listHeight..[[; --icon-size-grid: calc(var(--tile-size) * 0.6); }`);
 })(); 
 ]]
-  
-  editor.showPanel(PANEL_ID, currentWidth, html, script)
+
+  local finalHtml = table.concat(h)
+  editor.showPanel(PANEL_ID, currentWidth, finalHtml, script)
   PANEL_VISIBLE = true
 end
+
 
 command.define {
   name = "DocumentExplorer: Open Folder",
@@ -810,14 +753,14 @@ command.define {
     if PANEL_VISIBLE then
       editor.hidePanel(PANEL_ID)
       PANEL_VISIBLE = false
-      cachedFiles = nil -- CLEAR CACHE ON CLOSE
     else
       if goToCurrentDir then
         local current = editor.getCurrentPath() or ""
         clientStore.set(PATH_KEY, current:match("^(.*)/") or "")
       end
-      -- FETCH CACHE ON OPEN
-      cachedFiles = space.listFiles() 
+      if not cachedFiles then
+        cachedFiles = space.listFiles() 
+      end
       drawPanel()
     end
   end
