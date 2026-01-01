@@ -511,6 +511,25 @@
   transform: rotate(90deg);
 }
 
+/* Active Page Highlighting */
+.grid-tile.is-active-page {
+  background-color: var(--explorer-accent-color, #007acc) !important;
+  color: white !important;
+  border-radius: 4px;
+  outline: 2px solid var(--explorer-accent-color, #007acc);
+}
+
+/* Ensure the icon turns white too */
+.is-active-page .icon svg, 
+.is-active-page .grid-title {
+  color: white !important;
+  stroke: white !important;
+}
+
+/* Ensure the title text is visible when highlighted */
+.grid-tile.is-active-page .grid-title {
+  font-weight: bold;
+}
 
 /*
 ==========================================================================

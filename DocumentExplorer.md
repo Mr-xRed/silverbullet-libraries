@@ -290,20 +290,32 @@ local function fileTile(icon, name, target, ext, viewMode)
 
   return "<div class='" .. tileClass .. "' " ..
     "draggable='true' ondragstart='handleDragStart(event, \"" .. encodedDrag .. "\")' " ..
-    "data-ext='" .. originalExt:upper() .. "' title='" .. name .. "' onclick=\"" .. onClickAction .. "\">" ..
+    "data-ext='" .. originalExt:upper() .. "' title='" .. target:gsub("^/", "") .. "' onclick=\"" .. onClickAction .. "\">" ..
     "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
 
 -- ---------- Refresh Button ----------
-function refreshExplorer()
-    cachedFiles = space.listFiles()
-    drawPanel()
+
+function triggerHighlightUpdate()
+    clientStore.set("explorer.lastUpdate", os.time())
 end
+
+event.listen {
+    name = "editor:pageLoaded",
+    run = triggerHighlightUpdate
+}
 
 function refreshExplorerButton()
     cachedFiles = nil
     drawPanel()
+    triggerHighlightUpdate() -- Trigger the JS logic
     editor.flashNotification("Document Explorer Refreshed.")
+end
+
+function refreshExplorer()
+    cachedFiles = space.listFiles()
+    drawPanel()
+    editor.sendPanelMessage(PANEL_ID, { type = "updateHighlight" })
 end
 
 -- ---------- Tree Logic ----------
@@ -371,7 +383,7 @@ local function renderTree(files, prefix)
             if isHybrid then fClass = fClass .. " hybrid-tile" end
             if isFiltered(fullPath) then fClass = fClass .. " filtered-item" end
 
-            table.insert(buffer, "<details class='tree-folder'><summary class='" .. fClass .. "' title='"..name.."'>")
+            table.insert(buffer, "<details class='tree-folder'><summary class='" .. fClass .. "' data-path='"..fullPath.."' title='"..name.."'>")
             table.insert(buffer, "<div class='hybrid-folder-zone'>")
             table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></div>")
             
@@ -809,6 +821,101 @@ window.toggleTreeExpansion = function() {
     iconContainer.innerHTML = !isAnyOpen ? ICON_COLLAPSE : ICON_EXPAND;
 };
 
+// ---------------- Persistence & Highlighting ----------------
+
+
+function saveTreeState() {
+  const openFolders = Array.from(document.querySelectorAll('.tree-folder[open]'))
+    .map(details => details.querySelector('summary').getAttribute('data-path')); 
+  localStorage.setItem('explorer_open_folders', JSON.stringify(openFolders));
+}
+
+function initTreePersistence() {
+  const grid = document.getElementById("explorerGrid");
+  if (grid) {
+    grid.addEventListener('toggle', (e) => {
+      if (e.target.tagName === 'DETAILS') saveTreeState();
+    }, true);
+  }
+}
+
+// ---------------- Highlighting Logic ----------------
+
+// We keep this focused ONLY on restoring folder expansion
+function restoreTreeState() {
+  const saved = localStorage.getItem('explorer_open_folders');
+  const openFolders = saved ? JSON.parse(saved) : [];
+  
+  document.querySelectorAll('.tree-folder').forEach(folder => {
+    const path = folder.querySelector('summary').getAttribute('data-path');
+    if (openFolders.includes(path)) {
+      folder.setAttribute('open', 'true');
+    }
+  });
+}
+
+// This function handles the "Live" highlighting and scrolling
+let lastKnownPage = ""; 
+
+async function refreshActiveHighlight() {
+  const activePage = await syscall('editor.getCurrentPage');
+  if (!activePage || activePage === lastKnownPage) return; // Exit immediately if no change
+
+  lastKnownPage = activePage; // Update the tracker
+  console.log("Page changed to:", activePage); // Debugging
+
+  const normActive = activePage.toLowerCase().replace(/^\//, "").replace(/\.md$/, "");
+  const tiles = document.querySelectorAll('.grid-tile');
+  
+  // Remove old highlights first
+  document.querySelectorAll('.is-active-page').forEach(el => el.classList.remove('is-active-page'));
+
+  tiles.forEach(tile => {
+    let tilePath = (tile.getAttribute('title') || "").toLowerCase();
+    const normTile = tilePath.replace(/^\//, "").replace(/\.md$/, "");
+
+    if (normTile === normActive && normActive !== "") {
+      tile.classList.add('is-active-page');
+      
+      let parent = tile.closest('details');
+      while (parent) {
+        parent.setAttribute('open', 'true');
+        parent = parent.parentElement.closest('details');
+      }
+      
+      tile.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+}
+
+// ---------------- Dynamic Update Logic ----------------
+
+let lastUpdateToken = "";
+
+async function checkReloadTrigger() {
+    // We check the clientStore for the timestamp Lua just set
+    const currentUpdateToken = await syscall("clientStore.get", "explorer.lastUpdate");
+    
+    // Only run the heavy highlighting logic if the token has actually changed
+    if (currentUpdateToken && currentUpdateToken !== lastUpdateToken) {
+        lastUpdateToken = currentUpdateToken;
+        await refreshActiveHighlight();
+    }
+}
+
+// ---------------- Execution ----------------
+
+setTimeout(() => {
+    restoreTreeState(); 
+    initTreePersistence();
+    refreshActiveHighlight(); 
+}, 50);
+
+// We still check frequently, but 'checkReloadTrigger' is nearly 
+// instant and does 0 DOM work unless Lua tells it to via the token.
+if (window.highlightWatcher) clearInterval(window.highlightWatcher);
+window.highlightWatcher = setInterval(checkReloadTrigger, 500);
+  
 // ---------------- Filter Logic with Debounce ----------------
     let cachedTiles = [];
     function initializeTiles() { cachedTiles = Array.from(document.querySelectorAll(".grid-tile")); }
