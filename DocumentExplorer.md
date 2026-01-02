@@ -505,7 +505,7 @@ local function drawPanel()
   table.insert(h, [[" 
                    onclick="toggleTreeExpansion()">
                 <span id="tree-toggle-icon">]])
-  table.insert(h, ICONS.folderExpand)
+  table.insert(h, ICONS.folderCollapse)
   table.insert(h, [[</span>
               </div>
   
@@ -830,7 +830,7 @@ if (contextMenuEnabled) {
     
     // ADDED: Open option for folders in Tree View
     if (isFolder && isTreeView) {
-        menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold; ">Open</div>`;
+        menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold;">Open</div>`;
     }
 
     menuContent += `<div class="menu-item" id="ctx-rename">Rename</div>`;
