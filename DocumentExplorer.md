@@ -830,7 +830,7 @@ if (contextMenuEnabled) {
     
     // ADDED: Open option for folders in Tree View
     if (isFolder && isTreeView) {
-        menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold; color:var(--explorer-accent-color)">Open</div>`;
+        menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold; ">Open</div>`;
     }
 
     menuContent += `<div class="menu-item" id="ctx-rename">Rename</div>`;
