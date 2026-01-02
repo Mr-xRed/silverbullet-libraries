@@ -298,27 +298,35 @@ local function fileTile(icon, name, target, ext, viewMode)
     "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
 
--- ---------- Refresh Button ----------
+-- ---------- Refresh Logic ----------
 
 function triggerHighlightUpdate()
     clientStore.set("explorer.lastUpdate", os.time())
 end
 
-event.listen { name = "editor:pageLoaded", run = triggerHighlightUpdate}
-event.listen { name = "editor:documentLoaded", run = triggerHighlightUpdate }
-
-function refreshExplorerButton()
-    cachedFiles = nil
-    drawPanel()
-    triggerHighlightUpdate()
-    editor.flashNotification("Document Explorer Refreshed.")
-end
+--function refreshOnCreation()
+--    cachedFiles = nil  
+--    drawPanel()  
+--    triggerHighlightUpdate()  
+--    editor.flashNotification("New File Created.")
+--end
 
 function refreshExplorer()
     cachedFiles = space.listFiles()
     drawPanel()
---    editor.sendPanelMessage(PANEL_ID, { type = "updateHighlight" })
 end
+
+function refreshExplorerButton()
+    cachedFiles = space.listFiles()
+    drawPanel()
+    triggerHighlightUpdate()
+    editor.flashNotification("File list refreshed.")
+end
+
+-- event.listen { name = "file:listed", run = refreshOnCreation }
+event.listen { name = "editor:pageLoaded", run = triggerHighlightUpdate }
+event.listen { name = "editor:documentLoaded", run = triggerHighlightUpdate }
+
 
 -- ---------- Tree Logic ----------
 local function renderTree(files, prefix)

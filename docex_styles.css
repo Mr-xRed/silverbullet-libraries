@@ -544,11 +544,11 @@
   position: absolute;
   top: 4px;
   right: 4px;
-  color: white;
-  font-size: clamp(0.4em, calc((var(--tile-size) / 80px) * 0.6em), 0.8em);
+  font-size: clamp(0.4em, calc((var(--tile-size) / 60px) * 0.6em), 0.8em);
   font-weight: bold;
+  line-height: 1;
   padding: 1px 4px;
-  border-radius: 4px;
+  border-radius: 2em;
   pointer-events: none;
   z-index: 5;
 }
@@ -574,25 +574,29 @@
 }
 
 /* Extension specific colors */
+
 html[data-theme="dark"] {
-.md-tile::after { content: "MD"; background: oklch(from var(--file-md-color) 0.5 c h);}
-.pdf-tile::after { content: "PDF"; background: oklch(from var(--file-pdf-color) 0.5 c h); }
-.image-tile::after { content: "IMG"; background: oklch(from var(--file-img-color) 0.5 c h); }
-.excalidraw-tile::after { content: "EX"; background:oklch(from var(--file-ex-color) 0.5 c h); }
-.drawio-tile::after { content: "DIO"; background: oklch(from var(--file-dio-color) 0.5 c h); }
-.unknown-tile::after { content: attr(data-ext); background: oklch(from var(--file-unk-color) 0.5 c h); }
+  .md-tile::after { content: "MD"; color: var(--file-md-color); background: oklch(from var(--file-md-color) 0.25 0.02 h / 1); border: 1px solid oklch(from var(--file-md-color) 0.5 0.05 h / 1);}
+  .pdf-tile::after { content: "PDF"; color: var(--file-pdf-color); background: oklch(from var(--file-pdf-color) 0.25 0.02 h / 1); border: 1px solid oklch(from var(--file-pdf-color) 0.5 0.05 h / 1);}
+  .image-tile::after { content: "IMG"; color: var(--file-img-color); background: oklch(from var(--file-img-color) 0.25 0.02 h / 1); border: 1px solid oklch(from var(--file-img-color) 0.5 0.05 h / 1);}
+  .excalidraw-tile::after { content: "EX"; color: var(--file-ex-color); background: oklch(from var(--file-ex-color) 0.25 0.02 h / 1); border: 1px solid oklch(from var(--file-ex-color) 0.5 0.05 h / 1);}
+  .drawio-tile::after { content: "DIO"; color: var(--file-dio-color); background: oklch(from var(--file-dio-color) 0.25 0.02 h / 1); border: 1px solid oklch(from var(--file-dio-color) 0.5 0.05 h / 1);}
+  .unknown-tile::after { content: attr(data-ext); color: var(--file-unk-color); background: oklch(from var(--file-unk-color) 0.25 0 h / 1); border: 1px solid oklch(from var(--file-unk-color) 0.5 0 h / 1);}
 }
 
 
 html[data-theme="light"] {
-.md-tile::after { content: "MD"; background: oklch(from var(--file-md-color) l c h);}
-.pdf-tile::after { content: "PDF"; background: oklch(from var(--file-pdf-color) l c h); }
-.image-tile::after { content: "IMG"; background: oklch(from var(--file-img-color) l c h); }
-.excalidraw-tile::after { content: "EX"; background:oklch(from var(--file-ex-color) l c h); }
-.drawio-tile::after { content: "DIO"; background: oklch(from var(--file-dio-color) l c h); }
-.unknown-tile::after { content: attr(data-ext); background: oklch(from var(--file-unk-color) l c h); }
+  .md-tile::after { content: "MD"; background: oklch(from var(--file-md-color) 0.95 0.05 h / 1); color: oklch(from var(--file-md-color) 0.45 0.2 h / 1); border: 1px solid oklch(from var(--file-md-color) 0.8 0.05 h / 1);}
+  .pdf-tile::after { content: "PDF"; background: oklch(from var(--file-pdf-color) 0.95 0.05 h / 1); color: oklch(from var(--file-pdf-color) 0.45 0.2 h / 1); border: 1px solid oklch(from var(--file-pdf-color) 0.8 0.05 h / 1);}
+  .image-tile::after { content: "IMG"; background: oklch(from var(--file-img-color) 0.95 0.05 h / 1); color: oklch(from var(--file-img-color) 0.45 0.2 h / 1); border: 1px solid oklch(from var(--file-img-color) 0.8 0.05 h / 1);}
+  .excalidraw-tile::after { content: "EX"; background: oklch(from var(--file-ex-color) 0.95 0.05 h / 1); color: oklch(from var(--file-ex-color) 0.45 0.2 h / 1); border: 1px solid oklch(from var(--file-ex-color) 0.8 0.05 h / 1);}
+  .drawio-tile::after { content: "DIO"; background: oklch(from var(--file-dio-color) 0.95 0.05 h / 1); color: oklch(from var(--file-dio-color) 0.45 0.2 h / 1); border: 1px solid oklch(from var(--file-dio-color) 0.8 0.05 h / 1);}
+  .unknown-tile::after { content: attr(data-ext); background: oklch(from var(--file-unk-color) 0.95 0 h / 1); color: oklch(from var(--file-unk-color) 0.45 0 h / 1); border: 1px solid oklch(from var(--file-unk-color) 0.8 0 h / 1);}
 }
 
+.mode-grid .image-tile::after {
+  display: none !important;
+}
 
 /* --- 1. BASE HYBRID LAYOUT --- */
 .hybrid-tile {
@@ -615,10 +619,8 @@ html[data-theme="light"] {
 
 /* --- 2. THE MD BADGE --- */
 .hybrid-md-badge {
-  background: oklch(from var(--file-md-color) 0.5 c h);
-  color: white;
   font-weight: bold;
-  border-radius: 4px;
+  border-radius: 2em;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -627,6 +629,19 @@ html[data-theme="light"] {
   transition: transform 0.1s ease;
   cursor: url("/.fs/Library/Mr-xRed/hybrid-cursor.svg") 2 2, pointer !important;
 }
+
+html[data-theme="dark"] .hybrid-md-badge {
+  color: var(--file-md-color);
+  background: oklch(from var(--file-md-color) 0.25 0.02 h / 1);
+  border: 1px solid oklch(from var(--file-md-color) 0.5 0.05 h / 1);
+}
+
+html[data-theme="light"] .hybrid-md-badge {
+  color: oklch(from var(--file-md-color) 0.45 0.2 h / 1);
+  background: oklch(from var(--file-md-color) 0.95 0.05 h / 1);
+  border: 1px solid oklch(from var(--file-md-color) 0.8 0.05 h / 1);
+}
+
 
 /* Badge Hover/Drag State */
 .hybrid-md-badge:hover {
