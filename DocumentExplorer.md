@@ -301,7 +301,7 @@ end
 -- ---------- Refresh Logic ----------
 
 function triggerHighlightUpdate()
-    clientStore.set("explorer.lastUpdate", os.time())
+    clientStore.set("explorer.lastUpdate", os.time() .. math.random())
 end
 
 --function refreshOnCreation()
@@ -589,34 +589,30 @@ local function drawPanel()
         end
       end
 
-    -- --- NEW HYBRID LOGIC START ---
-        local hybridMap = {}
-        local finalFolders = {}
-        local finalMds = {}
+     -- --- UNIFIED SORTING & HYBRID LOGIC ---
+      local allFolders = {} 
+      local hybridMap = {}
+      local finalMds = {}
       
-        -- Create a lookup for MD files (without extension)
-        local mdLookup = {}
-        for _, f in ipairs(mds) do mdLookup[f:gsub("%.md$", "")] = true end
+      local mdLookup = {}
+      for _, f in ipairs(mds) do mdLookup[f:gsub("%.md$", "")] = true end
       
-        -- Check folders for matching MD files
-        for _, fName in ipairs(folders) do
-            if mdLookup[fName] then
-                hybridMap[fName] = true
-            else
-                table.insert(finalFolders, fName)
-            end
-        end
+      for _, fName in ipairs(folders) do
+          if mdLookup[fName] then hybridMap[fName] = true end
+          table.insert(allFolders, fName) 
+      end
       
-        -- Filter out MD files that are now part of a Hybrid
-        for _, fName in ipairs(mds) do
-            local base = fName:gsub("%.md$", "")
-            if not hybridMap[base] then
-                table.insert(finalMds, fName)
-            end
-        end
-        -- --- NEW HYBRID LOGIC END ---
-      table.sort(finalFolders); table.sort(finalMds); table.sort(pdfs);
-      table.sort(drawio); table.sort(excalidraw); table.sort(images); table.sort(unknowns)
+      for _, fName in ipairs(mds) do
+          local base = fName:gsub("%.md$", "")
+          if not hybridMap[base] then table.insert(finalMds, fName) end
+      end
+
+      -- Alphabetical Sort (Case Insensitive)
+      local sortFunc = function(a,b) return a:lower() < b:lower() end
+      table.sort(allFolders, sortFunc)
+      table.sort(finalMds, sortFunc)
+      table.sort(pdfs, sortFunc); table.sort(drawio, sortFunc); 
+      table.sort(excalidraw, sortFunc); table.sort(images, sortFunc); table.sort(unknowns, sortFunc)
 
       if folderPrefix ~= "" then
         local parent = folderPrefix:gsub("[^/]+/$", "")
@@ -624,34 +620,27 @@ local function drawPanel()
         table.insert(h, "<div class='icon'>"..ICONS.folderUp.."</div><div class='grid-title'>..</div></div>")
       end
 
-      -- Render standard folders
-        for _, f in ipairs(finalFolders) do
-    local p = folderPrefix .. f .. "/"
-    local fClass = "grid-tile folder-tile"
-    if isFiltered(p) then fClass = fClass .. " filtered-item" end
-    table.insert(h, "<div class='" .. fClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..p.."'} )\">")
-    table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
-end
+      -- RENDER UNIFIED FOLDERS
+      for _, f in ipairs(allFolders) do
+          local folderPath = folderPrefix .. f .. "/"
+          if hybridMap[f] then
+              local pagePath = "/" .. folderPrefix .. f
+              local hClass = "grid-tile folder-tile hybrid-tile"
+              if isFiltered(folderPath) then hClass = hClass .. " filtered-item" end
+              table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "'>")
+              table.insert(h, "<div class='hybrid-folder-zone' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+              table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
+              table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+              table.insert(h, "</div>")
+          else
+              local fClass = "grid-tile folder-tile"
+              if isFiltered(folderPath) then fClass = fClass .. " filtered-item" end
+              table.insert(h, "<div class='" .. fClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+              table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
+          end
+      end
 
--- 2. Hybrid Tiles (Folder + MD)
-        local sortedHybrids = {}
-        for k in pairs(hybridMap) do table.insert(sortedHybrids, k) end
-        table.sort(sortedHybrids)
-
-        for _, f in ipairs(sortedHybrids) do
-            local folderPath = folderPrefix .. f .. "/"
-            local pagePath = "/" .. folderPrefix .. f
-            local hClass = "grid-tile folder-tile hybrid-tile"
-            if isFiltered(folderPath) then hClass = hClass .. " filtered-item" end
-
-            table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "'>")
-            table.insert(h, "<div class='hybrid-folder-zone' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
-            table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
-            table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
-            table.insert(h, "</div>")
-        end
-
-        -- 3. Standard MDs (Files that aren't folders)
+      -- RENDER FILES
       for _, f in ipairs(finalMds) do table.insert(h, fileTile(ICONS.fileMD, f:gsub("%.md$",""), "/"..folderPrefix..f:gsub("%.md$",""), "md", viewMode)) end
       for _, f in ipairs(pdfs) do table.insert(h, fileTile(ICONS.filePDF, f:gsub("%.pdf$",""), "/"..folderPrefix..f, "pdf", viewMode)) end
       for _, f in ipairs(drawio) do table.insert(h, fileTile(ICONS.fileDIO, f:gsub("%.drawio$",""), "/"..folderPrefix..f, "drawio", viewMode)) end
@@ -1241,26 +1230,6 @@ command.define {
   run = function(args)
     clientStore.set(VIEW_MODE_KEY, args.mode)
     drawPanel()
-  end
-}
-
-command.define {
-  name = "Navigate: Document Explorer",
-  hide = true,
-  run = function()
-    if PANEL_VISIBLE then
-      editor.hidePanel(PANEL_ID)
-      PANEL_VISIBLE = false
-    else
-      if goToCurrentDir then
-        local current = editor.getCurrentPath() or ""
-        clientStore.set(PATH_KEY, current:match("^(.*)/") or "")
-      end
-      if not cachedFiles then
-        cachedFiles = space.listFiles() 
-      end
-      drawPanel()
-    end
   end
 }
 
