@@ -128,7 +128,7 @@ html[data-theme="light"]{
 
 ## Integration:
 
-```space-lua
+```lua
 -- priority: -1
 -- ------------- Config Init -------------
 config.define("explorer", {
@@ -1004,61 +1004,30 @@ async function refreshActiveHighlight() {
 
   lastKnownPage = activePage; // Update the tracker
   console.log("Page changed to:", activePage); // Debugging
-
-  const normActive = activePage.toLowerCase().replace(/^\//, "").replace(/\.md$/, "").replace(/\/$/, "");
+  
+  const normActive = activePage.toLowerCase().replace(/^\//, "").replace(/\.md$/, "");
   const tiles = document.querySelectorAll('.grid-tile');
-
+  
   // Remove old highlights first
   document.querySelectorAll('.is-active-page').forEach(el => el.classList.remove('is-active-page'));
 
   tiles.forEach(tile => {
-    // Try to derive a full path for the tile (prefer full paths over plain titles)
-    let tileFullPath = (tile.getAttribute('title') || "").toLowerCase();
-
-    // 1) Look for an element with data-path (summary in tree view or explicit attribute)
-    const dpElement = tile.querySelector('[data-path]') || tile.closest('[data-path]');
-    if (dpElement) {
-      const dp = dpElement.getAttribute('data-path');
-      if (dp) tileFullPath = dp.toLowerCase();
-    }
-
-    // 2) If still empty or ambiguous, try to extract path from onclick (used for folder tiles)
-    if (!tileFullPath || tileFullPath === "") {
-      const onclickAttr = tile.getAttribute('onclick') || (tile.querySelector && tile.querySelector('[onclick]') && tile.querySelector('[onclick]').getAttribute('onclick')) || "";
-      const m = onclickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-      if (m && m[1]) tileFullPath = m[1].toLowerCase();
-    }
-
-    // 3) If the tileFullPath looks like a simple name (no slash), try to resolve it relative to the current explorer path
-    // This helps grid folder tiles which use title-only names
-    if (tileFullPath && tileFullPath.indexOf("/") === -1) {
-      const grid = document.getElementById("explorerGrid");
-      const currentPath = grid ? (grid.getAttribute("data-current-path") || "") : "";
-      const candidate = (currentPath + tileFullPath).replace(/^\/+/, "").replace(/\/$/, "");
-      // Only adopt candidate if it makes sense relative to the active page (prevents accidental cross-folder matches)
-      if (normActive === tileFullPath || normActive.endsWith("/" + tileFullPath) || normActive === candidate) {
-        tileFullPath = candidate;
-      }
-    }
-
-    // Normalize tile path for comparison
-    const normTile = (tileFullPath || "").toLowerCase().replace(/^\//, "").replace(/\.md$/, "").replace(/\/$/, "");
+    let tilePath = (tile.getAttribute('title') || "").toLowerCase();
+    const normTile = tilePath.replace(/^\//, "").replace(/\.md$/, "");
 
     if (normTile === normActive && normActive !== "") {
       tile.classList.add('is-active-page');
-
-      // Ensure any containing details/folders open in tree view
+      
       let parent = tile.closest('details');
       while (parent) {
         parent.setAttribute('open', 'true');
         parent = parent.parentElement.closest('details');
       }
-
+      
       tile.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   });
 }
-
 
 // ---------------- Dynamic Update Logic ----------------
 
@@ -1350,7 +1319,7 @@ command.define {
       clientStore.set("explorer.disableFilter", "true")
     end
     drawPanel()
-  end 
+  end
 }
 
 ```
