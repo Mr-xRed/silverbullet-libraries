@@ -1004,61 +1004,30 @@ async function refreshActiveHighlight() {
 
   lastKnownPage = activePage; // Update the tracker
   console.log("Page changed to:", activePage); // Debugging
-
-  const normActive = activePage.toLowerCase().replace(/^\//, "").replace(/\.md$/, "").replace(/\/$/, "");
+  
+  const normActive = activePage.toLowerCase().replace(/^\//, "").replace(/\.md$/, "");
   const tiles = document.querySelectorAll('.grid-tile');
-
+  
   // Remove old highlights first
   document.querySelectorAll('.is-active-page').forEach(el => el.classList.remove('is-active-page'));
 
   tiles.forEach(tile => {
-    // Try to derive a full path for the tile (prefer full paths over plain titles)
-    let tileFullPath = (tile.getAttribute('title') || "").toLowerCase();
-
-    // 1) Look for an element with data-path (summary in tree view or explicit attribute)
-    const dpElement = tile.querySelector('[data-path]') || tile.closest('[data-path]');
-    if (dpElement) {
-      const dp = dpElement.getAttribute('data-path');
-      if (dp) tileFullPath = dp.toLowerCase();
-    }
-
-    // 2) If still empty or ambiguous, try to extract path from onclick (used for folder tiles)
-    if (!tileFullPath || tileFullPath === "") {
-      const onclickAttr = tile.getAttribute('onclick') || (tile.querySelector && tile.querySelector('[onclick]') && tile.querySelector('[onclick]').getAttribute('onclick')) || "";
-      const m = onclickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-      if (m && m[1]) tileFullPath = m[1].toLowerCase();
-    }
-
-    // 3) If the tileFullPath looks like a simple name (no slash), try to resolve it relative to the current explorer path
-    // This helps grid folder tiles which use title-only names
-    if (tileFullPath && tileFullPath.indexOf("/") === -1) {
-      const grid = document.getElementById("explorerGrid");
-      const currentPath = grid ? (grid.getAttribute("data-current-path") || "") : "";
-      const candidate = (currentPath + tileFullPath).replace(/^\/+/, "").replace(/\/$/, "");
-      // Only adopt candidate if it makes sense relative to the active page (prevents accidental cross-folder matches)
-      if (normActive === tileFullPath || normActive.endsWith("/" + tileFullPath) || normActive === candidate) {
-        tileFullPath = candidate;
-      }
-    }
-
-    // Normalize tile path for comparison
-    const normTile = (tileFullPath || "").toLowerCase().replace(/^\//, "").replace(/\.md$/, "").replace(/\/$/, "");
+    let tilePath = (tile.getAttribute('title') || "").toLowerCase();
+    const normTile = tilePath.replace(/^\//, "").replace(/\.md$/, "");
 
     if (normTile === normActive && normActive !== "") {
       tile.classList.add('is-active-page');
-
-      // Ensure any containing details/folders open in tree view
+      
       let parent = tile.closest('details');
       while (parent) {
         parent.setAttribute('open', 'true');
         parent = parent.parentElement.closest('details');
       }
-
+      
       tile.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   });
 }
-
 
 // ---------------- Dynamic Update Logic ----------------
 
@@ -1245,26 +1214,6 @@ command.define {
 }
 
 command.define {
-  name = "Navigate: Document Explorer",
-  hide = true,
-  run = function()
-    if PANEL_VISIBLE then
-      editor.hidePanel(PANEL_ID)
-      PANEL_VISIBLE = false
-    else
-      if goToCurrentDir then
-        local current = editor.getCurrentPath() or ""
-        clientStore.set(PATH_KEY, current:match("^(.*)/") or "")
-      end
-      if not cachedFiles then
-        cachedFiles = space.listFiles() 
-      end
-      drawPanel()
-    end
-  end
-}
-
-command.define {
   name = "Document Explorer: Increase Width",
   key = "Ctrl-Alt-ArrowRight",
   hide = true,
@@ -1286,58 +1235,6 @@ command.define {
   end
 }
 
-command.define {
-  name = "Navigate: Document Explorer Window",
-  hide = true,
-  run = function()
-        editor.invokeCommand "Navigate: Document Explorer"
-        js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
-       end
-}
-
-
-command.define {
-  name = "DocumentExplorer: Toggle Window Mode",
-  hide = true,
-  run = function()
-    local currentMode = clientStore.get("explorer.currentDisplayMode") or "panel"    
-    -- Close current view
-    if currentMode == "window" then
-      -- If in window, we just call the toggle which will hide it
-      editor.hidePanel(PANEL_ID) 
-      PANEL_VISIBLE = false
-      clientStore.set("explorer.currentDisplayMode", "panel")
-      editor.invokeCommand("Navigate: Document Explorer")
-    else
-      -- If in panel, hide panel and open window
-      editor.hidePanel(PANEL_ID)
-      PANEL_VISIBLE = false
-      clientStore.set("explorer.currentDisplayMode", "window")
-      editor.invokeCommand("Navigate: Document Explorer Window")
-    end
-  end
-}
-
-
-command.define {
-  name = "Navigate: Toggle Document Explorer",
-  key = "Ctrl-Alt-e",
-  run = function()
-    -- Check if a panel is currently visible at all
-    if PANEL_VISIBLE then
-        editor.hidePanel(PANEL_ID)
-        PANEL_VISIBLE = false
-    else
-        local lastMode = clientStore.get("explorer.currentDisplayMode") or "panel"
-        
-        if lastMode == "window" then
-            editor.invokeCommand("Navigate: Document Explorer Window")
-        else
-            editor.invokeCommand("Navigate: Document Explorer")
-        end
-    end
-  end
-}
 
 command.define {
   name = "DocumentExplorer: ToggleFilter",
@@ -1353,9 +1250,80 @@ command.define {
   end 
 }
 
+-- -------------------------------
+command.define {
+  name = "Navigate: Document Explorer Window",
+  hide = true,
+  run = function()
+      if not PANEL_VISIBLE then
+        if not cachedFiles then cachedFiles = space.listFiles() end
+        drawPanel()
+      end
+      js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
+  end
+}
+
+command.define {
+  name = "Navigate: Document Explorer",
+  hide = true,
+  run = function()
+    if PANEL_VISIBLE then
+      editor.hidePanel(PANEL_ID)
+      PANEL_VISIBLE = false
+    else
+      if not cachedFiles then
+        cachedFiles = space.listFiles() 
+      end
+      drawPanel()
+    end
+  end
+}
+
+command.define {
+  name = "DocumentExplorer: Toggle Window Mode",
+  hide = true,
+  run = function()
+    local currentMode = clientStore.get("explorer.currentDisplayMode") or "panel"    
+    
+    editor.hidePanel(PANEL_ID)
+    PANEL_VISIBLE = false
+   -- Switch mode
+    if currentMode == "window" then
+      clientStore.set("explorer.currentDisplayMode", "panel")
+      drawPanel()
+    else
+      clientStore.set("explorer.currentDisplayMode", "window")
+      drawPanel()
+      js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
+    end
+  end
+}
+
+command.define {
+  name = "Navigate: Toggle Document Explorer",
+  key = "Ctrl-Alt-e",
+  run = function()
+    if PANEL_VISIBLE then
+        editor.hidePanel(PANEL_ID)
+        PANEL_VISIBLE = false
+    else
+        -- INITIAL OPEN LOGIC:
+        -- Only jump to current directory when user manually hits the shortcut to OPEN
+        if goToCurrentDir then
+            local current = editor.getCurrentPath() or ""
+            clientStore.set(PATH_KEY, current:match("^(.*)/") or "")
+        end
+
+        local lastMode = clientStore.get("explorer.currentDisplayMode") or "panel"
+        if lastMode == "window" then
+            editor.invokeCommand("Navigate: Document Explorer Window")
+        else
+            editor.invokeCommand("Navigate: Document Explorer")
+        end
+    end
+  end
+}
 ```
-
-
 
 ## Discussions to this library
 * [SilverBullet Community](https://community.silverbullet.md/t/document-explorer-image-gallery-for-silverbullet/3647?u=mr.red)
