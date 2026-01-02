@@ -32,7 +32,10 @@ pageDecoration.prefix: "🗂️ "
 * Documents: .pdf, .excalidraw, .drawio (if Plugs installed)
 * Every other extension is rendered as `❔` and opened as raw file if browser supports it
 
-## GoTo: ${widgets.commandButton("Document Explorer in SidePanel","Navigate: Document Explorer")} or ${widgets.commandButton("Document Explorer in Window","Navigate: Document Explorer Window")}
+## GoTo: ${widgets.commandButton("Document Explorer in SidePanel","Navigate: Document Explorer")} or 
+${widgets.commandButton("Document Explorer in Window","Navigate: Document Explorer Window")}
+
+${widgets.commandButton("Decrease Width","Document Explorer: Decrease Width")}  ${widgets.commandButton("Increase Width","Document Explorer: Increase Width")}
 ## or use the shortcuts: 
 
 > **tip** New ShortCut Keys
@@ -367,7 +370,6 @@ local function renderTree(files, prefix)
         end
         table.sort(sorted)
         
-        -- Path Logic: Ensure we don't get double slashes or leading slashes at root
         local fullPath = name
         if currentPath ~= "" then
             fullPath = currentPath .. "/" .. name
@@ -375,13 +377,19 @@ local function renderTree(files, prefix)
         
         local isHybrid = (node._path ~= nil) and (#sorted > 0)
         local isFolder = (#sorted > 0) and (node._path == nil)
+        
+        -- Logic: Check filtering here
+        local filteredClass = ""
+        if isFiltered(fullPath) then
+            filteredClass = " filtered-item"
+        end
 
         if isFolder or isHybrid then
             local fClass = "grid-tile folder-tile"
             if isHybrid then fClass = fClass .. " hybrid-tile" end
-            if isFiltered(fullPath) then fClass = fClass .. " filtered-item" end
 
-            table.insert(buffer, "<details class='tree-folder'><summary class='" .. fClass .. "' data-path='"..fullPath.."' title='"..name.."'>")
+            -- Apply filteredClass to the wrapper <details>
+            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..fullPath.."' title='"..name.."'>")
             table.insert(buffer, "<div class='hybrid-folder-zone'>")
             table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></div>")
             
@@ -398,7 +406,8 @@ local function renderTree(files, prefix)
         else
             if node._path then
                 local ext = node._path:match("%.([^.]+)$") or "md"
-                table.insert(buffer, "<div class='tree-file'>")
+                -- Apply filteredClass to the wrapper <div>
+                table.insert(buffer, "<div class='tree-file" .. filteredClass .. "'>")
                 table.insert(buffer, fileTile(ICONS.file, name:gsub("%.md$",""), "/" .. node._path:gsub("%.md$",""), ext, "tree"))
                 table.insert(buffer, "</div>")
             end
@@ -412,9 +421,7 @@ local function renderTree(files, prefix)
     end
     table.sort(rootKeys)
 
-    -- Clean the prefix (remove trailing slash) to use as the base for the recursion
     local basePrefix = prefix:gsub("/$", "")
-
     local htmlParts = {"<div class='tree-view-container'>"}
     for _, k in ipairs(rootKeys) do 
         traverse(tree[k], k, htmlParts, basePrefix) 
@@ -868,6 +875,67 @@ if (contextMenuEnabled) {
         };
     }
 };
+
+
+// --- Mobile Long Press Logic ---
+let touchTimer;
+let touchStartPos = { x: 0, y: 0 };
+const LONG_PRESS_DURATION = 600; // 1 second
+const MOVE_THRESHOLD = 30; // Pixels to allow before canceling
+
+window.addEventListener('touchstart', function(e) {
+    const tile = e.target.closest('.grid-tile, .tree-folder');
+    if (!tile || tile.innerText.includes("..")) return;
+
+    // Store starting position
+    touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+
+    // Start the timer
+    touchTimer = setTimeout(() => {
+        // Create a fake contextmenu event to reuse your existing logic
+        const fakeEvent = new MouseEvent('contextmenu', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: touchStartPos.x,
+            clientY: touchStartPos.y,
+            button: 2
+        });
+        
+        // Vibrate for feedback (optional, works on Android)
+        if (navigator.vibrate) navigator.vibrate(50);
+        
+        tile.dispatchEvent(fakeEvent);
+    }, LONG_PRESS_DURATION);
+}, { passive: true });
+
+window.addEventListener('touchmove', function(e) {
+    if (!touchTimer) return;
+
+    // Calculate how far the finger moved
+    const moveX = Math.abs(e.touches[0].clientX - touchStartPos.x);
+    const moveY = Math.abs(e.touches[0].clientY - touchStartPos.y);
+
+    // If moved more than threshold, cancel the long-press (user is dragging/scrolling)
+    if (moveX > MOVE_THRESHOLD || moveY > MOVE_THRESHOLD) {
+        clearTimeout(touchTimer);
+        touchTimer = null;
+    }
+}, { passive: true });
+
+window.addEventListener('touchend', function() {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+});
+
+window.addEventListener('touchcancel', function() {
+    clearTimeout(touchTimer);
+    touchTimer = null;
+});
+  
+
+
+  
 
     window.onclick = () => { menu.style.display = 'none'; };
 }
