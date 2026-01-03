@@ -50,7 +50,7 @@ ${widgets.commandButton("Decrease Width","Document Explorer: Decrease Width")}  
 * `listHeight`         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
 * `enableContextMenu`  - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
 * `negativeFilter`     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none )
-* treeFolderFirst - sort the folders then files in treeview (default: false)
+* treeFolderFirst    - sort order in treeview: folders then files (default: false)
 
 ```lua
 config.set("explorer", {
