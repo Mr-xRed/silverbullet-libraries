@@ -49,7 +49,8 @@ ${widgets.commandButton("Decrease Width","Document Explorer: Decrease Width")}  
 * `tileSize`           - Grid Tile size, recommended between 60px-120px (default: "80px") 
 * `listHeight`         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
 * `enableContextMenu`  - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
-* `negativeFilter`     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none ) 
+* `negativeFilter`     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none )
+* treeFolderFirst - sort the folders then files in treeview (default: false)
 
 ```lua
 config.set("explorer", {
@@ -58,7 +59,8 @@ config.set("explorer", {
   tileSize = "80px",
   enableContextMenu = true,
   listHeight = "24px",
-  negativeFilter = {"Library/Std","*.zip","*.js","*.css", "*test*"}
+  negativeFilter = {"Library/Std","*.zip","*.js","*.css", "*test*"},
+  treeFolderFirst = false
 })
 ```
 
@@ -138,6 +140,7 @@ config.define("explorer", {
     tileSize = schema.string(),
     listHeight = schema.string(),
     panelWidth = schema.number(),
+    treeFolderFirst = schema.boolean(),
     goToCurrentDir = schema.boolean(),
     enableContextMenu = schema.boolean(),
     negativeFilter = { type = "array", items = { type = "string" } }
@@ -196,6 +199,9 @@ local homeDirName = cfg.homeDirName or "🏠 Home"
 local goToCurrentDir = cfg.goToCurrentDir ~= false
 local enableContextMenu = cfg.enableContextMenu ~= false
 local negativeFilter = cfg.negativeFilter or {}
+-- The new sorting preference
+local treeFolderFirst = cfg.treeFolderFirst == true 
+
 
 local PANEL_ID = "lhs"
 local PANEL_VISIBLE = false
@@ -369,6 +375,14 @@ local function renderTree(files, prefix)
         end
     end
 
+    -- Internal Helper: Check if a node contains children (is a folder or hybrid)
+    local function isFolderNode(n)
+        for k in pairs(n) do
+            if k ~= "_path" then return true end
+        end
+        return false
+    end
+
     -- 2. DEFINE TRAVERSE
     local function traverse(node, name, buffer, currentPath)
         currentPath = currentPath or ""
@@ -376,17 +390,29 @@ local function renderTree(files, prefix)
         for k in pairs(node) do 
             if k:sub(1,1) ~= "_" then table.insert(sorted, k) end 
         end
-        table.sort(sorted)
+
+        -- --- SORTING LOGIC ---
+        if treeFolderFirst then
+            table.sort(sorted, function(a, b)
+                local isA = isFolderNode(node[a])
+                local isB = isFolderNode(node[b])
+                if isA ~= isB then
+                    return isA -- Folders (true) come before files (false)
+                end
+                return a:lower() < b:lower()
+            end)
+        else
+            table.sort(sorted, function(a, b) return a:lower() < b:lower() end)
+        end
         
         local fullPath = name
         if currentPath ~= "" then
             fullPath = currentPath .. "/" .. name
         end
         
-        local isHybrid = (node._path ~= nil) and (#sorted > 0)
-        local isFolder = (#sorted > 0) and (node._path == nil)
+        local isHybrid = (node._path ~= nil) and (isFolderNode(node))
+        local isFolder = (isFolderNode(node)) and (node._path == nil)
         
-        -- Logic: Check filtering here
         local filteredClass = ""
         if isFiltered(fullPath) then
             filteredClass = " filtered-item"
@@ -396,7 +422,6 @@ local function renderTree(files, prefix)
             local fClass = "grid-tile folder-tile"
             if isHybrid then fClass = fClass .. " hybrid-tile" end
 
-            -- Apply filteredClass to the wrapper <details>
             table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..fullPath.."' title='"..name.."'>")
             table.insert(buffer, "<div class='hybrid-folder-zone'>")
             table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></div>")
@@ -414,7 +439,6 @@ local function renderTree(files, prefix)
         else
             if node._path then
                 local ext = node._path:match("%.([^.]+)$") or "md"
-                -- Apply filteredClass to the wrapper <div>
                 table.insert(buffer, "<div class='tree-file" .. filteredClass .. "'>")
                 table.insert(buffer, fileTile(ICONS.file, name:gsub("%.md$",""), "/" .. node._path:gsub("%.md$",""), ext, "tree"))
                 table.insert(buffer, "</div>")
@@ -427,7 +451,18 @@ local function renderTree(files, prefix)
     for k in pairs(tree) do 
         if k:sub(1,1) ~= "_" then table.insert(rootKeys, k) end 
     end
-    table.sort(rootKeys)
+
+    -- Sort the root level as well
+    if treeFolderFirst then
+        table.sort(rootKeys, function(a, b)
+            local isA = isFolderNode(tree[a])
+            local isB = isFolderNode(tree[b])
+            if isA ~= isB then return isA end
+            return a:lower() < b:lower()
+        end)
+    else
+        table.sort(rootKeys, function(a, b) return a:lower() < b:lower() end)
+    end
 
     local basePrefix = prefix:gsub("/$", "")
     local htmlParts = {"<div class='tree-view-container'>"}
@@ -438,6 +473,7 @@ local function renderTree(files, prefix)
     
     return table.concat(htmlParts)
 end
+
 
 function deleteFileWithConfirm(path)  
   if not path then return end  

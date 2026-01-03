@@ -114,7 +114,7 @@ function toggleFloatingJournalCalendar()
             --jc-elements-background: oklch(0.75 0 0 / 0.2); --jc-hover-background: oklch(0.5 0 0 / 0.4);
             --jc-text-color: oklch(0.2 0 0); --jc-accent-color:oklch(0.75 0.25 270);
         }
-        .jc-card { background: var(--jc-background); color: var(--jc-text-color); border-radius: 12px; border: 2px solid var(--jc-border-color); box-shadow: 0 10px 30px oklch(0 0 0 / 0.5); overflow: hidden; display: flex; flex-direction: column; }
+        .jc-card { background: var(--jc-background); color: var(--jc-text-color); border-radius: 12px; border: 2px solid var(--jc-border-color); box-shadow: 0 10px 30px oklch(0 0 0 / 0.5), inset 0 0 5px oklch(0 0 0 / 1) ,inset 0 0 20px oklch(0 0 0 / 0.4); overflow: hidden; display: flex; flex-direction: column; }
         .jc-header { background: var(--jc-elements-background); padding: 10px; cursor: grab; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
         .jc-nav-btn, .jc-close, .jc-today-btn { background: var(--jc-elements-background); color: var(--jc-text-color); border: 1px solid var(--jc-border-color); border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 0.9em; }
         .jc-nav-btn:hover, .jc-today-btn:hover { background: var(--jc-hover-background); }
@@ -125,7 +125,7 @@ function toggleFloatingJournalCalendar()
         .jc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 6px; }
         .jc-lbl { font-size: 0.7em; opacity: 0.5; text-align: center; font-weight: bold; }
         .jc-lbl.sun { color: oklch(0.65 0.18 30); opacity: 1; }
-        .jc-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.85em; border-radius: 6px; cursor: pointer; position: relative; background: var(--jc-elements-background); transition: 0.2s; }
+        .jc-day:not(.empty) { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.85em; border-radius: 6px; cursor: pointer; position: relative; background: var(--jc-elements-background); transition: 0.2s; /*box-shadow: inset 0 0 5px oklch(0 0 0 / 0.6) ,inset 0 0 20px oklch(1 0 0 / 0.2);*/}
         .jc-day:hover { background: var(--jc-accent-color); color: white; }
         .jc-day.sun { color: oklch(0.65 0.18 30); font-weight: bold; }
         .jc-day.today { border: 2px solid var(--jc-accent-color); font-weight: bold; color: oklch(0.65 0.18 30); }
