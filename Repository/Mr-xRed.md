@@ -41,6 +41,11 @@ description: "OpenWeatherMap Widget and slash commands"
 
 ## Productivity Shortcuts
 ```#meta/library/remote
+name: "🛠 DisableAccidentalMobileTaps"
+uri: github:Mr-xRed/silverbullet-libraries/DisableAccidentalMobileTaps.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DisableAccidentalMobileTaps.md
+description: "Command to disable Accidental Mobile Taps and summon the Evil Unwanted Virtual Keyboard"
+---
 name: "🛠 HeaderLevelToggle"
 uri: github:Mr-xRed/silverbullet-libraries/HeaderLevelToggle.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/HeaderLevelToggle.md
