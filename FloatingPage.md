@@ -19,7 +19,9 @@ See Examples below
 
 # Examples:
 
+
 ```space-lua
+  
 -- Mode 1: Internal SilverBullet Page
 command.define {
   name = "Floating: EXAMPLE: Open Internal Page",

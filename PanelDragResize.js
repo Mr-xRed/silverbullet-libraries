@@ -83,14 +83,14 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
       }
 
       .sb-resizer { position: absolute; z-index: 10001; }
-      .resizer-t { top: 0; left: 12px; right: 12px; height: 8px; cursor: ns-resize; }
-      .resizer-b { bottom: 0; left: 12px; right: 12px; height: 8px; cursor: ns-resize; }
-      .resizer-l { left: 0; top: 12px; bottom: 12px; width: 8px; cursor: ew-resize; }
-      .resizer-r { right: 0; top: 12px; bottom: 12px; width: 8px; cursor: ew-resize; }
-      .resizer-tl { top: 0; left: 0; width: 14px; height: 14px; cursor: nwse-resize; }
-      .resizer-tr { top: 0; right: 0; width: 14px; height: 14px; cursor: nesw-resize; }
-      .resizer-bl { bottom: 0; left: 0; width: 14px; height: 14px; cursor: nesw-resize; }
-      .resizer-br { bottom: 0; right: 0; width: 14px; height: 14px; cursor: nwse-resize; }
+      .resizer-t { top: 0; left: 22px; right: 22px; height: 10px; cursor: ns-resize; }
+      .resizer-b { bottom: 0; left: 22px; right: 22px; height: 10px; cursor: ns-resize; }
+      .resizer-l { left: 0; top: 22px; bottom: 22px; width: 10px; cursor: ew-resize; }
+      .resizer-r { right: 0; top: 22px; bottom: 22px; width: 10px; cursor: ew-resize; }
+      .resizer-tl { top: 0; left: 0; width: 24px; height: 24px; cursor: nwse-resize; }
+      .resizer-tr { top: 0; right: 0; width: 24px; height: 24px; cursor: nesw-resize; }
+      .resizer-bl { bottom: 0; left: 0; width: 24px; height: 24px; cursor: nesw-resize; }
+      .resizer-br { bottom: 0; right: 0; width: 24px; height: 24px; cursor: nwse-resize; }
       
       #sb-main .sb-panel.is-drag-active {
         flex: 1 1 0% !important;

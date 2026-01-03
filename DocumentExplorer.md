@@ -3,6 +3,7 @@ name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
 files:
 - PanelDragResize.js
+- FloatingPage.js
 - docex_styles.css
 - lucide-icons.svg
 - hybrid-cursor.svg
@@ -866,6 +867,11 @@ if (contextMenuEnabled) {
         menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold;">Go To</div>`;
     }
 
+    // NEW: Preview option for files
+    if (!isFolder || isBadgeClick) {
+        menuContent += `<div class="menu-item" id="ctx-preview">Preview</div>`;
+    }
+
     menuContent += `<div class="menu-item" id="ctx-rename">Rename</div>`;
     if (!isFolder || isBadgeClick) {
         menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
@@ -883,13 +889,23 @@ if (contextMenuEnabled) {
 
     // --- Action Handlers ---
     
-    // NEW: Handle the Open command
+    // Handle the Open command
     if (document.getElementById('ctx-open')) {
         document.getElementById('ctx-open').onclick = async () => {
             menu.style.display = 'none';
             let openPath = internalPath;
             if (openPath !== "" && !openPath.endsWith("/")) openPath += "/";
             await syscall('editor.invokeCommand', 'DocumentExplorer: Open Folder', { path: openPath });
+        };
+    }
+
+    // Handle the Preview command
+    if (document.getElementById('ctx-preview')) {
+        document.getElementById('ctx-preview').onclick = async () => {
+            menu.style.display = 'none';
+            const fileName = internalPath.split('/').pop();
+            const luaCmd = `js.import("/.fs/Library/Mr-xRed/FloatingPage.js").show("${internalPath}", "${fileName}")`;
+            await syscall('lua.evalExpression', luaCmd);
         };
     }
 
@@ -1286,7 +1302,7 @@ command.define {
   hide = true,
   run = function()
     local cur = clientStore.get("explorer.panelWidth") or 0.8
-    clientStore.set("explorer.panelWidth", math.max(cur - 0.05, 0.45))
+    clientStore.set("explorer.panelWidth", math.max(cur - 0.05, 0.5))
     drawPanel()
   end
 }

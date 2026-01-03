@@ -19,6 +19,15 @@ export function show(content, titleLabel = null) {
     const style = document.createElement("style");
     style.id = "sb-floating-page-styles";
     style.textContent = `
+      :root {
+        --header-height: 20px;
+        --frame-width: 5px;
+        --frame-color: oklch(0.4 0 0 / 0.2);
+        --window-border: 2px;
+        --window-border-radius: 10px;
+        --window-border-color: oklch(0.65 0 0 / 0.2);
+      }
+
       body.sb-dragging-active {
         user-select: none !important;
         -webkit-user-select: none !important;
@@ -29,12 +38,12 @@ export function show(content, titleLabel = null) {
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
-        background: var(--frame-color, #222);
-        border: var(--window-border, 1px) solid var(--window-border-color, #444);
+        background: var(--frame-color);
+        border: var(--window-border) solid var(--window-border-color);
         backdrop-filter: blur(10px);
-        box-shadow: 0px 5px 15px #0008;
-        border-radius: 12px;
-        padding: 6px;
+        box-shadow: 0px 0px 20px #0008;
+        border-radius: calc(var(--window-border-radius) + var(--frame-width));
+        padding: var(--frame-width);
         width: 600px;
         height: 500px;
         touch-action: none;
@@ -42,40 +51,58 @@ export function show(content, titleLabel = null) {
         max-height: calc(100vh - ${TOP_OFFSET}px);
       }
       
-      /* Visual feedback for focused window */
       .sb-floating-container.is-focused {
         box-shadow: 0px 10px 30px #000a;
-        border-color: var(--ui-accent-color, #007bff);
+        border-color: oklch(0.65 0 0 / 0.4);
       }
 
       .sb-floating-header {
-        height: 30px !important;
+        height: var(--header-height) !important;
         width: 100% !important;
         cursor: grab !important;
+        border-radius: 8px !important;
         flex-shrink: 0 !important;
         display: flex !important;
         align-items: center;
         justify-content: center;
         position: relative;
+        transition: background 0.2s ease;
       }
 
+      .sb-floating-header:hover { 
+        background: rgba(255, 255, 255, 0.1) !important; 
+      }
+
+/* 
+      .sb-floating-header::after {
+        content: "" !important;
+        width: 60px !important;
+        height: 12px !important;
+        background: repeating-linear-gradient(
+          to bottom,
+          rgba(128, 128, 128, 0.8) 0px,
+          rgba(128, 128, 128, 0.8) 2px,
+          transparent 2px,
+          transparent 5px
+        ) !important;
+        opacity: 0.6 !important;
+        position: absolute;
+      }
+*/
       .sb-floating-title {
         white-space: nowrap;      
         overflow: hidden;        
         text-overflow: ellipsis; 
-        
-
         max-width: 100%;         
-        padding: 0 35px;          
+        padding: 0 40px;          
         box-sizing: border-box;   
         text-align: center;     
-
-        font-size: 11px;
-        font-family: sans-serif;
-        color: rgba(255, 255, 255, 0.5);
-        pointer-events: none;
+        font-size: 1em;
+/*      font-family: sans-serif;
+        pointer-events: none; 
+        letter-spacing: 1; */
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        z-index: 1;
       }
 
       .sb-floating-close-btn {
@@ -94,17 +121,18 @@ export function show(content, titleLabel = null) {
       .sb-floating-iframe-wrapper {
         flex: 1;
         position: relative;
-        border-radius: 6px;
+        border-radius: var(--window-border-radius);
         overflow: hidden;
+        border: var(--window-border) solid var(--window-border-color);
+        margin-top: 4px;
       }
 
       .sb-floating-iframe {
         width: 100%; height: 100%;
         border: none;
-        background: var(--background, white);
+        background: transparent !important;
       }
 
-      /* The "Shield" prevents the iframe from stealing focus clicks */
       .sb-iframe-shield {
         position: absolute;
         top: 0; left: 0; right: 0; bottom: 0;
@@ -116,22 +144,18 @@ export function show(content, titleLabel = null) {
         display: none;
       }
 
-      /* Multi-side resizers */
+      /* Multi-side resizers - Adjusted to match source hit areas */
       .sb-resizer { position: absolute; z-index: 10001; }
-      
-      /* Sides */
-      .resizer-t { top: 0; left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
-      .resizer-b { bottom: 0; left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
-      .resizer-l { left: 0; top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
-      .resizer-r { right: 0; top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
-      
-      /* Corners */
-      .resizer-tl { top: 0; left: 0; width: 12px; height: 12px; cursor: nwse-resize; }
-      .resizer-tr { top: 0; right: 0; width: 12px; height: 12px; cursor: nesw-resize; }
-      .resizer-bl { bottom: 0; left: 0; width: 12px; height: 12px; cursor: nesw-resize; }
-      .resizer-br { bottom: 0; right: 0; width: 12px; height: 12px; cursor: nwse-resize; }
+      .resizer-t { top: 0; left: 22px; right: 22px; height: 10px; cursor: ns-resize; }
+      .resizer-b { bottom: 0; left: 22px; right: 22px; height: 10px; cursor: ns-resize; }
+      .resizer-l { left: 0; top: 22px; bottom: 22px; width: 10px; cursor: ew-resize; }
+      .resizer-r { right: 0; top: 22px; bottom: 22px; width: 10px; cursor: ew-resize; }
+      .resizer-tl { top: 0; left: 0; width: 24px; height: 24px; cursor: nwse-resize; }
+      .resizer-tr { top: 0; right: 0; width: 24px; height: 24px; cursor: nesw-resize; }
+      .resizer-bl { bottom: 0; left: 0; width: 24px; height: 24px; cursor: nesw-resize; }
+      .resizer-br { bottom: 0; right: 0; width: 24px; height: 24px; cursor: nwse-resize; }
     `;
-document.head.appendChild(style);
+    (document.head || document.documentElement).appendChild(style);
 
     window.addEventListener("resize", () => {
       document.querySelectorAll(".sb-floating-container").forEach(win => clampToViewport(win));
@@ -143,7 +167,6 @@ document.head.appendChild(style);
     return;
   }
 
-  // ... (Keep existing container/header/iframe creation) ...
   container = document.createElement("div");
   container.id = sanitizedId;
   container.className = "sb-floating-container";
@@ -185,7 +208,6 @@ document.head.appendChild(style);
 
   setupEvents(container, header, storageKey);
   
-  // (Keep clamping and loading logic same)
   const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
   if (saved) {
     container.style.left = `${saved.x}px`;
@@ -201,7 +223,6 @@ document.head.appendChild(style);
   focusWindow(container);
 }
 
-// ... (Keep clampToViewport and focusWindow same) ...
 function clampToViewport(win) {
   const rect = win.getBoundingClientRect();
   let left = rect.left, top = rect.top, width = rect.width, height = rect.height;
@@ -231,14 +252,10 @@ function setupEvents(container, header, storageKey) {
 
     if (resizer || isHeader) {
       activeAction = resizer ? resizer.dataset.direction : 'drag';
-      
-      // NEW: Apply global selection lock
       document.body.classList.add("sb-dragging-active");
-      
       startX = e.clientX; startY = e.clientY;
       startW = container.offsetWidth; startH = container.offsetHeight;
       startL = container.offsetLeft; startT = container.offsetTop;
-      
       e.target.setPointerCapture(e.pointerId);
       e.stopPropagation();
     }
@@ -279,10 +296,7 @@ function setupEvents(container, header, storageKey) {
   const stopAction = () => {
     if (!activeAction) return;
     activeAction = null;
-    
-    // NEW: Remove global selection lock
     document.body.classList.remove("sb-dragging-active");
-    
     localStorage.setItem(storageKey, JSON.stringify({
       x: container.offsetLeft, y: container.offsetTop,
       w: container.offsetWidth, h: container.offsetHeight
