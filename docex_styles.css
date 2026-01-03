@@ -312,7 +312,7 @@
   background: oklch(0.75 0 0 / 0.15);
 }
 
-.grid-tile:hover { background: var(--explorer-hover-bg); }
+.hybrid-virtual-entry .grid-tile:hover, .grid-tile:hover { background: var(--explorer-hover-bg); }
 
 .grid-tile.is-dragging {
   outline: 3px dotted var(--explorer-accent-color) !important;
@@ -683,6 +683,21 @@ html[data-theme="light"] {
 .mode-tree summary.hybrid-tile::-webkit-details-marker { 
   display: none; 
 }
+
+
+/* Styling for the virtual "Index" page injected from the parent */
+.hybrid-virtual-entry .grid-tile {
+    border: 1px dashed  oklch(from var(--file-md-color) 0.75 0.25 h); /* A dashed border to show it's "special" */
+    background: oklch(from var(--file-md-color) 0.75 0.25 h / 0.05); /* Very subtle blue tint */
+}
+
+.hybrid-virtual-entry .grid-title {
+    color:  oklch(from var(--file-md-color) 0.75 0.25 h) !important; 
+    font-weight: bold;
+}
+
+
+
 /* 
  ====== 9. OVERLAYS (Context Menu) ======
 */
