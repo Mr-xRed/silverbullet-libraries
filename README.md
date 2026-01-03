@@ -10,24 +10,29 @@
 * [**OpenWeatherMap_Widgets**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/OpenWeatherMap_Widgets.md) - OWM Weather widgets
 
 ### Productivity Shortcuts
+* [**DatePicker as SlashCommand**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DatePicker.md) - Pick a date from a calendar and add it to your page as a WikiLink
+* [**Floating Journal Calendar**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingJournalCalendar.md) - The Floating Journal Calendar is a lightweight, interactive navigation tool
+* [**DisableAccidentalMobileTaps**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DisableAccidentalMobileTaps.md) - Command to disable summoning the Evil Unwanted Virtual Keyboard
 * [**HeaderLevelToggle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/HeaderLevelToggle.md) - Toggles header level using Ctrl-1 to 6 Shortcut keys
 * [**SelectionToCodeblockToggle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SelectionToCodeblockToggle.md) - Transforms Selection into a CodeBlock
 
 ### Style and Visuals
 * [**Admonitions_multilingual**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Admonitions_multilingual.md) - Multilingual & Modern style custom admonitions 
-* [**TitleBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TitleBar_ModernStyle.md) - Improves aesthetics
 * [**ModalBoxHighlighter**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/ModalBoxHighlighter.md) - Improves focus and usability
 * [**Custom_Width_and_Color_Tables**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Custom_Width_and_Color_Tables.md) - Adds custom color and width to your boring tables
 * [**TopPageBanner**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TopPageBanner.md) - Displays an embedded image on the top of the page
 * [**SearchBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SearchBar_ModernStyle.md) - Restyling of the “Find in Page” - Search Bar
 * [**Treeview_Extension_DragAndResize**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Treeview_Extension_DragAndResize.md) - Adds Drag & Resize capabilities to TreeView
-* [**SilverBullet_CSS_Structure_Map**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SilverBullet_CSS_Structure_Map.md) - WORK IN PROGRESS
+* [**SilverBullet_CSS_Structure_Map**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/SilverBullet_CSS_Structure_Map.md) - A CSS Structure Map of IDs and Classes to ease customization.
 
 ### Tools
+* [**Document Explorer for SilverBullet**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DocumentExplorer.md) - Document Explorer for SilverBullet with some handy features
+* [**Floating Page(Proof of Concept)**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingPage.md) - Open any page in a Floating Window inside Silverbullet 
 * [**PrintPreview**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PrintPreview.md) - PrintPreview implementation using space-lua/HTML/CSS
-* ☠️ [**PDF_with_Pandoc_and_Weasyprint**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PDF_with_Pandoc_and_Weasyprint.md) - Example on how to use Pandoc with Silverbullet
 
 ### Deprecated Libraries
+* [**☠️ TitleBar_ModernStyle**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TitleBar_ModernStyle.md) - Improves aesthetics
+* ☠️ [**PDF_with_Pandoc_and_Weasyprint**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PDF_with_Pandoc_and_Weasyprint.md) - Example on how to use Pandoc with Silverbullet
 * ☠️ [**UpdateSilverbulletLibraries**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/UpdateSilverbulletLibraries.md) - Updates Community Silverbullet-Libraries
 * ☠️ [**Manage_Silverbullet_Libraries**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Manage_Silverbullet_Libraries.md) - Manage your imported silverbullet-libraries
 
