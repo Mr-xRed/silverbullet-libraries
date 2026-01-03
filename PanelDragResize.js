@@ -101,7 +101,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         margin-top: 4px !important;
         width: 100% !important;
         height: 100% !important; 
-        overflow: hidden !important;
+        overflow: clip !important;
         box-sizing: border-box !important;
         border: var(--window-border) solid var(--window-border-color) !important;
         border-radius: var(--window-border-radius) !important;
