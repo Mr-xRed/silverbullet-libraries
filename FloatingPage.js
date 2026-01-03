@@ -130,7 +130,7 @@ export function show(content, titleLabel = null) {
       .sb-floating-iframe {
         width: 100%; height: 100%;
         border: none;
-        background: transparent !important;
+        background: var(--root-background-color) !important;
       }
 
       .sb-iframe-shield {
