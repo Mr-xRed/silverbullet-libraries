@@ -10,21 +10,13 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
     style.id = "sb-global-drag-styles";
     style.textContent = `
       :root{
-        --header-height: 20px;
-        --frame-width: 5px;
-        --frame-color: oklch(0.4 0 0 / 0.2);
-        --window-border: 2px;
-        --window-border-radius: 10px;
-        --window-border-color: oklch(0.65 0 0 / 0.2);
+        --header-height: 20px;                         /* Header height, drag-area */
+        --frame-width: 5px;                            /* frame thickness */
+        --frame-color: oklch(0.4 0 0 / 0.2);          /* frame color */
+        --window-border: 2px;                          /* solid border width (aesthetic) */
+        --window-border-radius: 10px;                  /* inner iframe border radius */
+        --window-border-color: oklch(0.65 0 0 / 0.2);  /* solid border color (aesthetic) */
       } 
-
-      .sb-panel iframe {
-      background-color: transparent !important;
-      width: calc(100% + 2px);
-      height: calc(100% + 2px);
-      margin: -1px;
-      }
-
       #sb-top .panel, 
       body #sb-top .panel { 
         position: fixed !important; 
@@ -82,16 +74,23 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         opacity: 0.6 !important;
       }
 
+      /* Resizer Handles */
       .sb-resizer { position: absolute; z-index: 10001; }
-      .resizer-t { top: 0; left: 12px; right: 12px; height: 8px; cursor: ns-resize; }
-      .resizer-b { bottom: 0; left: 12px; right: 12px; height: 8px; cursor: ns-resize; }
-      .resizer-l { left: 0; top: 12px; bottom: 12px; width: 8px; cursor: ew-resize; }
-      .resizer-r { right: 0; top: 12px; bottom: 12px; width: 8px; cursor: ew-resize; }
-      .resizer-tl { top: 0; left: 0; width: 14px; height: 14px; cursor: nwse-resize; }
-      .resizer-tr { top: 0; right: 0; width: 14px; height: 14px; cursor: nesw-resize; }
-      .resizer-bl { bottom: 0; left: 0; width: 14px; height: 14px; cursor: nesw-resize; }
-      .resizer-br { bottom: 0; right: 0; width: 14px; height: 14px; cursor: nwse-resize; }
       
+      .sb-resizer { position: absolute; z-index: 10001; }
+      .resizer-t { top: 0; left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
+      .resizer-b { bottom: 0; left: 10px; right: 10px; height: 6px; cursor: ns-resize; }
+      .resizer-l { left: 0; top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
+      .resizer-r { right: 0; top: 10px; bottom: 10px; width: 6px; cursor: ew-resize; }
+      .resizer-tl { top: 0; left: 0; width: 12px; height: 12px; cursor: nwse-resize; }
+      .resizer-tr { top: 0; right: 0; width: 12px; height: 12px; cursor: nesw-resize; }
+      .resizer-bl { bottom: 0; left: 0; width: 12px; height: 12px; cursor: nesw-resize; }
+      .resizer-br { bottom: 0; right: 0; width: 12px; height: 12px; cursor: nwse-resize; }
+      
+      #sb-main .sb-panel:last-child {
+       border-left: none;
+      }a
+
       #sb-main .sb-panel.is-drag-active {
         flex: 1 1 0% !important;
         position: relative !important;
@@ -101,14 +100,14 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
         margin-top: 4px !important;
         width: 100% !important;
         height: 100% !important; 
-        overflow: hidden !important;
+/*        overflow: hidden !important;*/
         box-sizing: border-box !important;
         border: var(--window-border) solid var(--window-border-color) !important;
         border-radius: var(--window-border-radius) !important;
         background: transparent !important;
       }
     `;
-    (document.head || document.documentElement).appendChild(style);
+(document.head || document.documentElement).appendChild(style);
   }
 
   const container = document.createElement("div");
@@ -144,6 +143,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   const setIframesPointer = (val) => 
     container.querySelectorAll("iframe").forEach(f => f.style.pointerEvents = val);
 
+  // Unified Pointer Down handler
   const handleDown = (e) => {
     const resizer = e.target.closest('.sb-resizer');
     const isHeader = e.target.closest('.sb-panel-header');
@@ -175,6 +175,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
       newLeft = startL + dx;
       newTop = startT + dy;
       
+      // Snapping logic for drag
       if (newLeft < SNAP_THRESHOLD) newLeft = 0;
       if (newTop < SNAP_THRESHOLD) newTop = 0;
       if (newLeft + startW > window.innerWidth - SNAP_THRESHOLD) newLeft = window.innerWidth - startW;
@@ -183,17 +184,19 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
       container.style.left = `${newLeft}px`;
       container.style.top = `${newTop}px`;
     } else {
+      // Logic imported from your provided code
       if (activeAction.includes('r')) newWidth = startW + dx;
       if (activeAction.includes('b')) newHeight = startH + dy;
       if (activeAction.includes('l')) { newWidth = startW - dx; newLeft = startL + dx; }
       if (activeAction.includes('t')) { newHeight = startH - dy; newTop = startT + dy; }
 
-
+      // Viewport constraints
       if (newLeft < 0) { newWidth += newLeft; newLeft = 0; }
       if (newTop < 0) { newHeight += newTop; newTop = 0; }
       if (newLeft + newWidth > window.innerWidth) newWidth = window.innerWidth - newLeft;
       if (newTop + newHeight > window.innerHeight) newHeight = window.innerHeight - newTop;
 
+      // Min sizes
       if (newWidth > 320) { 
         container.style.width = `${newWidth}px`; 
         container.style.left = `${newLeft}px`; 
@@ -210,9 +213,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
     activeAction = null;
     setIframesPointer("auto");
     document.body.style.userSelect = "";
-    
-    // Save as rounded integers
-     localStorage.setItem("sb_dims_v1", JSON.stringify({
+    localStorage.setItem("sb_dims_v1", JSON.stringify({
       x: container.offsetLeft, y: container.offsetTop,
       w: container.offsetWidth, h: container.offsetHeight
     }));
@@ -221,6 +222,7 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   window.addEventListener("pointerup", stopAction);
   window.addEventListener("pointercancel", stopAction);
 
+  // Restore State
   const saved = JSON.parse(localStorage.getItem("sb_dims_v1") || "null");
   if (saved) {
     container.style.left = `${saved.x}px`;
