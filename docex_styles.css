@@ -1,7 +1,7 @@
 /* ====== 1. VARIABLES & BASE STYLES ====== */
 
 :root {
-  font-family: Monaco, Menlo, Consolas, "Courier New", Courier, monospace;
+  font-family: var(--ui-font), Monaco, Menlo, Consolas, "Courier New", Courier, monospace;
 }
 
 .explorer-panel {
@@ -597,7 +597,7 @@ html[data-theme="dark"] {
   }
   
   /* Active Page Highlighting */
-  .grid-tile.is-active-page {
+  .grid-tile.is-active-page:not(summary) {
   background-color: oklch(from var(--explorer-accent-color) 0.5 c h ) !important;
   /*color: var(--explorer-accent-text, white) !important;*/
   font-weight: bold;
@@ -613,7 +613,7 @@ html[data-theme="light"] {
   border: 1px solid oklch(from var(--file-md-color) 0.8 0.05 h / 1);
   }
   
-  .grid-tile.is-active-page {
+  .grid-tile.is-active-page:not(summary)  {
   background-color: oklch(from var(--explorer-accent-color) 0.70 0.28 h ) !important;
   color: var(--explorer-accent-text, white) !important;
   font-weight: bold;
