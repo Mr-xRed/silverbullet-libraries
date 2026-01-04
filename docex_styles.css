@@ -1,6 +1,4 @@
-/*
- ====== 1. VARIABLES & BASE STYLES ======
-*/
+/* ====== 1. VARIABLES & BASE STYLES ====== */
 
 :root {
   font-family: Monaco, Menlo, Consolas, "Courier New", Courier, monospace;
@@ -10,9 +8,7 @@
   color: var(--explorer-text-color);
 }
 
-/*
- ====== 2. LAYOUT CONTAINER ======
-*/
+/* ====== 2. LAYOUT CONTAINER ====== */
 
 .explorer-panel {
   display: flex;
@@ -41,9 +37,7 @@
   scroll-behavior: smooth;
 }
 
-/*
- ======3. HEADER & NAVIGATION ======
-*/
+/* ======3. HEADER & NAVIGATION ====== */
 
 .explorer-header {
   flex: 0 0 auto;
@@ -84,7 +78,7 @@
 .explorer-toolbar input {
   height: 100%;
   width: 100%;
-  padding: 4px 7px;
+  padding: 4px 22px 4px 4px;
   border-radius: 6px;
   border: none;
   outline: 1px solid var(--explorer-border-color);
@@ -98,13 +92,13 @@
 .explorer-toolbar input:hover { background: var(--explorer-hover-bg); }
 .explorer-toolbar input:focus {
   cursor: text;
-  outline: 2px solid var(--explorer-border-color);
+  outline: 1px solid var(--explorer-border-color);
   box-sizing: border-box;
 }
 
 .clear-btn {
   position: absolute;
-  right: 8px;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
   width: 14px;
@@ -216,11 +210,10 @@
 }
 
 
-/*--------- Hide Action Buttons when Filter in focus ------------- */
+/* --------- Hide Action Buttons when Filter in focus ------------- */
 
 .view-switcher, 
 .explorer-button-group,
-/*#filter-btn, #tree-toggle-btn,*/
 .action-buttons .explorer-action-btn {
   max-width: 200px; 
   opacity: 1;
@@ -280,9 +273,7 @@
   cursor: pointer;
 }
 
-/*
- ====== 4. SHARED TILE COMPONENTS (Icon, Title, Thumbnails) ======
-*/
+/* ====== 4. SHARED TILE COMPONENTS (Icon, Title, Thumbnails) ====== */
 
 .grid-tile {
   position: relative;
@@ -343,9 +334,7 @@
 
 
 
-/*
- ====== 5. GRID MODE SPECIFIC ======
-*/
+/* ====== 5. GRID MODE SPECIFIC ====== */
 
 .mode-grid .document-explorer {
   display: grid;
@@ -361,9 +350,7 @@
   overflow: hidden;
 }
 
-/*
- ====== 6. LIST & TREE MODE (Shared Styles) ======
-*/
+/* ====== 6. LIST & TREE MODE (Shared Styles) ====== */
 
 .mode-list .document-explorer,
 .mode-tree .document-explorer {
@@ -410,9 +397,7 @@
     font-size: calc((var(--list-tile-height) / 24px) * 16px);
 }
 
-/*
- ====== 7. TREE VIEW SPECIFIC ======
-*/
+/* ====== 7. TREE VIEW SPECIFIC ====== */
 
 .mode-tree .tree-view-container {
   padding-left: 5px;
@@ -426,7 +411,14 @@
  --tree-indent: calc((var(--icon-center) + var(--left-padding)));
 }
 
-
+/* Ensure the container has a relative position to anchor the line */
+.mode-tree .tree-content {
+  margin-left: var(--tree-indent) !important;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: visible; 
+}
 
 /* Vertical Lines  */
 .mode-tree .tree-content::before {
@@ -451,44 +443,7 @@
   pointer-events: none; 
 }
 
-/* Ensure the container has a relative position to anchor the line */
-.mode-tree .tree-content {
-  margin-left: var(--tree-indent) !important;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: visible; 
-}
 
-
-
-/*
-.mode-tree .tree-content {
- margin-left: var(--tree-indent) !important;
- position: relative;
- display: flex;
- flex-direction: column;
- overflow: hidden;
-}
-
-.mode-tree .tree-content::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -2px;
-  bottom: calc(var(--icon-center) - 2px); 
-  border-left: 2px solid var(--explorer-border-color);
-}
-
-.mode-tree .tree-file::before {
-  content: "";
-  position: absolute;
-  left: 0px;
-  top: var(--icon-center);
-  width: var(--left-padding);
-  border-top: 2px solid var(--explorer-border-color);
-}
-*/
 
 .tree-view-container > .tree-file::before,
 .tree-view-container > .tree-folder::before {
@@ -538,9 +493,7 @@
   font-weight: bold;
 }
 
-/*
- ====== 8. FILE EXTENSIONS & BADGES ======
-*/
+/* ====== 8. FILE EXTENSIONS & BADGES ====== */
 
 /* Shared badge style */
 .grid-tile::after {
@@ -730,9 +683,7 @@ html[data-theme="light"] {
 
 
 
-/* 
- ====== 9. OVERLAYS (Context Menu) ======
-*/
+/*  ====== 9. OVERLAYS (Context Menu) ====== */
 
 #explorer-context-menu {
   font-weight: bold;
@@ -742,7 +693,6 @@ html[data-theme="light"] {
   box-shadow: 0 4px 15px 0 oklch(0 0 0 / 0.5);
   padding: 4px;
   width: 80px;
- /* backdrop-filter: blur(10px);*/
 }
 
 #explorer-context-menu .menu-item {
@@ -763,9 +713,7 @@ html[data-theme="light"] {
 #explorer-context-menu .menu-item.delete:hover { background: oklch(0.65 0.2 30); color: white; }
 
 
-/*
- ====== 10. ICONS  ======
-*/
+/* ====== 10. ICONS  ====== */
 
 .action-buttons svg {
  max-height: 24px;
@@ -827,18 +775,19 @@ html[data-theme="light"] {
 .unknown-tile .icon svg{stroke: oklch(from var(--file-unk-color) l c h ); fill: oklch(from var(--file-unk-color) 0.95 c h ); }
 }
 
-/*
- ====== 11. MAIN (Colors) ======
-*/
+/* ====== 11. MAIN UI (Colors) ====== */
 
 html[data-theme="dark"]{
+  /*Main UI Color*/
   --explorer-bg-color: var(--top-background-color);
   --explorer-text-color:  var(--root-color,white);
-  --explorer-accent-color: var(--ui-accent-color,  #007acc);
-  --explorer-accent-text: var(--modal-selected-option-color);
+  --explorer-accent-color: var(--ui-accent-color,  oklch(55% 0.15 250));
+  --explorer-accent-text: var(--ui-accent-contrast-color);
+  --explorer-border-color: oklch(from var(--modal-border-color) 0.65 c h / 0.5);
   --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
-  --explorer-border-color: oklch(0.65 0 0 / 0.5);
-  --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
+  --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
+
+  /*Folder and File Color*/
   --folder-color: oklch(0.85 0.1 105);
   --file-md-color:  hsl(213, 100%, 83%);
   --file-pdf-color: oklch(0.85 0.1 30); 
@@ -849,13 +798,16 @@ html[data-theme="dark"]{
 }
 
 html[data-theme="light"]{
+  /*Main UI Color*/
   --explorer-bg-color: var(--top-background-color);
   --explorer-text-color: var(--root-color, black);
-  --explorer-accent-color: var(--ui-accent-color, #007acc);
-  --explorer-accent-text: var(--modal-selected-option-color);
+  --explorer-accent-color: var(--ui-accent-color,oklch(55% 0.15 250));
+  --explorer-accent-text: var(--ui-accent-contrast-color);
+  --explorer-border-color: oklch(from var(--modal-border-color) 0.50 c h / 0.5);
   --explorer-hover-bg: oklch(0.75 0 0 / 0.5);
-  --explorer-border-color: oklch(0.50 0 0 / 0.5);
-  --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
+  --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
+
+  /*Folder and File Color*/
   --folder-color: oklch(0.65 0.15 105);
   --file-md-color:  oklch(0.65 0.15 260);
   --file-pdf-color: oklch(0.65 0.15 30); 
