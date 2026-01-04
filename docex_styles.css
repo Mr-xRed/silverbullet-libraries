@@ -265,7 +265,7 @@
 
 .explorer-breadcrumbs a {
   text-decoration: none;
-  color: oklch(from var(--editor-wiki-link-page-color) l c h );
+  color: oklch(from var(--breadcrumb-color) l c h );
 }
 
 .explorer-breadcrumbs a:hover {
@@ -537,7 +537,7 @@ html[data-theme="dark"] {
   .image-tile::after { content: "IMG"; color: var(--file-img-color); background: oklch(from var(--file-img-color) 0.25 0.02 h / 1); border: 1px solid oklch(from var(--file-img-color) 0.5 0.05 h / 1);}
   .excalidraw-tile::after { content: "EX"; color: var(--file-ex-color); background: oklch(from var(--file-ex-color) 0.25 0.02 h / 1); border: 1px solid oklch(from var(--file-ex-color) 0.5 0.05 h / 1);}
   .drawio-tile::after { content: "DIO"; color: var(--file-dio-color); background: oklch(from var(--file-dio-color) 0.25 0.02 h / 1); border: 1px solid oklch(from var(--file-dio-color) 0.5 0.05 h / 1);}
-  .unknown-tile::after { content: attr(data-ext); color: var(--file-unk-color); background: oklch(from var(--file-unk-color) 0.25 0 h / 1); border: 1px solid oklch(from var(--file-unk-color) 0.5 0 h / 1);}
+  .unknown-tile::after { content: attr(data-ext); color: var(--file-unk-color); background: oklch(from var(--file-unk-color) 0.25 0.01 h / 1); border: 1px solid oklch(from var(--file-unk-color) 0.5 0.01 h / 1);}
 }
 
 
@@ -783,6 +783,7 @@ html[data-theme="dark"]{
   --explorer-text-color:  var(--root-color,white);
   --explorer-accent-color: var(--ui-accent-color,  oklch(55% 0.15 250));
   --explorer-accent-text: var(--ui-accent-contrast-color);
+  --breadcrumb-color: var(--editor-wiki-link-page-color);
   --explorer-border-color: oklch(from var(--modal-border-color) 0.65 c h / 0.5);
   --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
   --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
@@ -803,6 +804,7 @@ html[data-theme="light"]{
   --explorer-text-color: var(--root-color, black);
   --explorer-accent-color: var(--ui-accent-color,oklch(55% 0.15 250));
   --explorer-accent-text: var(--ui-accent-contrast-color);
+  --breadcrumb-color: var(--editor-wiki-link-page-color);
   --explorer-border-color: oklch(from var(--modal-border-color) 0.50 c h / 0.5);
   --explorer-hover-bg: oklch(0.75 0 0 / 0.5);
   --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);

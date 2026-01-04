@@ -84,15 +84,17 @@ Licensed under the ISC and MIT licenses.
 ```css
 
 html[data-theme="dark"]{
-  /* Main UI Color */
+  /*Main UI Color*/
   --explorer-bg-color: var(--top-background-color);
   --explorer-text-color:  var(--root-color,white);
   --explorer-accent-color: var(--ui-accent-color,  oklch(55% 0.15 250));
   --explorer-accent-text: var(--ui-accent-contrast-color);
+  --breadcrumb-color: var(--editor-wiki-link-page-color);
   --explorer-border-color: oklch(from var(--modal-border-color) 0.65 c h / 0.5);
   --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
   --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
-  /* Folder and File Color */
+
+  /*Folder and File Color*/
   --folder-color: oklch(0.85 0.1 105);
   --file-md-color:  hsl(213, 100%, 83%);
   --file-pdf-color: oklch(0.85 0.1 30); 
@@ -103,15 +105,17 @@ html[data-theme="dark"]{
 }
 
 html[data-theme="light"]{
-  /* Main UI Color */
+  /*Main UI Color*/
   --explorer-bg-color: var(--top-background-color);
   --explorer-text-color: var(--root-color, black);
   --explorer-accent-color: var(--ui-accent-color,oklch(55% 0.15 250));
   --explorer-accent-text: var(--ui-accent-contrast-color);
+  --breadcrumb-color: var(--editor-wiki-link-page-color);
   --explorer-border-color: oklch(from var(--modal-border-color) 0.50 c h / 0.5);
   --explorer-hover-bg: oklch(0.75 0 0 / 0.5);
   --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
-  /* Folder and File Color */
+
+  /*Folder and File Color*/
   --folder-color: oklch(0.65 0.15 105);
   --file-md-color:  oklch(0.65 0.15 260);
   --file-pdf-color: oklch(0.65 0.15 30); 
