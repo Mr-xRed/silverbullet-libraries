@@ -206,7 +206,6 @@ local homeDirName = cfg.homeDirName or "🏠 Home"
 local goToCurrentDir = cfg.goToCurrentDir ~= false
 local enableContextMenu = cfg.enableContextMenu ~= false
 local negativeFilter = cfg.negativeFilter or {}
--- The new sorting preference
 local treeFolderFirst = cfg.treeFolderFirst == true 
 
 
@@ -218,7 +217,6 @@ local VIEW_MODE_KEY = "gridExplorer.viewMode"
 
 -- ---------- Helper to check negative filters ----------
 local function isFiltered(path)
-  -- We always calculate this so we can "tag" the item in HTML
   local lowPath = path:lower()
   for _, pattern in ipairs(negativeFilter) do
     local lowPattern = pattern:lower()
