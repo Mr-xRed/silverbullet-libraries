@@ -185,9 +185,20 @@ export function show(content, titleLabel = null) {
   shield.className = "sb-iframe-shield";
   const iframe = document.createElement("iframe");
   iframe.className = "sb-floating-iframe";
-  if (isHtml) iframe.srcdoc = content;
-  else if (isUrl) iframe.src = content;
-  else iframe.src = window.location.origin + "/" + encodeURIComponent(content);
+  
+  //if (isHtml) iframe.srcdoc = content;
+  //else if (isUrl) iframe.src = content;
+  //else iframe.src = window.location.origin + "/" + encodeURIComponent(content);
+  
+  // Replace the old if/else block with this:
+  if (isHtml) {
+    const blob = new Blob([content], { type: 'text/html' });
+    iframe.src = URL.createObjectURL(blob);
+  } else if (isUrl) { iframe.src = content;
+  } else { iframe.src = window.location.origin + "/" + encodeURIComponent(content);
+  }
+  
+  
   header.appendChild(title);
   header.appendChild(closeBtn);
   wrapper.appendChild(shield);

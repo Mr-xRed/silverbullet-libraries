@@ -2,7 +2,7 @@
 name: "Library/Mr-xRed/FloatingPage"
 tags: meta/library
 files:
-- FloatingPage.js
+- UnifiedFloating.js
 pageDecoration.prefix: "📃 "
 ---
 # Open Floating Page (Proof of Concept)

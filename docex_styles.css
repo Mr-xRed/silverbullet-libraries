@@ -6,59 +6,40 @@
   font-family: Monaco, Menlo, Consolas, "Courier New", Courier, monospace;
 }
 
-.explorer-panel body {
+.explorer-panel {
   color: var(--explorer-text-color);
 }
-
 
 /*
  ====== 2. LAYOUT CONTAINER ======
 */
 
-
 .explorer-panel {
   display: flex;
   background: var(--explorer-bg-color);
   flex-direction: column;
-  height: 100%; 
+  height: 100vh; 
   width: 100%;
   overflow: hidden;
   box-sizing: border-box;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
+
 
 .document-explorer {
   box-sizing: border-box;
   flex: 1; 
+  overflow-y: auto;
+  overflow-x: hidden; 
+  width: 100%;
   min-height: 0; 
-  overflow-y: auto !important;
   padding: 0.5em;
-  width: 100%;
   gap: 8px;
   align-content: start;
   scroll-behavior: smooth;
 }
-/*
-.explorer-panel {
-  display: flex;
-  background: var(--explorer-bg-color);
-  flex-direction: column;
-  height: 100vh;
-  width: 100%;
-  overflow: hidden;
-}
-
-.document-explorer {
-  box-sizing: border-box;
-  flex: 1 1 auto;
-  overflow-x: hidden;
-  overflow-y: auto !important;
-  padding: 0.5em;
-  width: 100%;
-  gap: 8px;
-  align-content: start;
-  scroll-behavior: smooth;
-}
-*/
 
 /*
  ======3. HEADER & NAVIGATION ======
@@ -128,7 +109,7 @@
   transform: translateY(-50%);
   width: 14px;
   height: 14px;
-  background: oklch(0.5 0 0);
+  background:  var(--explorer-hover-bg);
   border-radius: 50%;
   display: none;
   align-items: center;
@@ -171,6 +152,13 @@
   opacity: 1;
 }
 
+.view-switcher div svg{
+  stroke: var(--explorer-text-color);
+}
+.view-switcher div.active svg{
+  stroke: var(--explorer-accent-text);
+}
+
 /* --- Action Buttons --- */
 .explorer-button-group {
     display: flex;
@@ -197,8 +185,11 @@
 
 .explorer-action-btn { font-size: 1.1em; }
 .explorer-action-btn:hover { background: var(--explorer-hover-bg); }
-.explorer-close-btn:hover { background: oklch(0.65 0.22 30); }
+.explorer-close-btn:hover { background: oklch(0.65 0.2 30); }
 .explorer-close-btn svg:hover { stroke: white; }
+
+.explorer-action-btn.active { background: var(--explorer-accent-color);}
+.explorer-action-btn.active svg { stroke: var(--explorer-accent-text);}
 
 #tree-toggle-btn:hover,
 #filter-btn:hover {
@@ -281,7 +272,7 @@
 
 .explorer-breadcrumbs a {
   text-decoration: none;
-  color: var(--link-color);
+  color: oklch(from var(--explorer-accent-color) calc(l - 0.10) c h );
 }
 
 .explorer-breadcrumbs a:hover {
@@ -307,7 +298,7 @@
 }
 
 .grid-tile.is-focused {
-  outline: 2px solid var(--ui-accent-color);
+  outline: 2px solid var(--explorer-accent-text);
   outline-offset: -2px;
   background: oklch(0.75 0 0 / 0.15);
 }
@@ -381,12 +372,14 @@
   gap: 2px;
   width: 100%;
   align-items: stretch;
+  contain: content;
 }
 
 .mode-list .grid-tile,
 .mode-tree .grid-tile {
   flex-direction: row;
   height: var(--list-tile-height);
+  max-height: var(--list-tile-height); /* Force it */
   padding: 0 2px 0 0px;
   align-content: center;
   gap: calc((var(--list-tile-height) / 24px) * 8px);
@@ -421,7 +414,11 @@
  ====== 7. TREE VIEW SPECIFIC ======
 */
 
-.mode-tree .tree-view-container { padding-left: 5px; }
+.mode-tree .tree-view-container {
+  padding-left: 5px;
+  margin: 0;
+  padding-bottom: 1px;
+}
 
 .mode-tree { 
  --left-padding: 15px;
@@ -429,14 +426,51 @@
  --tree-indent: calc((var(--icon-center) + var(--left-padding)));
 }
 
+
+
+/* Vertical Lines  */
+.mode-tree .tree-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -4px;
+  height: calc(100% - var(--icon-center) + 2px); 
+  border-left: 2px solid var(--explorer-border-color);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Horizontal Lines */
+.mode-tree .tree-file::before {
+  content: "";
+  position: absolute;
+  left: -2px;
+  top: var(--icon-center);
+  width: var(--left-padding);
+  border-top: 2px solid var(--explorer-border-color);
+  pointer-events: none; 
+}
+
+/* Ensure the container has a relative position to anchor the line */
+.mode-tree .tree-content {
+  margin-left: var(--tree-indent) !important;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: visible; 
+}
+
+
+
+/*
 .mode-tree .tree-content {
  margin-left: var(--tree-indent) !important;
  position: relative;
  display: flex;
  flex-direction: column;
+ overflow: hidden;
 }
 
-/* Vertical Lines */
 .mode-tree .tree-content::before {
   content: "";
   position: absolute;
@@ -446,7 +480,6 @@
   border-left: 2px solid var(--explorer-border-color);
 }
 
-/* Horizontal Lines */
 .mode-tree .tree-file::before {
   content: "";
   position: absolute;
@@ -455,6 +488,7 @@
   width: var(--left-padding);
   border-top: 2px solid var(--explorer-border-color);
 }
+*/
 
 .tree-view-container > .tree-file::before,
 .tree-view-container > .tree-folder::before {
@@ -502,10 +536,10 @@
 
 /* Active Page Highlighting */
 .grid-tile.is-active-page {
-  background-color: var(--explorer-accent-color, #007acc) !important;
-  color: white !important;
-  border-radius: 4px;
-  outline: 2px solid var(--explorer-accent-color, #007acc);
+  background-color: oklch(from var(--explorer-accent-color, #007acc) l c h / 0.8) !important;
+  color: var(--explorer-accent-text, white) !important;
+ /* border-radius: 4px; */
+ /* outline: 2px solid var(--explorer-accent-color, #007acc);*/
 }
 
 
@@ -727,16 +761,8 @@ html[data-theme="light"] {
   
 }
 
-#explorer-context-menu .menu-item.delete { color: oklch(0.75 0.3 30);}
-#explorer-context-menu .menu-item.delete:hover { background: red; color: white; }
-
-
-.menu-divider {
-    height: 1px;
-    background: gray;
-    margin: 4px 0;
-    opacity: 0.5;
-}
+#explorer-context-menu .menu-item.delete { color: oklch(0.65 0.2 30);}
+#explorer-context-menu .menu-item.delete:hover { background: oklch(0.65 0.2 30); color: white; }
 
 
 /*
@@ -789,7 +815,7 @@ html[data-theme="dark"] {
 .image-tile .icon svg{stroke: oklch(from var(--file-img-color) 0.98 c h );fill: oklch(from var(--file-img-color) 0.65 c h ); }
 .excalidraw-tile .icon svg{stroke: oklch(from var(--file-ex-color) 0.98 c h );fill: oklch(from var(--file-ex-color) 0.65 c h ); }
 .drawio-tile .icon svg{stroke: oklch(from var(--file-dio-color) 0.98 c h ); fill: oklch(from var(--file-dio-color) 0.65 c h ); }
-.unknown-tile .icon svg{stroke: oklch(from var(--file-unk-color) 0.98 0 h ); fill: oklch(from var(--file-unk-color) 0.65 c h ); }
+.unknown-tile .icon svg{stroke: oklch(from var(--file-unk-color) 0.98 c h ); fill: oklch(from var(--file-unk-color) 0.65 c h ); }
 }
 
 html[data-theme="light"] {
@@ -803,14 +829,17 @@ html[data-theme="light"] {
 .unknown-tile .icon svg{stroke: oklch(from var(--file-unk-color) l c h ); fill: oklch(from var(--file-unk-color) 0.95 c h ); }
 }
 
-
+/*
+ ====== 11. MAIN (Colors) ======
+*/
 
 html[data-theme="dark"]{
-  --explorer-bg-color: oklch(0.27 0 0);
+  --explorer-bg-color: var(--top-background-color);
+  --explorer-text-color:  var(--root-color,white);
+  --explorer-accent-color: var(--ui-accent-color);
+  --explorer-accent-text: var(--explorer-accent-text);
   --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
-  --explorer-text-color: oklch(1 0 0);
   --explorer-border-color: oklch(0.65 0 0 / 0.5);
-  --explorer-accent-color: oklch(0.75 0.25 230);
   --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
   --folder-color: oklch(0.85 0.1 105);
   --file-md-color:  hsl(213, 100%, 83%);
@@ -822,11 +851,12 @@ html[data-theme="dark"]{
 }
 
 html[data-theme="light"]{
-  --explorer-bg-color: oklch(0.91 0 0);
+  --explorer-bg-color: var(--top-background-color);
+  --explorer-text-color: var(--root-color, black);
+  --explorer-accent-color: var(--ui-accent-color);
+  --explorer-accent-text: var(--modal-selected-option-color);
   --explorer-hover-bg: oklch(0.75 0 0 / 0.5);
-  --explorer-text-color: oklch(0 0 0);
   --explorer-border-color: oklch(0.50 0 0 / 0.5);
-  --explorer-accent-color: oklch(0.80 0.18 230);
   --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
   --folder-color: oklch(0.65 0.15 105);
   --file-md-color:  oklch(0.65 0.15 260);
@@ -837,6 +867,3 @@ html[data-theme="light"]{
   --file-unk-color: oklch(0.65 0 0);
 }
 
-/*
- ====== 11. ROOT (Variables) ======
-*/

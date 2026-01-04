@@ -2,8 +2,7 @@
 name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
 files:
-- PanelDragResize.js
-- FloatingPage.js
+- UnifiedFloating.js
 - docex_styles.css
 - lucide-icons.svg
 - hybrid-cursor.svg
@@ -83,26 +82,16 @@ Licensed under the ISC and MIT licenses.
 > Make sure you copy this as space-style so it won’t get overwritten with future updates!
 
 ```css
-
-:root{
-  --header-height: 20px;                         /* Header height, drag-area */
-  --frame-width: 5px;                            /* frame thickness */
-  --frame-color: oklch(0.4 0 0 / 0.3);           /* frame color */
-  --window-border: 2px;                          /* solid border width (aesthetic) */
-  --window-border-radius: 10px;                  /* inner iframe border radius */
-  --window-border-color: oklch(0.65 0 0 / 0.3);  /* solid border color (aesthetic) */
-} 
-      
 html[data-theme="dark"]{
-  --explorer-bg-color: oklch(0.25 0 0);
+  --explorer-bg-color: var(--top-background-color, oklch(0.25 0 0));
+  --explorer-text-color:  var(--root-color, white);
+  --explorer-accent-color: var(--ui-accent-color, oklch(0.75 0.25 230));
+  --explorer-accent-text: var(--modal-selected-option-color);
   --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
-  --explorer-text-color: oklch(1 0 0);
   --explorer-border-color: oklch(0.65 0 0 / 0.5);
-  --explorer-accent-color: oklch(0.75 0.25 230);
   --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
-  --link-color:  oklch(0.85 0.1 260);
   --folder-color: oklch(0.85 0.1 105);
-  --file-md-color:  oklch(0.85 0.1 260);
+  --file-md-color:  hsl(213, 100%, 83%);
   --file-pdf-color: oklch(0.85 0.1 30); 
   --file-img-color: oklch(0.85 0.1 180); 
   --file-ex-color:  oklch(0.85 0.1 300); 
@@ -111,11 +100,12 @@ html[data-theme="dark"]{
 }
 
 html[data-theme="light"]{
-  --explorer-bg-color: oklch(0.85 0 0);
+  --explorer-bg-color: var(--top-background-color, oklch(0.85 0 0));
+  --explorer-text-color: var(--root-color, black);
+  --explorer-accent-color: var(--ui-accent-color, oklch(0.80 0.18 230));
+  --explorer-accent-text: var(--modal-selected-option-color);
   --explorer-hover-bg: oklch(0.75 0 0 / 0.5);
-  --explorer-text-color: oklch(0 0 0);
   --explorer-border-color: oklch(0.50 0 0 / 0.5);
-  --explorer-accent-color: oklch(0.80 0.18 230);
   --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
   --folder-color: oklch(0.65 0.15 105);
   --file-md-color:  oklch(0.65 0.15 260);
@@ -125,9 +115,18 @@ html[data-theme="light"]{
   --file-dio-color: oklch(0.65 0.15 90); 
   --file-unk-color: oklch(0.65 0 0);
 }
-
 ```
 
+## For the Floating Window
+```css
+:root{
+  --header-height: 20px;                         /* Header height, drag-area */
+  --frame-width: 5px;                            /* frame thickness */
+  --window-border: 2px;                          /* solid border width (aesthetic) */
+  --window-border-radius: 10px;                  /* inner iframe border radius */
+  --window-border-color: oklch(0.65 0 0 / 0.3);  /* solid border color (aesthetic) */
+} 
+```
 
 ## Integration:
 
@@ -585,17 +584,16 @@ end
                        id="refresh-btn" 
                        onclick="syscall('lua.evalExpression', 'refreshExplorerButton()')">]])
       table.insert(h, ICONS.refresh)
-      table.insert(h, [[</div>
+      local filterDisabled = clientStore.get("explorer.disableFilter") == "true"
+      local activeClass = filterDisabled and " active" or ""
       
-                  <div title="Toggle Negative Filter" 
-                        class="explorer-action-btn" id="filter-btn" 
-                        style="background: ]])
-      table.insert(h, (clientStore.get("explorer.disableFilter") == "true" and "var(--explorer-accent-color)" or "var(--explorer-tile-bg)"))
-      table.insert(h, [[" 
-                        onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">]])
-      table.insert(h, (clientStore.get("explorer.disableFilter") == "true" and ICONS.filterOn or ICONS.filterOff))
       table.insert(h, [[</div>
-              </div>  
+                        <div title="Toggle Negative Filter" 
+                              class="explorer-action-btn]] .. activeClass .. [[" id="filter-btn" 
+                              onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">]])
+      table.insert(h, (filterDisabled and ICONS.filterOn or ICONS.filterOff))
+      table.insert(h, [[</div>
+                 </div>  
                   <div class="action-buttons" style="display: flex; gap: 4px;">
                   <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">]])
       table.insert(h, ICONS.window)
@@ -960,7 +958,7 @@ if (contextMenuEnabled) {
         document.getElementById('ctx-preview').onclick = async () => {
             menu.style.display = 'none';
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("/.fs/Library/Mr-xRed/FloatingPage.js").show("${internalPath}", "${fileName}")`;
+            const luaCmd = `js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show("${internalPath}", "${fileName}")`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1384,7 +1382,7 @@ command.define {
         if not cachedFiles then cachedFiles = space.listFiles() end
         drawPanel()
       end
-      js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
+      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag()
   end
 }
 
@@ -1419,7 +1417,7 @@ command.define {
     else
       clientStore.set("explorer.currentDisplayMode", "window")
       drawPanel()
-      js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
+      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag()
     end
   end
 }
