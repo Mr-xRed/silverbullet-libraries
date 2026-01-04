@@ -82,14 +82,17 @@ Licensed under the ISC and MIT licenses.
 > Make sure you copy this as space-style so it won’t get overwritten with future updates!
 
 ```css
+
 html[data-theme="dark"]{
-  --explorer-bg-color: var(--top-background-color, oklch(0.25 0 0));
-  --explorer-text-color:  var(--root-color, white);
-  --explorer-accent-color: var(--ui-accent-color, oklch(0.75 0.25 230));
-  --explorer-accent-text: var(--modal-selected-option-color);
+  /* Main UI Color */
+  --explorer-bg-color: var(--top-background-color);
+  --explorer-text-color:  var(--root-color,white);
+  --explorer-accent-color: var(--ui-accent-color,  oklch(55% 0.15 250));
+  --explorer-accent-text: var(--ui-accent-contrast-color);
+  --explorer-border-color: oklch(from var(--modal-border-color) 0.65 c h / 0.5);
   --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
-  --explorer-border-color: oklch(0.65 0 0 / 0.5);
-  --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
+  --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
+  /* Folder and File Color */
   --folder-color: oklch(0.85 0.1 105);
   --file-md-color:  hsl(213, 100%, 83%);
   --file-pdf-color: oklch(0.85 0.1 30); 
@@ -100,13 +103,15 @@ html[data-theme="dark"]{
 }
 
 html[data-theme="light"]{
-  --explorer-bg-color: var(--top-background-color, oklch(0.85 0 0));
+  /* Main UI Color */
+  --explorer-bg-color: var(--top-background-color);
   --explorer-text-color: var(--root-color, black);
-  --explorer-accent-color: var(--ui-accent-color, oklch(0.80 0.18 230));
-  --explorer-accent-text: var(--modal-selected-option-color);
+  --explorer-accent-color: var(--ui-accent-color,oklch(55% 0.15 250));
+  --explorer-accent-text: var(--ui-accent-contrast-color);
+  --explorer-border-color: oklch(from var(--modal-border-color) 0.50 c h / 0.5);
   --explorer-hover-bg: oklch(0.75 0 0 / 0.5);
-  --explorer-border-color: oklch(0.50 0 0 / 0.5);
-  --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
+  --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
+  /* Folder and File Color */
   --folder-color: oklch(0.65 0.15 105);
   --file-md-color:  oklch(0.65 0.15 260);
   --file-pdf-color: oklch(0.65 0.15 30); 
