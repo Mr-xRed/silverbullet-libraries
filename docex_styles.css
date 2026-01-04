@@ -837,7 +837,7 @@ html[data-theme="dark"]{
   --explorer-bg-color: var(--top-background-color);
   --explorer-text-color:  var(--root-color,white);
   --explorer-accent-color: var(--ui-accent-color);
-  --explorer-accent-text: var(--explorer-accent-text);
+  --explorer-accent-text: var(--modal-selected-option-color);
   --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
   --explorer-border-color: oklch(0.65 0 0 / 0.5);
   --explorer-tile-bg: oklch(0.75 0 0 / 0.1);
