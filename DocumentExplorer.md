@@ -93,7 +93,6 @@ html[data-theme="dark"]{
   --explorer-border-color: oklch(from var(--modal-border-color) 0.65 c h / 0.5);
   --explorer-hover-bg: oklch(0.65 0 0 / 0.5);
   --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
-
   /*Folder and File Color*/
   --folder-color: oklch(0.85 0.1 105);
   --file-md-color:  hsl(213, 100%, 83%);
@@ -114,7 +113,6 @@ html[data-theme="light"]{
   --explorer-border-color: oklch(from var(--modal-border-color) 0.50 c h / 0.5);
   --explorer-hover-bg: oklch(0.75 0 0 / 0.5);
   --explorer-tile-bg:  oklch(0.75 0 0 / 0.1);
-
   /*Folder and File Color*/
   --folder-color: oklch(0.65 0.15 105);
   --file-md-color:  oklch(0.65 0.15 260);
