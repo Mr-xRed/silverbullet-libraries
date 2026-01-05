@@ -14,16 +14,17 @@ pageDecoration.prefix: "📃 "
 > Ctrl-Alt-Enter/Cmd-Alt-Enter - Opens the page under the cursor in a Floating Window
 > Ctrl-Alt-Click/Cmd-Alt-Click - Opens the clicked WikiLink under the mouse in a Floating Window
 
-Try it out here 👉 ${widgets.commandButton("Floating: Open")}${widgets.commandButton("Page","Floating: EXAMPLE: Open Internal Page")}${widgets.commandButton("External Website","Floating: EXAMPLE: Open Webpage")}${widgets.commandButton("Custom HTML","Floating: EXAMPLE: Open Custom HTML")}
+# Try it out here 👉 ${widgets.commandButton("Floating: Open")}${widgets.commandButton("Page","Floating: EXAMPLE: Open Internal Page")}${widgets.commandButton("External Website","Floating: EXAMPLE: Open Webpage")}${widgets.commandButton("Custom HTML","Floating: EXAMPLE: Open Custom HTML")}
 
 This JS opens a page, a website, direct HTML into a Floating Resizable window.
 See Examples below
-# Here is a text to test it out:
 
-Lorem ipsum dolor sit amet, https://www.wikipedia.org consectetur adipiscing elit, https://www.wikipedia.de sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo https://www.wikipedia.ro consequat. Duis aute irure dolor in reprehenderit in [voluptate](https://www.google.de) velit esse cillum dolore eu fugiat nulla pariatur. [[Excepteur]] sint occaecat cupidatat non proident, sunt in culpa qui officia [[deserunt]] mollit anim id est laborum.
+# Here is a text to test it:
+
+Lorem ipsum dolor sit amet, https://example.com consectetur adipiscing elit, https://www.wikipedia.org sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in [Silverbullet](https://silverbullet.md) velit esse cillum dolore eu fugiat nulla pariatur. [[CONFIG]] sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 
-# Examples:
+# Implementation Examples:
 
 ```space-lua
   
@@ -65,6 +66,10 @@ command.define {
 
 ```
 
+# Implementation
+
+## Page Picker in Floating Window
+
 ```space-lua
 command.define {
   name = "Floating: Open",
@@ -75,13 +80,14 @@ command.define {
       order by _.lastModified desc]]
     local page = editor.filterBox('🔍', allPages, "Select page")
     if page != nil then
+      clientStore.set("explorer.suppressOnce", "true")
       js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show(page.name)
     end
   end
 }
 ```
 
-
+## Shortcut Keys & Mouse Trigger
 
 ```space-lua
 -- Shared logic for detecting links at a specific document offset
@@ -90,7 +96,6 @@ local function findAndOpenLink(offset)
     local text = line.text
     
     -- Convert document-wide offset to line-relative position for searching
-    -- Lua is 1-indexed, so we ensure we have a valid index
     local relativePos = offset - line.from + 1
     
     local foundLink = nil
@@ -122,6 +127,7 @@ local function findAndOpenLink(offset)
     end
 
     if foundLink then
+        clientStore.set("explorer.suppressOnce", "true") -- if DocumentExplorer is open we surpress it
         js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show(foundLink)
         return true
     end
@@ -153,10 +159,8 @@ event.listen {
             return
         end
         
-        -- Use the position provided by the click event
         local offset = tonumber(e.data.pos)
         if findAndOpenLink(offset) then
-            -- We successfully handled it
             return true 
         end
     end
