@@ -9,8 +9,8 @@ pageDecoration.prefix: "📃 "
 
 > **warning** PROOF OF CONCEPT - EXPERIMENTAL ONLY
  
-> **success** Shortcut Keys
-> `Ctrl-Alt-o` - Opens the Page Picker to chose the Page
+> **success** Shortcut Keys & Mouse Trigger
+> `Ctrl-Alt-o`                   - Opens the Page Picker to chose the Page
 > Ctrl-Alt-Enter/Cmd-Alt-Enter - Opens the page under the cursor in a Floating Window
 > Ctrl-Alt-Click/Cmd-Alt-Click - Opens the clicked WikiLink under the mouse in a Floating Window
 
