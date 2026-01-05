@@ -22,7 +22,7 @@ See Examples below
 # Here is a text to test it:
 
 Lorem ipsum dolor sit amet, https://example.com consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation [Wikipedia](https://wikipedia.org) ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in velit esse cillum dolore eu fugiat nulla pariatur. Sint occaecat cupidatat non proident,  [[CONFIG|Configuration]]  sunt in culpa qui officia deserunt mollit anim id est laborum.
-
+Plugs
 
 # Implementation Examples:
 
@@ -95,7 +95,6 @@ local function findAndOpenLink(offset)
     local line = editor.getCurrentLine()
     local text = line.text
     
-    -- Convert document-wide offset to line-relative position for searching
     local relativePos = offset - line.from + 1
     
     local foundLink = nil
@@ -105,30 +104,31 @@ local function findAndOpenLink(offset)
         { type = "bare",     regex = "https?://%S+" }
     }
 
-        for _, p in ipairs(patterns) do
-            local searchStart = 1
-            while true do
-                local start, finish, cap1, cap2 = text:find(p.regex, searchStart)
-                if not start then break end
-                
-                if relativePos >= start and relativePos <= finish then
-                    if p.type == "markdown" then
-                        foundLink = cap2
-                    elseif p.type == "wiki" then
-                        -- Logic: Match the first sequence of characters that are NOT a pipe
-                        foundLink = cap1:match("([^|]+)")
-                    else
-                        foundLink = text:sub(start, finish):gsub("[%.,;]$" , "")
-                    end
-                    break
+    for _, p in ipairs(patterns) do
+        local searchStart = 1
+        while true do
+            local start, finish, cap1, cap2 = text:find(p.regex, searchStart)
+            if not start then break end
+            
+            if relativePos >= start and relativePos <= finish then
+                if p.type == "markdown" then
+                    foundLink = cap2
+                elseif p.type == "wiki" then
+                    -- Extract everything before the pipe (if present) and trim whitespace
+                    local rawTarget = cap1:match("([^|]+)")
+                    foundLink = rawTarget and rawTarget:match("^%s*(.-)%s*$")
+                else
+                    foundLink = text:sub(start, finish):gsub("[%.,;]$" , "")
                 end
-                searchStart = finish + 1
+                break
             end
-            if foundLink then break end
+            searchStart = finish + 1
         end
+        if foundLink then break end
+    end
 
     if foundLink then
-        clientStore.set("explorer.suppressOnce", "true") -- if DocumentExplorer is open we surpress it
+        clientStore.set("explorer.suppressOnce", "true")
         js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show(foundLink)
         return true
     end
