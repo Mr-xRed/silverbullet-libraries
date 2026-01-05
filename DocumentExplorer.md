@@ -44,13 +44,14 @@ ${widgets.commandButton("Decrease Width","Document Explorer: Decrease Width")}  
 > `Ctrl-Alt-ArrotLeft`  - Decrease Document Explorer Width in 10% increments
 
 ## Configuration Options and Defaults:
-* `homeDirName`        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
-* `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
-* `tileSize`           - Grid Tile size, recommended between 60px-120px (default: "80px") 
-* `listHeight`         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
-* `enableContextMenu`  - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
-* `negativeFilter`     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none )
-* treeFolderFirst    - sort order in treeview: folders then files (default: false)
+* **`homeDirName`**        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
+* **`goToCurrentDir`**     - Start navigation in the Directory of the currently opened page (default: true)
+* **`tileSize`**           - Grid Tile size, recommended between 60px-120px (default: "80px") 
+* **`listHeight`**         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
+* **`enableContextMenu`**  - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
+* **`negativeFilter`**     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none )
+* **`treeFolderFirst`**    - sort order in treeview: folders then files (default: false)
+* **`recoverAfterRefresh`** - Rocover after Page refresh - Reopen DocEx when you Refresh the page (default: true) 
 
 ```lua
 config.set("explorer", {
@@ -60,7 +61,8 @@ config.set("explorer", {
   enableContextMenu = true,
   listHeight = "24px",
   negativeFilter = {"Library/Std","*.zip","*.js","*.css", "*test*"},
-  treeFolderFirst = false
+  treeFolderFirst = false,
+  recoverAfterRefresh = true
 })
 ```
 
@@ -150,7 +152,8 @@ config.define("explorer", {
     treeFolderFirst = schema.boolean(),
     goToCurrentDir = schema.boolean(),
     enableContextMenu = schema.boolean(),
-    negativeFilter = { type = "array", items = { type = "string" } }
+    negativeFilter = { type = "array", items = { type = "string" } },
+    recoverAfterRefresh = schema.boolean()
   }
 })
 
@@ -207,6 +210,7 @@ local goToCurrentDir = cfg.goToCurrentDir ~= false
 local enableContextMenu = cfg.enableContextMenu ~= false
 local negativeFilter = cfg.negativeFilter or {}
 local treeFolderFirst = cfg.treeFolderFirst == true 
+local recoverAfterRefresh = cfg.recoverAfterRefresh ~= false
 
 
 local PANEL_ID = "lhs"
@@ -215,6 +219,32 @@ local cachedFiles = nil
 local PATH_KEY = "gridExplorer.cwd"
 local VIEW_MODE_KEY = "gridExplorer.viewMode"
 
+-- ---------- Restore panel visibility on page load ----------
+local function restoreExplorerOpenStateOnPageLoad()
+  if not recoverAfterRefresh then return end
+  
+  -- Check if we were explicitly told to stay closed for this specific load
+  if clientStore.get("explorer.suppressOnce") == "true" then
+    clientStore.set("explorer.suppressOnce", "false") -- Reset it immediately
+    return 
+  end
+  local shouldOpen = clientStore.get("explorer.open")
+  
+  if shouldOpen == "true" and not PANEL_VISIBLE then
+    local lastMode = clientStore.get("explorer.currentDisplayMode") or "panel"
+    
+    if lastMode == "window" then
+      -- Explicitly open window mode
+      if not cachedFiles then cachedFiles = space.listFiles() end
+      drawPanel()
+      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag()
+    else
+      -- Explicitly open panel mode
+      if not cachedFiles then cachedFiles = space.listFiles() end
+      drawPanel()
+    end
+  end
+end
 -- ---------- Helper to check negative filters ----------
 local function isFiltered(path)
   local lowPath = path:lower()
@@ -334,8 +364,12 @@ function refreshExplorerButton()
     editor.flashNotification("File list refreshed.")
 end
 
--- event.listen { name = "file:listed", run = refreshOnCreation }
-event.listen { name = "editor:pageLoaded", run = triggerHighlightUpdate }
+-- ---------- Event Listeners ----------
+-- Add restoreExplorerOpenStateOnPageLoad to the pageLoaded event
+event.listen { name = "editor:pageLoaded", run = function()
+    triggerHighlightUpdate()
+    restoreExplorerOpenStateOnPageLoad() 
+end }
 event.listen { name = "editor:documentLoaded", run = triggerHighlightUpdate }
 
 -- ---------- Tree Logic ----------
@@ -962,6 +996,10 @@ if (contextMenuEnabled) {
     if (document.getElementById('ctx-preview')) {
         document.getElementById('ctx-preview').onclick = async () => {
             menu.style.display = 'none';
+            
+            // Set the suppression flag so the new window doesn't spawn an explorer
+            await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
+            
             const fileName = internalPath.split('/').pop();
             const luaCmd = `js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show("${internalPath}", "${fileName}")`;
             await syscall('lua.evalExpression', luaCmd);
@@ -1323,6 +1361,7 @@ ensureElement("explorer-style-css", "link", { rel: "stylesheet", href: "/.fs/Lib
   local finalHtml = table.concat(h)
   editor.showPanel(PANEL_ID, currentWidth, finalHtml, script)
   PANEL_VISIBLE = true
+  clientStore.set("explorer.open", "true")
 end
 
 
@@ -1387,6 +1426,7 @@ command.define {
         if not cachedFiles then cachedFiles = space.listFiles() end
         drawPanel()
       end
+      clientStore.set("explorer.open", "true")
       js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag()
   end
 }
@@ -1398,11 +1438,10 @@ command.define {
     if PANEL_VISIBLE then
       editor.hidePanel(PANEL_ID)
       PANEL_VISIBLE = false
+      clientStore.set("explorer.open", "false") 
     else
-      if not cachedFiles then
-        cachedFiles = space.listFiles() 
-      end
-      drawPanel()
+      if not cachedFiles then cachedFiles = space.listFiles() end
+      drawPanel() 
     end
   end
 }
@@ -1424,6 +1463,7 @@ command.define {
       drawPanel()
       js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag()
     end
+      clientStore.set("explorer.open", "true")
   end
 }
 
