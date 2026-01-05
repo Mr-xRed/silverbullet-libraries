@@ -21,7 +21,7 @@ See Examples below
 
 # Here is a text to test it:
 
-Lorem ipsum dolor sit amet, https://example.com consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation [Silverbullet](https://silverbullet.md) ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in velit esse cillum dolore eu fugiat nulla pariatur. Sint occaecat cupidatat non proident,  [[CONFIG]]  sunt in culpa qui officia deserunt mollit anim id est laborum.
+Lorem ipsum dolor sit amet, https://example.com consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation [Wikipedia](https://wikipedia.org) ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in velit esse cillum dolore eu fugiat nulla pariatur. Sint occaecat cupidatat non proident,  [[CONFIG]]  sunt in culpa qui officia deserunt mollit anim id est laborum.
 
 
 # Implementation Examples:
