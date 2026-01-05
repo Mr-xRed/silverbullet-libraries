@@ -864,7 +864,7 @@ window.addEventListener('keydown', function(e) {
         // Visual Update
         document.querySelectorAll(".is-focused").forEach(el => el.classList.remove("is-focused"));
         target.classList.add("is-focused");
-        target.scrollIntoView({ block: "nearest", behavior: "auto" }); // "auto" is faster than "smooth"
+        target.scrollIntoView({ block: "nearest", behavior: "instant" }); // "auto" is faster than "smooth"
 
         // SPEEDY ENTER LOGIC
         if (e.key === "Enter") {
@@ -1192,7 +1192,7 @@ async function refreshActiveHighlight() {
         parent = parent.parentElement.closest('details');
       }
 
-      tile.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      tile.scrollIntoView({ behavior: 'instant', block: 'center' });
     }
   });
 }
