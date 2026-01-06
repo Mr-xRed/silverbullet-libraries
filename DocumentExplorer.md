@@ -37,7 +37,7 @@ pageDecoration.prefix: "🗂️ "
 
 ## or use the shortcuts: 
 
-> **tip** ShortCut Keys
+> **tip** ShortCut Key
 > `Ctrl-Alt-e` - Toggle Document Explorer
 
 ## Configuration Options and Defaults:
