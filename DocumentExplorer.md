@@ -6,6 +6,7 @@ files:
 - docex_styles.css
 - lucide-icons.svg
 - hybrid-cursor.svg
+- PanelWidthResizer.md
 pageDecoration.prefix: "🗂️ "
 ---
 # 🗂️ Document Explorer
@@ -14,7 +15,7 @@ pageDecoration.prefix: "🗂️ "
 
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DocumentExplorer_Screenshot.png)
 
-## Features
+## Featuresf
 • Dynamic View Modes:
   * ==Grid== Large thumbnails (with image previews) for a visual gallery experience.
   * ==List==: Compact, vertical view for high-density file management.
@@ -32,18 +33,15 @@ pageDecoration.prefix: "🗂️ "
 * Documents: .pdf, .excalidraw, .drawio (if Plugs installed)
 * Every other extension is rendered as `❔` and opened as raw file if browser supports it
 
-## GoTo: ${widgets.commandButton("Document Explorer in SidePanel","Navigate: Document Explorer")} or 
-${widgets.commandButton("Document Explorer in Window","Navigate: Document Explorer Window")}
+## GoTo: ${widgets.commandButton("Document Explorer in SidePanel","Navigate: Document Explorer")} or ${widgets.commandButton("Document Explorer in Window","Navigate: Document Explorer Window")}
 
-${widgets.commandButton("Decrease Width","Document Explorer: Decrease Width")}  ${widgets.commandButton("Increase Width","Document Explorer: Increase Width")}
 ## or use the shortcuts: 
 
 > **tip** New ShortCut Keys
-> `Ctrl-Alt-e`          - Toggle Document Explorer
-> `Ctrl-Alt-ArrotRight` - Increase Document Explorer Width in 10% increments
-> `Ctrl-Alt-ArrotLeft`  - Decrease Document Explorer Width in 10% increments
+> `Ctrl-Alt-e` - Toggle Document Explorer
 
 ## Configuration Options and Defaults:
+* **`position`**           - Where the panel is docked (“lhs”|“rhs” - left/right hand side) (default: lhs)
 * **`homeDirName`**        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
 * **`goToCurrentDir`**     - Start navigation in the Directory of the currently opened page (default: true)
 * **`tileSize`**           - Grid Tile size, recommended between 60px-120px (default: "80px") 
@@ -51,10 +49,11 @@ ${widgets.commandButton("Decrease Width","Document Explorer: Decrease Width")}  
 * **`enableContextMenu`**  - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
 * **`negativeFilter`**     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none )
 * **`treeFolderFirst`**    - sort order in treeview: folders then files (default: false)
-* **`recoverAfterRefresh`** - Rocover after Page refresh - Reopen DocEx when you Refresh the page (default: true) 
+* **`recoverAfterRefresh`** - Recover after Page refresh - Reopen DocEx when you Refresh the page (default: true) 
 
 ```lua
 config.set("explorer", {
+  position = "lhs",
   homeDirName = "🏠 Home",
   goToCurrentDir = true,
   tileSize = "80px",
@@ -145,6 +144,7 @@ html[data-theme="light"]{
 config.define("explorer", {
   type = "object",
   properties = {
+    position = schema.string(),
     homeDirName = schema.string(),
     tileSize = schema.string(),
     listHeight = schema.string(),
@@ -203,8 +203,9 @@ window = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg
 
 -- ------------- Load Config -------------
 local cfg = config.get("explorer") or {}
+local PANEL_ID = cfg.position or "lhs"
 local tileSize = cfg.tileSize or "80px"
-local listHeight = cfg.listHeight or "24px"
+local listHeight = cfg.listHeight or "25.2px"
 local homeDirName = cfg.homeDirName or "🏠 Home"
 local goToCurrentDir = cfg.goToCurrentDir ~= false
 local enableContextMenu = cfg.enableContextMenu ~= false
@@ -213,7 +214,6 @@ local treeFolderFirst = cfg.treeFolderFirst == true
 local recoverAfterRefresh = cfg.recoverAfterRefresh ~= false
 
 
-local PANEL_ID = "lhs"
 local PANEL_VISIBLE = false
 local cachedFiles = nil
 local PATH_KEY = "gridExplorer.cwd"
@@ -223,23 +223,24 @@ local VIEW_MODE_KEY = "gridExplorer.viewMode"
 local function restoreExplorerOpenStateOnPageLoad()
   if not recoverAfterRefresh then return end
   
-  -- Check if we were explicitly told to stay closed for this specific load
   if clientStore.get("explorer.suppressOnce") == "true" then
-    clientStore.set("explorer.suppressOnce", "false") -- Reset it immediately
+    clientStore.set("explorer.suppressOnce", "false")
     return 
   end
+  
   local shouldOpen = clientStore.get("explorer.open")
   
   if shouldOpen == "true" and not PANEL_VISIBLE then
     local lastMode = clientStore.get("explorer.currentDisplayMode") or "panel"
-    
+    local selector = "#sb-main .sb-panel." .. PANEL_ID
     if lastMode == "window" then
-      -- Explicitly open window mode
       if not cachedFiles then cachedFiles = space.listFiles() end
       drawPanel()
-      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag()
+ --     utils.timeout(100,
+ --     function()
+      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
+ --     end)
     else
-      -- Explicitly open panel mode
       if not cachedFiles then cachedFiles = space.listFiles() end
       drawPanel()
     end
@@ -580,6 +581,7 @@ end
     
       local h = {} 
       
+--      table.insert(h, [[<div class="explorer-panel ]] .. PANEL_ID .. [[ mode-]])
       table.insert(h, [[<div class="explorer-panel mode-]])
       table.insert(h, viewMode)
       table.insert(h, [[">
@@ -1384,27 +1386,6 @@ command.define {
 }
 
 command.define {
-  name = "Document Explorer: Increase Width",
-  key = "Ctrl-Alt-ArrowRight",
-  hide = true,
-  run = function()
-    local cur = clientStore.get("explorer.panelWidth") or 0.8
-    clientStore.set("explorer.panelWidth", math.min(cur + 0.05, 1))
-    drawPanel()
-  end
-}
-
-command.define {
-  name = "Document Explorer: Decrease Width",
-  key = "Ctrl-Alt-ArrowLeft",
-  hide = true,
-  run = function()
-    local cur = clientStore.get("explorer.panelWidth") or 0.8
-    clientStore.set("explorer.panelWidth", math.max(cur - 0.05, 0.5))
-    drawPanel()
-  end
-}
-command.define {
   name = "DocumentExplorer: ToggleFilter",
   hide = true,
   run = function()
@@ -1416,19 +1397,6 @@ command.define {
     end
     drawPanel()
   end 
-}
--- -------------------------------
-command.define {
-  name = "Navigate: Document Explorer Window",
-  hide = true,
-  run = function()
-      if not PANEL_VISIBLE then
-        if not cachedFiles then cachedFiles = space.listFiles() end
-        drawPanel()
-      end
-      clientStore.set("explorer.open", "true")
-      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag()
-  end
 }
 
 command.define {
@@ -1446,26 +1414,6 @@ command.define {
   end
 }
 
-command.define {
-  name = "DocumentExplorer: Toggle Window Mode",
-  hide = true,
-  run = function()
-    local currentMode = clientStore.get("explorer.currentDisplayMode") or "panel"    
-    
-    editor.hidePanel(PANEL_ID)
-    PANEL_VISIBLE = false
-   -- Switch mode
-    if currentMode == "window" then
-      clientStore.set("explorer.currentDisplayMode", "panel")
-      drawPanel()
-    else
-      clientStore.set("explorer.currentDisplayMode", "window")
-      drawPanel()
-      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag()
-    end
-      clientStore.set("explorer.open", "true")
-  end
-}
 
 command.define {
   name = "Navigate: Toggle Document Explorer",
@@ -1489,6 +1437,51 @@ command.define {
             editor.invokeCommand("Navigate: Document Explorer")
         end
     end
+  end
+}
+
+-- ----------------------------------
+
+command.define {
+  name = "DocumentExplorer: Toggle Window Mode",
+  hide = true,
+  run = function()
+    local currentMode = clientStore.get("explorer.currentDisplayMode") or "panel"    
+    local selector = "#sb-main .sb-panel." .. PANEL_ID -- This targets the SB panel wrapper
+    
+    -- Force a clean slate
+    editor.hidePanel(PANEL_ID)
+    PANEL_VISIBLE = false
+
+    if currentMode == "window" then
+      clientStore.set("explorer.currentDisplayMode", "panel")
+      drawPanel()
+    else
+      clientStore.set("explorer.currentDisplayMode", "window")
+      drawPanel()
+      -- GIVE THE DOM A MOMENT TO BREATH
+--      utils.timeout(50, function()
+      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
+--      end)
+    end
+    clientStore.set("explorer.open", "true")
+  end
+}
+
+command.define {
+  name = "Navigate: Document Explorer Window",
+  hide = true,
+  run = function()
+      local selector = "#sb-main .sb-panel." .. PANEL_ID
+      if not PANEL_VISIBLE then
+        if not cachedFiles then cachedFiles = space.listFiles() end
+        drawPanel()
+      end
+      clientStore.set("explorer.open", "true")
+      -- Re-apply drag logic
+--      utils.timeout(50, function()
+        js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
+--      end)
   end
 }
 ```

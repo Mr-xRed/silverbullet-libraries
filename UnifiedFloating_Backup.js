@@ -331,24 +331,12 @@ export function show(content, titleLabel = null) {
 export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   injectStyles();
   const panel = document.querySelector(panelSelector);
-  
-  // Guard clause: if panel doesn't exist or is already wrapped
   if (!panel || panel.parentElement.classList.contains('sb-window-container')) return;
 
-  // Identify the type
-  let panelType = "panel";
-  if (panelSelector.includes("lhs")) panelType = "lhs";
-  else if (panelSelector.includes("rhs")) panelType = "rhs";
-  else if (panelSelector.includes("bhs") || panel.classList.contains("sb-bhs")) panelType = "bhs";
-
-  // IMPORTANT: Tag the panel so the Resizer script ignores it
-  panel.classList.add("is-detached-window");
-
   const originalInlineStyles = panel.getAttribute("style") || "";
-  const storageKey = `sb_dims_${panelType}_v1`;
-  
+  const storageKey = "sb_dims_v1";
   const container = document.createElement("div");
-  container.className = `sb-window-container is-panel panel-${panelType}`;
+  container.className = "sb-window-container is-panel";
   const header = document.createElement("div");
   header.className = "sb-window-header"; 
 
@@ -362,8 +350,6 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
   panel.parentNode.insertBefore(container, panel);
   container.appendChild(header);
   container.appendChild(panel);
-
-  // Apply localized reset
   panel.style.cssText = `flex: 1 1 0% !important; position: relative !important; top: 0 !important; left: 0 !important; margin: 0 !important; margin-top: 4px !important; width: 100% !important; height: 100% !important; overflow: clip !important; box-sizing: border-box !important; border: var(--window-border) solid var(--explorer-border-color) !important; border-radius: var(--window-border-radius) !important; background: transparent !important;`;
 
   setupEvents(container, header, storageKey, true);
@@ -375,16 +361,10 @@ export function enableDrag(panelSelector = "#sb-main .sb-panel") {
     container.style.width = `${saved.w}px`;
     container.style.height = `${saved.h}px`;
     clampToViewport(container, true);
-  } else {
-    container.style.width = "350px";
-    container.style.height = "500px";
-    container.style.left = panelType === "rhs" ? (window.innerWidth - 380) + "px" : "30px";
-    container.style.top = "100px";
   }
 
   const observer = new MutationObserver(() => {
     if (!document.body.contains(panel)) {
-      panel.classList.remove("is-detached-window"); // Clean up tag
       panel.setAttribute("style", originalInlineStyles);
       container.remove();
       observer.disconnect();

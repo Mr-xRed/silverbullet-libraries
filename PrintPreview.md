@@ -351,7 +351,8 @@ command.define {
     sync.performFileSync(outputFile)
 
     editor.flashNotification("HTML exported: " .. outputFile)
-    editor.openUrl("/.fs/" .. outputFile)
+--    editor.openUrl("/.fs/" .. outputFile)
+     js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show(outputFile, "PrintPreview")
   end
 }
 
