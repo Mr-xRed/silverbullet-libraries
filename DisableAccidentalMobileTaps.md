@@ -139,5 +139,5 @@ command.define {
 
 ```
 
-## Discussions about this widget
+## Discussions about this library
 * [SilverBullet Community](https://community.silverbullet.md/t/fixing-the-silverbullet-mobile-keyboard-drama-disable-accidental-taps/3709?u=mr.red)
