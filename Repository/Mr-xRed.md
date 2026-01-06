@@ -69,6 +69,12 @@ description: "The Journal Calendar is a lightweight, interactive navigation tool
 
 ## Styles and Visuals
 ```#meta/library/remote
+---
+name: "🛠️ Panel Width Resizer using your Mouse"
+uri: github:Mr-xRed/silverbullet-libraries/PanelWidthResizer.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PanelWidthResizer.md
+description: "Resize Side Panels (LHS, RHS, BHS) using your mouse & drag handles"
+---
 name: "🎨 Admonitions_multilingual"
 uri: github:Mr-xRed/silverbullet-libraries/Admonitions_multilingual.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/Admonitions_multilingual.md

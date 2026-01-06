@@ -11,15 +11,17 @@ pageDecoration.prefix: "🛠️ "
 *   **auto**: It automatically toggles between docked and overlay based on your screen width. (default)
 *   **dock**: Best for desktops; it pushes the editor to the side to make room for your panels.
 *   **overlay**: Ideal for mobile or focused work; the panels float over the editor to temporarily access the panel
-   
+
+
 ```space-lua
 config.set("sidePanel.mode", "auto") -- "auto" | "overlay" | "dock"
 ```
 
 ## Implementation
 
-### Title bar fix.
-- We are Setting the Title bar to Fixed so it doesn’t change Focus when resizing Windows
+### Title bar fix
+- We are setting the TitleBar to “fixed” so it doesn’t change focus when resizing the panels
+- 
 ```space-style
 #sb-top .panel {
  position:fixed;
@@ -51,7 +53,6 @@ function initDraggablePanel()
 
                 sidePanels.forEach(panel => {
                     if (panel.classList.contains("is-detached-window")) return;
-
                     // 1. Assign classes directly based on DOM position if not already present
                     // This creates the 'lhs'/'rhs' classes for other scripts to use
                     const isLHS = panel.nextElementSibling === editor || (panel.nextElementSibling && panel.nextElementSibling.contains(editor));
@@ -115,7 +116,7 @@ function initDraggablePanel()
                                 ["top", "bottom", "left", "right", "z-index"].forEach(p => el.style.removeProperty(p));
                             }
                             el.style.setProperty("width", val + "px", "important");
-               //             el.style.setProperty("max-width", val + "px", "important");
+             //             el.style.setProperty("max-width", val + "px", "important");
                             el.style.setProperty("flex", "0 0 " + val + "px", "important");
                         }
                     };
@@ -132,13 +133,26 @@ function initDraggablePanel()
                     
                     handle.setAttribute("style", handleStyle);
                     const resizeLine = document.createElement("div");
-                    let lineStyle = `position: absolute; background: gray; opacity: 0; transition: opacity 0.2s; pointer-events: none;`;
+                    let lineStyle = `position: absolute; background: gray; opacity: 0; transition: opacity 0.5s, background 0.5s; pointer-events: none;`;
                     if (type === "BHS") lineStyle += `top: 8px; left: 0; width: 100%; height: 2px;`;
-                    else lineStyle += `top: 0; ${type === "LHS" ? "right: 8px" : "left: 8px"}; width: 2px; height: 100%;`;
+                    else lineStyle += `top: 0; ${type === "LHS" ? "right: 5px" : "left: 5px"}; width: 4px; height: 100%;`;
                     
                     resizeLine.setAttribute("style", lineStyle);
                     handle.appendChild(resizeLine);
                     el.appendChild(handle);
+
+                    // Hover Effects
+                    handle.addEventListener("mouseenter", () => {
+                        if (handle.dataset.dragging !== "true") {
+                            resizeLine.style.background = "gray";
+                            resizeLine.style.opacity = "0.5";
+                        }
+                    });
+                    handle.addEventListener("mouseleave", () => {
+                        if (handle.dataset.dragging !== "true") {
+                            resizeLine.style.opacity = "0";
+                        }
+                    });
 
                     const startDragging = (e) => {
                         const isTouch = e.type === 'touchstart';
@@ -166,6 +180,7 @@ function initDraggablePanel()
                     
                         const onUp = () => {
                             handle.dataset.dragging = "";
+                            resizeLine.style.background = "gray";
                             resizeLine.style.opacity = "0";
                             document.querySelectorAll('iframe').forEach(ifrm => ifrm.style.pointerEvents = 'auto');
                             
@@ -209,11 +224,13 @@ end
 
 initDraggablePanel()
 
-command.define {
-    name = "UI: Fix Multi-Panel Resizer",
-    run = function() initDraggablePanel() end
-}
+
+-- Command to FIX Resizer when not launched automagically
+-- command.define {
+--    name = "UI: Fix Multi-Panel Resizer",
+--    run = function() initDraggablePanel() end
+--}
 ```
 
 # Discussions about this library
-[Silverbullet Community](https://community.silverbullet.md/t/resizing-side-panels-lhs-rhs-bhs-using-drag-handle/3728)
+- [Silverbullet Community](https://community.silverbullet.md/t/resizing-side-panels-lhs-rhs-bhs-using-drag-handle/3728)
