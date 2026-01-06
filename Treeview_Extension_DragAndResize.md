@@ -71,14 +71,20 @@ Here is an example how your ActionButton Config should look like this:
 
 ## Define Command with Move&Resize JS
 ```space-lua
+-- priority: -1
+
 command.define {
   name = "Tree View: Toggle Move&Resize",
   key = "Ctrl-Alt-a",
   mac = "Cmd-Alt-a",
   run = function()
+        local cfg = config.get("treeview") or {}
+        local PANEL_ID = cfg.position or "lhs"
+        local selector = "#sb-main .sb-panel." .. PANEL_ID
         editor.invokeCommand "Tree View: Toggle"
-        js.import("/.fs/Library/Mr-xRed/PanelDragResize.js").enableDrag()
-       end
+        editor.flashNotification(selector)
+        js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector) 
+    end
 }
 ```
 
