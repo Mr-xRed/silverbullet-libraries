@@ -13,7 +13,7 @@ pageDecoration.prefix: "🛠️ "
 *   **overlay**: Ideal for mobile or focused work; the panels float over the editor to temporarily access the panel
 
 
-```space-lua
+```lua
 config.set("sidePanel.mode", "auto") -- "auto" | "overlay" | "dock"
 ```
 

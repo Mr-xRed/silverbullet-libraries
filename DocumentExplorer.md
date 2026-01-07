@@ -15,7 +15,7 @@ pageDecoration.prefix: "🗂️ "
 
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DocumentExplorer_Screenshot.png)
 
-## Featuresf
+## Features
 • Dynamic View Modes:
   * ==Grid== Large thumbnails (with image previews) for a visual gallery experience.
   * ==List==: Compact, vertical view for high-density file management.
@@ -24,7 +24,7 @@ pageDecoration.prefix: "🗂️ "
 • Real-Time ==Filtering== by filename or extension
 • ==Drag&Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
 • Context Menu: ==Right-click== for quick File/Folder renaming and deletion.
-• ==Responsive design==: Adjustable panel width using keyboard shortcuts.
+• ==Responsive design==: Adjustable panel width using your mouse.
 - Easy to create a Color Theme
 
 ## Currently supported extension:
