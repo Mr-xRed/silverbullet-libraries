@@ -1,4 +1,4 @@
----
+🚧---
 name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
 files:
@@ -6,13 +6,10 @@ files:
 - docex_styles.css
 - lucide-icons.svg
 - hybrid-cursor.svg
-- PanelWidthResizer.md
+- AdvancedPanelControls.md
 pageDecoration.prefix: "🗂️ "
 ---
 # 🗂️ Document Explorer
-
-> **warning** WORK IN PROGRESS
-
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DocumentExplorer_Screenshot.png)
 
 ## Features
@@ -25,7 +22,7 @@ pageDecoration.prefix: "🗂️ "
 • ==Drag&Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
 • Context Menu: ==Right-click== for quick File/Folder renaming and deletion.
 • ==Responsive design==: Adjustable panel width using your mouse.
-- Easy to create a Color Theme
+- With instructions for a Color Theme
 
 ## Currently supported extension:
 * Pages: .md
@@ -51,6 +48,9 @@ pageDecoration.prefix: "🗂️ "
 * **`treeFolderFirst`**    - sort order in treeview: folders then files (default: false)
 * **`recoverAfterRefresh`** - Recover after Page refresh - Reopen DocEx when you Refresh the page (default: true) 
 
+> **note** Note
+> Copy this into a `space-lua` block in your config page to change the default values.
+
 ```lua
 config.set("explorer", {
   position = "lhs",
@@ -64,9 +64,6 @@ config.set("explorer", {
   recoverAfterRefresh = true
 })
 ```
-
-> **note** Note
-> Copy this into a `space-lua` block on your config page to change default values.
 
 ### Styling: Icons
 
@@ -236,10 +233,7 @@ local function restoreExplorerOpenStateOnPageLoad()
     if lastMode == "window" then
       if not cachedFiles then cachedFiles = space.listFiles() end
       drawPanel()
- --     utils.timeout(100,
- --     function()
       js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
- --     end)
     else
       if not cachedFiles then cachedFiles = space.listFiles() end
       drawPanel()
@@ -866,7 +860,7 @@ window.addEventListener('keydown', function(e) {
         // Visual Update
         document.querySelectorAll(".is-focused").forEach(el => el.classList.remove("is-focused"));
         target.classList.add("is-focused");
-        target.scrollIntoView({ block: "nearest", behavior: "instant" }); // "auto" is faster than "smooth"
+        target.scrollIntoView({ block: "nearest", behavior: "auto" }); // "auto" is faster than "smooth"
 
         // SPEEDY ENTER LOGIC
         if (e.key === "Enter") {
@@ -1194,7 +1188,7 @@ async function refreshActiveHighlight() {
         parent = parent.parentElement.closest('details');
       }
 
-      tile.scrollIntoView({ behavior: 'instant', block: 'center' });
+      tile.scrollIntoView({ behavior: 'auto', block: 'center' });
     }
   });
 }
@@ -1459,10 +1453,7 @@ command.define {
     else
       clientStore.set("explorer.currentDisplayMode", "window")
       drawPanel()
-      -- GIVE THE DOM A MOMENT TO BREATH
---      utils.timeout(50, function()
       js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
---      end)
     end
     clientStore.set("explorer.open", "true")
   end
@@ -1478,10 +1469,7 @@ command.define {
         drawPanel()
       end
       clientStore.set("explorer.open", "true")
-      -- Re-apply drag logic
---      utils.timeout(50, function()
         js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
---      end)
   end
 }
 ```

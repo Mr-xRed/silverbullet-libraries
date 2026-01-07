@@ -1,10 +1,14 @@
 ---
-name: "Library/Mr-xRed/PanelWidthResizer"
+name: "Library/Mr-xRed/AdvancedPanelControls"
 tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---
 
-# Resize Side Panels (LHS, RHS, BHS) using your mouse & drag handles
+# Advanced Panel Controls (LHS, RHS, BHS) 
+
+- Resizing using your mouse & drag handles
+- Collapse/Expand handles
+- Swipe gestures (Mobile) (left and right swipe) to easily Collapse and Expand the panels.
 
 ## Configuration
 
@@ -14,13 +18,24 @@ pageDecoration.prefix: "🛠️ "
 
 
 ```lua
-config.set("sidePanel.mode", "auto") -- "auto" | "overlay" | "dock"
+config.set("sidePanel", {
+  mode = "auto",  -- "auto" | "overlay" | "dock"
+  gestures = true  -- true (enabled), false (disabled)
+  minWidth = "300" -- min Width Constraints for LHS and RHS
+  maxWidth = "1000" -- max Width Constraints for LHS and RHS
+  minHeight = "100" -- min Height Constraints for BHS
+  maxHeight = "500" -- max Height Constraints for BHS
+})
 ```
+
+
+> **warning** IMPORTANT!
+> For this script to work as intended you need to remove all your previous custom space-styles which you added to manipulate the panels, otherwise it will conflict with it!
 
 ## Implementation
 
 ### Title bar fix
-- We are setting the TitleBar to “fixed” so it doesn’t change focus when resizing the panels
+- We set the TitleBar to “fixed” so it doesn’t change focus when resizing the panels
   
 ```space-style
 #sb-top .panel {
@@ -32,9 +47,14 @@ config.set("sidePanel.mode", "auto") -- "auto" | "overlay" | "dock"
 ```space-lua
 -- priority: -1
 
-function initDraggablePanel()
+function initPanelControls()
     local cfg = config.get("sidePanel") or {}
     local panelMode = cfg.mode or "auto"
+    local gesturesEnabled = cfg.gestures ~= false
+    local minWidth = cfg.minWidth or "300"
+    local maxWidth = cfg.maxWidth or "1000"
+    local minHeight = cfg.minHeight or "100"
+    local maxHeight = cfg.maxHeight or "500"
 
     local savedLHS = clientStore.get("lhsPanelWidth") or "300"
     local savedRHS = clientStore.get("rhsPanelWidth") or "300"
@@ -45,9 +65,15 @@ function initDraggablePanel()
             const handlePrefix = "sb-drag-handle-";
             const drawerPrefix = "sb-drawer-toggle-";
             const configMode = "]] .. panelMode .. [[";
+            const gesturesEnabled = ]] .. tostring(gesturesEnabled) .. [[;
             
             // --- STATE MANAGEMENT ---
             let currentMode = "dock"; 
+            
+            // --- SWIPE STATE (Global to closure to ensure stability) ---
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let lastActionTime = 0; // Cooldown to prevent double-firing
 
             const updateToggleIcon = (toggle, type, isOpen) => {
                 if (type === "LHS") toggle.innerHTML = isOpen ? "<" : ">";
@@ -287,8 +313,8 @@ function initDraggablePanel()
                 // Hover Effects
                     handle.addEventListener("mouseenter", () => {
                         if (handle.dataset.dragging !== "true") {
-                            resizeLine.style.background = "gray";
-                            resizeLine.style.opacity = "0.5";
+                          resizeLine.style.background = "gray";
+                          resizeLine.style.opacity = "0.5";
                         }
                     });
                     handle.addEventListener("mouseleave", () => {
@@ -305,6 +331,8 @@ function initDraggablePanel()
                     
                     handle.dataset.dragging = "true";
                     resizeLine.style.opacity = "1";
+                    resizeLine.style.background = "var(--ui-accent-color)";
+
                     document.querySelectorAll('iframe').forEach(ifrm => ifrm.style.pointerEvents = 'none');
                 
                     const onMove = (me) => {
@@ -316,8 +344,8 @@ function initDraggablePanel()
                         else if (type === "BHS") newVal = window.innerHeight - touch.clientY;
 
                         // Constraints
-                        if (type !== "BHS" && (newVal < 0 || newVal > 3000)) return;
-                        if (type === "BHS" && (newVal < 100 || newVal > 3000)) return;
+                        if (type !== "BHS" && (newVal < ]]..minWidth..[[ || newVal > ]]..maxWidth..[[)) return;
+                        if (type === "BHS" && (newVal < ]]..minHeight..[[ || newVal > ]]..maxHeight..[[)) return;
 
                         // UPDATE CSS VARIABLES
                         // This updates the layout AND the "closed" state calc() automatically
@@ -361,8 +389,101 @@ function initDraggablePanel()
                 handle.addEventListener("touchstart", startDragging, { passive: false });
             };
 
+            // --- STABLE SWIPE HANDLERS ---
+            const handleSwipeStart = (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                touchStartY = e.changedTouches[0].screenY;
+            };
+
+            const handleSwipeEnd = (e) => {
+                const now = Date.now();
+                if (now - lastActionTime < 500) return; 
+
+                const touchEndX = e.changedTouches[0].screenX;
+                const touchEndY = e.changedTouches[0].screenY;
+                
+                const diffX = touchEndX - touchStartX;
+                const diffY = touchEndY - touchStartY;
+
+                if (Math.abs(diffX) <= Math.abs(diffY)) return;
+                if (Math.abs(diffX) < 50) return;
+
+                const layouts = getLayouts();
+                const lhsLayout = layouts.find(l => l.type === "LHS");
+                const rhsLayout = layouts.find(l => l.type === "RHS");
+                
+                const isPanelOpen = (layout) => layout && layout.el.getAttribute("data-drawer-open") !== "false";
+                
+                const togglePanel = (layout, shouldOpen) => {
+                    if (!layout) return false;
+                    const el = layout.el;
+                    const newState = shouldOpen;
+                    
+                    if ((el.getAttribute("data-drawer-open") !== "false") === newState) return false;
+
+                    el.setAttribute("data-drawer-open", newState);
+                    updateToggleIcon(document.getElementById(drawerPrefix + layout.type), layout.type, newState);
+                    refreshPanelState(el, layout.type, currentMode);
+                    return true;
+                };
+
+                let actionTaken = false;
+                if (diffX > 0) {
+                    if (isPanelOpen(rhsLayout)) {
+                        actionTaken = togglePanel(rhsLayout, false);
+                    } else if (!isPanelOpen(lhsLayout)) {
+                        actionTaken = togglePanel(lhsLayout, true);
+                    }
+                } else {
+                    if (isPanelOpen(lhsLayout)) {
+                        actionTaken = togglePanel(lhsLayout, false);
+                    } else if (!isPanelOpen(rhsLayout)) {
+                        actionTaken = togglePanel(rhsLayout, true);
+                    }
+                }
+
+                if (actionTaken) {
+                    lastActionTime = now;
+                }
+            };
+
+            const initSwipeGestures = () => {
+                if (!gesturesEnabled) return;
+
+                // 1. Attach to MAIN
+                const main = document.querySelector("#sb-main");
+                if (main && main.getAttribute("data-swipe-init") !== "true") {
+                    main.setAttribute("data-swipe-init", "true");
+                    main.addEventListener('touchstart', handleSwipeStart, {passive: true});
+                    main.addEventListener('touchend', handleSwipeEnd, {passive: true});
+                }
+
+                // 2. Attach to IFRAMES inside Panels
+                const iframes = document.querySelectorAll(".sb-panel iframe");
+                iframes.forEach(iframe => {
+                    const attachToIframe = () => {
+                        try {
+                            const iDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            iDoc.removeEventListener('touchstart', handleSwipeStart);
+                            iDoc.removeEventListener('touchend', handleSwipeEnd);
+                            
+                            iDoc.addEventListener('touchstart', handleSwipeStart, {passive: true});
+                            iDoc.addEventListener('touchend', handleSwipeEnd, {passive: true});
+                        } catch(err) {
+                            // Cross-origin silence
+                        }
+                    };
+
+                    attachToIframe();
+                    iframe.addEventListener("load", attachToIframe);
+                });
+            };
+
             // Init
-            const observer = new MutationObserver(refreshLayout);
+            const observer = new MutationObserver(() => {
+                refreshLayout();
+                initSwipeGestures();
+            });
             observer.observe(document.body, { childList: true, subtree: true });
             
             // Debounce resize
@@ -373,7 +494,10 @@ function initDraggablePanel()
             });
             
             // Initial boot
-            setTimeout(refreshLayout, 100);
+            setTimeout(() => {
+                refreshLayout();
+                initSwipeGestures();
+            }, 100);
         })();
     ]]
 
@@ -386,8 +510,7 @@ function initDraggablePanel()
     js.window.addEventListener("sb-save-bhs", function(e) clientStore.set("bottomPanelHeight", e.detail.value) end)
 end
 
-initDraggablePanel()
-
+initPanelControls()
 ```
 
 # Discussions about this library

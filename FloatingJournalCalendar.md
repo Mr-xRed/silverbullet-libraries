@@ -99,39 +99,178 @@ function toggleFloatingJournalCalendar()
     container.id = "sb-journal-root"
     container.innerHTML = [[
     <style>
-        body.sb-dragging-active { user-select: none !important; -webkit-user-select: none !important; }
+        body.sb-dragging-active {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+        }
+        
         #sb-journal-root {
-            position: fixed; top: ]] .. saved_top .. [[; left: ]] .. saved_left .. [[; right: ]] .. saved_right .. [[;
-            width: 300px; z-index: 10000; font-family: system-ui, sans-serif; user-select: none; touch-action: none;
+            position: fixed;
+            top: ]] .. saved_top .. [[;
+            left: ]] .. saved_left .. [[;
+            right: ]] .. saved_right .. [[;
+            width: 300px;
+            z-index: 10000;
+            font-family: system-ui, sans-serif;
+            user-select: none;
+            touch-action: none;
         }
+        
         html[data-theme="dark"] #sb-journal-root {
-            --jc-background: oklch(0.3 0 0); --jc-border-color: oklch(0.5 0 0 / 0.4);
-            --jc-elements-background: oklch(0.5 0 0 / 0.2); --jc-hover-background: oklch(0.5 0 0 / 0.4);
-            --jc-text-color: oklch(1 0 0); --jc-accent-color:oklch(0.55 0.25 270);
+            --jc-background: oklch(0.3 0 0);
+            --jc-border-color: oklch(0.5 0 0 / 0.4);
+            --jc-elements-background: oklch(0.5 0 0 / 0.2);
+            --jc-hover-background: oklch(0.5 0 0 / 0.4);
+            --jc-text-color: oklch(1 0 0);
+            --jc-accent-color: var(--ui-accent-color, oklch(0.55 0.25 270));
         }
+        
         html[data-theme="light"] #sb-journal-root {
-            --jc-background: oklch(0.9 0 0); --jc-border-color: oklch(0.75 0 0 / 0.4);
-            --jc-elements-background: oklch(0.75 0 0 / 0.2); --jc-hover-background: oklch(0.5 0 0 / 0.4);
-            --jc-text-color: oklch(0.2 0 0); --jc-accent-color:oklch(0.75 0.25 270);
+            --jc-background: oklch(0.95 0 0);
+            --jc-border-color: oklch(0.75 0 0 / 0.4);
+            --jc-elements-background: oklch(0.85 0 0 / 0.2);
+            --jc-hover-background: oklch(0.75 0 0 / 0.4);
+            --jc-text-color: oklch(0.1 0 0);
+            --jc-accent-color: var(--ui-accent-color, oklch(0.75 0.25 270));
         }
-        .jc-card { background: var(--jc-background); color: var(--jc-text-color); border-radius: 12px; border: 2px solid var(--jc-border-color); box-shadow: 0 10px 30px oklch(0 0 0 / 0.5), inset 0 0 5px oklch(0 0 0 / 1) ,inset 0 0 20px oklch(0 0 0 / 0.4); overflow: hidden; display: flex; flex-direction: column; }
-        .jc-header { background: var(--jc-elements-background); padding: 10px; cursor: grab; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
-        .jc-nav-btn, .jc-close, .jc-today-btn { background: var(--jc-elements-background); color: var(--jc-text-color); border: 1px solid var(--jc-border-color); border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 0.9em; }
-        .jc-nav-btn:hover, .jc-today-btn:hover { background: var(--jc-hover-background); }
-        .jc-close { font-size: 1.4em; line-height: 1; }
-        .jc-close:hover { background: oklch(0.65 0.18 30/ 0.7); color: white; }
-        .jc-selectors { display: flex; gap: 4px; align-items: center; }
-        .jc-select { background: var(--jc-elements-background); color: var(--jc-text-color); border: 1px solid var(--jc-border-color); border-radius: 4px; font-size: 0.85em; padding: 2px; cursor: pointer; }
-        .jc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 6px; }
-        .jc-lbl { font-size: 0.7em; opacity: 0.5; text-align: center; font-weight: bold; }
-        .jc-lbl.sun { color: oklch(0.65 0.18 30); opacity: 1; }
-        .jc-day:not(.empty) { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.85em; border-radius: 6px; cursor: pointer; position: relative; background: var(--jc-elements-background); transition: 0.2s; /*box-shadow: inset 0 0 5px oklch(0 0 0 / 0.6) ,inset 0 0 20px oklch(1 0 0 / 0.2);*/}
-        .jc-day:hover { background: var(--jc-accent-color); color: white; }
-        .jc-day.sun { color: oklch(0.65 0.18 30); font-weight: bold; }
-        .jc-day.today { border: 2px solid var(--jc-accent-color); font-weight: bold; color: oklch(0.65 0.18 30); }
-        .jc-day.empty { background: transparent; cursor: default; }
-        .jc-dot { width: 4px; height: 4px; background: yellow; border-radius: 50%; position: absolute; bottom: 4px; box-shadow: 2px 2px 3px oklch(0 0 0 / 0.5)}
-        .jc-day.sun .jc-dot { background: oklch(0.65 0.18 30); }
+        
+        .jc-card {
+            background: var(--jc-background);
+            color: var(--jc-text-color);
+            border-radius: 12px;
+            border: 2px solid var(--jc-border-color);
+            box-shadow: 2px 2px 10px oklch(0 0 0 / 0.2)/*,
+                inset 0 0 5px oklch(0 0 0 / 1),
+                inset 0 0 20px oklch(0 0 0 / 0.4)*/; 
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .jc-header {
+            background: var(--jc-elements-background);
+            padding: 10px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 5px;
+        }
+        
+        .jc-nav-btn,
+        .jc-close,
+        .jc-today-btn {
+            background: var(--jc-elements-background);
+            color: var(--jc-text-color);
+            border: 1px solid var(--jc-border-color);
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        
+        .jc-nav-btn:hover,
+        .jc-today-btn:hover {
+            background: var(--jc-hover-background);
+        }
+        
+        .jc-close {
+            font-size: 1.4em;
+            line-height: 1;
+        }
+        
+        .jc-close:hover {
+            background: oklch(0.65 0.18 30 / 0.7);
+            color: white;
+        }
+        
+        .jc-selectors {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        
+        .jc-select {
+            background: var(--jc-elements-background);
+            color: var(--jc-text-color);
+            border: 1px solid var(--jc-border-color);
+            border-radius: 4px;
+            font-size: 0.85em;
+            padding: 2px;
+            cursor: pointer;
+        }
+        
+        .jc-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            padding: 6px;
+        }
+        
+        .jc-lbl {
+            font-size: 0.7em;
+            opacity: 0.5;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .jc-lbl.sun {
+            color: oklch(0.65 0.18 30);
+            opacity: 1;
+        }
+        
+        .jc-day:not(.empty) {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            background: var(--jc-elements-background);
+            transition: 0.2s;
+            box-shadow:
+            /*  inset 0 0 5px oklch(0 0 0 / 0.6),
+                inset 0 0 20px oklch(1 0 0 / 0.2); */
+        }
+        
+        .jc-day:hover {
+            background: var(--jc-accent-color);
+            color: white;
+        }
+        
+        .jc-day.sun {
+            color: oklch(0.65 0.18 30);
+            font-weight: bold;
+        }
+        
+        .jc-day.today {
+            border: 2px solid var(--jc-accent-color);
+            font-weight: bold;
+            color: oklch(0.65 0.18 30);
+        }
+        
+        .jc-day.empty {
+            background: transparent;
+            cursor: default;
+        }
+        
+        .jc-dot {
+            width: 4px;
+            height: 4px;
+            background: yellow;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 4px;
+            box-shadow: 2px 2px 3px oklch(0 0 0 / 0.5);
+        }
+        
+        .jc-day.sun .jc-dot {
+            background: oklch(0.65 0.18 30);
+        }
+         }
     </style>
     <div class="jc-card" id="jc-draggable">
         <div class="jc-header" id="jc-handle">

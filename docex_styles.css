@@ -35,7 +35,20 @@
   gap: 8px;
   align-content: start;
   scroll-behavior: smooth;
+  scrollbar-width: thin;
 }
+
+
+/* scrollbar background */
+/* track (background) */
+/* thumb (the draggable bit) */
+/* hover state */
+/*
+.document-explorer::-webkit-scrollbar {width: 6px;}
+.document-explorer::-webkit-scrollbar-track { background: var(--explorer-bg-color); border-radius: 2em;}
+.document-explorer::-webkit-scrollbar-thumb { background: var(--explorer-hover-bg, oklch(0.65 0.18 30)); border-radius: 2em; z-index:10010; cursor: pointer;}
+.document-explorer::-webkit-scrollbar-thumb:hover {background: var(--explorer-accent-color);}
+*/
 
 /* ======3. HEADER & NAVIGATION ====== */
 
