@@ -21,7 +21,7 @@ config.set("sidePanel.mode", "auto") -- "auto" | "overlay" | "dock"
 
 ### Title bar fix
 - We are setting the TitleBar to “fixed” so it doesn’t change focus when resizing the panels
-- 
+  
 ```space-style
 #sb-top .panel {
  position:fixed;
@@ -30,6 +30,8 @@ config.set("sidePanel.mode", "auto") -- "auto" | "overlay" | "dock"
 
 ### Space-Lua + JS
 ```space-lua
+-- priority: -1
+
 function initDraggablePanel()
     local cfg = config.get("sidePanel") or {}
     local panelMode = cfg.mode or "auto"
