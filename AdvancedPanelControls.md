@@ -37,12 +37,11 @@ config.set("sidePanel", {
 ## Implementation
 
 ### Title bar fix
-- We set the TitleBar to “fixed” so it doesn’t change focus when resizing the panels
+- We set the TitleBar to a higher z-index and also “fixed” so the panel doesnt cover the Hamburger menu when on mobile and to not change focus when resizing the panels
   
 ```space-style
-#sb-top .panel {
- position:fixed;
-}
+#sb-top {z-index: 1005;}
+#sb-top .panel {position:fixed;}
 ```
 
 ### Space-Lua + JS
