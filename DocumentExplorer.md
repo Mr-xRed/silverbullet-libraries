@@ -1,4 +1,4 @@
-🚧---
+---
 name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
 files:
