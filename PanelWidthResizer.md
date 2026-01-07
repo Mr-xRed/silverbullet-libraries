@@ -165,10 +165,14 @@ function initDraggablePanel()
 
                 sidePanels.forEach(panel => {
                     if (panel.classList.contains("is-detached-window")) return;
+                    // 1. Assign classes directly based on DOM position if not already present
+                    // This creates the 'lhs'/'rhs' classes for other scripts to use
                     const isLHS = panel.nextElementSibling === editor || (panel.nextElementSibling && panel.nextElementSibling.contains(editor));
                     const type = isLHS ? "LHS" : "RHS";
-                    const className = type.toLowerCase(); 
-                    if (!panel.classList.contains(className)) panel.classList.add(className);
+                    const className = type.toLowerCase(); // 'lhs' or 'rhs'
+                    if (!panel.classList.contains(className)) {
+                        panel.classList.add(className);
+                    }
                     layouts.push({ el: panel, type: type });
                 });
 
@@ -278,6 +282,19 @@ function initDraggablePanel()
                 handle.appendChild(resizeLine);
                 el.appendChild(handle);
 
+                // Hover Effects
+                    handle.addEventListener("mouseenter", () => {
+                        if (handle.dataset.dragging !== "true") {
+                            resizeLine.style.background = "gray";
+                            resizeLine.style.opacity = "0.5";
+                        }
+                    });
+                    handle.addEventListener("mouseleave", () => {
+                        if (handle.dataset.dragging !== "true") {
+                            resizeLine.style.opacity = "0";
+                        }
+                    });
+                    
                 const startDragging = (e) => {
                     if (el.getAttribute("data-drawer-open") === "false") return;
                     
