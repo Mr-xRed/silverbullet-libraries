@@ -20,11 +20,13 @@ pageDecoration.prefix: "🛠️ "
 ```lua
 config.set("sidePanel", {
   mode = "auto",  -- "auto" | "overlay" | "dock"
-  gestures = true  -- true (enabled), false (disabled)
-  minWidth = "300" -- min Width Constraints for LHS and RHS
-  maxWidth = "1000" -- max Width Constraints for LHS and RHS
-  minHeight = "100" -- min Height Constraints for BHS
-  maxHeight = "500" -- max Height Constraints for BHS
+  gestures = true,  -- true (enabled), false (disabled)
+  minWidth = "300", -- min Width Constraints for LHS and RHS
+  maxWidth = "1000", -- max Width Constraints for LHS and RHS
+  minHeight = "100", -- min Height Constraints for BHS
+  maxHeight = "500", -- max Height Constraints for BHS
+  lhsHandlePostion = "50%", -- Top To Bottom
+  rhsHandlePostion = "50%"  -- Top To Bottom
 })
 ```
 
@@ -55,6 +57,8 @@ function initPanelControls()
     local maxWidth = cfg.maxWidth or "1000"
     local minHeight = cfg.minHeight or "100"
     local maxHeight = cfg.maxHeight or "500"
+    local lhsHandlePostion = cfg.lhsHandlePostion or "50%"
+    local rhsHandlePostion = cfg.rhsHandlePostion or "50%"
 
     local savedLHS = clientStore.get("lhsPanelWidth") or "300"
     local savedRHS = clientStore.get("rhsPanelWidth") or "300"
@@ -107,9 +111,9 @@ function initPanelControls()
                 `;
 
                 if (type === "LHS") {
-                    style += `top: 50%; right: -29px; width: 28px; height: 64px; border-left: none; border-radius: 0 8px 8px 0; transform: translateY(-50%);`;
+                    style += `top: ]]..lhsHandlePostion..[[; right: -29px; width: 28px; height: 64px; border-left: none; border-radius: 0 8px 8px 0; transform: translateY(-]]..lhsHandlePostion..[[);`;
                 } else if (type === "RHS") {
-                    style += `top: 50%; left: -29px; width: 28px; height: 64px; border-right: none; border-radius: 8px 0 0 8px; transform: translateY(-50%);`;
+                    style += `top: ]]..rhsHandlePostion..[[; left: -29px; width: 28px; height: 64px; border-right: none; border-radius: 8px 0 0 8px; transform: translateY(-]]..rhsHandlePostion..[[);`;
                 } else if (type === "BHS") {
                     style += `left: 50%; top: -29px; width: 64px; height: 28px; border-bottom: none; border-radius: 8px 8px 0 0; transform: translateX(-50%);`;
                 }
