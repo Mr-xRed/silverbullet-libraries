@@ -314,8 +314,8 @@ function initDraggablePanel()
                         else if (type === "BHS") newVal = window.innerHeight - touch.clientY;
 
                         // Constraints
-                        if (type !== "BHS" && (newVal < 150 || newVal > 800)) return;
-                        if (type === "BHS" && (newVal < 100 || newVal > 600)) return;
+                        if (type !== "BHS" && (newVal < 0 || newVal > 3000)) return;
+                        if (type === "BHS" && (newVal < 100 || newVal > 3000)) return;
 
                         // UPDATE CSS VARIABLES
                         // This updates the layout AND the "closed" state calc() automatically

@@ -59,7 +59,7 @@ config.set("explorer", {
   tileSize = "80px",
   enableContextMenu = true,
   listHeight = "24px",
-  negativeFilter = {"Library/Std","*.zip","*.js","*.css", "*test*"},
+  negativeFilter = {"Library/Std","*.js","*.css", "*test*"},
   treeFolderFirst = false,
   recoverAfterRefresh = true
 })
