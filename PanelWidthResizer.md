@@ -74,7 +74,7 @@ function initDraggablePanel()
                     cursor: pointer;
                     font-family: monospace;
                     font-weight: bold;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    /*box-shadow: 0 2px 5px rgba(0,0,0,0.2);*/
                     transition: all 0.3s ease;
                 `;
 
@@ -386,12 +386,6 @@ end
 
 initDraggablePanel()
 
-
--- Command to FIX Resizer when not launched automagically
--- command.define {
---    name = "UI: Fix Multi-Panel Resizer",
---    run = function() initDraggablePanel() end
---}
 ```
 
 # Discussions about this library
