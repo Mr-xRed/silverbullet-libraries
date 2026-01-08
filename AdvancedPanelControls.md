@@ -110,9 +110,9 @@ function initPanelControls()
                 `;
 
                 if (type === "LHS") {
-                    style += `top: ]]..lhsHandlePostion..[[; right: -29px; width: 28px; height: 64px; border-left: none; border-radius: 0 8px 8px 0; transform: translateY(-]]..lhsHandlePostion..[[);`;
+                    style += `top: ]]..lhsHandlePostion..[[; right: -29px; width: 28px; height: 64px; border-left: none; border-radius: 0 8px 8px 0; transform: translateY(-50%);`;
                 } else if (type === "RHS") {
-                    style += `top: ]]..rhsHandlePostion..[[; left: -29px; width: 28px; height: 64px; border-right: none; border-radius: 8px 0 0 8px; transform: translateY(-]]..rhsHandlePostion..[[);`;
+                    style += `top: ]]..rhsHandlePostion..[[; left: -29px; width: 28px; height: 64px; border-right: none; border-radius: 8px 0 0 8px; transform: translateY(-50%);`;
                 } else if (type === "BHS") {
                     style += `left: 50%; top: -29px; width: 64px; height: 28px; border-bottom: none; border-radius: 8px 8px 0 0; transform: translateX(-50%);`;
                 }
