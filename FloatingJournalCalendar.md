@@ -4,6 +4,7 @@ tags: meta/library
 pageDecoration.prefix: "🗓️ "
 ---
 # Floating Journal Calendar & Page Navigation
+
 The **Floating Journal Calendar** is a lightweight, interactive navigation tool for SilverBullet. It provides a sleek, floating interface that allows users to quickly browse their journal entries. By scanning existing pages against a customizable date pattern, it visually identifies days with active entries, enabling seamless one-click navigation through personal history.
 
 ![JournalCalendar](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/JournalCalendar.png)
@@ -13,6 +14,7 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 ### **📅 Visual Journaling**
 * **Activity Indicators:** Automatically scans your space and places a distinct dot on days that already have a journal entry.
 * **Instant Navigation:** Click any date to immediately navigate to that specific journal page.
+* **Drag&Drop**: Drag the day to add the Journal WikiLink to the page
 * **Smart Date Logic:** Highlights "Today"
 
 ### **✨ Enhanced User Interface**
