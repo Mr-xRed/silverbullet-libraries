@@ -31,15 +31,16 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 ```lua
 -- priority: 1
 config.set("FloatingJournalCalendar", {
-  journalPathPattern = 'Journal/#year#/#month#/#year#-#month#-#day#_#weekday#',
+  journalPathPattern = 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#',
   monthNames = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
   dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
 })    
 ```
+
 > **note** Note
 > Copy this into a `space-lua` block on your config page to change default values
 
-## Side Panel Integration
+## Floating Journal Calendar Intergation
 
 ```space-lua
 -- priority: 0
@@ -68,7 +69,7 @@ function toggleFloatingJournalCalendar()
     end
 
     local cfg = config.get("FloatingJournalCalendar") or {}
-    local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#/#year#-#month#-#day#_#weekday#'
+    local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#'
     local month_names = quote_list(cfg.monthNames or {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"})
     local day_names = quote_list(cfg.dayNames or {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
 
@@ -139,9 +140,7 @@ function toggleFloatingJournalCalendar()
             color: var(--jc-text-color);
             border-radius: 12px;
             border: 2px solid var(--jc-border-color);
-            box-shadow: 2px 2px 10px oklch(0 0 0 / 0.2)/*,
-                inset 0 0 5px oklch(0 0 0 / 1),
-                inset 0 0 20px oklch(0 0 0 / 0.4)*/; 
+            box-shadow: 2px 2px 10px oklch(0 0 0 / 0.2); 
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -231,9 +230,6 @@ function toggleFloatingJournalCalendar()
             position: relative;
             background: var(--jc-elements-background);
             transition: 0.2s;
-            box-shadow:
-            /*  inset 0 0 5px oklch(0 0 0 / 0.6),
-                inset 0 0 20px oklch(1 0 0 / 0.2); */
         }
         
         .jc-day:hover {
@@ -270,7 +266,6 @@ function toggleFloatingJournalCalendar()
         .jc-day.sun .jc-dot {
             background: oklch(0.65 0.18 30);
         }
-         }
     </style>
     <div class="jc-card" id="jc-draggable">
         <div class="jc-header" id="jc-handle">
@@ -336,6 +331,7 @@ function toggleFloatingJournalCalendar()
             for(let i=1; i<=lastDay; i++) {
                 const d = document.createElement("div");
                 d.className = "jc-day";
+                d.draggable = true;
                 const dateObj = new Date(y, m, i);
                 const isSun = dateObj.getDay() === 0;
                 if(isSun) d.classList.add("sun");
@@ -344,6 +340,7 @@ function toggleFloatingJournalCalendar()
                 const path = pattern
                     .replace(/#year#/g, y)
                     .replace(/#month#/g, String(m+1).padStart(2,'0'))
+                    .replace(/#monthname#/g, months[m])
                     .replace(/#day#/g, String(i).padStart(2,'0'))
                     .replace(/#weekday#/g, days[isSun ? 6 : dateObj.getDay()-1]);
 
@@ -351,7 +348,15 @@ function toggleFloatingJournalCalendar()
                     const dot = document.createElement("div"); dot.className = "jc-dot"; d.appendChild(dot);
                 }
                 d.innerHTML += `<span>${i}</span>`;
+                
                 d.onclick = () => window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action:"navigate", path, session }}));
+                
+                d.ondragstart = (e) => {
+                    // This handles the standard drop behavior for the editor automatically
+                    e.dataTransfer.setData("text/plain", "[[" + path + "]].."]]"..[[");
+                    e.dataTransfer.dropEffect = "copy";
+                };
+
                 grid.appendChild(d);
             }
         }
