@@ -19,7 +19,7 @@ pageDecoration.prefix: "🛠️ "
 - Panel constraints configurable (min/max width and height).
 - Button-Size and Style configurable through Space-Style (Documentation -> Soon)
 
-![[https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/UAPC-Screenshot.png|1000px]]
+![UAPC-Screenshot|1000px](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/UAPC-Screenshot.png)
 
 
 ## Known Issues
