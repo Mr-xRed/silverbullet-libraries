@@ -11,8 +11,8 @@ website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DocumentExp
 description: "Document Explorer for SilverBullet with Grid|List|Tree-View and some other handy features"
 ---
 name: "🛠️ Unified Advanced Panel Control and Window Management"
-uri: github:Mr-xRed/silverbullet-libraries/AdvancedPanelControls.md
-website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/AdvancedPanelControls.md
+uri: github:Mr-xRed/silverbullet-libraries/AdvancedPanelControl.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/AdvancedPanelControl.md
 description: "Advanced Controls for your Side Panels (LHS, RHS, BHS)"
 ---
 name: "🖨️ PrintPreview"

@@ -19,8 +19,7 @@ pageDecoration.prefix: "🛠️ "
 - Panel constraints configurable (min/max width and height).
 - Button-Size and Style configurable through Space-Style (Documentation -> Soon)
 
-![[Library/Mr-xRed/UAPC-Screenshot.png|1000px]]
-
+![[https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/UAPC-Screenshot.png|1000px]]
 
 
 ## Known Issues
@@ -59,7 +58,7 @@ config.set("AdvancedPanelControl", {
 
 
 > **warning** IMPORTANT!
-> For this script to work as intended you need to remove all your previous custom space-styles which you added to manipulate the panels, otherwise it will conflict with it!
+> For this script to work as intended you need to remove all your previous custom space-styles or Libraries which you added previously to manipulate the panels, otherwise it will conflict with them!
 
 ## Implementation
 
