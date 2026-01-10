@@ -97,7 +97,7 @@ html[data-theme="light"] {
 
 html {
   --control-btn-size: 28px;
-  --btn-border-radius: 20px;
+  --btn-border-radius: 15px;
   --drag-line-width: 16px;
 }
 
@@ -107,7 +107,7 @@ html {
 
 .sb-window-container {
   position: fixed !important;
-  z-index: 9999 !important;
+  z-index: 89 !important;
 
   display: flex !important;
   flex-direction: column !important;
@@ -222,7 +222,7 @@ html {
   );
 
   transition: all 0.2s;
-  z-index: 10002;
+  z-index: 92;
 }
 
 .sb-window-container.is-focused .sb-window-close-btn {
@@ -272,7 +272,7 @@ html {
 
 .sb-resizer {
   position: absolute;
-  z-index: 10001;
+  z-index: 91;
 }
 
 .resizer-t,
@@ -315,7 +315,7 @@ html {
    ========================================================= */
 
 #sb-top {
-  z-index: 10005;
+  z-index: 105;
 }
 
 #sb-top .panel {
@@ -336,7 +336,7 @@ html {
   display: flex;
   gap: 0;
 
-  z-index: 10001;
+  z-index: 91;
   border: 1px solid var(--panel-border-color);
   transition: all 0.3s ease;
 }
@@ -473,7 +473,7 @@ html {
 
 .sb-panel.is-full {
   position: fixed !important;
-  z-index: 10008 !important;
+  z-index: 98 !important;
 
   top: 56px !important;
   left: 0 !important;
@@ -517,7 +517,7 @@ html {
 
 .sb-drag-handle {
   position: absolute;
-  z-index: 10010;
+  z-index: 100;
 
   display: flex;
   align-items: center;

@@ -31,7 +31,7 @@ This CSS snippet is all about **improving focus and usability** when interacti
   inset: 0; 
   background: rgba(0,0,0,0.6);
   backdrop-filter: blur(14px);
-  z-index: 10208;
+  z-index: 208;
   opacity: 0;
   pointer-events: none; 
   transition: opacity 0.3s ease;
@@ -48,7 +48,7 @@ This CSS snippet is all about **improving focus and usability** when interacti
 .sb-modal-box[open],
 .sb-modal {
   position: fixed;
-  z-index: 10209;
+  z-index: 209;
 }
 
 ```
