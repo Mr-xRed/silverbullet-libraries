@@ -2,7 +2,7 @@
 name: "Library/Mr-xRed/FloatingPage"
 tags: meta/library
 files:
-- UnifiedFloating.js
+- UnifiedAdvancedPanelControl.js
 pageDecoration.prefix: "📃 "
 ---
 # Open Floating Page
@@ -33,7 +33,7 @@ command.define {
   name = "Floating: EXAMPLE: Open Internal Page",
   hide = true,
   run = function()
-    js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show("CONFIG", "Configuration")
+    js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show("CONFIG", "Configuration")
   end
 }
 
@@ -44,7 +44,7 @@ command.define {
   run = function()
     -- Note: Some sites like Google/GitHub block iframes for security. 
     -- Wikipedia and personal sites usually work fine.
-    js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show("https://en.wikipedia.org", "Wikipedia")
+    js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show("https://en.wikipedia.org", "Wikipedia")
   end
 }
 
@@ -60,7 +60,7 @@ command.define {
         <button onclick="alert('It works!')">Click Me</button>
       </body>
     ]]
-    js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show(myHtml, "Custom App")
+    js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(myHtml, "Custom App")
   end
 }
 
@@ -81,7 +81,7 @@ command.define {
     local page = editor.filterBox('🔍', allPages, "Select page")
     if page != nil then
       clientStore.set("explorer.suppressOnce", "true")
-      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show(page.name)
+      js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(page.name)
     end
   end
 }
@@ -129,7 +129,7 @@ local function findAndOpenLink(offset)
 
     if foundLink then
         clientStore.set("explorer.suppressOnce", "true")
-        js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show(foundLink)
+        js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(foundLink)
         return true
     end
     return false

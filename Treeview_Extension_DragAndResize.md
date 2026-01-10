@@ -1,11 +1,11 @@
 ---
 name: "Library/Mr-xRed/Treeview_Extension_DragAndResize"
 tags: meta/library
-files:
-- UnifiedFloating.js
-pageDecoration.prefix: "📎 "
+pageDecoration.prefix: "☠️ "
 ---
 # Treeview or Document Explorer Extension to Drag & Resize
+
+> **danger** ☠️ DEPRECATED
 
 > **warning** Dependencies
 > You must have TreeView Plug installed: [Treeview Plug](https://github.com/joekrill/silverbullet-treeview)
@@ -24,7 +24,7 @@ pageDecoration.prefix: "📎 "
 
 Here is an example how your ActionButton Config should look like this:
 
-```lua
+```
     {
       icon = "layout", description = "Toggle Tree View",
       run = function()
@@ -70,7 +70,7 @@ Here is an example how your ActionButton Config should look like this:
 ```
 
 ## Define Command with Move&Resize JS
-```space-lua
+```
 -- priority: -1
 
 command.define {

@@ -2,11 +2,11 @@
 name: "Library/Mr-xRed/DocumentExplorer"
 tags: meta/library
 files:
-- UnifiedFloating.js
+- AdvancedPanelControl.md
+- UnifiedAdvancedPanelControl.js
 - docex_styles.css
 - lucide-icons.svg
 - hybrid-cursor.svg
-- AdvancedPanelControls.md
 pageDecoration.prefix: "🗂️ "
 ---
 # 🗂️ Document Explorer
@@ -122,7 +122,7 @@ html[data-theme="light"]{
 }
 ```
 
-## For the Floating Window
+## For the Window
 ```css
 :root{
   --header-height: 20px;                         /* Header height, drag-area */
@@ -233,7 +233,7 @@ local function restoreExplorerOpenStateOnPageLoad()
     if lastMode == "window" then
       if not cachedFiles then cachedFiles = space.listFiles() end
       drawPanel()
-      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
+      js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableDrag(selector)
     else
       if not cachedFiles then cachedFiles = space.listFiles() end
       drawPanel()
@@ -630,9 +630,9 @@ end
       table.insert(h, [[</div>
                  </div>  
                   <div class="action-buttons" style="display: flex; gap: 4px;">
-                  <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">]])
+<!--              <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">]])
       table.insert(h, ICONS.window)
-      table.insert(h, [[</div>
+      table.insert(h, [[</div> -->
                   <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">]])
       table.insert(h, ICONS.close)
       table.insert(h, [[</div>
@@ -888,7 +888,18 @@ window.addEventListener('keydown', function(e) {
   
 // ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
-    const decodedData = atob(encodedData);
+    // 1. Decode Base64 to a binary string
+    const binaryString = atob(encodedData);
+    
+    // 2. Convert binary string to a Uint8Array
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    // 3. Properly decode the bytes as UTF-8
+    const decodedData = new TextDecoder().decode(bytes);
+    
     event.dataTransfer.setData("text/plain", decodedData);
     event.dataTransfer.effectAllowed = "copy";
     
@@ -953,7 +964,7 @@ if (contextMenuEnabled) {
     
     // ADDED: Open option for folders in Tree View
     if (isFolder && isTreeView) {
-        menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold;">Go To</div>`;
+        menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold;">Focus</div>`;
     }
 
     // NEW: Preview option for files
@@ -997,7 +1008,7 @@ if (contextMenuEnabled) {
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show("${internalPath}", "${fileName}")`;
+            const luaCmd = `js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show("${internalPath}", "${fileName}")`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1436,28 +1447,28 @@ command.define {
 
 -- ----------------------------------
 
-command.define {
-  name = "DocumentExplorer: Toggle Window Mode",
-  hide = true,
-  run = function()
-    local currentMode = clientStore.get("explorer.currentDisplayMode") or "panel"    
-    local selector = "#sb-main .sb-panel." .. PANEL_ID -- This targets the SB panel wrapper
+--command.define {
+--  name = "DocumentExplorer: Toggle Window Mode",
+--  hide = true,
+--  run = function()
+--    local currentMode = clientStore.get("explorer.currentDisplayMode") or "panel"    
+--    local selector = "#sb-main .sb-panel." .. PANEL_ID -- This targets the SB panel wrapper
     
     -- Force a clean slate
-    editor.hidePanel(PANEL_ID)
-    PANEL_VISIBLE = false
+--    editor.hidePanel(PANEL_ID)
+--    PANEL_VISIBLE = false
 
-    if currentMode == "window" then
-      clientStore.set("explorer.currentDisplayMode", "panel")
-      drawPanel()
-    else
-      clientStore.set("explorer.currentDisplayMode", "window")
-      drawPanel()
-      js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
-    end
-    clientStore.set("explorer.open", "true")
-  end
-}
+--    if currentMode == "window" then
+--      clientStore.set("explorer.currentDisplayMode", "panel")
+--      drawPanel()
+--    else
+--      clientStore.set("explorer.currentDisplayMode", "window")
+--      drawPanel()
+--      js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableWindow(selector)
+--    end
+--    clientStore.set("explorer.open", "true")
+--  end
+--}
 
 command.define {
   name = "Navigate: Document Explorer Window",
@@ -1469,7 +1480,7 @@ command.define {
         drawPanel()
       end
       clientStore.set("explorer.open", "true")
-        js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").enableDrag(selector)
+        js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableWindow(selector)
   end
 }
 ```

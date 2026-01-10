@@ -3,7 +3,6 @@ name: "Library/Mr-xRed/VirtualPageDocumentExplorer"
 tags: meta/library
 pageDecoration.prefix: "☠️ "
 ---
-
 # ☠️ Document Explorer (Virtual Page) - Deprecated
 
 > **danger** Deprecated

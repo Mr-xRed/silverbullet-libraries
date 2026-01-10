@@ -352,7 +352,7 @@ command.define {
 
     editor.flashNotification("HTML exported: " .. outputFile)
 --    editor.openUrl("/.fs/" .. outputFile)
-     js.import("/.fs/Library/Mr-xRed/UnifiedFloating.js").show(outputFile, "PrintPreview")
+     js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(outputFile, "PrintPreview")
   end
 }
 

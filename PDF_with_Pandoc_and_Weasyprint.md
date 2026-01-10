@@ -61,7 +61,7 @@ sudo apt install libcairo2 libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf2.0-0 l
 
 ## Command implementation
 
-```lua
+```
 config.define("pandocCSS", {type = "string"})
 
 local pandocCSS = config.get("pandocCSS") or "Library/Mr-xRed/PDF_with_Pandoc_and_Weasyprint/pandoc.css"

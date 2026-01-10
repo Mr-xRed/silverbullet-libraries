@@ -2,10 +2,12 @@
 name: "Library/Mr-xRed/TitleBar_ModernStyle"
 description: "Modern restyling of the Title Bar"
 tags: meta/library
-pageDecoration.prefix: "🖌️ "
+pageDecoration.prefix: "☠️ "
 ---
 
 # Title Bar Restyling
+
+> **danger** DEPRECATED 
 
 * this is a restyle for your Title Bar which will give it a modern look with frosted glass effect
 

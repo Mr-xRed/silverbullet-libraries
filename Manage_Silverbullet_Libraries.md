@@ -79,7 +79,7 @@ order by updateDate]]}
 * repos are in form of: `{"owner/repository","path"}`
 
 
-```lua
+```
 config.set( "libraries", {
     apiToken = "YOUR_GITHUB_API_TOKEN", 
     defaultPath = "Library/Custom/",
@@ -97,7 +97,7 @@ config.set( "libraries", {
 # Implementation 
 
 ## 🗂️ Import: Browse GitHub Repositories (Command)
-```lua
+```
 command.define {
   name = "Import: Browse GitHub Repositories",
   key = "Ctrl-Alt-s",
@@ -331,7 +331,7 @@ end
 
 ## 🖌 Buttons Style
 
-```css
+```
 .sb-notifications {
   position: fixed !important;
   z-index: 9999 !important;
@@ -400,7 +400,7 @@ table.manageLibraries td button:active {
 ```
 
 ## ⚙️ Check & Update GitHub Library (Function)
-```lua
+```
 function updateLibraryFromGitHub(page)
   if not page then 
     editor.flashNotification("No page specified to update", "error")
@@ -486,7 +486,7 @@ end
 ```
 
 ## ⚙️ Update Raw Markdown Library (Function)
-```lua
+```
 -- Function to update a given Markdown page
 function updateLibraryRawMarkdown(page)
   if not page then 
@@ -533,7 +533,7 @@ end
 ```
 
 ## ⚙️ Check Update Status for a page (Function)
-```lua
+```
 function checkLibraryUpdateStatus(page)
   if not page then return end
 
@@ -584,7 +584,7 @@ end
 ```
 
 ## ⚙️ Update Github or Markdown for specified page (Function)
-```lua
+```
 function updateLibrary(page)
     local original_text = space.readPage(page)
     local fm = index.extractFrontmatter(original_text).frontmatter or {}
@@ -602,7 +602,7 @@ end
 ```
 
 ## 🚀 Import: Check All Github Update Statuses (Command)
-```lua
+```
 command.define {
   name = "Import: Check All Github Update Statuses",
   key = "Ctrl-Alt-h",
@@ -627,7 +627,7 @@ end
 ```
 
 ## 🚀 Import: Check & Update All GitHub Libraries (Command)
-```lua
+```
 command.define {
   name = "Import: Check & Update All GitHub Libraries",
   key = "Ctrl-Alt-g",
@@ -649,7 +649,7 @@ end
 
 ## 🚀 Import: Update All Raw-Markdown Libraries (Command)
 
-```lua
+```
 command.define {
   name = "Import: Update All Raw-Markdown Libraries",
   key = "Ctrl-Alt-m",
@@ -710,7 +710,7 @@ command.define {
 
 ## 🪄 Helper Functions
 ### Parse Custom Date
-```lua
+```
 function parse_datetime(str)
   if not str or str == "" then
     return nil
