@@ -215,7 +215,8 @@ header.appendChild(dockRHSBtn);
       const kill = () => {
         doc.querySelector("#sb-top")?.remove();
         doc.querySelectorAll("#sb-main .sb-panel").forEach(el => el.remove());
-        doc.querySelectorAll("#sb-root .sb-bhs").forEach(el => el.remove());
+        doc.querySelector("#sb-root .sb-bhs")?.remove();
+        doc.querySelector("#custom-styles")?.remove();
       };
 
       // First pass
@@ -248,6 +249,8 @@ header.appendChild(dockRHSBtn);
     handle.dataset.direction = dir;
     container.appendChild(handle);
   });
+  
+  /*
   (document.querySelector("#sb-main") || document.body).appendChild(container);
   setupEvents(container, header, storageKey, false);
   const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
@@ -259,6 +262,31 @@ header.appendChild(dockRHSBtn);
     clampToViewport(container, false);
   } else {
     const offset = document.querySelectorAll('.is-floating').length * 30;
+    container.style.width = "600px";
+    container.style.height = "500px";
+    container.style.left = `${100 + offset}px`;
+    container.style.top = `${TOP_OFFSET + 35 + offset}px`;
+  }
+  */
+
+  // Get all existing floating windows *before* adding the new one
+  const existingFloating = document.querySelectorAll('.is-floating').length;
+  // Then append container
+  (document.querySelector("#sb-main") || document.body).appendChild(container);
+  setupEvents(container, header, storageKey, false);
+
+  // Apply saved position + offset
+  const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
+  const OFFSET_STEP = 20;
+  if (saved) {
+    const offset = existingFloating > 0 ? existingFloating * OFFSET_STEP : 0;
+    container.style.left = `${saved.x + offset}px`;
+    container.style.top = `${saved.y + offset}px`;
+    container.style.width = `${saved.w}px`;
+    container.style.height = `${saved.h}px`;
+    clampToViewport(container, false);
+  } else {
+    const offset = existingFloating * OFFSET_STEP;
     container.style.width = "600px";
     container.style.height = "500px";
     container.style.left = `${100 + offset}px`;
@@ -309,6 +337,10 @@ function dockFloatingWindow(container, side) {
 }
 
 
+function cssPx(varName, fallback = 0) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(varName);
+  return parseInt(v, 10) || fallback;
+}
 
 
 
@@ -465,7 +497,7 @@ function _makeSPM(configOverrides = {}) {
       mode: "auto",
       gestures: true,
       constraints: { minW: 300, maxW: 1000, minH: 100, maxH: 500 },
-      positions: { lhs: "50%", rhs: "50%", bhs: "50%" },
+    //  positions: { lhs: "50%", rhs: "50%", bhs: "50%" },
       prefixes: { handle: "sb-drag-handle-", controls: "sb-panel-controls-" }
     },
     state: { currentMode: "dock", isDragging: false, swipe: { startX: 0, startY: 0, lastAction: 0 }, resizeTimer: null },
@@ -479,7 +511,7 @@ function _makeSPM(configOverrides = {}) {
   SPM.config = Object.assign(defaults.config, configOverrides.config || {});
   if (typeof configOverrides.gestures === "boolean") SPM.config.gestures = configOverrides.gestures;
   if (configOverrides.constraints) SPM.config.constraints = Object.assign(SPM.config.constraints, configOverrides.constraints);
-  if (configOverrides.positions) SPM.config.positions = Object.assign(SPM.config.positions, configOverrides.positions);
+ // if (configOverrides.positions) SPM.config.positions = Object.assign(SPM.config.positions, configOverrides.positions);
   if (configOverrides.savedLHS) SPM.savedLHS = String(configOverrides.savedLHS);
   if (configOverrides.savedRHS) SPM.savedRHS = String(configOverrides.savedRHS);
   if (configOverrides.savedBHS) SPM.savedBHS = String(configOverrides.savedBHS);
@@ -515,7 +547,7 @@ function _makeSPM(configOverrides = {}) {
     const id = SPM.config.prefixes.controls + type;
     if (document.getElementById(id)) return;
     const container = SPM.ui.createControl(id, "sb-panel-controls-container");
-
+/*
     // 🔑 APPLY POSITION HERE
       if (type === "LHS" && SPM.config.positions.lhs) {
         container.style.top = SPM.config.positions.lhs;
@@ -528,7 +560,7 @@ function _makeSPM(configOverrides = {}) {
       if (type === "BHS" && SPM.config.positions.bhs) {
         container.style.left = SPM.config.positions.bhs;
       }
-
+*/
     const btnClass = "sb-panel-control-base";
     // Toggle Button
     const toggleBtn = SPM.ui.createControl("", btnClass + " sb-drawer-toggle");
@@ -880,7 +912,7 @@ function _makeSPM(configOverrides = {}) {
  *   panelMode: "auto"|"overlay"|"dock",
  *   gestures: true|false,
  *   constraints: { minW, maxW, minH, maxH },
- *   positions: { lhs, rhs, bhs },
+ * //  positions: { lhs, rhs, bhs },
  *   savedLHS: "300",
  *   savedRHS: "300",
  *   savedBHS: "200"
@@ -895,7 +927,7 @@ export function initPanelControls(options = {}) {
       mode: options.panelMode || (options.mode || "auto"),
       gestures: (typeof options.gestures === "boolean") ? options.gestures : (options.gesturesEnabled !== undefined ? options.gesturesEnabled : true),
       constraints: options.constraints || (options.constraints || null),
-      positions: options.positions || (options.positions || null),
+    //  positions: options.positions || (options.positions || null),
       prefixes: { handle: "sb-drag-handle-", controls: "sb-panel-controls-" }
     },
     savedLHS: options.savedLHS,

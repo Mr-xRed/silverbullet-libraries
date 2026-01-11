@@ -50,9 +50,6 @@ config.set("AdvancedPanelControl", {
   maxWidth = "1000", -- max Width Constraints for LHS and RHS
   minHeight = "100", -- min Height Constraints for BHS
   maxHeight = "500", -- max Height Constraints for BHS
-  lhsHandlePostion = "50vh",  -- Top To Bottom
-  rhsHandlePostion = "50vh",  -- Top To Bottom
-  bhsHandlePostion = "50vw"   -- Left To Right
 })
 ```
 
@@ -72,32 +69,29 @@ config.set("AdvancedPanelControl", {
   --header-height: 20px;
   --frame-width: 5px;
   --frame-opacity: 100%;
-  --window-border: 2px;
-  --window-border-radius: 10px;
-}
-
-/* ---------------------------------------------------------
-   Theme Helpers
-   --------------------------------------------------------- */
-html[data-theme="dark"] {
-  --explorer-accent-color: oklch(0.75 0.25 230);
-  --explorer-border-color: oklch(
-    from var(--explorer-accent-color)
-    calc(l - 0.5) c h / 0.1
-  );
-}
-
-html[data-theme="light"] {
-  --explorer-accent-color: oklch(0.80 0.18 230);
-  --explorer-border-color: oklch( from var(--explorer-accent-color) calc(l - 0.5) c h / 0.1 );
-}
-
-html {
+  --uapc-border: 2px;
+  --uapc-border-radius: 10px;
+  
   --control-btn-size: 28px;
   --control-btn-size-hover: 28px;
   --btn-border-radius: 15px;
   --drag-line-width: 16px;
+  --lhs-control-postion: 50vh;
+  --rhs-control-postion: 50vh;
+  --bhs-control-postion: 50vw;
 }
+
+/* ----- Accent Colors ------ */
+html[data-theme="dark"] {
+  --uapc-accent-color: var(--ui-accent-color);
+  --uapc-border-color: oklch( from var(--uapc-accent-color) calc(l - 0.5) c h / var(--frame-opacity) );
+}
+
+html[data-theme="light"] {
+  --uapc-accent-color: var(--ui-accent-color);
+  --uapc-border-color: oklch( from var(--uapc-accent-color) calc(l - 0.5) c h / var(--frame-opacity) );
+}
+
 
 /* =========================================================
    Floating Window
@@ -112,10 +106,10 @@ html {
   box-sizing: border-box !important;
 
   padding: var(--frame-width);
-  border: var(--window-border) solid var(--explorer-border-color);
-  border-radius: calc(var(--window-border-radius) + var(--frame-width));
+  border: var(--uapc-border) solid var(--uapc-border-color);
+  border-radius: calc(var(--uapc-border-radius) + var(--frame-width));
 
-  background: oklch( from var(--explorer-accent-color) l 0.02 h / var(--frame-opacity));
+  background: oklch( from var(--uapc-accent-color) l 0.02 h / var(--frame-opacity));
 
   backdrop-filter: blur(10px);
   box-shadow: 0 0 20px #00000090;
@@ -125,11 +119,8 @@ html {
 }
 
 .sb-window-container.is-focused {
-  background: oklch(
-    from var(--explorer-accent-color)
-    l c h / var(--frame-opacity)
-  );
-  border-color: var(--explorer-border-color) !important;
+  background: oklch( from var(--uapc-accent-color) l c h / var(--frame-opacity));
+  border-color: var(--uapc-border-color) !important;
   box-shadow: 0 0 20px #000000b0;
 }
 
@@ -212,7 +203,7 @@ html {
   border-radius: 6px;
 
   background: oklch(
-    from var(--explorer-accent-color)
+    from var(--uapc-accent-color)
     l 0.02 h / 0.1
   );
 
@@ -222,7 +213,7 @@ html {
 
 .sb-window-container.is-focused .sb-window-close-btn {
   background: oklch(
-    from var(--explorer-accent-color)
+    from var(--uapc-accent-color)
     l c h / 0.5
   );
 }
@@ -248,8 +239,8 @@ html {
   overflow: clip !important;
   box-sizing: border-box !important;
 
-  border: var(--window-border) solid var(--explorer-border-color) !important;
-  border-radius: var(--window-border-radius) !important;
+  border: var(--uapc-border) solid var(--uapc-border-color) !important;
+  border-radius: var(--uapc-border-radius) !important;
 
   background: var(--root-background-color, transparent) !important;
 }
@@ -380,7 +371,7 @@ html {
    --------------------------------------------------------- */
 
 .lhs .sb-panel-controls-container {
-  top: var(--control-btn-position);
+  top: var(--lhs-control-postion);
   right: calc((-1 * var(--control-btn-size)) - 1px);
 
   flex-direction: column;
@@ -392,7 +383,7 @@ html {
 }
 
 .rhs .sb-panel-controls-container {
-  top: var(--control-btn-position);
+  top: var(--rhs-control-postion);
   left: calc((-1 * var(--control-btn-size)) - 1px);
 
   flex-direction: column;
@@ -405,7 +396,7 @@ html {
 
 .bhs .sb-panel-controls-container {
   top: calc((-1 * var(--control-btn-size)) - 1px);
-  right: var(--control-btn-position);
+  right: var(--bhs-control-postion);
 
   flex-direction: row;
 
