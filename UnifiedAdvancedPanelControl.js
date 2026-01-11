@@ -183,15 +183,54 @@ header.appendChild(dockRHSBtn);
   contentArea.className = "sb-window-content";
   const iframe = document.createElement("iframe");
   iframe.className = "sb-window-iframe";
+  /*
   iframe.onload = () => {
     try {
       const style = document.createElement('style');
-      style.textContent = `#sb-top { display: none !important; } html #sb-root {--editor-width: 800px !important; }`;
+      style.textContent = `#sb-top, #sb-main .sb-panel, #sb-root .sb-bhs { display: none !important; } html #sb-root {--editor-width: 800px !important; }`;
       iframe.contentDocument.head.appendChild(style);
     } catch (e) {
       console.warn("Cross-origin iframe detected: Cannot hide #sb-top inside this frame.", e);
     }
   };
+  */
+
+  iframe.onload = () => {
+    try {
+      const doc = iframe.contentDocument;
+      if (!doc) return;
+
+      // ===SAFETY NET: CSS HIDE (instant + future-proof) === 
+      const style = doc.createElement("style");
+      style.textContent = `
+        #sb-top,
+        #sb-main .sb-panel,
+        #sb-root .sb-bhs {
+          display: none !important;
+        }
+      `;
+      doc.head.appendChild(style);
+
+      // ====HARD DELETE: remove only the children, never parents ==== 
+      const kill = () => {
+        doc.querySelector("#sb-top")?.remove();
+        doc.querySelectorAll("#sb-main .sb-panel").forEach(el => el.remove());
+        doc.querySelectorAll("#sb-root .sb-bhs").forEach(el => el.remove());
+      };
+
+      // First pass
+      kill();
+
+      // Watch for SPA respawns
+      const observer = new MutationObserver(kill);
+      observer.observe(doc.body, { childList: true, subtree: true });
+
+    } catch (e) {
+      console.warn("Cross-origin iframe detected: DOM modification skipped.", e);
+    }
+  };
+
+
   if (isHtml) {
     const blob = new Blob([content], { type: 'text/html' });
     iframe.src = URL.createObjectURL(blob);
