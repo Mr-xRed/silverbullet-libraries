@@ -59,6 +59,18 @@ config.set("AdvancedPanelControl", {
 
 ## Implementation
 
+### Default overrides
+```space-style
+
+#sb-main .cm-editor .cm-content {padding: 5px 40px;}
+#sb-top {z-index: 105; }
+#sb-top .panel {position: fixed;}
+#sb-editor { min-width: 0;}
+.sb-lua-wrapper { max-width: 100%; overflow-x: auto; }
+
+```
+
+
 ```space-style
 
 /* ---------------------------------------------------------
@@ -241,7 +253,7 @@ html[data-theme="light"] {
 
   border: var(--uapc-border) solid var(--uapc-border-color) !important;
   border-radius: var(--uapc-border-radius) !important;
-
+  
   background: var(--root-background-color, transparent) !important;
 }
 
@@ -256,10 +268,7 @@ html[data-theme="light"] {
    Window Resizers
    ========================================================= */
 
-.sb-resizer {
-  position: absolute;
-  z-index: 91;
-}
+.sb-resizer { position: absolute; z-index: 91;}
 
 .resizer-t,
 .resizer-b {
@@ -271,26 +280,10 @@ html[data-theme="light"] {
 
 .resizer-t { top: 0; }
 .resizer-b { bottom: 0; }
-
-.resizer-l,
-.resizer-r {
-  top: 20px;
-  bottom: 20px;
-  width: 8px;
-  cursor: ew-resize;
-}
-
+.resizer-l,.resizer-r {top:20px;bottom:20px;width:8px;cursor:ew-resize;}
 .resizer-l { left: 0; }
 .resizer-r { right: 0; }
-
-.resizer-tl,
-.resizer-tr,
-.resizer-bl,
-.resizer-br {
-  width: 22px;
-  height: 22px;
-}
-
+.resizer-tl,.resizer-tr,.resizer-bl,.resizer-br{width:22px;height: 22px;}
 .resizer-tl { top: 0; left: 0; cursor: nwse-resize; }
 .resizer-tr { top: 0; right: 0; cursor: nesw-resize; }
 .resizer-bl { bottom: 0; left: 0; cursor: nesw-resize; }
@@ -299,14 +292,6 @@ html[data-theme="light"] {
 /* =========================================================
    Panel Controls (Migrated)
    ========================================================= */
-
-#sb-top {
-  z-index: 105;
-}
-
-#sb-top .panel {
-  position: fixed;
-}
 
 /* ---------------------------------------------------------
    Base Panel Behaviour
@@ -327,13 +312,17 @@ html[data-theme="light"] {
 .sb-panel-controls-container {
   position: absolute;
   display: flex;
-  gap: px;
+  flex-direction: column;
+  transform: translateY(-50%);
+  gap: 0;
   z-index: 91;
+  
   border: 1px solid var(--panel-border-color);
   background: oklch( from var(--top-background-color) l c h / var(--frame-opacity) );
   transition: --control-btn-size 0.3s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  
 }
 
 .sb-panel-controls-container:hover {--control-btn-size: var(--control-btn-size-hover);}
@@ -362,10 +351,13 @@ html[data-theme="light"] {
   color: white;
 }
 
-.sb-drawer-toggle {
+.lhs .sb-drawer-toggle, .rhs .sb-drawer-toggle {
   height: calc(3 * var(--control-btn-size));
 }
 
+.bhs .sb-drawer-toggle {
+  width: calc(3 * var(--control-btn-size));
+}
 /* ---------------------------------------------------------
    Panel Orientations
    --------------------------------------------------------- */
@@ -373,9 +365,6 @@ html[data-theme="light"] {
 .lhs .sb-panel-controls-container {
   top: var(--lhs-control-postion);
   right: calc((-1 * var(--control-btn-size)) - 1px);
-
-  flex-direction: column;
-  transform: translateY(-50%);
 
   border-left: none;
   border-radius: 0 var(--btn-border-radius)
@@ -385,10 +374,7 @@ html[data-theme="light"] {
 .rhs .sb-panel-controls-container {
   top: var(--rhs-control-postion);
   left: calc((-1 * var(--control-btn-size)) - 1px);
-
-  flex-direction: column;
-  transform: translateY(-50%);
-
+  
   border-right: none;
   border-radius: var(--btn-border-radius) 0
                  0 var(--btn-border-radius);
@@ -437,66 +423,41 @@ html[data-theme="light"] {
    Panel States
    --------------------------------------------------------- */
 
-.sb-panel.is-collapsed {
-  pointer-events: none;
-}
+.sb-panel.is-collapsed { pointer-events: none;}
 
-.sb-panel.is-collapsed.lhs {
-  margin-left: calc(var(--sb-panel-width) * -1);
-}
+.sb-panel.is-collapsed.lhs { margin-left: calc(var(--sb-panel-width) * -1);}
+.sb-panel.is-collapsed.rhs { margin-right: calc(var(--sb-panel-width) * -1);}
+.sb-panel.is-collapsed.bhs { margin-bottom: calc(var(--sb-panel-height) * -1);}
 
-.sb-panel.is-collapsed.rhs {
-  margin-right: calc(var(--sb-panel-width) * -1);
-}
-
-.sb-panel.is-collapsed.bhs {
-  margin-bottom: calc(var(--sb-panel-height) * -1);
-}
-
-.sb-panel.is-collapsed .sb-panel-controls-container {
-  pointer-events: auto;
-}
+.sb-panel.is-collapsed .sb-panel-controls-container { pointer-events: auto;}
 
 /* Fullscreen */
 
 .sb-panel.is-full {
   position: fixed !important;
   z-index: 98 !important;
-
   top: 56px !important;
   left: 0 !important;
-
   width: 100vw !important;
   height: calc(100vh - 56px) !important;
-
   margin: 0 !important;
   transform: none !important;
 }
 
-.sb-panel.rhs.is-full {
-  left: auto !important;
-  right: 0 !important;
-}
-
-.sb-panel.is-full .sb-panel-control-base:first-child {
-  border-radius: var(--btn-border-radius) var(--btn-border-radius) 0 0;  
-}
-
-.sb-panel.is-full .sb-panel-control-base:last-child {
-  border-radius: 0 0 var(--btn-border-radius) var(--btn-border-radius);
-}
-
 .sb-panel.is-full .sb-panel-controls-container{
   border: 1px solid var(--panel-border-color) !important;
-  border-radius: var(--btn-border-radius);
-}
+  border-radius: var(--btn-border-radius);}
 
-.sb-panel.lhs.is-full .sb-panel-controls-container{
-  right: 5px;
-}
-.sb-panel.rhs.is-full .sb-panel-controls-container{
-  left: 5px;
-}
+
+.sb-panel.rhs.is-full { left: auto !important; right: 0 !important;}
+.sb-panel.is-full .sb-panel-control-base:first-child {
+  border-radius: var(--btn-border-radius) var(--btn-border-radius) 0 0;}
+.sb-panel.is-full .sb-panel-control-base:last-child {
+  border-radius: 0 0 var(--btn-border-radius) var(--btn-border-radius);}
+
+
+.sb-panel.lhs.is-full .sb-panel-controls-container{ right: 5px; }
+.sb-panel.rhs.is-full .sb-panel-controls-container{ left: 5px; }
 
 
 /* ---------------------------------------------------------
