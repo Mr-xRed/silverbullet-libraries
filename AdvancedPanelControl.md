@@ -93,8 +93,8 @@ html[data-theme="light"] {
 }
 
 html {
-  --control-btn-size: 20px;
-  --control-btn-size-hover: 30px;
+  --control-btn-size: 28px;
+  --control-btn-size-hover: 28px;
   --btn-border-radius: 15px;
   --drag-line-width: 16px;
 }
