@@ -19,7 +19,7 @@ pageDecoration.prefix: "🛠️ "
 - Panel constraints configurable (min/max width and height).
 - Button-Size and Style configurable through Space-Style (Documentation -> Soon)
 
-![UAPC-Screenshot|1000px](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/UAPC-Screenshot.png)
+u![UAPC-Screenshot|1000px](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/UAPC-Screenshot.png)
 
 
 ## Known Issues
@@ -68,9 +68,9 @@ config.set("AdvancedPanelControl", {
 :root {
   --header-height: 20px;
   --frame-width: 5px;
-  --frame-opacity: 100%;
+  --frame-opacity: 20%;
   --uapc-border: 2px;
-  --uapc-border-radius: 10px;
+  --uapc-border-radius: 8px;
   
   --control-btn-size: 28px;
   --control-btn-size-hover: 28px;
@@ -164,7 +164,7 @@ html[data-theme="light"] {
 
 .sb-window-title {
   max-width: 100%;
-  padding: 0 40px;
+  padding: 0 75px;
 
   white-space: nowrap;
   overflow: hidden;

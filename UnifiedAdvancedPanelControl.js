@@ -17,13 +17,13 @@ let highestZ = 100;
 const SNAP_THRESHOLD = 15;
 const TOP_OFFSET = 55;
 
-function injectStyles() {
-  if (document.getElementById("sb-unified-drag-styles")) return;
-  const style = document.createElement("style");
-  style.id = "sb-unified-drag-styles";
-  style.textContent = ` :root { --header-height: 20px; --frame-width: 5px; --frame-opacity: 10%; --window-border: 2px; --window-border-radius: 10px; } /* #sb-main .sb-panel:last-child {border-left: none;}*/ html[data-theme="dark"]{ --explorer-border-color: oklch(from var(--explorer-accent-color) calc(l - 0.5) c h / 0.1); --explorer-accent-color: oklch(0.75 0.25 230); } html[data-theme="light"]{ --explorer-border-color: oklch(from var(--explorer-accent-color) calc(l - 0.5) c h / 0.1); --explorer-accent-color: oklch(0.80 0.18 230); } .sb-window-container { position: fixed !important; z-index: 89 !important; display: flex !important; flex-direction: column !important; box-sizing: border-box !important; background: oklch(from var(--explorer-accent-color) l 0.02 h / var(--frame-opacity)); border: var(--window-border) solid var(--explorer-border-color) ; backdrop-filter: blur(10px); box-shadow: 0px 0px 20px #00000090; border-radius: calc(var(--window-border-radius) + var(--frame-width)); padding: var(--frame-width); touch-action: none; transition: border-color 0.2s ease, box-shadow 0.2s ease; } .sb-window-container.is-focused { background: oklch(from var(--explorer-accent-color) l c h / var(--frame-opacity)); border-color: var(--explorer-border-color) !important; box-shadow: 0px 0px 20px #000000b0; } .sb-window-header { height: var(--header-height) !important; width: 100% !important; cursor: grab !important; border-radius: 8px !important; flex-shrink: 0 !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: background 0.2s ease; position: relative; } .is-panel .sb-window-header::after { content: "" !important; width: 60px !important; height: 12px !important; background: repeating-linear-gradient( to bottom, #808080cc 0px, #808080cc 2px, transparent 2px, transparent 5px ) !important; opacity: 0.6 !important; } .sb-window-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0 40px; text-align: center; font-weight: 700; font-size: 0.85em; text-transform: uppercase; z-index: 1; pointer-events: none; color: var(--root-color); } .sb-window-close-btn { position: absolute; top: -2px; right: 0px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 6px; font-size: 14px; color: var(--root-color); background: oklch(from var(--explorer-accent-color) l 0.02 h / 0.1);; transition: all 0.2s; z-index: 92; } .sb-window-container.is-focused .sb-window-close-btn { background: oklch(from var(--explorer-accent-color) l c h / 0.5);; } .sb-window-container.is-focused .sb-window-close-btn:hover , .sb-window-close-btn:hover { background: oklch(0.65 0.2 30); color: white; } .sb-window-content { flex: 1 1 0% !important; position: relative !important; margin-top: 4px !important; width: 100% !important; height: 100% !important; overflow: clip !important; box-sizing: border-box !important; border: var(--window-border) solid var(--explorer-border-color) !important; border-radius: var(--window-border-radius) !important; background: var(--root-background-color, transparent) !important; } .sb-window-iframe { width: 100%; height: 100%; border: none; display: block; } .sb-resizer { position: absolute; z-index: 91; } .resizer-t { top: 0; left: 20px; right: 20px; height: 8px; cursor: ns-resize; } .resizer-b { bottom: 0; left: 20px; right: 20px; height: 8px; cursor: ns-resize; } .resizer-l { left: 0; top: 20px; bottom: 20px; width: 8px; cursor: ew-resize; } .resizer-r { right: 0; top: 20px; bottom: 20px; width: 8px; cursor: ew-resize; } .resizer-tl { top: 0; left: 0; width: 22px; height: 22px; cursor: nwse-resize; } .resizer-tr { top: 0; right: 0; width: 22px; height: 22px; cursor: nesw-resize; } .resizer-bl { bottom: 0; left: 0; width: 22px; height: 22px; cursor: nesw-resize; } .resizer-br { bottom: 0; right: 0; width: 22px; height: 22px; cursor: nwse-resize; } `;
-  (document.head || document.documentElement).appendChild(style);
-}
+//function injectStyles() {
+//  if (document.getElementById("sb-unified-drag-styles")) return;
+//  const style = document.createElement("style");
+//  style.id = "sb-unified-drag-styles";
+//  style.textContent = `  `;
+//  (document.head || document.documentElement).appendChild(style);
+//}
 
 function focusWindow(win) {
   document.querySelectorAll(".sb-window-container").forEach(c => c.classList.remove("is-focused"));
@@ -124,7 +124,7 @@ function setupEvents(container, header, storageKey, isPanel) {
    =========================== */
 
 export function show(content, titleLabel = null) {
-  injectStyles();
+ // injectStyles();
   const isUrl = content.startsWith("http://") || content.startsWith("https://");
   const isHtml = content.trim().startsWith("<") && content.trim().endsWith(">");
   const storageKey = isHtml ? "sb_dim_mode_html" : (isUrl ? "sb_dim_mode_url" : "sb_dim_mode_page");
@@ -216,7 +216,7 @@ header.appendChild(dockRHSBtn);
         doc.querySelector("#sb-top")?.remove();
         doc.querySelectorAll("#sb-main .sb-panel").forEach(el => el.remove());
         doc.querySelector("#sb-root .sb-bhs")?.remove();
-        doc.querySelector("#custom-styles")?.remove();
+     //   doc.querySelector("#custom-styles")?.remove();
       };
 
       // First pass
@@ -345,7 +345,7 @@ function cssPx(varName, fallback = 0) {
 
 
 export function enableWindow(panelSelector = "#sb-main .sb-panel") {
-  injectStyles();
+  //injectStyles();
   const panel = document.querySelector(panelSelector);
   // Guard clause: if panel doesn't exist or is already wrapped
   if (!panel || panel.parentElement.classList.contains('sb-window-container')) return;
@@ -427,8 +427,28 @@ export function enableWindow(panelSelector = "#sb-main .sb-panel") {
   container.appendChild(header);
   container.appendChild(panel);
   // Apply localized reset panel.style
-  panel.style.cssText = `flex: 1 1 0% !important; position: relative !important; top: 0 !important; left: 0 !important; margin: 0 !important; margin-top: 4px !important; width: 100% !important; height: 100% !important; overflow: clip !important; box-sizing: border-box !important; border: var(--window-border) solid var(--explorer-border-color) !important; border-radius: var(--window-border-radius) !important; background: transparent !important;`;
-  setupEvents(container, header, storageKey, true);
+  panel.style.cssText = `
+  flex: 1 1 0% !important;
+  position: relative !important;
+
+  top: 0 !important;
+  left: 0 !important;
+
+  margin: 0 !important;
+  margin-top: 4px !important;
+
+  width: 100% !important;
+  height: 100% !important;
+
+  overflow: clip !important;
+  box-sizing: border-box !important;
+
+  border: var(--uapc-border) solid var(--uapc-border-color) !important;
+  border-radius: var(--uapc-border-radius) !important;
+  
+  background: transparent !important;
+`;
+setupEvents(container, header, storageKey, true);
   const saved = JSON.parse(localStorage.getItem(storageKey) || "null");
   if (saved) {
     container.style.left = `${saved.x}px`;
