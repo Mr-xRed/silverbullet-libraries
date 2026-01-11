@@ -35,8 +35,8 @@ function focusWindow(win) {
 function clampToViewport(win, isPanel = false) {
   const rect = win.getBoundingClientRect();
   const minTop = isPanel ? TOP_OFFSET : TOP_OFFSET;
-  const minW = isPanel ? 320 : 260;
-  const minH = isPanel ? 310 : 260;
+  const minW = isPanel ? 250 : 250;
+  const minH = isPanel ? 250 : 250;
   let left = rect.left, top = rect.top, width = Math.max(rect.width, minW), height = Math.max(rect.height, minH);
   if (width > window.innerWidth) width = window.innerWidth;
   if (height > window.innerHeight - minTop) height = window.innerHeight - minTop;
@@ -615,9 +615,6 @@ function _makeSPM(configOverrides = {}) {
     SPM.ui.syncChevron(el, type); // SYNC CHEVRON
     return true;
   };
-
-
-
 
 
   SPM.ui.syncChevron = (el, type) => {

@@ -71,7 +71,7 @@ config.set("AdvancedPanelControl", {
 :root {
   --header-height: 20px;
   --frame-width: 5px;
-  --frame-opacity: 20%;
+  --frame-opacity: 100%;
   --window-border: 2px;
   --window-border-radius: 10px;
 }
@@ -89,14 +89,12 @@ html[data-theme="dark"] {
 
 html[data-theme="light"] {
   --explorer-accent-color: oklch(0.80 0.18 230);
-  --explorer-border-color: oklch(
-    from var(--explorer-accent-color)
-    calc(l - 0.5) c h / 0.1
-  );
+  --explorer-border-color: oklch( from var(--explorer-accent-color) calc(l - 0.5) c h / 0.1 );
 }
 
 html {
-  --control-btn-size: 28px;
+  --control-btn-size: 20px;
+  --control-btn-size-hover: 30px;
   --btn-border-radius: 15px;
   --drag-line-width: 16px;
 }
@@ -117,10 +115,7 @@ html {
   border: var(--window-border) solid var(--explorer-border-color);
   border-radius: calc(var(--window-border-radius) + var(--frame-width));
 
-  background: oklch(
-    from var(--explorer-accent-color)
-    l 0.02 h / var(--frame-opacity)
-  );
+  background: oklch( from var(--explorer-accent-color) l 0.02 h / var(--frame-opacity));
 
   backdrop-filter: blur(10px);
   box-shadow: 0 0 20px #00000090;
@@ -331,25 +326,26 @@ html {
   overflow: visible !important;
 }
 
-.sb-panel-controls-container {
-  position: absolute;
-  display: flex;
-  gap: 0;
-
-  z-index: 91;
-  border: 1px solid var(--panel-border-color);
-  transition: all 0.3s ease;
-}
 
 /* ---------------------------------------------------------
    Unified Control Buttons
    --------------------------------------------------------- */
 
+@property --control-btn-size { syntax: '<length>'; inherits: true; initial-value: 24px; }
+
 .sb-panel-controls-container {
-  background: oklch( from var(--top-background-color) l c h / 0.1 );
+  position: absolute;
+  display: flex;
+  gap: px;
+  z-index: 91;
+  border: 1px solid var(--panel-border-color);
+  background: oklch( from var(--top-background-color) l c h / var(--frame-opacity) );
+  transition: --control-btn-size 0.3s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
+
+.sb-panel-controls-container:hover {--control-btn-size: var(--control-btn-size-hover);}
 
 .sb-panel-control-base {
   width: var(--control-btn-size);
@@ -361,12 +357,13 @@ html {
 
   font-family: monospace;
   font-weight: bold;
-  font-size: calc(var(--control-btn-size) * 0.6);
+  font-size: calc(var(--control-btn-size) * 0.8);
 
   color: var(--root-color);
   cursor: pointer;
 
-  transition: all 0.6s ease;
+  transition: color 0.3s cubic-bezier(0.25, 1, 0.5, 1),
+              background 0.3s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 .sb-panel-control-base:hover {
