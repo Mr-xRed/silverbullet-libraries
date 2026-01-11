@@ -55,7 +55,7 @@ config.set("AdvancedPanelControl", {
 
 
 > **warning** IMPORTANT!
-> For this script to work as intended you need to remove all your previous custom space-styles or Libraries which you added previously to manipulate the panels, otherwise it will conflict with them!
+> For this Library to work as intended you need to remove all your previous custom space-styles or Libraries which you added previously to manipulate the panels, otherwise it will conflict with them!
 
 ## Implementation
 
@@ -63,9 +63,13 @@ config.set("AdvancedPanelControl", {
 ```space-style
 
 #sb-main .cm-editor .cm-content {padding: 5px 40px;}
+
 #sb-top {z-index: 105; }
+
 #sb-top .panel {position: fixed;}
+
 #sb-editor { min-width: 0;}
+
 .sb-lua-wrapper { max-width: 100%; overflow-x: auto; }
 
 ```

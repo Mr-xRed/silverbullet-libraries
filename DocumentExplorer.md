@@ -418,7 +418,8 @@ local function renderTree(files, prefix)
         currentPath = currentPath or ""
         local sorted = {}
         for k in pairs(node) do 
-            if k:sub(1,1) ~= "_" then table.insert(sorted, k) end 
+            -- REMOVED: k:sub(1,1) ~= "_" check to allow underscores
+            if k ~= "_path" then table.insert(sorted, k) end 
         end
 
         if treeFolderFirst then
@@ -486,7 +487,8 @@ local function renderTree(files, prefix)
     -- 3. EXECUTE TRAVERSE
     local rootKeys = {}
     for k in pairs(tree) do 
-        if k:sub(1,1) ~= "_" then table.insert(rootKeys, k) end 
+        -- REMOVED: k:sub(1,1) ~= "_" check to allow underscores
+        if k ~= "_path" then table.insert(rootKeys, k) end 
     end
 
     if treeFolderFirst then
