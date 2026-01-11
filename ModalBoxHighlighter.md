@@ -7,7 +7,7 @@ pageDecoration.prefix: "🖌️ "
 
 This CSS snippet is all about **improving focus and usability** when interacting with modal boxes in SilverBullet, such as search results, dialogs, or other pop-ups. Essentially, it’s a combination of **visual polish** and **functional enhancement**.
 
-*   **Dimensions & Shape**: 600px wide, 80px from top, 15px rounded corners - modern, soft look.
+*   **Dimensions & Shape**: centered vertically, 15px rounded corners - modern, soft look.
 *   **Backdrop**: Dark, semi-transparent, blurred overlay - focuses attention on modal.
 *   **Benefits**: Improves focus, usability, and aesthetics with sleek, user-friendly design.
 
@@ -16,13 +16,12 @@ This CSS snippet is all about **improving focus and usability** when interacti
 
 /* Makes the modal box a little narrower and higher to fit more results*/
 .sb-modal-box {
-   /* width: 600px;*/
-    top:80px;
+    top:50vh;
+    transform: translateY(calc(-50% - 55px));
     border-radius: 15px !important;
 }
-.sb-modal-box .sb-result-list {
-    max-height: 60vh;
-}
+
+.sb-modal-box .sb-result-list { max-height: 60vh; }
 
 /* Creates a dark blured backdrop when a ModalBox is opened */
 #sb-root::before {
@@ -45,11 +44,7 @@ This CSS snippet is all about **improving focus and usability** when interacti
   pointer-events: auto;
 }
 
-.sb-modal-box[open],
-.sb-modal {
-  position: fixed;
-  z-index: 209;
-}
+.sb-modal-box[open], .sb-modal { position: fixed; z-index: 209; }
 
 ```
 
