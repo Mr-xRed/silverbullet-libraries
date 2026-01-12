@@ -9,7 +9,7 @@ files:
 - hybrid-cursor.svg
 pageDecoration.prefix: "🗂️ "
 ---
-# 🗂️ Document Explorer
+# 🗂️ Document Explorer (Ver. 1.0.10)
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DocumentExplorer_Screenshot.png)
 
 ## Features
