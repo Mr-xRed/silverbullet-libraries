@@ -587,6 +587,9 @@ html[data-theme="light"] {
   z-index: 1;
 }
 
+.mode-grid .grid-tile .hybrid-folder-zone { gap: 0;}
+
+
 /* --- 2. THE MD BADGE --- */
 .hybrid-md-badge {
   font-weight: bold;
@@ -650,10 +653,10 @@ html[data-theme="light"] {
 
 .mode-grid .hybrid-md-badge {
   position: absolute;
-  top: 5px;
-  right: 5px;
-  font-size: 10px;
-  padding: 2px 5px;
+  top: 4px;
+  right: 4px;
+  font-size: clamp(0.4em, calc((var(--tile-size) / 60px) * 0.6em), 0.8em);
+  padding: 1px 4px;
 }
 
 /* --- 4. LIST & TREE MODES --- */
@@ -665,6 +668,15 @@ html[data-theme="light"] {
 
 .mode-list .hybrid-md-badge,
 .mode-tree .hybrid-md-badge {
+  width: max-content; 
+  height: fit-content;
+  align-self: center; 
+  display: inline-flex; 
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap; 
+  line-height: 1;      
+
   position: relative;
   margin-left: auto; 
   margin-right: 2px;
