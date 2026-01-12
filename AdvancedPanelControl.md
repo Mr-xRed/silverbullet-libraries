@@ -74,20 +74,15 @@ config.set("AdvancedPanelControl", {
 
 ```
 
+### Root Variables
 
 ```space-style
-/* priority: 100*/
-/* ---------------------------------------------------------
-   Root Variables
-   --------------------------------------------------------- */
+
+/* priority: 100 */
    
 :root {
-  --header-height: 20px;
-  --frame-width: 5px;
-  --frame-opacity: 100%;
-  --uapc-border: 2px;
-  --uapc-border-radius: 8px;
   
+/* --- Panel Control variables ---*/  
   --control-btn-size: 28px;
   --control-btn-size-hover: 28px;
   --btn-border-radius: 15px;
@@ -95,19 +90,40 @@ config.set("AdvancedPanelControl", {
   --lhs-control-postion: 50vh;
   --rhs-control-postion: 50vh;
   --bhs-control-postion: 50vw;
+
+/* ----- Window variables ------*/
+  --header-height: 20px;
+  --frame-width: 5px;
+  --frame-opacity: 100%;
+  --window-border: 2px;
+  --window-border-radius: 8px;
 }
 
-/* ----- Accent Colors ------ */
+/* ----- Window Colors ------ */
 html[data-theme="dark"] {
-  --uapc-accent-color: var(--ui-accent-color);
-  --uapc-border-color: oklch( from var(--uapc-accent-color) calc(l - 0.5) c h / var(--frame-opacity) );
+  --window-accent-color: var(--ui-accent-color);
+  --window-header-title: var(--modal-selected-option-color);
+  --window-border-color: oklch( from var(--window-accent-color) calc(l - 0.15) 0.01 h / var(--frame-opacity) );
+  --window-border-color-focused: oklch( from var(--window-accent-color) calc(l - 0.2) 0.1 h / var(--frame-opacity) );
+  --window-color: oklch( from var(--window-accent-color) calc(l - 0.2) 0.01 h / var(--frame-opacity));
+  --window-color-focused:oklch( from var(--window-accent-color) calc(l) 0.2 h / var(--frame-opacity));
 }
 
 html[data-theme="light"] {
-  --uapc-accent-color: var(--ui-accent-color);
-  --uapc-border-color: oklch( from var(--uapc-accent-color) calc(l - 0.5) c h / var(--frame-opacity) );
+  --window-accent-color: var(--ui-accent-color);
+  --window-header-title: var(--modal-selected-option-color);
+  --window-border-color: oklch( from var(--window-accent-color) calc(l + 0.3) 0.01 h / var(--frame-opacity) );
+  --window-border-color-focused: oklch( from var(--window-accent-color) calc(l ) 0.1 h / var(--frame-opacity) );
+  --window-color:oklch( from var(--window-accent-color) calc(l + 0.3) 0.01 h / var(--frame-opacity));
+  --window-color-focused:oklch( from var(--window-accent-color) calc(l + 0.1) 0.2 h / var(--frame-opacity));
 }
+```
 
+
+### Main StyleSheet
+
+```space-style
+/* priority: 100 */
 
 /* =========================================================
    Floating Window
@@ -122,22 +138,22 @@ html[data-theme="light"] {
   box-sizing: border-box !important;
 
   padding: var(--frame-width);
-  border: var(--uapc-border) solid var(--uapc-border-color);
-  border-radius: calc(var(--uapc-border-radius) + var(--frame-width));
+  border: var(--window-border) solid var(--window-border-color);
+  border-radius: calc(var(--window-border-radius) + var(--frame-width));
 
-  background: oklch( from var(--uapc-accent-color) l 0.01 h / var(--frame-opacity));
+  background: var(--window-color);
 
   backdrop-filter: blur(10px);
-  box-shadow: 0 0 20px #00000090;
+  box-shadow: 0 0 10px #00000055;
 
   touch-action: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sb-window-container.is-focused {
-  background: oklch( from var(--uapc-accent-color) l 0.15 h / var(--frame-opacity));
-  border-color: var(--uapc-border-color) !important;
-  box-shadow: 0 0 20px #000000b0;
+  background: var(--window-color-focused);
+  border-color: var(--window-border-color-focused) !important;
+  box-shadow: 0 0 20px #000000bb;
 }
 
 /* ---------------------------------------------------------
@@ -157,8 +173,8 @@ html[data-theme="light"] {
   cursor: grab !important;
   border-radius: 8px !important;
   flex-shrink: 0 !important;
-
   transition: background 0.2s ease;
+  color:var(--window-header-title);
 }
 
 .is-panel .sb-window-header::after {
@@ -219,7 +235,7 @@ html[data-theme="light"] {
   border-radius: 6px;
 
   background: oklch(
-    from var(--uapc-accent-color)
+    from var(--window-accent-color)
     l 0.02 h / 0.1
   );
 
@@ -228,10 +244,7 @@ html[data-theme="light"] {
 }
 
 .sb-window-container.is-focused .sb-window-close-btn {
-  background: oklch(
-    from var(--uapc-accent-color)
-    l c h / 0.5
-  );
+  background: oklch(from var(--window-accent-color) calc(l - 0.1) c h / 0.5 );
 }
 
 .sb-window-close-btn:hover,
@@ -255,12 +268,15 @@ html[data-theme="light"] {
   overflow: clip !important;
   box-sizing: border-box !important;
 
-  border: var(--uapc-border) solid var(--uapc-border-color) !important;
-  border-radius: var(--uapc-border-radius) !important;
+  border: var(--window-border) solid var(--window-border-color) !important;
+  border-radius: var(--window-border-radius) !important;
   
   background: var(--root-background-color, transparent) !important;
 }
 
+.is-focused .sb-window-content {
+  border-color: var(--window-border-color-focused) !important;
+}
 .sb-window-iframe {
   width: 100%;
   height: 100%;
