@@ -35,7 +35,7 @@
   gap: 8px;
   align-content: start;
   scroll-behavior: smooth;
-  scrollbar-width: thin;
+/*  scrollbar-width: thin; */
 }
 
 
