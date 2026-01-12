@@ -339,12 +339,14 @@ html[data-theme="light"] {
   border: 1px solid var(--panel-border-color);
   background: oklch( from var(--top-background-color) l c h / var(--frame-opacity) );
   transition: --control-btn-size 0.3s ease;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  /*backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);*/
   
 }
 
-.sb-panel-controls-container:hover {--control-btn-size: var(--control-btn-size-hover);}
+.sb-panel-controls-container:hover {
+  --control-btn-size: var(--control-btn-size-hover);
+}
 
 .sb-panel-control-base {
   width: var(--control-btn-size);
@@ -475,9 +477,20 @@ html[data-theme="light"] {
   border-radius: 0 0 var(--btn-border-radius) var(--btn-border-radius);}
 
 
-.sb-panel.lhs.is-full .sb-panel-controls-container{ right: 5px; }
-.sb-panel.rhs.is-full .sb-panel-controls-container{ left: 5px; }
+.sb-panel.lhs.is-full .sb-panel-controls-container{ right: 15px; }
+.sb-panel.rhs.is-full .sb-panel-controls-container{ left: 15px; }
 
+
+.sb-panel.is-full .sb-panel-controls-container {
+    opacity: 50%;
+   box-shadow: 0 0 20px #00000088;
+   transition: all 0.3s ease;
+}
+
+.sb-panel.is-full .sb-panel-controls-container:hover {
+    opacity: 100%;
+    box-shadow: 0 0 20px #000000bb;
+}
 
 /* ---------------------------------------------------------
    Resize Handles
