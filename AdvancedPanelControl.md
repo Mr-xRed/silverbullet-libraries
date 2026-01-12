@@ -84,7 +84,7 @@ config.set("AdvancedPanelControl", {
 :root {
   --header-height: 20px;
   --frame-width: 5px;
-  --frame-opacity: 20%;
+  --frame-opacity: 100%;
   --uapc-border: 2px;
   --uapc-border-radius: 8px;
   
@@ -125,7 +125,7 @@ html[data-theme="light"] {
   border: var(--uapc-border) solid var(--uapc-border-color);
   border-radius: calc(var(--uapc-border-radius) + var(--frame-width));
 
-  background: oklch( from var(--uapc-accent-color) l 0.02 h / var(--frame-opacity));
+  background: oklch( from var(--uapc-accent-color) l 0.01 h / var(--frame-opacity));
 
   backdrop-filter: blur(10px);
   box-shadow: 0 0 20px #00000090;
@@ -135,7 +135,7 @@ html[data-theme="light"] {
 }
 
 .sb-window-container.is-focused {
-  background: oklch( from var(--uapc-accent-color) l c h / var(--frame-opacity));
+  background: oklch( from var(--uapc-accent-color) l 0.15 h / var(--frame-opacity));
   border-color: var(--uapc-border-color) !important;
   box-shadow: 0 0 20px #000000b0;
 }
@@ -318,9 +318,8 @@ html[data-theme="light"] {
   display: flex;
   flex-direction: column;
   transform: translateY(-50%);
-  gap: 0;
+  gap: 0px;
   z-index: 91;
-  
   border: 1px solid var(--panel-border-color);
   background: oklch( from var(--top-background-color) l c h / var(--frame-opacity) );
   transition: --control-btn-size 0.3s ease;
@@ -334,14 +333,14 @@ html[data-theme="light"] {
 .sb-panel-control-base {
   width: var(--control-btn-size);
   height: var(--control-btn-size);
-
+  
   display: flex;
   align-items: center;
   justify-content: center;
 
   font-family: monospace;
   font-weight: bold;
-  font-size: calc(var(--control-btn-size) * 0.8);
+  font-size: calc(var(--control-btn-size) - 10px);
 
   color: var(--root-color);
   cursor: pointer;
