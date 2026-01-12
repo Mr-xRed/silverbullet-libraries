@@ -19,7 +19,7 @@ pageDecoration.prefix: "🛠️ "
 - Panel constraints configurable (min/max width and height).
 - Button-Size and Style configurable through Space-Style (Documentation -> Soon)
 
-u![UAPC-Screenshot|1000px](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/UAPC-Screenshot.png)
+![UAPC-Screenshot|1000px](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/UAPC-Screenshot.png)
 
 
 ## Known Issues
@@ -74,7 +74,7 @@ config.set("AdvancedPanelControl", {
 
 ```
 
-### Root Variables
+### CSS Variables (`space-style` customization options)
 
 ```space-style
 
@@ -610,11 +610,9 @@ function initPanelControls()
 
   -- Store Retrieval
   local savedLHS = clientStore.get("lhsPanelWidth") or "300"
---  editor.flashNotification(savedLHS)
   local savedRHS = clientStore.get("rhsPanelWidth") or "300"
---  editor.flashNotification(savedRHS)
   local savedBHS = clientStore.get("bottomPanelHeight") or "200"
---  editor.flashNotification(savedBHS)
+
 
 -- Pass configuration and saved values to the module's initPanelControls function.
   local jsModule = js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js")
@@ -629,21 +627,18 @@ function initPanelControls()
       savedBHS = savedBHS
     })
   else
---    editor.flashNotification("Failed to initialize UnifiedFloating.js module")
+    editor.flashNotification("Failed to initialize UnifiedFloating.js module")
   end
 
   -- Register listeners that were previously wired in Lua (store saves and close)
   js.window.addEventListener("sb-save-lhs", function(e)
     clientStore.set("lhsPanelWidth", e.detail.value)
---    editor.flashNotification(e.detail.value)
   end)
   js.window.addEventListener("sb-save-rhs", function(e)
     clientStore.set("rhsPanelWidth", e.detail.value)
---    editor.flashNotification(e.detail.value)
   end)
   js.window.addEventListener("sb-save-bhs", function(e)
     clientStore.set("bottomPanelHeight", e.detail.value)
---    editor.flashNotification(e.detail.value)
   end)
   js.window.addEventListener("sb-close-panel", function(e)
     hideSilverBulletPanel(e.detail.type)
@@ -651,7 +646,6 @@ function initPanelControls()
   js.window.addEventListener('silverbullet:hidePanel', function(e)
     hideSilverBulletPanel(e.detail.type)
   end)
-  
   js.window.addEventListener("flashNotification", function(e)
     editor.flashNotification(e.detail.value)
   end)
