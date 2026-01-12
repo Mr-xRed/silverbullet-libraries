@@ -832,79 +832,130 @@ function _makeSPM(configOverrides = {}) {
     handle.addEventListener("touchstart", startDragging, { passive: false });
   };
 
-  SPM.events.initSwipe = () => {
-    if (!SPM.config.gestures) return;
-    const handleStart = (e) => {
-      if (SPM.state.isDragging) return;
-      SPM.state.swipe.startX = e.changedTouches[0].screenX;
-      SPM.state.swipe.startY = e.changedTouches[0].screenY;
-    };
-    const handleEnd = (e) => {
-      if (SPM.state.isDragging) return;
-      const now = Date.now();
-      if (now - SPM.state.swipe.lastAction < 500) return;
-      const diffX = e.changedTouches[0].screenX - SPM.state.swipe.startX;
-      const diffY = e.changedTouches[0].screenY - SPM.state.swipe.startY;
-      const isHorizontal = Math.abs(diffX) > Math.abs(diffY);
-      const isVertical = Math.abs(diffY) > Math.abs(diffX);
-      const layouts = SPM.layout.getPanels();
-      const lhs = layouts.find(l => l.type === "LHS");
-      const rhs = layouts.find(l => l.type === "RHS");
-      const bhs = layouts.find(l => l.type === "BHS");
-      let acted = false;
-      const handleProgression = (dir) => {
-        const lhsOpen = lhs && lhs.el.classList.contains("is-expanded") && !lhs.el.classList.contains("is-full");
-        const lhsFull = lhs && lhs.el.classList.contains("is-full");
-        const rhsOpen = rhs && rhs.el.classList.contains("is-expanded") && !rhs.el.classList.contains("is-full");
-        const rhsFull = rhs && rhs.el.classList.contains("is-full");
-        if (dir === "left") {
-          if (lhsFull) return SPM.layout.toggleFullSize(lhs.el, "LHS", false);
-          if (lhsOpen) return SPM.layout.togglePanel(lhs.el, "LHS", false);
-          if (!rhsOpen) return SPM.layout.togglePanel(rhs.el, "RHS", true);
-          if (!rhsFull) return SPM.layout.toggleFullSize(rhs.el, "RHS", true);
-        } else if (dir === "right") {
-          if (rhsFull) return SPM.layout.toggleFullSize(rhs.el, "RHS", false);
-          if (rhsOpen) return SPM.layout.togglePanel(rhs.el, "RHS", false);
-          if (!lhsOpen) return SPM.layout.togglePanel(lhs.el, "LHS", true);
-          if (!lhsFull) return SPM.layout.toggleFullSize(lhs.el, "LHS", true);
-        }
-        return false;
-      };
-      if (isHorizontal && Math.abs(diffX) > 50) {
-        acted = handleProgression(diffX > 0 ? "right" : "left");
-      } else if (isVertical && Math.abs(diffY) > 50 && bhs) {
-        const bOpen = bhs.el.classList.contains("is-expanded") && !bhs.el.classList.contains("is-full");
-        const bFull = bhs.el.classList.contains("is-full");
-        if (diffY < 0) {
-          if (!bOpen) acted = SPM.layout.togglePanel(bhs.el, "BHS", true);
-          else if (!bFull) acted = SPM.layout.toggleFullSize(bhs.el, "BHS", true);
-        } else {
-          if (bFull) acted = SPM.layout.toggleFullSize(bhs.el, "BHS", false);
-          else if (bOpen) acted = SPM.layout.togglePanel(bhs.el, "BHS", false);
-        }
-      }
-      if (acted) SPM.state.swipe.lastAction = now;
-    };
-    const main = document.querySelector("#sb-main");
-    if (main && main.getAttribute("data-swipe-init") !== "true") {
-      main.setAttribute("data-swipe-init", "true");
-      main.addEventListener('touchstart', handleStart, {passive: true});
-      main.addEventListener('touchend', handleEnd, {passive: true});
-    }
-    document.querySelectorAll(".sb-panel iframe").forEach(iframe => {
-      const attach = () => {
-        try {
-          const iDoc = iframe.contentDocument || iframe.contentWindow.document;
-          iDoc.removeEventListener('touchstart', handleStart);
-          iDoc.removeEventListener('touchend', handleEnd);
-          iDoc.addEventListener('touchstart', handleStart, {passive: true});
-          iDoc.addEventListener('touchend', handleEnd, {passive: true});
-        } catch(e) {}
-      };
-      attach();
-      iframe.addEventListener("load", attach);
-    });
+SPM.events.initSwipe = () => {
+  if (!SPM.config.gestures) return;
+
+  const MIN_DISTANCE = 70;
+  const MAX_DURATION = 300;
+  const MIN_VELOCITY = 0.6;
+  const DIRECTION_RATIO = 1.5;
+
+  const handleStart = (e) => {
+    if (SPM.state.isDragging) return;
+    const t = e.changedTouches[0];
+    // Ensure the swipe object exists to avoid undefined errors
+    if (!SPM.state.swipe) SPM.state.swipe = {};
+    
+    SPM.state.swipe.startX = t.screenX;
+    SPM.state.swipe.startY = t.screenY;
+    SPM.state.swipe.startTime = Date.now();
   };
+
+  const handleEnd = (e) => {
+    if (SPM.state.isDragging || !SPM.state.swipe) return;
+
+    const now = Date.now();
+    if (now - (SPM.state.swipe.lastAction || 0) < 500) return;
+
+    const t = e.changedTouches[0];
+    // Fixed: Correctly referencing the nested swipe object
+    const dx = t.screenX - SPM.state.swipe.startX;
+    const dy = t.screenY - SPM.state.swipe.startY;
+    const duration = now - SPM.state.swipe.startTime;
+
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if (duration > MAX_DURATION || Math.max(absX, absY) < MIN_DISTANCE) return;
+
+    const velocityX = absX / duration;
+    const velocityY = absY / duration;
+
+    let acted = false;
+    const layouts = SPM.layout.getPanels();
+    const lhs = layouts.find(l => l.type === "LHS");
+    const rhs = layouts.find(l => l.type === "RHS");
+    const bhs = layouts.find(l => l.type === "BHS");
+
+    // Horizontal logic
+    if (absX > absY * DIRECTION_RATIO && velocityX >= MIN_VELOCITY) {
+      const dir = dx > 0 ? "right" : "left";
+      
+      const state = {
+        LHS: {
+          full: lhs?.el.classList.contains("is-full"),
+          open: lhs?.el.classList.contains("is-expanded") && !lhs?.el.classList.contains("is-full")
+        },
+        RHS: {
+          full: rhs?.el.classList.contains("is-full"),
+          open: rhs?.el.classList.contains("is-expanded") && !rhs?.el.classList.contains("is-full")
+        }
+      };
+
+      const actions = dir === "left" ? [
+        { cond: state.LHS.full, run: () => SPM.layout.toggleFullSize(lhs.el, "LHS", false) },
+        { cond: state.LHS.open, run: () => SPM.layout.togglePanel(lhs.el, "LHS", false) },
+        { cond: !state.RHS.open, run: () => SPM.layout.togglePanel(rhs.el, "RHS", true) },
+        { cond: !state.RHS.full, run: () => SPM.layout.toggleFullSize(rhs.el, "RHS", true) }
+      ] : [
+        { cond: state.RHS.full, run: () => SPM.layout.toggleFullSize(rhs.el, "RHS", false) },
+        { cond: state.RHS.open, run: () => SPM.layout.togglePanel(rhs.el, "RHS", false) },
+        { cond: !state.LHS.open, run: () => SPM.layout.togglePanel(lhs.el, "LHS", true) },
+        { cond: !state.LHS.full, run: () => SPM.layout.toggleFullSize(lhs.el, "LHS", true) }
+      ];
+
+      const action = actions.find(a => a.cond);
+      if (action) acted = action.run();
+
+    // Vertical logic
+    } else if (absY > absX * DIRECTION_RATIO && velocityY >= MIN_VELOCITY && bhs) {
+      const bOpen = bhs.el.classList.contains("is-expanded") && !bhs.el.classList.contains("is-full");
+      const bFull = bhs.el.classList.contains("is-full");
+
+      if (dy < 0) {
+        if (!bOpen) acted = SPM.layout.togglePanel(bhs.el, "BHS", true);
+        else if (!bFull) acted = SPM.layout.toggleFullSize(bhs.el, "BHS", true);
+      } else {
+        if (bFull) acted = SPM.layout.toggleFullSize(bhs.el, "BHS", false);
+        else if (bOpen) acted = SPM.layout.togglePanel(bhs.el, "BHS", false);
+      }
+    }
+
+    if (acted) SPM.state.swipe.lastAction = now;
+  };
+
+  const main = document.querySelector("#sb-main");
+  if (main && main.getAttribute("data-swipe-init") !== "true") {
+    main.setAttribute("data-swipe-init", "true");
+    main.addEventListener("touchstart", handleStart, { passive: true });
+    main.addEventListener("touchend", handleEnd, { passive: true });
+  }
+
+  // Handle iframes
+  document.querySelectorAll(".sb-panel iframe").forEach(iframe => {
+    const attach = () => {
+      try {
+        const iDoc = iframe.contentDocument || iframe.contentWindow.document;
+        iDoc.removeEventListener("touchstart", handleStart);
+        iDoc.removeEventListener("touchend", handleEnd);
+        iDoc.addEventListener("touchstart", handleStart, { passive: true });
+        iDoc.addEventListener("touchend", handleEnd, { passive: true });
+      } catch (e) {}
+    };
+    attach();
+    iframe.addEventListener("load", attach);
+  });
+};
+
+
+
+
+
+
+
+
+
+
 
   SPM.init = () => {
     const observer = new MutationObserver(() => {
