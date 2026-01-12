@@ -443,8 +443,8 @@ export function enableWindow(panelSelector = "#sb-main .sb-panel") {
   overflow: clip !important;
   box-sizing: border-box !important;
 
-  border: var(--uapc-border) solid var(--uapc-border-color) !important;
-  border-radius: var(--uapc-border-radius) !important;
+  border: var(--window-border) solid var(--winbdow-border-color) !important;
+  border-radius: var(--window-border-radius) !important;
   
   background: transparent !important;
 `;
