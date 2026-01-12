@@ -181,8 +181,18 @@ header.appendChild(dockRHSBtn);
   header.appendChild(closeBtn);
   const contentArea = document.createElement("div");
   contentArea.className = "sb-window-content";
+  
+  // Set background to black for a better video experience
+  contentArea.style.backgroundColor = "black";
+
   const iframe = document.createElement("iframe");
   iframe.className = "sb-window-iframe";
+
+  // Critical additions for Video Players
+  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen";
+  iframe.referrerPolicy = "strict-origin-when-cross-origin";
+  iframe.setAttribute("allowfullscreen", "true");
+
   /*
   iframe.onload = () => {
     try {
