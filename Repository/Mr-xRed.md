@@ -10,6 +10,16 @@ uri: github:Mr-xRed/silverbullet-libraries/DocumentExplorer.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DocumentExplorer.md
 description: "Document Explorer for SilverBullet with Grid|List|Tree-View and some other handy features"
 ---
+name: "✅ TaskManager"
+uri: github:Mr-xRed/silverbullet-libraries/TaskManager.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TaskManager.md
+description: "TaskManager"
+---
+name: "🛠️ TableFilterAndSorting"
+uri: github:Mr-xRed/silverbullet-libraries/TableFilterAndSorting.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TableFilterAndSorting.md
+description: "Adds filter & sorting to SilverBullet tables globally"
+---
 name: "🛠️ Unified Advanced Panel Control and Window Management"
 uri: github:Mr-xRed/silverbullet-libraries/AdvancedPanelControl.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/AdvancedPanelControl.md

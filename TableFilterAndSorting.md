@@ -1,8 +1,32 @@
+---
+name: "Library/Mr-xRed/TableFilterAndSorting"
+tags: meta/library
+pageDecoration.prefix: "🛠️ "
+---
 
-# Task Manager
-${TaskManager(query[[from index.tag "task" order by name]])}
+# Silverbullet Table Sorting andd Filtering
 
-## Task Manager Table Styling
+- This Library adds table Sorting and Filtering to all Silverbullt Tables inside your Space
+
+> **note** Enable/Disable Commands and Config example
+> `Table: Enable Sorting and Filter` - Command to manually ENABLE Soring&Filtering (for current instance)
+>
+> `Table: Disable Sorting and Filter` - Command to manually DISABLE Soring&Filtering (for current instance)
+>
+> `config.set("tableSort", { enabled = false })` - enable/disable for Sorting&Filter to autostart (default: true)
+
+![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/TableSortAndFilters-Screenshot.png)
+
+## Config Example:
+
+```lua
+
+-- Table Sorting is enabled by default. To disable it and use only the comands use following config
+config.set("tableSort", { enabled = false })
+
+```
+
+## Table Filter and Sorting Styling
 
 ```space-style
 
@@ -162,7 +186,12 @@ ${TaskManager(query[[from index.tag "task" order by name]])}
 ## Filter and Sort Tables
 
 ```space-lua
--- priority: 11
+-- priority: -1
+
+-- ------------- Load Config -------------
+local cfg = config.get("tableSort") or {}
+local enabled = cfg.enabled ~= false
+
 
 local function cleanupSorter()
     local scriptId = "sb-table-sorter-runtime"
@@ -559,8 +588,21 @@ function enableTableSorter()
     print("Table Sorter/Filter: Advanced UI Active.")
 end
 
-command.define { name = "Table: Enable Auto-Sort", run = function() enableTableSorter() end }
-command.define { name = "Table: Disable Auto-Sort", run = function() cleanupSorter() end }
+command.define { name = "Table: Enable Sorting and Filter", run = function() enableTableSorter() end }
+command.define { name = "Table: Disable Sorting and Filter", run = function() cleanupSorter() end }
 
-enableTableSorter()
+
+
+if enabled then
+    enableTableSorter()
+else
+    cleanupSorter()
+    return
+end
+
+
 ```
+
+## Discussion to this Library
+- [Silverbullet Community](https://community.silverbullet.md/t/todo-task-manager-global-interactive-table-sorter-filtering/3767?u=mr.red)
+- 
