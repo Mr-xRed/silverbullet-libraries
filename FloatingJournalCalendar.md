@@ -25,7 +25,7 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 
 ### **⚙️ Customizable**
 * **Flexible Path Patterns:** Configure your journal file structure (e.g., `Journal/2024/05/2024-05-20_Mon`). 
-* **Localization Support:** Easily change month names and weekday abbreviations to match your preferred language.
+* **Localization Support:** Easily change month names and weekday abbreviations to match your preferred language. Choose whether to start weeks on Sunday or Monday.
 
 
 ## Config Example and default values
@@ -35,12 +35,24 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 config.set("FloatingJournalCalendar", {
   journalPathPattern = 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#',
   monthNames = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
-  dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+  dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"},
+  weekStartsSunday = false
 })    
 ```
 
 > **note** Note
 > Copy this into a `space-lua` block on your config page to change default values
+
+### Example: Starting weeks on Sunday
+```lua
+-- priority: 1
+config.set("FloatingJournalCalendar", {
+  journalPathPattern = 'Journal/#year#/#month#/#year#-#month#-#day#_#weekday#',
+  monthNames = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
+  dayNames = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"},
+  weekStartsSunday = true
+})
+```
 
 ## Floating Journal Calendar Intergation
 
@@ -51,7 +63,8 @@ config.define("FloatingJournalCalendar", {
   properties = {
     journalPathPattern = schema.string(),
     monthNames = { type = "array", items = { type = "string" } },
-    dayNames = { type = "array", items = { type = "string" } }
+    dayNames = { type = "array", items = { type = "string" } },
+    weekStartsSunday = schema.boolean()
   }
 })
 
@@ -74,6 +87,7 @@ function toggleFloatingJournalCalendar()
     local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#'
     local month_names = quote_list(cfg.monthNames or {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"})
     local day_names = quote_list(cfg.dayNames or {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
+    local start_sunday = cfg.weekStartsSunday or false
 
     local all_pages = space.listPages()
     local page_map_items = {}
@@ -293,6 +307,7 @@ function toggleFloatingJournalCalendar()
         const session = "]]..sessionID..[[";
         const months = ]]..month_names..[[;
         const days = ]]..day_names..[[;
+        const start_sun = ]]..(start_sunday and "true" or "false")..[[;
         const existing = ]]..existing_pages_json..[[;
         const pattern = "]]..path_pattern..[[";
         const root = document.getElementById("sb-journal-root");
@@ -320,12 +335,13 @@ function toggleFloatingJournalCalendar()
             document.getElementById("jc-month").innerHTML = months.map((n, i) => `<option value="${i}" ${i===m?'selected':''}>${n}</option>`).join('');
             let years = []; for(let i=y-10; i<=y+10; i++) years.push(i);
             document.getElementById("jc-year").innerHTML = years.map(v => `<option value="${v}" ${v===y?'selected':''}>${v}</option>`).join('');
-            document.getElementById("jc-labels").innerHTML = days.map((d, i) => `<div class="jc-lbl ${i===6?'sun':''}">${d}</div>`).join('');
+            const sunIdx = start_sun ? 0 : 6;
+            document.getElementById("jc-labels").innerHTML = days.map((d, i) => `<div class="jc-lbl ${i===sunIdx?'sun':''}">${d}</div>`).join('');
 
             const grid = document.getElementById("jc-days");
             grid.innerHTML = "";
             const firstDay = new Date(y, m, 1).getDay();
-            const offset = (firstDay === 0) ? 6 : firstDay - 1;
+            const offset = start_sun ? firstDay : ((firstDay - 1) % 7);
             const lastDay = new Date(y, m + 1, 0).getDate();
 
             for(let i=0; i<offset; i++) grid.appendChild(Object.assign(document.createElement("div"), {className:"jc-day empty"}));
