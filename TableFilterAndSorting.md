@@ -60,7 +60,7 @@ config.set("tableSort", { enabled = false })
     transform: translateY(-50%);
     pointer-events: none;
 }
-.sort-indicator-wrapper span { opacity: 0.5; }
+.sort-indicator-wrapper span { opacity: 0.2; }
 .sort-asc .up, .sort-desc .down {
     opacity: 1 !important;
     color: white;
@@ -86,7 +86,7 @@ config.set("tableSort", { enabled = false })
   width: 15px;
   height: 15px;
   display: inline-block;
-  opacity: 0.6;
+  opacity: 0.2;
   background-color: currentColor; /* stroke uses this because we mask it */
   -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M13.354 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l1.218-1.348'/><path d='M16 6h6'/><path d='M19 3v6'/></svg>") no-repeat center / contain;
   mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M13.354 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14v6a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341l1.218-1.348'/><path d='M16 6h6'/><path d='M19 3v6'/></svg>") no-repeat center / contain;

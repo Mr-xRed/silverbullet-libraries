@@ -41,67 +41,241 @@ ${TaskManager(query[[from index.tag "task" order by name limit 5]], {
 
 ## Config Example
 ```lua
-config.set("taskManager", {
-  open = "☐",               -- any unicode character or emojis. e.g.: "🔳", "⭕️", "☐"
-  done = "☑",               -- any unicode character or emojis. e.g.: "✅", "🟢", "☑"
-  gotoTask = "↪",           -- any unicode character or emojis. e.g.: "⛓️", "⚓️", "↪"
-  boxSize = "1.8em",        -- any CSS unit "px", "em"
-  emptyAttribute = "---",   -- any unicode character or emojis. e.g.: "🚫", "N.A.", "---"
+config.set("taskManager", {  -- for icons you can use any unicode character or emojis
+  open = "☐",                -- Task Open icon,  e.g.: "🔳", "⭕️", "☐"
+  done = "☑",                -- Task Done icon, e.g.: "✅", "🟢", "☑"
+  gotoTask = "↪",            -- Jump to task icon, e.g.: "⛓️", "⚓️", "↪"
+  editTask = "✎",            -- Edit button icon, e.g.: "✏️" "✍️" "✎"
+  boxSize = "1.8em",         -- any CSS unit "px", "em"
+  emptyAttribute = "---",    -- any unicode character or emojis. e.g.: "🚫", "N.A.", "---"
  })
 ```
 
 ## Task Manager Table Styling
 
 ```space-style
+/* ---------------------------------
+   Task Manager Theme Variables
+---------------------------------- */
 
 html[data-theme='dark'] .taskManager {
   --task-header-color: oklch(0.6 0.2 260 / 0.5);
 }
 
 html[data-theme='light'] .taskManager {
-  --task-header-color: oklch(from var(--ui-accent-color) calc(l + 0.1) c h / 0.8);
+  --task-header-color: oklch( from var(--ui-accent-color) calc(l + 0.1) c h / 0.8 );
 }
 
 
+/* ---------------------------------
+   Task Manager Table
+---------------------------------- */
+
 #sb-main .cm-editor .taskManager {
-  
   font-size: 0.8em;
-  
-  table {
-    display: table;
-    border-collapse: separate;
-    box-sizing: border-box;
-    text-indent: initial;
-    unicode-bidi: isolate;
-    border-spacing: 2px;
-    border-color: gray;
- }
+}
 
-    thead tr {
-      line-height: 2;
-      background: var(--task-header-color)
-    }
-      
-    td { padding: 2px;}
-    
-    tbody tr:nth-of-type(even) { }
-    tbody tr:nth-of-type(odd) { }
-    /* thead th { opacity: 1 !important;}*/
-    td:first-child { justify-content: center; }
-    th:nth-child(2), td:nth-child(2),
-    th:nth-child(3), td:nth-child(3) { text-align: left;}
-    th, td { text-align: center; vertical-align: middle; }
+#sb-main .cm-editor .taskManager table {
+  display: table;
+  border-collapse: separate;
+  box-sizing: border-box;
+  text-indent: initial;
+  unicode-bidi: isolate;
+  border-spacing: 2px;
+  border-color: gray;
+}
 
- }
+#sb-main .cm-editor .taskManager thead tr {
+  line-height: 2;
+  background: var(--task-header-color);
+}
 
+#sb-main .cm-editor .taskManager td {
+  padding: 2px;
+}
+
+#sb-main .cm-editor .taskManager td:first-child {
+  justify-content: center;
+}
+
+#sb-main .cm-editor .taskManager th,
+#sb-main .cm-editor .taskManager td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+#sb-main .cm-editor .taskManager th:nth-child(2),
+#sb-main .cm-editor .taskManager td:nth-child(2),
+#sb-main .cm-editor .taskManager th:nth-child(3),
+#sb-main .cm-editor .taskManager td:nth-child(3) {
+  text-align: left;
+}
+
+/* tbody striping hooks kept intentionally empty */
+#sb-main .cm-editor .taskManager tbody tr:nth-of-type(even) {}
+#sb-main .cm-editor .taskManager tbody tr:nth-of-type(odd) {}
+
+
+/* ---------------------------------
+   Task Manager Buttons
+---------------------------------- */
 
 #sb-main button.btn-toggle-task,
-#sb-main button.btn-goto-page {
+#sb-main button.btn-goto-page,
+#sb-main button.btn-edit-task {
   background: transparent;
-  padding: 0 ;
-/*  font-size: 1.4em;*/
+  padding: 0 4px;
   border: none;
   cursor: pointer;
+}
+
+#sb-main button.btn-goto-page,
+#sb-main button.btn-edit-task {
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+#sb-main button.btn-goto-page:hover,
+#sb-main button.btn-edit-task:hover {
+  opacity: 1;
+}
+
+
+/* ---------------------------------
+   Edit Task Modal
+---------------------------------- */
+
+#sb-taskeditor-root {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 20000;
+
+  font-family: sans-serif;
+}
+
+.te-card {
+  width: 420px;
+  max-width: 90vw;
+
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  padding: 25px;
+  border-radius: 12px;
+
+  background: #1e1e1e;
+  color: #e0e0e0;
+
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+
+.te-header {
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: var(--task-header-color, #a8a8a8);
+}
+
+.te-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.te-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.te-label {
+  font-size: 0.8em;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.te-input {
+  width: 100%;
+  box-sizing: border-box;
+
+  padding: 8px 12px;
+  border-radius: 6px;
+
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+
+  font-size: 0.95em;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.te-input:focus {
+  border-color: var(--ui-accent-color, #007bff);
+}
+
+.te-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--ui-accent-color, #007bff);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.6;
+  cursor: pointer;
+}
+
+.te-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.te-btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.te-cancel {
+  background: transparent;
+  color: #aaa;
+}
+
+.te-cancel:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.te-save {
+  background: var(--ui-accent-color, #007bff);
+  color: white;
+}
+
+.te-save:hover {
+  filter: brightness(1.1);
+}
+
 
 ```
 
@@ -118,6 +292,7 @@ local done = cfg.done or "☑︎"
 local boxSize = cfg.boxSize or "1.4em"
 local emptyAttribute = cfg.emptyAttribute or "---"
 local gotoTask = cfg.gotoTask or "↪"
+local editTask = cfg.editTask or "✎"
 
 
 -- ------------- Task Toggle Function -------------
@@ -150,13 +325,248 @@ local function toggleTaskRemote(pageName, pos, currentState, queryText)
     end, 200) 
 end
 
+-- ------------- Update Task Attributes Function -------------
+local function updateTaskRemote(pageName, pos, finalState, newText, attributes)
+    local content = space.readPage(pageName)
+    if not content then return end
+
+    local lineEnd = content:find("\n", pos + 1) or (#content + 1)
+    local originalLine = content:sub(pos + 1, lineEnd - 1)
+    
+    local indent, bullet = originalLine:match("^(%s*)([%*%-]?)")
+    indent = indent or ""
+    bullet = bullet or "*"
+    if bullet == "" then bullet = "*" end
+
+    -- Use the state passed from the modal
+    local stateMark = "[ ]"
+    if finalState == "x" or finalState == "X" then 
+        stateMark = "[x]" 
+    end
+
+    local attrString = ""
+    for _, attr in ipairs(attributes) do
+        if attr.value and attr.value ~= "" then
+            attrString = attrString .. " [" .. attr.key .. ": " .. attr.value .. "]"
+        end
+    end
+
+    local newLine = indent .. bullet .. " " .. stateMark .. " " .. newText .. attrString
+
+    local prefix = content:sub(1, pos)
+    local suffix = content:sub(lineEnd)
+    
+    local finalContent = prefix .. newLine .. suffix
+    space.writePage(pageName, finalContent)
+
+    js.window.setTimeout(function()  
+        codeWidget.refreshAll()  
+    end, 200)
+end
+
+-- ------------- Task Editor Modal (JS Bridge) -------------
+local function openTaskEditor(taskData, extraCols)
+    local sessionID = "te_" .. tostring(math.floor(js.window.performance.now()))
+    
+    local existing = js.window.document.getElementById("sb-taskeditor-root")
+    if existing then existing.remove() end
+
+    local fields = {}
+    for _, col in ipairs(extraCols) do
+        local key = col[2]
+        local label = col[1] or key or "Unknown"
+        local val = taskData[key]
+        
+        if val == nil then val = "" end
+        if type(val) == "table" then val = "" end 
+        
+        table.insert(fields, {
+            label = tostring(label),
+            key = tostring(key),
+            type = col[3] or "string",
+            value = tostring(val)
+        })
+    end
+
+    local function uniqueHandler(e)
+        if e.detail.session == sessionID then
+            updateTaskRemote(
+                taskData.page, 
+                taskData.pos, 
+                e.detail.state, 
+                e.detail.text, 
+                e.detail.attributes
+            )
+            js.window.removeEventListener("sb-save-task", uniqueHandler)
+        end
+    end
+    js.window.addEventListener("sb-save-task", uniqueHandler)
+
+    local fieldsJSON = "[]"
+    if #fields > 0 then
+        local parts = {}
+        for _, f in ipairs(fields) do
+            local safeLabel = string.gsub(tostring(f.label), '"', '\\"')
+            local safeKey = string.gsub(tostring(f.key), '"', '\\"')
+            local safeVal = string.gsub(tostring(f.value), '"', '\\"')
+            safeVal = string.gsub(safeVal, '\n', ' ')
+
+            table.insert(parts, string.format(
+                [[{ "label": "%s", "key": "%s", "type": "%s", "value": "%s" }]], 
+                safeLabel, 
+                safeKey, 
+                f.type, 
+                safeVal
+            ))
+        end
+        fieldsJSON = "[" .. table.concat(parts, ",") .. "]"
+    end
+
+    local taskNameSafe = string.gsub(tostring(taskData.name or ""), '"', '\\"')
+    taskNameSafe = string.gsub(taskNameSafe, '\n', ' ')
+    local isChecked = (taskData.state == "x" or taskData.state == "X") and "checked" or ""
+
+    local container = js.window.document.createElement("div")
+    container.id = "sb-taskeditor-root"
+    container.innerHTML = [[
+    <style>
+    </style>
+    <div class="te-card" id="te-card-inner">
+      <div class="te-header">Edit Task Details</div>
+      
+      <div class="te-row">
+        <input type="checkbox" id="te-status-checkbox" class="te-checkbox" ]] .. isChecked .. [[>
+        <label for="te-status-checkbox" style="cursor:pointer">Completed</label>
+      </div>
+
+      <div class="te-group">
+        <label class="te-label">Task Description</label>
+        <input type="text" id="te-main-input" class="te-input" value="]] .. taskNameSafe .. [[">
+      </div>
+
+      <div id="te-dynamic-fields" style="display: flex; flex-direction: column; gap: 15px;"></div>
+
+      <div class="te-actions">
+        <button class="te-btn te-cancel" id="te-cancel-btn">Cancel</button>
+        <button class="te-btn te-save" id="te-save-btn">Save Changes</button>
+      </div>
+    </div>
+    ]]
+
+    js.window.document.body.appendChild(container)
+
+    local script = [[
+    (function() {
+        const session = "]] .. sessionID .. [[";
+        const fields = ]] .. fieldsJSON .. [[;
+        const container = document.getElementById('te-dynamic-fields');
+        const root = document.getElementById('sb-taskeditor-root');
+        const card = document.getElementById('te-card-inner');
+
+        const formatForInput = (val, type) => {
+             if(!val) return "";
+             val = val.trim();
+             if (type === 'datetime-local') return val.replace(" ", "T");
+             if (type === 'date') return val.split("T")[0].split(" ")[0];
+             return val;
+        };
+
+        fields.forEach(f => {
+            const group = document.createElement('div');
+            group.className = 'te-group';
+            const label = document.createElement('label');
+            label.className = 'te-label';
+            label.innerText = f.label;
+            const input = document.createElement('input');
+            input.className = 'te-input';
+            input.dataset.key = f.key;
+            
+            const isTime = f.type === 'dateTime' || f.type.includes('hh') || f.type.includes('mm');
+            const isDate = !isTime && (f.type === 'date' || f.type.includes('YY') || f.type.includes('MM'));
+
+            if (isTime) {
+                 input.type = 'datetime-local';
+                 input.value = formatForInput(f.value, 'datetime-local');
+            } else if (isDate) {
+                 input.type = 'date';
+                 input.value = formatForInput(f.value, 'date');
+            } else {
+                 input.type = 'text';
+                 input.value = f.value;
+            }
+            group.appendChild(label);
+            group.appendChild(input);
+            container.appendChild(group);
+        });
+
+        const cleanup = () => { 
+            window.removeEventListener("keydown", handleKey, true);
+            if(root) root.remove(); 
+        };
+        
+        const save = () => {
+            const newText = document.getElementById('te-main-input').value;
+            const newState = document.getElementById('te-status-checkbox').checked ? "x" : " ";
+            const attributes = [];
+            const inputs = container.querySelectorAll('input');
+            inputs.forEach(inp => {
+                let val = inp.value;
+                if (inp.type === 'datetime-local' && val.includes("T")) val = val.replace("T", " ");
+                attributes.push({ key: inp.dataset.key, value: val });
+            });
+            window.dispatchEvent(new CustomEvent("sb-save-task", { 
+                detail: { session: session, text: newText, state: newState, attributes: attributes } 
+            }));
+            cleanup();
+        };
+
+        // Aggressive Focus Trap & Key Stopper
+        const handleKey = (e) => {
+            // Stop CM from seeing anything
+            e.stopPropagation();
+
+            const focusables = card.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+
+            if (e.key === "Tab") {
+                // Prevent focus escaping the modal
+                if (e.shiftKey) {
+                    if (document.activeElement === first) {
+                        last.focus();
+                        e.preventDefault();
+                    }
+                } else {
+                    if (document.activeElement === last) {
+                        first.focus();
+                        e.preventDefault();
+                    }
+                }
+            } else if (e.key === "Escape") {
+                cleanup();
+            } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                save();
+            }
+        };
+
+        window.addEventListener("keydown", handleKey, true);
+        document.getElementById('te-cancel-btn').onclick = cleanup;
+        document.getElementById('te-save-btn').onclick = save;
+        root.onclick = (e) => { if(e.target === root) cleanup(); };
+        
+        setTimeout(() => document.getElementById('te-main-input').focus(), 50);
+    })();
+    ]]
+
+    local scriptEl = js.window.document.createElement("script")
+    scriptEl.innerHTML = script
+    container.appendChild(scriptEl)
+end
+
 -- ------------- Table Building Function -------------
 function TaskManager(taskQuery, extraCols)
-    extraCols = extraCols or {
-        {"Completed", "completed", "date"}
-    }
+    extraCols = extraCols or { {"Completed", "completed", "date"} }
 
-    -- helper to get a field from task robustly
     local function getField(task, key)
         if not key or type(key) ~= "string" then return nil end
         if task[key] ~= nil then return task[key] end
@@ -167,22 +577,10 @@ function TaskManager(taskQuery, extraCols)
     end
 
     local function formatValue(colSpec, task)
-    local header, fieldKey, typ = colSpec[1], colSpec[2], colSpec[3] or "string"
-    local val = getField(task, fieldKey)
-
-    if val == nil then
-        return emptyAttribute
-    end
-
-    if type(val) == "table" then
-        if #val == 0 then
-            return emptyAttribute
-        else
-            return table.concat(val, ", ")
-        end
-    end
-
-    if val == "" then return emptyAttribute end
+        local header, fieldKey, typ = colSpec[1], colSpec[2], colSpec[3] or "string"
+        local val = getField(task, fieldKey)
+        if val == nil or val == "" then return emptyAttribute end
+        if type(val) == "table" then return #val == 0 and emptyAttribute or table.concat(val, ", ") end
 
     -- parse ISO or partial date with optional time
     local function parseISO(iso)
@@ -280,18 +678,20 @@ end
 
                     local cells = {
                         dom.td {
+                            widgets.button(editTask, function() openTaskEditor(t, extraCols) end, { class = "btn-edit-task", title = "Edit Attributes" }), 
+
                             widgets.button(isDone and done or open,
                                 function()
                                     toggleTaskRemote(t.page, t.pos, t.state, t.text)
                                 end,
                                 { class = "btn-toggle-task", style = "font-size: ".. boxSize}
-                            )
-                        },
-                        dom.td { title = isLong and rawName or nil, displayName },
-                        dom.td {
+                            ),
                             widgets.button(gotoTask, function()
                                 editor.navigate(t.page .. "@" .. t.pos)
                             end, { class = "btn-goto-page" }),
+                        },
+                        dom.td { title = isLong and rawName or nil, displayName },
+                        dom.td {
                             " [[" .. (t.page or "") .. "]]"
                         }
                     }
