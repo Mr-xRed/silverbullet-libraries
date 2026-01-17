@@ -54,17 +54,27 @@ config.set("taskManager", {  -- for icons you can use any unicode character or e
 ## Task Manager Table Styling
 
 ```space-style
+
 /* ---------------------------------
    Task Manager Theme Variables
 ---------------------------------- */
 
-html[data-theme='dark'] .taskManager {
-  --task-header-color: oklch(0.6 0.2 260 / 0.5);
-}
+html[data-theme='dark'] { .taskManager, #sb-taskeditor-root {
+  --task-header-bg: var(--modal-hint-background-color);
+  --taskedit-modal-bg: var(--modal-background-color);
+  --taskedit-modal-input-bg: var(--modal-help-background-color);
+  --taskedit-modal-color: var(--modal-color);
+  --taskedit-modal-header:var(--modal-header-label-color);
+  --taskedit-modal-border:  var(--modal-border-color);
+}}
 
-html[data-theme='light'] .taskManager {
-  --task-header-color: oklch( from var(--ui-accent-color) calc(l + 0.1) c h / 0.8 );
-}
+html[data-theme='light'] { .taskManager, #sb-taskeditor-root {
+  --task-header-bg: var(--modal-hint-background-color);
+  --taskedit-modal-bg: var(--modal-background-color);
+  --taskedit-modal-input-bg: var(--modal-help-background-color);
+  --taskedit-modal-color: var(--modal-color);
+  --taskedit-modal-border:  var(--modal-border-color);
+}}
 
 
 /* ---------------------------------
@@ -87,7 +97,7 @@ html[data-theme='light'] .taskManager {
 
 #sb-main .cm-editor .taskManager thead tr {
   line-height: 2;
-  background: var(--task-header-color);
+  background: var(--task-header-bg);
 }
 
 #sb-main .cm-editor .taskManager td {
@@ -154,29 +164,30 @@ html[data-theme='light'] .taskManager {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(14px);
+  z-index: 200;
 
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 20000;
+  font-family: var(--ui-font);
 
-  font-family: sans-serif;
+  transition: opacity 0.3s ease;
 }
 
 .te-card {
   width: 420px;
-  max-width: 90vw;
+  max-width: 80vw;
 
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 10px;
 
-  padding: 25px;
-  border-radius: 12px;
+  padding: 15px;
+  border-radius: 15px;
 
-  background: #1e1e1e;
-  color: #e0e0e0;
+  background: var(--taskedit-modal-bg);
+  color: var(--taskedit-modal-color);
 
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--taskedit-modal-border);
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
@@ -184,7 +195,7 @@ html[data-theme='light'] .taskManager {
   font-size: 1.1em;
   font-weight: bold;
   margin-bottom: 10px;
-  color: var(--task-header-color, #a8a8a8);
+  color: var(--taskedit-modal-header);
 }
 
 .te-group {
@@ -210,34 +221,29 @@ html[data-theme='light'] .taskManager {
   width: 100%;
   box-sizing: border-box;
 
-  padding: 8px 12px;
+  padding: 4px 6px;
   border-radius: 6px;
 
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: white;
+  background: var(--taskedit-modal-input-bg);
+  border: 1px solid transparent;
+  color: var(--taskedit-modal-color);
 
   font-size: 0.95em;
+  font-family: var(--ui-font);
   outline: none;
-  transition: border-color 0.2s;
+/*  transition: border-color 0.2s;*/
 }
 
 .te-input:focus {
-  border-color: var(--ui-accent-color, #007bff);
+  background: oklch( from var(--taskedit-modal-input-bg) l c h / 0.1);
+  border: 1px solid var(--ui-accent-color);
 }
 
 .te-checkbox {
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: var(--ui-accent-color, #007bff);
-}
-
-input[type="date"]::-webkit-calendar-picker-indicator,
-input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  opacity: 0.6;
-  cursor: pointer;
+  accent-color: var(--ui-accent-color);
 }
 
 .te-actions {
@@ -258,27 +264,42 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 
 .te-cancel {
-  background: transparent;
-  color: #aaa;
+  color: oklch(from var(--taskedit-modal-color) l c h / 0.5);
+  background: rgba(128, 128, 128, 0.05);
 }
 
 .te-cancel:hover {
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
+  color: oklch(from var(--taskedit-modal-color) l c h);
+  background: rgba(128, 128, 128, 0.1);
 }
 
 .te-save {
-  background: var(--ui-accent-color, #007bff);
-  color: white;
+  color: var(--modal-selected-option-color);
+  background: var(--ui-accent-color);
+  opacity: 1;
 }
 
 .te-save:hover {
-  filter: brightness(1.1);
+  opacity: 0.9;
+}
+
+
+/* ---------------------------------
+   Native Date Picker Styling
+---------------------------------- */
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-datetime-edit-fields-wrapper, 
+input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
+  cursor:text;
 }
 
 
 ```
-
 
 ## Build Table for Task Manager
 
