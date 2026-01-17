@@ -54,12 +54,12 @@ config.set("taskManager", {  -- for icons you can use any unicode character or e
 ## Task Manager Table Styling
 
 ```space-style
-
+/* priority: -100*/
 /* ---------------------------------
    Task Manager Theme Variables
 ---------------------------------- */
 
-html[data-theme='dark'] { .taskManager, #sb-taskeditor-root {
+html[data-theme='dark'] { .taskManager, #sb-taskeditor {
   --task-header-bg: var(--modal-hint-background-color);
   --taskedit-modal-bg: var(--modal-background-color);
   --taskedit-modal-input-bg: var(--modal-help-background-color);
@@ -68,7 +68,7 @@ html[data-theme='dark'] { .taskManager, #sb-taskeditor-root {
   --taskedit-modal-border:  var(--modal-border-color);
 }}
 
-html[data-theme='light'] { .taskManager, #sb-taskeditor-root {
+html[data-theme='light'] { .taskManager, #sb-taskeditor {
   --task-header-bg: var(--modal-hint-background-color);
   --taskedit-modal-bg: var(--modal-background-color);
   --taskedit-modal-input-bg: var(--modal-help-background-color);
@@ -92,12 +92,15 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor-root {
   text-indent: initial;
   unicode-bidi: isolate;
   border-spacing: 2px;
-  border-color: gray;
+  border-color: red;
+  overflow: hidden; /* crucial */
 }
 
-#sb-main .cm-editor .taskManager thead tr {
+#sb-main .cm-editor .taskManager thead tr{
   line-height: 2;
   background: var(--task-header-bg);
+  border-radius:10px;
+
 }
 
 #sb-main .cm-editor .taskManager td {
@@ -106,6 +109,12 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor-root {
 
 #sb-main .cm-editor .taskManager td:first-child {
   justify-content: center;
+}
+
+#sb-main .cm-editor .taskManager tbody td:first-child {
+  display: flex;
+  align-items: center;     /* vertical centring */
+  justify-content: center; /* horizontal centring */
 }
 
 #sb-main .cm-editor .taskManager th,
@@ -121,9 +130,19 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor-root {
   text-align: left;
 }
 
-/* tbody striping hooks kept intentionally empty */
 #sb-main .cm-editor .taskManager tbody tr:nth-of-type(even) {}
 #sb-main .cm-editor .taskManager tbody tr:nth-of-type(odd) {}
+
+
+
+
+#sb-main .cm-editor .taskManager thead th:first-child {
+  border-top-left-radius: 10px;
+}
+
+#sb-main .cm-editor .taskManager thead th:last-child {
+  border-top-right-radius: 10px;
+}
 
 
 /* ---------------------------------
@@ -137,6 +156,10 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor-root {
   padding: 0 4px;
   border: none;
   cursor: pointer;
+  
+  display: inline-flex;
+  align-items: center;   /* vertical centring */
+  justify-content: center; /* horizontal centring */
 }
 
 #sb-main button.btn-goto-page,
@@ -155,7 +178,7 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor-root {
    Edit Task Modal
 ---------------------------------- */
 
-#sb-taskeditor-root {
+#sb-taskeditor {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -304,6 +327,11 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
 ## Build Table for Task Manager
 
 ```space-lua
+
+```
+
+
+```space-lua
 -- priority: -1
 
 -- ------------- Load Config & Default Values -------------
@@ -389,7 +417,7 @@ end
 local function openTaskEditor(taskData, extraCols)
     local sessionID = "te_" .. tostring(math.floor(js.window.performance.now()))
     
-    local existing = js.window.document.getElementById("sb-taskeditor-root")
+    local existing = js.window.document.getElementById("sb-taskeditor")
     if existing then existing.remove() end
 
     local fields = {}
@@ -448,7 +476,7 @@ local function openTaskEditor(taskData, extraCols)
     local isChecked = (taskData.state == "x" or taskData.state == "X") and "checked" or ""
 
     local container = js.window.document.createElement("div")
-    container.id = "sb-taskeditor-root"
+    container.id = "sb-taskeditor"
     container.innerHTML = [[
     <style>
     </style>
@@ -481,7 +509,7 @@ local function openTaskEditor(taskData, extraCols)
         const session = "]] .. sessionID .. [[";
         const fields = ]] .. fieldsJSON .. [[;
         const container = document.getElementById('te-dynamic-fields');
-        const root = document.getElementById('sb-taskeditor-root');
+        const root = document.getElementById('sb-taskeditor');
         const card = document.getElementById('te-card-inner');
 
         const formatForInput = (val, type) => {
