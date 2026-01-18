@@ -36,19 +36,16 @@ ${TaskManager(query[[from index.tag "task" order by name limit 5]], {
 ${TaskManager(query[[from index.tag "task" order by name limit 5]], {
   {"Priority", "priority", "string"},
   {"Due Date", "due", "YY-MM-DD"},
-  {"Scheduled", "scheduled", "date"},
   {"Completed", "completed", "dateTime"},
   {"Estimate", "est", "string"}
 })}
-
 
 ## Config Example
 ```lua
 config.set("taskManager", {  -- for icons you can use any unicode character or emojis
   open = "☐",                -- Task Open icon,  e.g.: "🔳", "⭕️", "☐"
   done = "☑",                -- Task Done icon, e.g.: "✅", "🟢", "☑"
-  gotoTask = "↪",            -- Jump to task icon, e.g.: "⛓️", "⚓️", "↪"
-  editTask = "✎",            -- Edit button icon, e.g.: "✏️" "✍️" "✎"
+  editTask = "Edit",            -- Edit button icon, e.g.: "✏️" "✍️" "✎"
   boxSize = "1.8em",         -- any CSS unit "px", "em"
   emptyAttribute = "---",    -- any unicode character or emojis. e.g.: "🚫", "N.A.", "---"
  })
@@ -57,27 +54,34 @@ config.set("taskManager", {  -- for icons you can use any unicode character or e
 ## Task Manager Table Styling
 
 ```space-style
-/* priority: -1*/
+/* priority: -1 */
+
 /* ---------------------------------
    Task Manager Theme Variables
 ---------------------------------- */
 
-html[data-theme='dark'] { .taskManager, #sb-taskeditor {
-  --task-header-bg: var(--modal-hint-background-color);
-  --taskedit-modal-bg: var(--modal-background-color);
-  --taskedit-modal-input-bg: var(--modal-help-background-color);
-  --taskedit-modal-color: var(--modal-color);
-  --taskedit-modal-header:var(--modal-header-label-color);
-  --taskedit-modal-border:  var(--modal-border-color);
-}}
+html[data-theme='dark'] {
+  .taskManager,
+  #sb-taskeditor {
+    --task-header-bg: var(--modal-hint-background-color);
+    --taskedit-modal-bg: var(--modal-background-color);
+    --taskedit-modal-input-bg: var(--modal-help-background-color);
+    --taskedit-modal-color: var(--modal-color);
+    --taskedit-modal-header: var(--modal-header-label-color);
+    --taskedit-modal-border: var(--modal-border-color);
+  }
+}
 
-html[data-theme='light'] { .taskManager, #sb-taskeditor {
-  --task-header-bg: var(--modal-hint-background-color);
-  --taskedit-modal-bg: var(--modal-background-color);
-  --taskedit-modal-input-bg: var(--modal-help-background-color);
-  --taskedit-modal-color: var(--modal-color);
-  --taskedit-modal-border:  var(--modal-border-color);
-}}
+html[data-theme='light'] {
+  .taskManager,
+  #sb-taskeditor {
+    --task-header-bg: var(--ui-accent-color);
+    --taskedit-modal-bg: var(--modal-background-color);
+    --taskedit-modal-input-bg: var(--modal-help-background-color);
+    --taskedit-modal-color: var(--modal-color);
+    --taskedit-modal-border: var(--modal-border-color);
+  }
+}
 
 
 /* ---------------------------------
@@ -90,38 +94,25 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
 
 #sb-main .cm-editor .taskManager table {
   display: table;
-  border-collapse: separate;
   box-sizing: border-box;
-  text-indent: initial;
-  unicode-bidi: isolate;
+  border-collapse: separate;
   border-spacing: 2px;
   border-color: red;
-  overflow: hidden; /* crucial */
+  overflow: hidden;
+
+  text-indent: initial;
+  unicode-bidi: isolate;
 }
 
-#sb-main .cm-editor .taskManager thead tr{
+#sb-main .cm-editor .taskManager thead tr {
   line-height: 2;
   background: var(--task-header-bg);
-  border-radius:10px;
-
-}
-
-#sb-main .cm-editor .taskManager td {
-  padding: 2px;
-}
-
-#sb-main .cm-editor .taskManager td:first-child {
-  justify-content: center;
-}
-
-#sb-main .cm-editor .taskManager tbody td:first-child {
-  display: flex;
-  align-items: center;     /* vertical centring */
-  justify-content: center; /* horizontal centring */
+  border-radius: 10px;
 }
 
 #sb-main .cm-editor .taskManager th,
 #sb-main .cm-editor .taskManager td {
+  padding: 2px;
   text-align: center;
   vertical-align: middle;
 }
@@ -133,11 +124,15 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
   text-align: left;
 }
 
-#sb-main .cm-editor .taskManager tbody tr:nth-of-type(even) {}
-#sb-main .cm-editor .taskManager tbody tr:nth-of-type(odd) {}
+#sb-main .cm-editor .taskManager td:first-child {
+  justify-content: center;
+}
 
-
-
+#sb-main .cm-editor .taskManager tbody td:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 #sb-main .cm-editor .taskManager thead th:first-child {
   border-top-left-radius: 10px;
@@ -147,31 +142,43 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
   border-top-right-radius: 10px;
 }
 
+#sb-main .cm-editor .taskManager tbody tr:nth-of-type(even) {}
+#sb-main .cm-editor .taskManager tbody tr:nth-of-type(odd) {}
+
 
 /* ---------------------------------
    Task Manager Buttons
 ---------------------------------- */
 
-#sb-main button.btn-toggle-task,
-#sb-main button.btn-goto-page,
-#sb-main button.btn-edit-task {
-  background: transparent;
-  padding: 0 4px;
-  border: none;
-  cursor: pointer;
-  
+#sb-main button.btn-toggle-task {
   display: inline-flex;
-  align-items: center;   /* vertical centring */
-  justify-content: center; /* horizontal centring */
+  align-items: center;
+  justify-content: center;
+
+  background: transparent;
+  border: none;
+  padding: 0 4px;
+
+  cursor: pointer;
 }
 
-#sb-main button.btn-goto-page,
 #sb-main button.btn-edit-task {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: oklch(from var(--editor-wiki-link-page-background-color) l c h / 0.2);
+  color: var(--editor-wiki-link-page-color);
+
+  padding: 2px 4px;
+  border: none;
+  border-radius: 5px;
+
+  cursor: pointer;
   opacity: 0.5;
-  transition: opacity 0.2s;
+  transition: opacity 0.3s;
 }
 
-#sb-main button.btn-goto-page:hover,
 #sb-main button.btn-edit-task:hover {
   opacity: 1;
 }
@@ -184,18 +191,19 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
 #sb-taskeditor {
   position: fixed;
   inset: 0;
+
   width: 100vw;
   height: 100vh;
 
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.6);
+
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(14px);
   z-index: 200;
 
   font-family: var(--ui-font);
-
   transition: opacity 0.3s ease;
 }
 
@@ -217,10 +225,17 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
+#te-dynamic-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
 .te-header {
   font-size: 1.1em;
   font-weight: bold;
   margin-bottom: 10px;
+
   color: var(--taskedit-modal-header);
 }
 
@@ -239,6 +254,7 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
 .te-label {
   font-size: 0.8em;
   opacity: 0.7;
+
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -251,23 +267,25 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
   border-radius: 6px;
 
   background: var(--taskedit-modal-input-bg);
-  border: 1px solid transparent;
   color: var(--taskedit-modal-color);
+
+  border: 1px solid transparent;
+  outline: none;
 
   font-size: 0.95em;
   font-family: var(--ui-font);
-  outline: none;
-/*  transition: border-color 0.2s;*/
+/*  transition: border-color 0.2s; */
 }
 
 .te-input:focus {
-  background: oklch( from var(--taskedit-modal-input-bg) l c h / 0.1);
+  background: oklch(from var(--taskedit-modal-input-bg) l c h / 0.1);
   border: 1px solid var(--ui-accent-color);
 }
 
 .te-checkbox {
   width: 18px;
   height: 18px;
+
   cursor: pointer;
   accent-color: var(--ui-accent-color);
 }
@@ -280,20 +298,23 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
 }
 
 .te-btn {
-  padding: 10px 20px;
+  padding: 6px 12px;
   border-radius: 6px;
   border: none;
 
   cursor: pointer;
+
   font-size: 0.9em;
   font-weight: 600;
 }
 
+#te-add-attr-btn,
 .te-cancel {
   color: oklch(from var(--taskedit-modal-color) l c h / 0.5);
   background: rgba(128, 128, 128, 0.05);
 }
 
+#te-add-attr-btn:hover,
 .te-cancel:hover {
   color: oklch(from var(--taskedit-modal-color) l c h);
   background: rgba(128, 128, 128, 0.1);
@@ -302,17 +323,44 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
 .te-save {
   color: var(--modal-selected-option-color);
   background: var(--ui-accent-color);
-  opacity: 1;
 }
 
 .te-save:hover {
   opacity: 0.9;
 }
 
- .te-attr-row { display: flex; gap: 10px; margin-top: 10px; align-items: flex-end; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; }
-      .te-attr-col { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-      .te-attr-select { background: #333; color: white; border: 1px solid #555; border-radius: 4px; padding: 4px; height: 32px; }
+.te-attr-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
 
+  margin-top: 10px;
+  padding: 10px;
+
+  border-radius: 10px;
+  border: 1px solid var(--taskedit-modal-border);
+
+  background: oklch(
+    from var(--taskedit-modal-input-bg)
+    calc(l - 0.1) c h / 0.1
+  );
+}
+
+.te-attr-col {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.te-attr-select {
+  padding: 4px;
+  border-radius: 4px;
+
+  background: var(--taskedit-modal-input-bg);
+  color: var(--taskedit-modal-color);
+}
 
 
 /* ---------------------------------
@@ -324,14 +372,24 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
-input[type="date"]::-webkit-datetime-edit-fields-wrapper, 
+input[type="date"]::-webkit-datetime-edit-fields-wrapper,
 input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
-  cursor:text;
+  cursor: text;
+}
+
+.te-input[type="date"],
+.te-input[type="datetime-local"] {
+  width: 100%;
+  min-width: 0;
+}
+
+.te-attr-row .te-attr-col:last-of-type {
+  flex: 1 1 0;
 }
 
 
-```
 
+```
 
 ## Build Table for Task Manager
 
@@ -344,8 +402,8 @@ local open = cfg.open or "☐"
 local done = cfg.done or "☑︎"
 local boxSize = cfg.boxSize or "1.4em"
 local emptyAttribute = cfg.emptyAttribute or "---"
-local gotoTask = cfg.gotoTask or "↪"
-local editTask = cfg.editTask or "✎"
+-- local gotoTask = cfg.gotoTask or "↪"
+local editTask = cfg.editTask or "Edit"
 
 
 -- ------------- Task Toggle Function -------------
@@ -498,8 +556,7 @@ local function openTaskEditor(taskData, extraCols)
     local container = js.window.document.createElement("div")
     container.id = "sb-taskeditor"
     container.innerHTML = [[
-    <style>
-    </style>
+    <style></style>
     <div class="te-card" id="te-card-inner">
       <div class="te-header">Edit Task Details</div>
       
@@ -513,7 +570,7 @@ local function openTaskEditor(taskData, extraCols)
         <input type="text" id="te-main-input" class="te-input" value="]] .. taskNameSafe .. [[">
       </div>
 
-      <div id="te-dynamic-fields" style="display: flex; flex-direction: column; gap: 15px;"></div>
+      <div id="te-dynamic-fields"></div>
 
       <div class="te-actions">
         <button class="te-btn te-cancel" id="te-cancel-btn">Cancel</button>
@@ -747,22 +804,13 @@ end
 
                     local cells = {
                         dom.td {
-                            widgets.button(editTask, function() openTaskEditor(t, extraCols) end, { class = "btn-edit-task", title = "Edit Attributes" }), 
-
-                            widgets.button(isDone and done or open,
-                                function()
-                                    toggleTaskRemote(t.page, t.pos, t.state, t.text)
-                                end,
-                                { class = "btn-toggle-task", style = "font-size: ".. boxSize}
-                            ),
-                            widgets.button(gotoTask, function()
-                                editor.navigate(t.page .. "@" .. t.pos)
-                            end, { class = "btn-goto-page" }),
-                        },
+                                  widgets.button(editTask,function() openTaskEditor(t, extraCols) end,
+                                  { class = "btn-edit-task", title = "Edit Attributes" }), 
+                                  widgets.button(isDone and done or open,
+                                  function() toggleTaskRemote(t.page, t.pos, t.state, t.text) end,
+                                  { class = "btn-toggle-task", style = "font-size: ".. boxSize})},
                         dom.td { title = isLong and rawName or nil, displayName },
-                        dom.td {
-                            " [[" .. (t.page or "") .. "]]"
-                        }
+                        dom.td { string.format(" [[%s@%d|%s]]", t.page, t.pos, t.page:match("([^/]+)$") or t.page)}
                     }
 
                     for _, col in ipairs(extraCols) do
@@ -790,6 +838,56 @@ end
     })
 end
 
+-- =========================================================
+-- =========== Add Completed Timestamp inline ==============
+-- =========================================================
+
+event.listen {
+  name = "task:stateChange",
+  run = function(e)
+    local data = e.data
+    local text = data.text
+    
+    -- Safety check: ensure text exists to avoid 'nil value' errors
+    if not text then return end
+
+    -- CASE 1: Task marked as complete ('x')
+    if data.newState == "x" then
+      -- Check if timestamp already exists to prevent infinite loops/double-clicks
+      if not string.find(text, "%[completed:") then
+        -- Some sandboxes restrict os.date; we use a simple format
+        local completedAt = os.date("%Y-%m-%dT%H:%M:%S")
+        -- Append the timestamp at the end
+        local newText = string.gsub(text, "%[%s*%]", "[x]") .. " [completed: " .. completedAt .. "]"
+        
+        editor.dispatch({
+          changes = {
+            from = data.from,
+            to = data.to,
+            insert = newText
+          }
+        })
+      end
+
+    -- CASE 2: Task marked as incomplete (' ')
+    elseif data.newState == " " then
+      -- Check if there is actually a timestamp to remove
+      if string.find(text, "%[completed:") then        
+        -- Remove the [completed: ...] tag and any leading space
+        local cleanText = string.gsub(text, "%[[xX]%]", "[ ]")
+        local newText = string.gsub(cleanText, "%s*%[completed: [^%]]+]", "")
+        
+        editor.dispatch({
+          changes = {
+            from = data.from,
+            to = data.to,
+            insert = newText
+          }
+        })
+      end
+    end
+  end
+}
 
 
 
@@ -856,7 +954,7 @@ local function openInlineTaskEditor(taskData, existingFields)
         <input type="text" id="te-main-input" class="te-input" value="]] .. taskNameSafe .. [[">
       </div>
 
-      <div id="te-dynamic-fields" style="display: flex; flex-direction: column; gap: 15px;"></div>
+      <div id="te-dynamic-fields"></div>
       
       <div class="te-attr-row">
         <div class="te-attr-col">
@@ -875,7 +973,7 @@ local function openInlineTaskEditor(taskData, existingFields)
           <label class="te-label" style="font-size: 0.8em;">Value</label>
           <input type="text" id="te-new-val" class="te-input">
         </div>
-        <button id="te-add-attr-btn" class="te-btn" style="height: 32px; background: #444; padding: 0 10px;">Add</button>
+        <button id="te-add-attr-btn" class="te-btn">Add</button>
       </div>
 
       <div class="te-actions">
