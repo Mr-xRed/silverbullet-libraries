@@ -6,6 +6,9 @@ pageDecoration.prefix: "✅ "
 
 # Task Manager
 
+> **note** Shortcut-Key
+> `Alt-Shift-e` - Inline Task Editor - move your cursor to any markdown task and edit the Task in the Modal Window. If there is no task in the line it will transform it into a task.
+
 ### Example: **Simple Task Manager** with no extra attributes:
 
 ```lua
@@ -54,7 +57,7 @@ config.set("taskManager", {  -- for icons you can use any unicode character or e
 ## Task Manager Table Styling
 
 ```space-style
-/* priority: -100*/
+/* priority: -1*/
 /* ---------------------------------
    Task Manager Theme Variables
 ---------------------------------- */
@@ -306,6 +309,11 @@ html[data-theme='light'] { .taskManager, #sb-taskeditor {
   opacity: 0.9;
 }
 
+ .te-attr-row { display: flex; gap: 10px; margin-top: 10px; align-items: flex-end; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; }
+      .te-attr-col { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+      .te-attr-select { background: #333; color: white; border: 1px solid #555; border-radius: 4px; padding: 4px; height: 32px; }
+
+
 
 /* ---------------------------------
    Native Date Picker Styling
@@ -324,12 +332,8 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
 
 ```
 
+
 ## Build Table for Task Manager
-
-```space-lua
-
-```
-
 
 ```space-lua
 -- priority: -1
@@ -393,11 +397,25 @@ local function updateTaskRemote(pageName, pos, finalState, newText, attributes)
         stateMark = "[x]" 
     end
 
+    -- Logic for auto-timestamping "completed" attribute
+    local hasCompleted = false
+    local timestamp = os.date("%Y-%m-%d %H:%M")
+    
     local attrString = ""
     for _, attr in ipairs(attributes) do
-        if attr.value and attr.value ~= "" then
-            attrString = attrString .. " [" .. attr.key .. ": " .. attr.value .. "]"
+        local key = attr.key:lower()
+        -- Skip existing completed tags if we are in 'x' state (we'll re-add/refresh it)
+        -- Or skip it if we are in ' ' state (we want to remove it)
+        if key ~= "completed" then
+            if attr.value and attr.value ~= "" then
+                attrString = attrString .. " [" .. attr.key .. ": " .. attr.value .. "]"
+            end
         end
+    end
+    
+    -- If state is checked, append the current completion timestamp
+    if finalState == "x" or finalState == "X" then
+        attrString = attrString .. " [completed: " .. timestamp .. "]"
     end
 
     local newLine = indent .. bullet .. " " .. stateMark .. " " .. newText .. attrString
@@ -423,18 +441,20 @@ local function openTaskEditor(taskData, extraCols)
     local fields = {}
     for _, col in ipairs(extraCols) do
         local key = col[2]
-        local label = col[1] or key or "Unknown"
-        local val = taskData[key]
-        
-        if val == nil then val = "" end
-        if type(val) == "table" then val = "" end 
-        
-        table.insert(fields, {
-            label = tostring(label),
-            key = tostring(key),
-            type = col[3] or "string",
-            value = tostring(val)
-        })
+        if key ~= "completed" then -- We handle completed automatically now
+            local label = col[1] or key or "Unknown"
+            local val = taskData[key]
+            
+            if val == nil then val = "" end
+            if type(val) == "table" then val = "" end 
+            
+            table.insert(fields, {
+                label = tostring(label),
+                key = tostring(key),
+                type = col[3] or "string",
+                value = tostring(val)
+            })
+        end
     end
 
     local function uniqueHandler(e)
@@ -770,6 +790,269 @@ end
     })
 end
 
+
+
+
+-- =========================================================
+-- ============ INLINE TASK EDITOR EXTENSION ===============
+-- =========================================================
+
+local function openInlineTaskEditor(taskData, existingFields)
+    local sessionID = "te_inline_" .. tostring(math.floor(js.window.performance.now()))
+    
+    local existing = js.window.document.getElementById("sb-taskeditor")
+    if existing then existing.remove() end
+
+    local function uniqueHandler(e)
+        if e.detail.session == sessionID then
+            updateTaskRemote(
+                taskData.page, 
+                taskData.pos, 
+                e.detail.state, 
+                e.detail.text, 
+                e.detail.attributes
+            )
+            js.window.removeEventListener("sb-save-task", uniqueHandler)
+        end
+    end
+    js.window.addEventListener("sb-save-task", uniqueHandler)
+
+    local parts = {}
+    for _, f in ipairs(existingFields) do
+        -- Skip 'completed' from being rendered in dynamic list as we manage it via checkbox
+        if f.key:lower() ~= "completed" then
+            local safeLabel = string.gsub(tostring(f.key), '"', '\\"')
+            local safeKey = string.gsub(tostring(f.key), '"', '\\"')
+            local safeVal = string.gsub(tostring(f.value), '"', '\\"')
+            safeVal = string.gsub(safeVal, '\n', ' ')
+            table.insert(parts, string.format(
+                [[{ "label": "%s", "key": "%s", "type": "string", "value": "%s" }]], 
+                safeLabel, safeKey, safeVal
+            ))
+        end
+    end
+    local fieldsJSON = "[" .. table.concat(parts, ",") .. "]"
+
+    local taskNameSafe = string.gsub(tostring(taskData.name or ""), '"', '\\"')
+    taskNameSafe = string.gsub(taskNameSafe, '\n', ' ')
+    local isChecked = (taskData.state == "x" or taskData.state == "X") and "checked" or ""
+
+    local container = js.window.document.createElement("div")
+    container.id = "sb-taskeditor"
+    container.innerHTML = [[
+    <style>
+    
+    </style>
+    <div class="te-card" id="te-card-inner">
+      <div class="te-header">Inline Task Editor</div>
+      
+      <div class="te-row">
+        <input type="checkbox" id="te-status-checkbox" class="te-checkbox" ]] .. isChecked .. [[>
+        <label for="te-status-checkbox" style="cursor:pointer">Completed</label>
+      </div>
+
+      <div class="te-group">
+        <label class="te-label">Task Description</label>
+        <input type="text" id="te-main-input" class="te-input" value="]] .. taskNameSafe .. [[">
+      </div>
+
+      <div id="te-dynamic-fields" style="display: flex; flex-direction: column; gap: 15px;"></div>
+      
+      <div class="te-attr-row">
+        <div class="te-attr-col">
+          <label class="te-label" style="font-size: 0.8em;">Attr Name</label>
+          <input type="text" id="te-new-key" class="te-input" placeholder="e.g. due, priority">
+        </div>
+        <div class="te-attr-col" style="flex: 0.6;">
+          <label class="te-label" style="font-size: 0.8em;">Type</label>
+          <select id="te-new-type" class="te-attr-select">
+            <option value="string">String</option>
+            <option value="date">Date</option>
+            <option value="datetime">DateTime</option>
+          </select>
+        </div>
+        <div class="te-attr-col">
+          <label class="te-label" style="font-size: 0.8em;">Value</label>
+          <input type="text" id="te-new-val" class="te-input">
+        </div>
+        <button id="te-add-attr-btn" class="te-btn" style="height: 32px; background: #444; padding: 0 10px;">Add</button>
+      </div>
+
+      <div class="te-actions">
+        <button class="te-btn te-cancel" id="te-cancel-btn">Cancel</button>
+        <button class="te-btn te-save" id="te-save-btn">Save Changes</button>
+      </div>
+    </div>
+    ]]
+
+    js.window.document.body.appendChild(container)
+
+    local script = [[
+    (function() {
+        const session = "]] .. sessionID .. [[";
+        const fields = ]] .. fieldsJSON .. [[;
+        const container = document.getElementById('te-dynamic-fields');
+        const root = document.getElementById('sb-taskeditor');
+        const card = document.getElementById('te-card-inner');
+
+        const formatForInput = (val, type) => {
+             if(!val) return "";
+             val = val.trim();
+             if (type === 'datetime-local') return val.replace(" ", "T");
+             if (type === 'date') return val.split("T")[0].split(" ")[0];
+             return val;
+        };
+
+        const createFieldInput = (key, val, type) => {
+            const group = document.createElement('div');
+            group.className = 'te-group';
+            const label = document.createElement('label');
+            label.className = 'te-label';
+            label.innerText = key;
+            const input = document.createElement('input');
+            input.className = 'te-input';
+            input.dataset.key = key;
+
+            if (type === 'datetime') {
+                 input.type = 'datetime-local';
+                 input.value = formatForInput(val, 'datetime-local');
+            } else if (type === 'date') {
+                 input.type = 'date';
+                 input.value = formatForInput(val, 'date');
+            } else {
+                 input.type = 'text';
+                 input.value = val;
+            }
+            group.appendChild(label);
+            group.appendChild(input);
+            container.appendChild(group);
+        };
+
+        fields.forEach(f => {
+            let type = "string";
+            if(f.value.match(/^\d{4}-\d{2}-\d{2}$/)) type = "date";
+            if(f.value.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)) type = "datetime";
+            createFieldInput(f.key, f.value, type);
+        });
+
+        const newKeyInp = document.getElementById('te-new-key');
+        const newTypeSel = document.getElementById('te-new-type');
+        const newValInp = document.getElementById('te-new-val');
+
+        newTypeSel.onchange = () => {
+            if(newTypeSel.value === 'date') newValInp.type = 'date';
+            else if(newTypeSel.value === 'datetime') newValInp.type = 'datetime-local';
+            else newValInp.type = 'text';
+        };
+
+        document.getElementById('te-add-attr-btn').onclick = () => {
+            const key = newKeyInp.value.trim();
+            if(!key) return;
+            createFieldInput(key, newValInp.value, newTypeSel.value);
+            newKeyInp.value = "";
+            newValInp.value = "";
+        };
+
+        const cleanup = () => { 
+            window.removeEventListener("keydown", handleKey, true);
+            if(root) root.remove(); 
+        };
+        
+        const save = () => {
+            const newText = document.getElementById('te-main-input').value;
+            const newState = document.getElementById('te-status-checkbox').checked ? "x" : " ";
+            const attributes = [];
+            const inputs = container.querySelectorAll('.te-input[data-key]');
+            inputs.forEach(inp => {
+                let val = inp.value;
+                if (inp.type === 'datetime-local' && val.includes("T")) val = val.replace("T", " ");
+                attributes.push({ key: inp.dataset.key, value: val });
+            });
+            window.dispatchEvent(new CustomEvent("sb-save-task", { 
+                detail: { session: session, text: newText, state: newState, attributes: attributes } 
+            }));
+            cleanup();
+        };
+
+        const handleKey = (e) => {
+            e.stopPropagation();
+            const focusables = card.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            const first = focusables[0];
+            const last = focusables[focusables.length - 1];
+        
+            if (e.key === "Tab") {
+                if (e.shiftKey) {
+                    if (document.activeElement === first) { last.focus(); e.preventDefault(); }
+                } else {
+                    if (document.activeElement === last) { first.focus(); e.preventDefault(); }
+                }
+            } else if (e.key === "Escape") {
+                cleanup();
+            } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                save();
+            }
+        };
+        
+        window.addEventListener("keydown", handleKey, true);
+        document.getElementById('te-cancel-btn').onclick = cleanup;
+        document.getElementById('te-save-btn').onclick = save;
+        root.onclick = (e) => { if(e.target === root) cleanup(); };
+        setTimeout(() => document.getElementById('te-main-input').focus(), 50);
+    })();
+    ]]
+
+    local scriptEl = js.window.document.createElement("script")
+    scriptEl.innerHTML = script
+    container.appendChild(scriptEl)
+end
+
+
+local function inlineEditTask()
+    local line = editor.getCurrentLine()
+    local lineContent = line.text
+
+    local prefix, state, rest =
+      lineContent:match("^(%s*[%-%*])%s*%[([ xX])%](.*)")
+
+    if not prefix then
+      openInlineTaskEditor({
+        name = lineContent:match("^%s*(.-)%s*$") or "",
+        state = " ",
+        page = editor.getCurrentPage(),
+        pos = line.from
+      }, {})
+      return
+    end
+
+    local attributes = {}
+    for match in string.matchRegexAll(
+      rest,
+      "\\[([\\w_-]+)\\s*[:=]\\s*([^\\]]*)\\]"
+    ) do
+      table.insert(attributes, {
+        key = match[2],
+        value = match[3]
+      })
+    end
+
+    local cleanText = rest
+    cleanText = cleanText:gsub("%s*%[[^%]]+%]", "")
+    cleanText = cleanText:match("^%s*(.-)%s*$") or ""
+
+    openInlineTaskEditor({
+      name = cleanText,
+      state = state,
+      page = editor.getCurrentPage(),
+      pos = line.from
+    }, attributes)
+  end
+
+
+command.define {
+  name = "Task Editor: Inline",
+  key = "Alt-Shift-e",
+  run = function() inlineEditTask() end
+}
 ```
 
 
