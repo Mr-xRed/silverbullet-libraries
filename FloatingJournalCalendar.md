@@ -44,76 +44,15 @@ config.set("FloatingJournalCalendar", {
 
 ## Floating Journal Calendar Intergation
 
-```space-lua
--- priority: 0
-config.define("FloatingJournalCalendar", {
-  type = "object",
-  properties = {
-    journalPathPattern = schema.string(),
-    monthNames = { type = "array", items = { type = "string" } },
-    dayNames = { type = "array", items = { type = "string" } }
-  }
-})
+```space-style
+/* priority: -1000 */
 
-local function quote_list(t)
-    local quoted = {}
-    for i, v in ipairs(t) do
-        quoted[i] = '"' .. v .. '"'
-    end
-    return "[" .. table.concat(quoted, ", ") .. "]"
-end
-
-function toggleFloatingJournalCalendar()
-    local existing_root = js.window.document.getElementById("sb-journal-root")
-    if existing_root then 
-        existing_root.remove() 
-        return 
-    end
-
-    local cfg = config.get("FloatingJournalCalendar") or {}
-    local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#'
-    local month_names = quote_list(cfg.monthNames or {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"})
-    local day_names = quote_list(cfg.dayNames or {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
-
-    local all_pages = space.listPages()
-    local page_map_items = {}
-    for _, p in ipairs(all_pages) do
-        table.insert(page_map_items, '"' .. p.name .. '":true')
-    end
-    local existing_pages_json = "{" .. table.concat(page_map_items, ",") .. "}"
-
-    local sessionID = "jc_" .. math.floor(os.time())
-    local saved_top = clientStore.get("jc_pos_top") or "80px"
-    local saved_left = clientStore.get("jc_pos_left") or "auto"
-    local saved_right = (saved_left == "auto") and "20px" or "auto"
-
-    js.window.addEventListener("sb-journal-event", function(e)
-        if e.detail.session == sessionID then
-            if e.detail.action == "navigate" then
-                editor.navigate(e.detail.path)
-            elseif e.detail.action == "save_pos" then
-                clientStore.set("jc_pos_top", e.detail.top)
-                clientStore.set("jc_pos_left", e.detail.left)
-            end
-        end
-    end)
-
-    local container = js.window.document.createElement("div")
-    container.id = "sb-journal-root"
-    container.innerHTML = [[
-    <style>
-        body.sb-dragging-active {
-            user-select: none !important;
-            -webkit-user-select: none !important;
-        }
+   body.sb-dragging-active { user-select: none !important; -webkit-user-select: none !important; }
         
         #sb-journal-root {
             position: fixed;
-            top: ]] .. saved_top .. [[;
-            left: ]] .. saved_left .. [[;
-            right: ]] .. saved_right .. [[;
             width: 300px;
-            z-index: 10000;
+            z-index: 100;
             font-family: system-ui, sans-serif;
             user-select: none;
             touch-action: none;
@@ -255,19 +194,119 @@ function toggleFloatingJournalCalendar()
             cursor: default;
         }
         
+        /* New Container for multiple dots */
+        .jc-dots-container {
+            display: flex;
+            gap: 2px;
+            position: absolute;
+            bottom: 3px;
+            justify-content: center;
+            width: 100%;
+        }
+
         .jc-dot {
             width: 4px;
             height: 4px;
-            background: yellow;
             border-radius: 50%;
-            position: absolute;
-            bottom: 4px;
-            box-shadow: 2px 2px 3px oklch(0 0 0 / 0.5);
+            box-shadow: 1px 1px 2px oklch(0 0 0 / 0.5);
+            /* Removed absolute positioning */
         }
         
-        .jc-day.sun .jc-dot {
-            background: oklch(0.65 0.18 30);
+        .jc-dot.green { background: oklch(0.6 0.18 145); }
+        .jc-dot.yellow { background: oklch(0.95 0.18 95); }
+        .jc-dot.orange { background: oklch(0.8 0.20 55); }
+        .jc-dot.red { background: oklch(0.6 0.2 10); }
+        
+        .jc-day.sun .jc-dot.red {
+            /* Ensure red dot is visible on sunday if text is red, though dot bg is distinct enough */
+            box-shadow: 0 0 0 1px white;
         }
+```
+
+
+
+```space-lua
+-- priority: -1
+config.define("FloatingJournalCalendar", {
+  type = "object",
+  properties = {
+    journalPathPattern = schema.string(),
+    monthNames = { type = "array", items = { type = "string" } },
+    dayNames = { type = "array", items = { type = "string" } }
+  }
+})
+
+local function quote_list(t)
+    local quoted = {}
+    for i, v in ipairs(t) do
+        quoted[i] = '"' .. v .. '"'
+    end
+    return "[" .. table.concat(quoted, ", ") .. "]"
+end
+
+function toggleFloatingJournalCalendar()
+    local existing_root = js.window.document.getElementById("sb-journal-root")
+    if existing_root then 
+        existing_root.remove() 
+        return 
+    end
+
+    local cfg = config.get("FloatingJournalCalendar") or {}
+    local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#'
+    local month_names = quote_list(cfg.monthNames or {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"})
+    local day_names = quote_list(cfg.dayNames or {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
+
+    local all_pages = space.listPages()
+    local page_map_items = {}
+    for _, p in ipairs(all_pages) do
+        table.insert(page_map_items, '"' .. p.name .. '":true')
+    end
+    local existing_pages_json = "{" .. table.concat(page_map_items, ",") .. "}"
+
+    local sessionID = "jc_" .. math.floor(os.time())
+    local saved_top = clientStore.get("jc_pos_top") or "80px"
+    local saved_left = clientStore.get("jc_pos_left") or "auto"
+    local saved_right = (saved_left == "auto") and "20px" or "auto"
+
+    js.window.addEventListener("sb-journal-event", function(e)
+        if e.detail.session == sessionID then
+            if e.detail.action == "navigate" then
+                local prefix = e.detail.path
+                local matches = {}
+                local current_pages = space.listPages()
+                for _, p in ipairs(current_pages) do
+                    if p.name:find(prefix, 1, true) == 1 then
+                        table.insert(matches, { name = p.name, value = p.name })
+                    end
+                end
+
+                if #matches > 1 then
+                    local selection = editor.filterBox("Select Journal Entry:", matches, "Multiple entries found for this date.", "Pick a page...")
+                    if selection then
+                        editor.navigate(selection.value)
+                    end
+                else
+                    local final_path = (#matches == 1) and matches[1].value or prefix
+                    editor.navigate(final_path)
+                end
+            elseif e.detail.action == "request-refresh" then
+                refreshCalendarDots()
+            elseif e.detail.action == "save_pos" then
+                clientStore.set("jc_pos_top", e.detail.top)
+                clientStore.set("jc_pos_left", e.detail.left)
+            end
+        end
+    end)
+
+    local container = js.window.document.createElement("div")
+    container.id = "sb-journal-root"
+    container.innerHTML = [[
+    <style>
+  #sb-journal-root {
+            top: ]] .. saved_top .. [[;
+            left: ]] .. saved_left .. [[;
+            right: ]] .. saved_right .. [[;
+  }
     </style>
     <div class="jc-card" id="jc-draggable">
         <div class="jc-header" id="jc-handle">
@@ -275,7 +314,7 @@ function toggleFloatingJournalCalendar()
             <div class="jc-selectors">
                 <select id="jc-month" class="jc-select"></select>
                 <select id="jc-year" class="jc-select"></select>
-                <button class="jc-today-btn" id="jc-today" title="Jump to Today">⦿</button>
+                <button class="jc-today-btn" id="jc-today" title="Jump to Today & Refresh">↺</button>
             </div>
             <button class="jc-nav-btn" id="jc-next">›</button>
             <button class="jc-close" id="jc-close-btn">×</button>
@@ -293,7 +332,7 @@ function toggleFloatingJournalCalendar()
         const session = "]]..sessionID..[[";
         const months = ]]..month_names..[[;
         const days = ]]..day_names..[[;
-        const existing = ]]..existing_pages_json..[[;
+        let existing = ]]..existing_pages_json..[[;
         const pattern = "]]..path_pattern..[[";
         const root = document.getElementById("sb-journal-root");
         
@@ -330,6 +369,8 @@ function toggleFloatingJournalCalendar()
 
             for(let i=0; i<offset; i++) grid.appendChild(Object.assign(document.createElement("div"), {className:"jc-day empty"}));
 
+            const pageNames = Object.keys(existing);
+
             for(let i=1; i<=lastDay; i++) {
                 const d = document.createElement("div");
                 d.className = "jc-day";
@@ -339,23 +380,49 @@ function toggleFloatingJournalCalendar()
                 if(isSun) d.classList.add("sun");
                 if(i===now.getDate() && m===now.getMonth() && y===now.getFullYear()) d.classList.add("today");
 
-                const path = pattern
+                const basePath = pattern
                     .replace(/#year#/g, y)
                     .replace(/#month#/g, String(m+1).padStart(2,'0'))
                     .replace(/#monthname#/g, months[m])
                     .replace(/#day#/g, String(i).padStart(2,'0'))
-                    .replace(/#weekday#/g, days[isSun ? 6 : dateObj.getDay()-1]);
+                    .replace(/#weekday#/g, days[isSun ? 6 : dateObj.getDay()-1])
+                    .replace(/#wildcard#/g, "");
 
-                if(existing[path]) {
-                    const dot = document.createElement("div"); dot.className = "jc-dot"; d.appendChild(dot);
+                // Logic update: Count matches instead of just checking existence
+                const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
+
+                if(matchCount > 0) {
+                    const dotsContainer = document.createElement("div");
+                    dotsContainer.className = "jc-dots-container";
+                    
+                    const numReds = Math.floor(matchCount / 4);
+                    const remainder = matchCount % 4;
+
+                    // Add full sets (Red dots)
+                    for(let r=0; r<numReds; r++) {
+                        const dot = document.createElement("div"); 
+                        dot.className = "jc-dot red"; 
+                        dotsContainer.appendChild(dot);
+                    }
+
+                    // Add remainder dot
+                    if (remainder > 0) {
+                        const dot = document.createElement("div");
+                        let colorClass = "green"; // Default 1
+                        if (remainder === 2) colorClass = "yellow";
+                        if (remainder === 3) colorClass = "orange";
+                        dot.className = "jc-dot " + colorClass;
+                        dotsContainer.appendChild(dot);
+                    }
+                    d.appendChild(dotsContainer);
                 }
+                
                 d.innerHTML += `<span>${i}</span>`;
                 
-                d.onclick = () => window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action:"navigate", path, session }}));
+                d.onclick = () => window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action:"navigate", path: basePath, session }}));
                 
                 d.ondragstart = (e) => {
-                    // This handles the standard drop behavior for the editor automatically
-                    e.dataTransfer.setData("text/plain", "[[" + path + "]].."]]"..[[");
+                    e.dataTransfer.setData("text/plain", "[[" + basePath +  "]].."]]"..[[");
                     e.dataTransfer.dropEffect = "copy";
                 };
 
@@ -363,10 +430,23 @@ function toggleFloatingJournalCalendar()
             }
         }
 
+        window.addEventListener("sb-journal-update", (e) => {
+            if (e.detail && e.detail.existing) {
+                existing = e.detail.existing;
+                render();
+            }
+        });
+
         window.addEventListener("resize", clamp);
         document.getElementById("jc-prev").onclick = () => { vDate.setMonth(vDate.getMonth()-1); render(); };
         document.getElementById("jc-next").onclick = () => { vDate.setMonth(vDate.getMonth()+1); render(); };
-        document.getElementById("jc-today").onclick = () => { vDate = new Date(); render(); };
+        
+        document.getElementById("jc-today").onclick = () => { 
+            vDate = new Date(); 
+            window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action: "request-refresh", session }}));
+            render(); 
+        };
+
         document.getElementById("jc-month").onchange = (e) => { vDate.setMonth(parseInt(e.target.value)); render(); };
         document.getElementById("jc-year").onchange = (e) => { vDate.setFullYear(parseInt(e.target.value)); render(); };
         document.getElementById("jc-close-btn").onclick = () => root.remove();
@@ -407,32 +487,29 @@ function toggleFloatingJournalCalendar()
     container.appendChild(scriptEl)
 end
 
+function refreshCalendarDots()
+    local existing_root = js.window.document.getElementById("sb-journal-root")
+    if not existing_root then return end
+
+    local all_pages = space.listPages()
+    local page_map_items = {}
+    for _, p in ipairs(all_pages) do
+        table.insert(page_map_items, '"' .. p.name .. '":true')
+    end
+    local json_str = "{" .. table.concat(page_map_items, ",") .. "}"
+    
+    -- Using call() to invoke dispatchEvent without needing the .new constructor in Lua
+    js.window.dispatchEvent(js.window.eval([[ (data) => new CustomEvent("sb-journal-update", { detail: { existing: data } }) ]])(js.window.JSON.parse(json_str)))
+end
+
+event.listen { name = "editor:pageLoaded", run = function() refreshCalendarDots() end }
+-- event.listen { name = "editor:pageSaved", run = function() refreshCalendarDots() end }
+
 command.define {
     name = "Journal: Floating Calendar",
     run = function() toggleFloatingJournalCalendar() end
 }
 ```
 
+## Discussion to this library
 * [SilverBullet Community](https://community.silverbullet.md/t/sleek-interactive-floating-journal-calendar/3680/6?u=mr.red)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
