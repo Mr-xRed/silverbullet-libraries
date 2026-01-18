@@ -33,7 +33,7 @@ ${TaskManager(query[[from index.tag "task" order by name limit 5]], {
 })}
 ```
 
-${TaskManager(query[[from index.tag "task" order by name limit 5]], {
+${TaskManager(query[[from index.tag "task" order by name limit 10]], {
   {"Priority", "priority", "string"},
   {"Due Date", "due", "YY-MM-DD"},
   {"Completed", "completed", "dateTime"},
