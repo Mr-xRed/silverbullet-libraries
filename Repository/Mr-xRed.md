@@ -25,6 +25,11 @@ uri: github:Mr-xRed/silverbullet-libraries/AdvancedPanelControl.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/AdvancedPanelControl.md
 description: "Advanced Controls for your Side Panels (LHS, RHS, BHS)"
 ---
+name: "⏲️ Pomodoro Clock"
+uri: github:Mr-xRed/silverbullet-libraries/PomodoroClock.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PomodoroClock.md
+description: "Floating Pomodoro: The productivity tool you didn’t ask for, but are getting anyway"
+---
 name: "🖨️ PrintPreview"
 uri: github:Mr-xRed/silverbullet-libraries/PrintPreview.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PrintPreview.md
