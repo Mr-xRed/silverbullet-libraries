@@ -20,8 +20,10 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 ### **✨ Enhanced User Interface**
 * **Dynamic Theming:** Built-in support for both **Dark** and **Light**.
 * **Draggable & Snappable:** A "grab-and-go" header allows you to move the calendar anywhere. It features **edge-snapping** and **viewport clamping** to ensure it never gets lost off-screen. 
-* **Persistent Positioning:** Remembers its last location on your screen across sessions, so it stays exactly where you’ve put it.
-* **Quick Jump:** Includes a "Today" button (⦿) to instantly return to the current month and year from anywhere in the calendar.
+* **Persistent Positioning:** Remembers its last location on your screen across sessions, so it stays exactly where you’ve put it.`
+* **Quick Jump:** Includes a "Today & Refresh" button `↺` to instantly return to the current month and year from anywhere in the calendar and refresh the dot’s
+- Added `Cmd/Ctrl + Click` to convert the selected text to a piped WikiLink
+  e.g: `[[Journal/2024/05/2024-05-20_Mon|Selected Text]]`
 
 ### **⚙️ Customizable**
 * **Flexible Path Patterns:** Configure your journal file structure (e.g., `Journal/2024/05/2024-05-20_Mon`). 
@@ -45,7 +47,7 @@ config.set("FloatingJournalCalendar", {
 ## Floating Journal Calendar Intergation
 
 ```space-style
-/* priority: -1000 */
+/* priority: -100 */
 
    body.sb-dragging-active { user-select: none !important; -webkit-user-select: none !important; }
         
@@ -224,7 +226,6 @@ config.set("FloatingJournalCalendar", {
 ```
 
 
-
 ```space-lua
 -- priority: -1
 config.define("FloatingJournalCalendar", {
@@ -272,6 +273,19 @@ function toggleFloatingJournalCalendar()
         if e.detail.session == sessionID then
             if e.detail.action == "navigate" then
                 local prefix = e.detail.path
+                
+                -- Handle Ctrl+Click Link Insertion Logic
+                if e.detail.ctrlKey or e.detail.metaKey then
+                    local sel = editor.getSelection()
+                    if sel and sel.from ~= sel.to then
+                        local selectedText = editor.getText():sub(sel.from + 1, sel.to)
+                        editor.replaceRange(sel.from, sel.to, "[[" .. prefix .. "|" .. selectedText .. "]]")
+                    else
+                        editor.insertAtCursor("[[" .. prefix .. "]]")
+                    end
+                    return
+                end
+
                 local matches = {}
                 local current_pages = space.listPages()
                 for _, p in ipairs(current_pages) do
@@ -388,7 +402,6 @@ function toggleFloatingJournalCalendar()
                     .replace(/#weekday#/g, days[isSun ? 6 : dateObj.getDay()-1])
                     .replace(/#wildcard#/g, "");
 
-                // Logic update: Count matches instead of just checking existence
                 const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
 
                 if(matchCount > 0) {
@@ -398,17 +411,15 @@ function toggleFloatingJournalCalendar()
                     const numReds = Math.floor(matchCount / 4);
                     const remainder = matchCount % 4;
 
-                    // Add full sets (Red dots)
                     for(let r=0; r<numReds; r++) {
                         const dot = document.createElement("div"); 
                         dot.className = "jc-dot red"; 
                         dotsContainer.appendChild(dot);
                     }
 
-                    // Add remainder dot
                     if (remainder > 0) {
                         const dot = document.createElement("div");
-                        let colorClass = "green"; // Default 1
+                        let colorClass = "green"; 
                         if (remainder === 2) colorClass = "yellow";
                         if (remainder === 3) colorClass = "orange";
                         dot.className = "jc-dot " + colorClass;
@@ -419,7 +430,7 @@ function toggleFloatingJournalCalendar()
                 
                 d.innerHTML += `<span>${i}</span>`;
                 
-                d.onclick = () => window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action:"navigate", path: basePath, session }}));
+                d.onclick = (e) => window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action:"navigate", path: basePath, session, ctrlKey: e.ctrlKey, metaKey: e.metaKey }}));
                 
                 d.ondragstart = (e) => {
                     e.dataTransfer.setData("text/plain", "[[" + basePath +  "]].."]]"..[[");
@@ -498,17 +509,16 @@ function refreshCalendarDots()
     end
     local json_str = "{" .. table.concat(page_map_items, ",") .. "}"
     
-    -- Using call() to invoke dispatchEvent without needing the .new constructor in Lua
     js.window.dispatchEvent(js.window.eval([[ (data) => new CustomEvent("sb-journal-update", { detail: { existing: data } }) ]])(js.window.JSON.parse(json_str)))
 end
 
 event.listen { name = "editor:pageLoaded", run = function() refreshCalendarDots() end }
--- event.listen { name = "editor:pageSaved", run = function() refreshCalendarDots() end }
 
 command.define {
     name = "Journal: Floating Calendar",
     run = function() toggleFloatingJournalCalendar() end
 }
+
 ```
 
 ## Discussion to this library
