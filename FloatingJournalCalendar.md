@@ -316,11 +316,14 @@ function toggleFloatingJournalCalendar()
     container.id = "sb-journal-root"
     container.innerHTML = [[
     <style>
-  #sb-journal-root {
-            top: ]] .. saved_top .. [[;
-            left: ]] .. saved_left .. [[;
-            right: ]] .. saved_right .. [[;
-  }
+      #sb-journal-root {
+        top: ]] .. saved_top .. [[;
+        left: ]] .. saved_left .. [[;
+        right: ]] .. saved_right .. [[;
+      }
+      #sb-journal-root.ctrl-active .jc-day {
+        cursor: copy !important;
+      }
     </style>
     <div class="jc-card" id="jc-draggable">
         <div class="jc-header" id="jc-handle">
@@ -353,6 +356,14 @@ function toggleFloatingJournalCalendar()
         const SNAP = 15;
         const TOP_OFFSET = 65;
         let vDate = new Date();
+
+        // Visual feedback for Ctrl key
+        window.addEventListener("keydown", (e) => {
+            if (e.ctrlKey || e.metaKey) root.classList.add("ctrl-active");
+        });
+        window.addEventListener("keyup", (e) => {
+            if (!e.ctrlKey && !e.metaKey) root.classList.remove("ctrl-active");
+        });
 
         function clamp() {
             const rect = root.getBoundingClientRect();
