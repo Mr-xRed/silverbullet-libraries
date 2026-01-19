@@ -161,7 +161,6 @@ html[data-theme="light"] #sb-pomodoro-root {
 
 
 ### Space-Lua
-
 ```space-lua
 -- priority: -1
 config.define("FloatingPomodoro", {
@@ -209,7 +208,7 @@ function togglePomodoro()
     container.id = "sb-pomodoro-root"
     container.innerHTML = [[
     <style>
-        #sb-pomodoro-root { top: ]]..tostring(saved_top)..[[; left: ]]..tostring(saved_left)..[[; right: ]]..tostring(saved_right)..[[; }
+        #sb-pomodoro-root { position: fixed; z-index: 1000; top: ]]..tostring(saved_top)..[[; left: ]]..tostring(saved_left)..[[; right: ]]..tostring(saved_right)..[[; }
     
     </style>
     <div class="pm-card" id="pm-main-card">
@@ -350,6 +349,7 @@ function togglePomodoro()
                 targetTime = null;
                 startBtn.innerText = "Resume";
                 saveState();
+                updateUI();
             } else {
                 isRunning = true;
                 targetTime = Date.now() + (timeLeft * 1000);
@@ -451,7 +451,10 @@ function restorePomodoroOnLoad()
     if not recoverAfterRefresh then return end
     
     local isOpen = clientStore.get("pm_is_open")
-    if isOpen == "true" then
+    local existing = js.window.document.getElementById("sb-pomodoro-root")
+    
+    -- If it should be open but doesn't exist in the current page DOM, create it.
+    if isOpen == "true" and not existing then
         togglePomodoro()
     end
 end
@@ -463,7 +466,6 @@ command.define {
     run = function() togglePomodoro() end
 }
 ```
-
 
 ## **A Note on Productivity**
 
