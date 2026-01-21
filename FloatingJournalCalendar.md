@@ -202,7 +202,7 @@ html[data-theme="light"] #sb-journal-root {
               display: flex;
               gap: 2px;
               position: absolute;
-              bottom: 3px;
+              bottom: 5px;
               justify-content: center;
               width: 100%;
           }
