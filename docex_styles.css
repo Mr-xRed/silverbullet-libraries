@@ -659,6 +659,23 @@ html[data-theme="light"] {
   padding: 1px 4px;
 }
 
+
+
+.mode-grid .grid-tile.hybrid-tile .hybrid-folder-zone {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.mode-grid .grid-tile.hybrid-tile .grid-title {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+
 /* --- 4. LIST & TREE MODES --- */
 .mode-list .hybrid-tile,
 .mode-tree .hybrid-tile {
