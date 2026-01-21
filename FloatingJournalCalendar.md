@@ -543,4 +543,4 @@ command.define {
 ```
 
 ## Discussion to this library
-* [SilverBullet Community](https://community.silverbullet.md/t/sleek-interactive-floating-journal-calendar/3680/6?u=mr.red) 
+* [SilverBullet Community](https://community.silverbullet.md/t/sleek-interactive-floating-journal-calendar/3680/6?u=mr.red)
