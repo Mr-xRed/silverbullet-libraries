@@ -22,7 +22,7 @@ A unified media library for SilverBullet that lets you search, fetch, and store 
     
 
 > **warning** OMDb API key
-> To use **movies and TV series**, you must configure a **free
+> To use **movies and TV series**, you must configure a free OMDb API key
 > Get one at [**omdbapi.com**](https://omdbapi.com/apikey.aspx) and add it to your SilverBullet config.
 
 
