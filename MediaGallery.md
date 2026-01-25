@@ -8,7 +8,7 @@ pageDecoration.prefix: "🖼️ "
 
 A configurable, client-side media gallery widget that renders your media pages as a searchable, paginated grid with posters/covers.
 
-**Main features**
+## **Main features**
 
 *   🖼 **Responsive grid layout** with configurable tile size and pagination
     
@@ -16,7 +16,11 @@ A configurable, client-side media gallery widget that renders your media pages a
     
 *   🧩 **Type-aware defaults** for movies, series, and books (fully overridable)
     
-  
+## Acces it:
+Virtual Pages: [[mediaGallery:books]], [[mediaGallery:movies]], [[mediaGallery:series]]
+or
+Add as Widget to any page: `${widgets.mediaGallery("books","180px","12")}`
+
 ## Configuration: Example for Pages:
 
 ![Pages Configuration Example](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/MediaGallery_config.png)
@@ -61,7 +65,7 @@ local tagDefaults = {
   ["book"] = {"page", "book", {"title", "author", "year"}, "score", "cover", {"description", "publisher", "genre"}},
 }
 
-function widgets.mediaGrid(mediaType, customTileSize, customPageItems)
+function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
   -- 1. Determine the tag and configuration
   -- Use provided arguments or fall back to defaults
   local currentTileSize = customTileSize or tileSize
@@ -308,7 +312,7 @@ virtualPage.define {
   run = function(mediaType)
     mediaType = mediaType or "movie"
     local header = "# Gallery: " .. mediaType:upper()
-    return header .. "\n${widgets.mediaGrid(\"" .. mediaType .. "\",\"" .. tileSize .. "\",\"" .. pageItems .. "\")}\n"
+    return header .. "\n${widgets.mediaGallery(\"" .. mediaType .. "\",\"" .. tileSize .. "\",\"" .. pageItems .. "\")}\n"
   end
 }
 ```
