@@ -39,10 +39,20 @@ name: "📃 Floating Page (Proof of Concept)"
 uri: github:Mr-xRed/silverbullet-libraries/FloatingPage.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingPage.md
 description: "Open any page in a Floating Window inside Silverbullet"
+---
+name: "🧰 MediaManager"
+uri: github:Mr-xRed/silverbullet-libraries/MediaManager.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/MediaManager.md
+description: "A unified media library for SilverBullet that lets you search, fetch, and store **books, movies, and TV series** as structured pages with rich metadata."
 ```
 
 ## Widgets
 ```#meta/library/remote
+name: "🖼️ MediaGallery"
+uri: github:Mr-xRed/silverbullet-libraries/MediaGallery.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/MediaGallery.md
+description: "A configurable, client-side media gallery widget that renders your media pages as a searchable, paginated grid with posters or covers."
+---
 name: "⏳ DayProgressBar"
 uri: github:Mr-xRed/silverbullet-libraries/DayProgressBar.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DayProgressBar.md
