@@ -52,6 +52,8 @@ config.set("mediaGallery",{
 ## Status-specific badge colors
 
 ```space-style
+/* priority: 100 */
+
 /* Status-specific badge colors */
 .media-score[data-status="to-read"] {
   background: oklch(0.6 0.18 20); /* Reddish */
@@ -83,9 +85,9 @@ local pageItems = cfg.pageItems or 14 -- pagination limit
 
 -- Default templates for specific types if not overridden in config
 local tagDefaults = {
-  ["movie"] = {"page", "movie", {"title", "year", "runtime","director"}, "score", "cover", {"plot", "actors", "genre"}},
-  ["series"] = {"page", "series", {"title", "year", "writer", "runtime", "actors"}, "imdb_rating", "poster", {"actors", "plot", "genre"}},
-  ["book"] = {"page", "book", {"title", "author", "year"}, "score", "cover", {"description", "publisher", "genre"}},
+  ["movie"] = {"page", "movie", {"title", "year", "runtime","director"}, "score", "cover", {"genre", "actors","plot"}},
+  ["series"] = {"page", "series", {"title", "year", "writer", "runtime", "actors"}, "imdb_rating", "poster", {"genre","actors", "plot"}},
+  ["book"] = {"page", "book", {"title", "author", "year"}, "score", "cover", {"genre","publisher","description"}},
 }
 
 function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
@@ -93,14 +95,14 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
   -- Use provided arguments or fall back to defaults
   local currentTileSize = customTileSize or tileSize
   local currentPageItems = tonumber(customPageItems) or pageItems
-  
+   
   -- Generate a unique ID for this specific widget instance to prevent crosstalk
   local uid = "mg_" .. mediaType:gsub("%W", "") .. "_" .. math.random(1000, 9999)
-  
+   
   -- We look for the mediaType directly in tagDefaults or custom config
   local tag = mediaType
   local currentCfg = nil
-  
+   
   -- Check user's custom config first
   for _, entry in ipairs(cfg.custom or {}) do
       if entry[2] == tag then -- Index 2 is now the tag name
@@ -108,29 +110,29 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
           break
       end
   end
-  
+   
   -- Use type-specific defaults or global fallback if no custom config exists
   if not currentCfg then
       -- Attempt to find a match in tagDefaults (handling singular/plural if needed)
       currentCfg = tagDefaults[tag] or tagDefaults[tag:gsub("s$", "")] or {"object", tag, {"title", "year"}, "score", "cover", {"director", "plot", "actors", "genre"}}
   end
-  
+   
   -- The actual tag and mode used for the query
   local queryMode = currentCfg[1]
   local queryTag = currentCfg[2]
   -- 2. Execute the query
   local items
   if queryMode == "page" then
---     items = query[[from index.tag(page) where type == queryTag order by title]]
+--      items = query[[from index.tag(page) where type == queryTag order by title]]
         items = query[[from index.tag("page") where type == queryTag order by title]]
   else
       items = query[[from index.tag(queryTag) order by title]]
   end
-  
+   
   -- 3. Build the HTML
   -- We wrap everything in a unique container ID to scope the JS logic
   local html = "<div id='" .. uid .. "' class='media-grid-instance'>"
-  
+   
   html = html .. [[
     <div class="media-controls">
       <div class="media-filter-container">
@@ -140,11 +142,11 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
       <div class="media-pagination"></div>
     </div>
   ]]
-  
+   
   html = html .. "<div class='media-gallery-wrapper' style='--poster-width: " .. currentTileSize .. ";'>"
-  
+   
   if #items == 0 then
-     return "<div class='media-empty-state'>No items found for tag: <code>" .. queryTag .. "</code></div>"
+      return "<div class='media-empty-state'>No items found for tag: <code>" .. queryTag .. "</code></div>"
   end
 
   for _, item in ipairs(items) do
@@ -159,17 +161,29 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
     local score = item[scoreField] or item.imdb_rating or ""
     local link = "/" .. item.ref
     
-    -- Build Metadata Rows (Row 2 up to Row 6)
+    -- Build Metadata Rows (Row 2 up to Row 6) for FRONT
     local metaRowsHtml = ""
     for i = 2, 6 do
         if titleFields[i] and item[titleFields[i]] then
             local val = item[titleFields[i]]
             if type(val) == "table" then val = table.concat(val, ", ") end
-            metaRowsHtml = metaRowsHtml .. "<div class='media-meta-row row-" .. i .. "'>" .. tostring(val) .. "</div>"
+            -- Wrapped in span for marquee detection
+            metaRowsHtml = metaRowsHtml .. "<div class='media-meta-row row-" .. i .. "'><span>" .. tostring(val) .. "</span></div>"
+        end
+    end
+
+    -- Build Back Content (from filterFields/last array)
+    local backContentHtml = ""
+    for _, f in ipairs(filterFields) do
+        local val = item[f]
+        if val then
+            if type(val) == "table" then val = table.concat(val, ", ") end
+            local label = f:gsub("^%l", string.upper)
+            backContentHtml = backContentHtml .. "<div class='media-back-field'><strong>" .. label .. ":</strong> " .. tostring(val) .. "</div>"
         end
     end
     
-    -- Build Filter Content
+    -- Build Filter Content string for search
     local searchTerms = {}
     for _, f in ipairs(titleFields) do 
         local val = item[f]
@@ -210,15 +224,33 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
       imageHtml = "<div class='media-poster-placeholder'><span>" .. title:sub(1,1) .. "</span></div>"
     end
 
-    -- Render the Card
+    -- Render the Card Structure
+    -- 1. Main Container (Link)
+    -- 2. Flip Container (Poster Only)
+    -- 3. Info Container (Static)
     html = html .. 
       "<a class='media-card' href='" .. link .. "' data-ref='" .. link .. "' data-filter='" .. filterContent .. "'>" ..
-        "<div class='media-poster'>" .. 
-          imageHtml ..
-          scoreHtml ..
+        
+        -- Poster Flip Area
+        "<div class='media-poster-flip-container'>" ..
+            "<div class='media-poster-flip-inner'>" ..
+                -- FRONT FACE (Image)
+                "<div class='media-poster-face media-poster-front'>" ..
+                    imageHtml ..
+                    scoreHtml ..
+                "</div>" ..
+                -- BACK FACE (Description)
+                "<div class='media-poster-face media-poster-back'>" ..
+                    "<div class='media-back-content'>" ..
+                        backContentHtml ..
+                    "</div>" ..
+                "</div>" ..
+            "</div>" ..
         "</div>" ..
+
+        -- Static Info Area
         "<div class='media-info'>" ..
-          "<div class='media-title'>" .. title .. "</div>" ..
+          "<div class='media-title'><span>" .. title .. "</span></div>" ..
           "<div class='media-meta'>" ..
               metaRowsHtml ..
           "</div>" ..
@@ -246,6 +278,38 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
             
             if (!input || !paginationContainer || !galleryWrapper) return false;
 
+            // Setup Flip Logic (Ctrl+Click on Card)
+            const cards = galleryWrapper.querySelectorAll(".media-card");
+            cards.forEach(card => {
+                card.addEventListener("click", (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        // Flip only the poster inner container
+                        const flipper = card.querySelector(".media-poster-flip-inner");
+                        if(flipper) flipper.classList.toggle("flipped");
+                    }
+                });
+            });
+
+            // Marquee Overflow Checker
+            const checkOverflows = () => {
+                requestAnimationFrame(() => {
+                    // We select the PARENT elements (.media-title, .media-meta-row)
+                    const elements = galleryWrapper.querySelectorAll(".media-title, .media-meta-row");
+                    elements.forEach(el => {
+                        // Reset to check cleanly
+                        el.classList.remove("is-overflowing");
+                        
+                        // If scrollWidth (full content) is greater than clientWidth (visible box)
+                        // it means text is truncated/ellipsed.
+                        if (el.scrollWidth > el.clientWidth) {
+                            el.classList.add("is-overflowing");
+                        }
+                    });
+                });
+            };
+
             const updateDisplay = () => {
                 const rawQuery = input.value.toLowerCase().trim();
                 const keywords = rawQuery.split(/\s+/).filter(k => k.length > 0);
@@ -267,10 +331,13 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
                 const end = start + itemsPerPage;
                 
                 filteredCards.slice(start, end).forEach(card => {
-                    card.style.display = "flex";
+                    card.style.display = "flex"; // Flex column based on CSS
                 });
 
                 renderPagination(totalPages);
+                
+                // Check for marquees after layout update
+                setTimeout(checkOverflows, 100);
             };
 
             const renderPagination = (totalPages) => {
@@ -314,6 +381,11 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
                 updateDisplay();
             });
 
+            // Listen for resize to re-calc overflows
+            window.addEventListener('resize', () => {
+                 checkOverflows();
+            });
+
             updateDisplay();
             return true;
         };
@@ -345,13 +417,16 @@ virtualPage.define {
 }
 ```
 
-## Widget Styling
-
 
 ```space-style
+html{
+  --embed-background: var(--subtle-background-color);
+  --hr-color: var(--modal-border-color)
+}
+
 /* ---------- CONTROLS ---------- */
 .media-controls {
-  padding: 0 20px 10px 20px;
+  padding: 10px 20px 10px 20px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -430,7 +505,7 @@ virtualPage.define {
   font-style: italic;
 }
 
-/* ---------- CARD BASE ---------- */
+/* ---------- CARD CONTAINER ---------- */
 .media-card {
   display: flex;
   flex-direction: column;
@@ -439,30 +514,81 @@ virtualPage.define {
   border-radius: 12px;
   transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
-  overflow: hidden;
+  overflow: visible; /* Needed for 3D overlap if any */
 }
 
 .media-card:hover {
   transform: translateY(-5px);
 }
 
-/* ---------- POSTER AREA ---------- */
-.media-poster {
-  position: relative;
+/* ---------- POSTER FLIP AREA ---------- */
+.media-poster-flip-container {
+  perspective: 1000px;
   width: 100%;
   aspect-ratio: 2 / 3;
-  background-color: oklch(0.25 0 0);
+  margin-bottom: 0;
+}
+
+.media-poster-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+/* The Flip State */
+.media-poster-flip-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+/* Shared Face Styles */
+.media-poster-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden; /* Safari */
+  backface-visibility: hidden;
   border-radius: 12px;
   overflow: hidden;
+  background: var(--embed-background);
+}
+
+/* Front Face: The Image */
+.media-poster-front {
+  z-index: 2;
+  transform: rotateY(0deg);
+  background-color: oklch(0.25 0 0);
   box-shadow: 0 4px 10px oklch(0 0 0 / 0.3);
 }
 
-.media-poster img {
+.media-poster-front img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
+/* Back Face: The Details */
+.media-poster-back {
+  transform: rotateY(180deg);
+  background: var(--embed-background);
+  border: 1px solid var(--hr-color);
+  padding: 12px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  box-shadow: 0 4px 10px oklch(0 0 0 / 0.1);
+}
+
+/* Scrollbar for back face */
+/*.media-poster-back::-webkit-scrollbar {
+  width: 4px;
+}
+.media-poster-back::-webkit-scrollbar-thumb {
+  background: var(--hr-color);
+  border-radius: 2px;
+}
+*/
 .media-poster-placeholder {
   display: flex;
   align-items: center;
@@ -495,6 +621,13 @@ virtualPage.define {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0; /* Fixes Flexbox squishing ellipses */
+}
+
+/* Marquee Logic */
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
 }
 
 .media-title {
@@ -503,9 +636,22 @@ virtualPage.define {
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: ellipsis; 
   color: var(--text-normal);
   margin-bottom: 2px;
+  display: block; /* Ensures proper width calc */
+}
+
+/* If overflowing, allow clip on hover so marquee works */
+.media-title.is-overflowing:hover {
+  text-overflow: clip;
+}
+
+/* Animate the inner span */
+.media-title.is-overflowing:hover span {
+  display: inline-block;
+  animation: marquee-scroll 5s linear infinite;
+  padding-right: 20px; /* spacing after scroll */
 }
 
 .media-meta {
@@ -521,11 +667,41 @@ virtualPage.define {
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 0.85;
+  display: block;
+}
+
+/* If overflowing, allow clip on hover */
+.media-meta-row.is-overflowing:hover {
+  text-overflow: clip;
+}
+
+/* Animate the inner span */
+.media-meta-row.is-overflowing:hover span {
+  display: inline-block;
+  animation: marquee-scroll 5s linear infinite;
+  padding-right: 20px;
 }
 
 .row-2 { font-weight: 500; color: var(--text-normal); opacity: 0.9; }
 .row-3 { opacity: 0.8; }
 .row-4, .row-5, .row-6 { opacity: 0.65; font-size: 0.75em; }
+
+/* ---------- BACK CONTENT STYLING ---------- */
+.media-back-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.85em;
+  line-height: 1.4;
+}
+
+.media-back-field strong {
+  color: var(--text-normal);
+  display: block;
+  font-size: 0.9em;
+  margin-bottom: 2px;
+ /* border-bottom: 1px solid var(--hr-color);*/
+}
 ```
 
 ## Discussions to this library
