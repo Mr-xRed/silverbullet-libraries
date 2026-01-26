@@ -2,6 +2,9 @@
 name: Library/Mr-xRed/MediaManager
 tags: meta/library
 pageDecoration.prefix: "🧰 "
+share.uri: "github:Mr-xRed/silverbullet-libraries/MediaManager.md"
+share.hash: b48b4bed
+share.mode: pull
 ---
 
 # Media Manager for SilverBullet
@@ -12,7 +15,7 @@ A unified media library for SilverBullet that lets you search, fetch, and store 
 
 ## **Main features**
 
-*   📚 **[Books via Open Library](https://community.silverbullet.md/t/add-book-note-via-openlibrary-metadata-lbrary/3770)** with authors, ISBNs, covers, and cleaned descriptions (shoutout to [jamesravey](https://community.silverbullet.md/u/jamesravey))
+*   📚 **[Books via Open Library](https://community.silverbullet.md/t/add-book-note-via-openlibrary-metadata-lbrary/3770)** with authors, ISBNs, covers, and cleaned descriptions (shoutout to [jamesravey](https://community.silverbullet.md/u/jamesravey)) or via Google Books. 
     
 *   🎬 **Movies & TV series via OMDb**, including ratings, posters, cast, and IMDb links
     
@@ -39,9 +42,9 @@ year: "${first_publish_year}"
 author:
 ${author_block}
 isbn: "${isbn}"
-url: "https://openlibrary.org${olid}"
+url: "${url}"
 tags: "mediaDB/book"
-dataSource: "OpenLibraryAPI"
+dataSource: "${api}"
 cover: "${cover_image_url}"
 description: "${description}"
 ---
@@ -210,14 +213,16 @@ MediaManager.providers = {
 
         mapData = function(book)
             local safeBook = {}
+
             for k in {'title','first_publish_year','author_name', 'isbn'} do
                 safeBook[k] = book[k] or "Unknown"
             end
-            
+                      
             -- Fix: Map first_publish_year to year for the filename template
             safeBook['year'] = book['first_publish_year'] or "Unknown"
-            
+            safeBook['api'] = "OpenLibraryAPI"
             safeBook['olid'] = book['key']
+            safeBook['url'] = "https://openlibrary.org" .. book['key']
             safeBook['cover_image_url'] = book.cover_i and ("https://covers.openlibrary.org/b/id/" .. book.cover_i .. "-L.jpg") or ""
 
             -- Build dynamic author block
@@ -268,9 +273,83 @@ MediaManager.providers = {
                 end
             end
             safeBook['description'] = MediaManager.utils.cleanDescription(description_text)
-
             return safeBook
         end
+    },
+    gbook = {
+        configKey = "bookmanager",
+        search = function(queryString)
+            local url = "https://www.googleapis.com/books/v1/volumes?q=" .. string.gsub(queryString, " ", "+") .. "&maxResults=10"
+            local resp = net.proxyFetch(url, { method = "GET", headers = { Accept = "application/json" } })
+
+            if not resp.ok then error("Failed to fetch from Google Books: " .. resp.status) end
+            local data = resp.body
+            if #data.items == 0 then return nil end
+
+            local options = {}
+            for i, doc in ipairs(data.items) do
+                options[i] = {
+                    name = doc.volumeInfo.title,
+                    value = i,
+                    description = string.format("By %s, published %s", doc.volumeInfo.authors, doc.volumeInfo.publishedDate)
+                }
+            end
+            
+            local result = editor.filterBox("Select:", options)
+            return result and data.items[result.value] or nil
+        end,
+      
+        mapData = function(book)
+            local volume = book.volumeInfo
+            local safeBook = {}
+            safeBook['api'] = "GoogleBooksAPI"
+
+            -- mapping fields
+            safeBook['title'] = volume["title"]
+            safeBook['first_publish_year'] = volume["publishedDate"]
+            safeBook['year'] = volume['publishedDate'] or "Unknown"
+            safeBook['url'] = volume['infoLink']
+
+            -- Google Books API returns a direct link the image (in most cases)
+            if volume.imageLinks.thumbnail ~= nil then
+              safeBook['cover_image_url'] = volume.imageLinks.thumbnail
+            else
+              safeBook['cover_image_url'] = ""
+            end
+            -- the thumbnail actually quite small. 
+            -- Sometimes, larger images seem to be available in the self-link but those urls don't work for me
+            -- confused ...
+
+            -- Build dynamic author block
+            safeBook['author_name'] = volume["authors"]
+            local author_lines = {}
+            if type(book.volumeInfo.authors) == "table" then
+                for _, name in ipairs(book.volumeInfo.authors) do
+                    table.insert(author_lines, '  - "' .. name .. '"')
+                end
+            end
+            safeBook['author_block'] = table.concat(author_lines, "\n")
+
+            -- ISBN Extraction Logic from industryIdentifiers
+            local industryIds = {}
+            if type(volume.industryIdentifiers) == "table" then
+                for _, id in ipairs(volume.industryIdentifiers) do
+                    industryIds[id.type] = id.identifier
+                end
+            end
+            if industryIds.ISBN_13 then
+              safeBook['isbn'] = industryIds.ISBN_13
+            elseif industryIds.ISBN_10 then
+              safeBook['isbn'] = industryIds.ISBN_10
+            else
+              safeBook['isbn'] = "Unknown"
+            end
+
+            safeBook['description'] = MediaManager.utils.cleanDescription(volume["description"])
+
+            return safeBook
+          
+        end      
     },
     movie = createOMDbProvider("movie", "omdbmanager"),
     series = createOMDbProvider("series", "omdbmanager")
@@ -308,9 +387,9 @@ year: "${first_publish_year}"
 author:
 ${author_block}
 isbn: "${isbn}"
-url: "https://openlibrary.org${olid}"
+url: "${url}"
 tags: "mediaDB/book"
-dataSource: "OpenLibraryAPI"
+dataSource: "${api}"
 cover: "${cover_image_url}"
 description: "${description}"
 ---
@@ -378,6 +457,7 @@ command.define {
   run = function()
     local options = {
         { name = "Book", value = "book", description = "Search Open Library" },
+        { name = "Book", value = "gbook", description = "Search Google Books (add isbn: to search on ISBN)" },      
         { name = "Movie", value = "movie", description = "Search OMDb Movies" },
         { name = "TV Series", value = "series", description = "Search OMDb TV Series" }
     }
