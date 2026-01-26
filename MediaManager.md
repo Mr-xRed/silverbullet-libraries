@@ -306,7 +306,7 @@ MediaManager.providers = {
 
             -- mapping fields
             safeBook['title'] = volume["title"]
-            safeBook['first_publish_year'] = volume["publishedDate"]
+            safeBook['first_publish_year'] = string.sub(volume["publishedDate"],1,4)
             safeBook['year'] = volume['publishedDate'] or "Unknown"
             safeBook['url'] = volume['infoLink']
 
