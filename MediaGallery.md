@@ -49,6 +49,29 @@ config.set("mediaGallery",{
 
 ```
 
+## Status-specific badge colors
+
+```space-style
+/* Status-specific badge colors */
+.media-score[data-status="to-read"] {
+  background: oklch(0.6 0.18 20); /* Reddish */
+  box-shadow: 0 0 5px rgba(0,0,0,1);
+  color: white;
+}
+
+.media-score[data-status="done"] {
+  background: oklch(0.6 0.18 140); /* Greenish */
+  box-shadow: 0 0 5px rgba(0,0,0,1);
+  color: white;
+}
+
+.media-score[data-status="reading"] {
+  background: oklch(0.6 0.18 250); /* Bluish */
+  box-shadow: 0 0 5px rgba(0,0,0,1);
+  color: white;
+}
+```
+
 
 ## Implementation
 
@@ -98,7 +121,7 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
   -- 2. Execute the query
   local items
   if queryMode == "page" then
---      items = query[[from index.tag(page) where type == queryTag order by title]]
+--     items = query[[from index.tag(page) where type == queryTag order by title]]
         items = query[[from index.tag("page") where type == queryTag order by title]]
   else
       items = query[[from index.tag(queryTag) order by title]]
@@ -171,7 +194,12 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
     -- Hide score badge if "0", empty, or N/A
     local scoreHtml = ""
     if score ~= "" and score ~= "0" and score ~= 0 and score ~= "N/A" then
-        scoreHtml = "<div class='media-score'>" .. score .. "</div>"
+        -- Generate a data-status attribute for CSS styling based on the content
+        local statusAttr = ""
+        if type(score) == "string" then
+            statusAttr = " data-status='" .. score:lower():gsub("%s+", "-") .. "'"
+        end
+        scoreHtml = "<div class='media-score'" .. statusAttr .. ">" .. score .. "</div>"
     end
     
     -- Fallback for missing images
@@ -319,6 +347,7 @@ virtualPage.define {
 
 ## Widget Styling
 
+
 ```space-style
 /* ---------- CONTROLS ---------- */
 .media-controls {
@@ -457,6 +486,7 @@ virtualPage.define {
   padding: 4px 8px;
   border-radius: 6px;
   z-index: 2;
+  text-transform: capitalize;
 }
 
 /* ---------- INFO AREA ---------- */
