@@ -311,14 +311,20 @@ MediaManager.providers = {
             safeBook['url'] = volume['infoLink']
 
             -- Google Books API returns a direct link the image (in most cases)
-            if volume.imageLinks.thumbnail ~= nil then
+            if volume["imageLinks"] ~= nil then
               safeBook['cover_image_url'] = volume.imageLinks.thumbnail
             else
               safeBook['cover_image_url'] = ""
             end
-            -- the thumbnail actually quite small. 
-            -- Sometimes, larger images seem to be available in the self-link but those urls don't work for me
-            -- confused ...
+            -- if the 'Books page' has a larger image, get that from the Books page. 
+            local work_url = book.selfLink
+            local work_resp = net.proxyFetch(work_url, { method = "GET", headers = { Accept = "application/json" } })
+            if work_resp.ok then
+                local w = work_resp.body
+                if w.volumeInfo.imageLinks.medium then
+                  safeBook['cover_image_url'] = w.volumeInfo.imageLinks.medium
+                end
+            end
 
             -- Build dynamic author block
             safeBook['author_name'] = volume["authors"]
