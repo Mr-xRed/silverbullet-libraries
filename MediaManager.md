@@ -283,7 +283,7 @@ MediaManager.providers = {
 
             if not resp.ok then error("Failed to fetch from Google Books: " .. resp.status) end
             local data = resp.body
-            if #data.items == 0 then return nil end
+            if data.totalItems == 0 then return nil end
 
             local options = {}
             for i, doc in ipairs(data.items) do
@@ -318,8 +318,8 @@ MediaManager.providers = {
             -- if the 'Books page' has a larger image, get that from the Books page. 
             local work_url = book.selfLink
             local work_resp = net.proxyFetch(work_url, { method = "GET", headers = { Accept = "application/json" } })
-           local info = work_resp.ok and work_resp.body and work_resp.body.volumeInfo
-           local images = info and info.imageLinks
+            local info = work_resp.ok and work_resp.body and work_resp.body.volumeInfo
+            local images = info and info.imageLinks
           
             if images and images.medium then
                 safeBook.cover_image_url = images.medium
