@@ -87,7 +87,7 @@ local pageItems = cfg.pageItems or 14 -- pagination limit
 local tagDefaults = {
   ["movie"] = {"page", "movie", {"title", "year", "runtime","director"}, "score", "cover", {"genre", "actors","plot"}},
   ["series"] = {"page", "series", {"title", "year", "writer", "runtime", "actors"}, "imdb_rating", "poster", {"genre","actors", "plot"}},
-  ["book"] = {"page", "book", {"title", "author", "year"}, "score", "cover", {"genre","publisher","description"}},
+  ["book"] = {"page", "book", {"title", "author", "year"}, "score", "cover", {"description"}},
 }
 
 function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
