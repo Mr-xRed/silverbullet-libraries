@@ -370,9 +370,22 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageRows)
                     let valB = b.getAttribute("data-sort-" + sortField) || "";
 
                     // Attempt numeric conversion for specific fields
-                    if (["year", "score", "runtime", "imdb_rating"].includes(sortField)) {
-                        const numA = parseFloat(valA.replace(/[^0-9.]/g, '')) || 0;
-                        const numB = parseFloat(valB.replace(/[^0-9.]/g, '')) || 0;
+                    if (["score", "runtime", "imdb_rating", "year"].includes(sortField)) {
+                        let numA, numB;
+
+                        if (sortField === "year") {
+                            // Extract the first year from the range (e.g., "2012-2015" -> 2012)
+                            const matchA = valA.match(/^\d{4}/);
+                            const matchB = valB.match(/^\d{4}/);
+
+                            numA = matchA ? parseInt(matchA[0], 10) : 0;
+                            numB = matchB ? parseInt(matchB[0], 10) : 0;
+                        } else {
+                            // Original logic for other fields
+                            numA = parseFloat(valA.replace(/[^0-9.]/g, '')) || 0;
+                            numB = parseFloat(valB.replace(/[^0-9.]/g, '')) || 0;
+                        }
+
                         return sortDirection === "asc" ? numA - numB : numB - numA;
                     }
 
