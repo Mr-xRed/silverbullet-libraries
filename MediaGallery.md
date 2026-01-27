@@ -12,9 +12,11 @@ A configurable, client-side media gallery widget that renders your media pages a
 
 *   🖼 **Responsive grid layout** with configurable tile size and pagination
     
-*   🔍 **Live filtering** across titles, metadata, plots, genres, and cast
+*   🔍 **Live filtering** and **Order By**: title, year, description, plot, genre, cast, metadata etc.
     
 *   🧩 **Type-aware defaults** for movies, series, and books (fully overridable)
+
+*   🖱️ **Ctrl/Cmd-Click** to Flip the Card to see more details on the back
     
 ## Acces it:
 Virtual Pages: [[mediaGallery:books]], [[mediaGallery:movies]], [[mediaGallery:series]]
@@ -35,17 +37,17 @@ config.set("mediaGallery",{
   tileSize = "180px", -- default value for Virtual Page or if not specified in widget
   pageItems = 12,     -- default value for Virtual Page or if not specified in widget
   custom = {
-    {"page", "movie", {"title", "year", "runtime","director"}, "score", "cover", {"plot", "actors","genre"}}
-    {"object","person",{"name","birthday","phone","emoji"}},
+    {"page", "movie", {"title", "year", "runtime","director"}, "score", "cover", {"plot", "actors","genre"}},
+    {"object","person",{"name","birthday","phone","emoji"}}
   }
 }) 
 
--- 1st. - data source: `page` or `object`
--- 2nd. - data source: tag name, is also the Virtual Page tag e.g. [[mediaGaller:movie]]
--- 3rd. - {array}: title & detail source with up to 5x elements
--- 4th. - attribute name for score field
--- 5th. - attribute name for the image URL
--- 6th. - {array}: custom filter attributes to include in the live filter other than already specified in title & details
+-- 1st - data source: `page` or `object`
+-- 2nd - data source: tag name, is also the Virtual Page tag e.g. [[mediaGaller:movie]]
+-- 3rd - {array}: title & detail source with up to 5x elements
+-- 4th - attribute name for score field
+-- 5th - attribute name for the image URL
+-- 6th - {array}: custom filter attributes to include in the LiveFilter and OrderBy, other than already specified in title & details
 
 ```
 
@@ -407,7 +409,7 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
                         e.preventDefault();
                         currentPage = page;
                         updateDisplay();
-                        root.scrollIntoView({behavior: 'smooth', block: 'start'});
+              //          root.scrollIntoView({behavior: 'smooth', block: 'start'});
                     };
                     return btn;
                 };
