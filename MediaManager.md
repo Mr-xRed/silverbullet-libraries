@@ -2,9 +2,6 @@
 name: Library/Mr-xRed/MediaManager
 tags: meta/library
 pageDecoration.prefix: "🧰 "
-share.uri: "github:Mr-xRed/silverbullet-libraries/MediaManager.md"
-share.hash: b48b4bed
-share.mode: pull
 ---
 
 # Media Manager for SilverBullet
@@ -15,7 +12,7 @@ A unified media library for SilverBullet that lets you search, fetch, and store 
 
 ## **Main features**
 
-*   📚 **[Books via Open Library](https://community.silverbullet.md/t/add-book-note-via-openlibrary-metadata-lbrary/3770)** with authors, ISBNs, covers, and cleaned descriptions (shoutout to [jamesravey](https://community.silverbullet.md/u/jamesravey)) or via Google Books. 
+*   📚 **[Books via Open Library](https://community.silverbullet.md/t/add-book-note-via-openlibrary-metadata-lbrary/3770)** (shoutout to [jamesravey](https://community.silverbullet.md/u/jamesravey)) or via Google Books (shoutout to [mike](https://community.silverbullet.md/u/mike)), with authors, ISBNs, covers, and descriptions (if available)  
     
 *   🎬 **Movies & TV series via OMDb**, including ratings, posters, cast, and IMDb links
     
@@ -319,11 +316,11 @@ MediaManager.providers = {
             -- if the 'Books page' has a larger image, get that from the Books page. 
             local work_url = book.selfLink
             local work_resp = net.proxyFetch(work_url, { method = "GET", headers = { Accept = "application/json" } })
-            if work_resp.ok then
-                local w = work_resp.body
-                if w.volumeInfo.imageLinks.medium then
-                  safeBook['cover_image_url'] = w.volumeInfo.imageLinks.medium
-                end
+           local info = work_resp.ok and work_resp.body and work_resp.body.volumeInfo
+           local images = info and info.imageLinks
+          
+            if images and images.medium then
+                safeBook.cover_image_url = images.medium
             end
 
             -- Build dynamic author block
