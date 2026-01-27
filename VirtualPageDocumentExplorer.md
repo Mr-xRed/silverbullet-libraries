@@ -37,7 +37,7 @@ pageDecoration.prefix: "☠️ "
 * `goToCurrentDir`     - Start navigation in the Directory of the currently opened page (default: true)
 * `viewMode`           - Choose between “grid” and “list” (default: grid)
 
-```lua
+```
 config.set("vpexplorer", {
   homeDirName = "🏠 Home",
   goToCurrentDir = true,
@@ -55,7 +55,7 @@ config.set("vpexplorer", {
 ## Integration:
 
 ### Config Init
-```lua
+```
 config.define("vpexplorer", {
   type = "object",
   properties = {
@@ -72,7 +72,7 @@ config.define("vpexplorer", {
 
 
 ### Command
-```lua
+```
 command.define {
   name = "Navigate: Virtual Page Document Explorer",
   key = "Ctrl-Alt-e",
@@ -104,7 +104,7 @@ command.define {
 ```
 
 ### Document Explorer Widget
-```lua
+```
 
 -- Defining Config Defaults
 local cfg = config.get("vpexplorer") or {}
@@ -302,7 +302,7 @@ end
 ```
 
 ### VirtualPage
-```lua
+```
 command.define {
   name = "Explorer: Toggle View Mode",
   run = function()
@@ -361,7 +361,7 @@ virtualPage.define {
 
 ## Styling:
 
-```css
+```
 
 /* ---------- BREADCRUMBS ---------- */
 .explorer-breadcrumbs {
