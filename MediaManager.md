@@ -25,6 +25,8 @@ A unified media library for SilverBullet that lets you search, fetch, and store 
 > To use **movies and TV series**, you must configure a free OMDb API key
 > Get one at [**omdbapi.com**](https://omdbapi.com/apikey.aspx) and add it to your SilverBullet config.
 
+> **Info** Copyright Info
+> Google Books data is provided by the Google Books API. Metadata and covers remain the property of their respective rights holders.
 
 ## Configuration Examples
 
