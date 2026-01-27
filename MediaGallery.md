@@ -35,7 +35,7 @@ Add as Widget to any page: `${widgets.mediaGallery("books","180px","12")}`
 ```
 config.set("mediaGallery",{
   tileSize = "180px", -- default value for Virtual Page or if not specified in widget
-  pageItems = 12,     -- default value for Virtual Page or if not specified in widget
+  pageRows = 2,       -- default value for Virtual Page or if not specified in widget
   custom = {
     {"page", "movie", {"title", "year", "runtime","director"}, "score", "cover", {"plot", "actors","genre"}},
     {"object","person",{"name","birthday","phone","emoji"}}
@@ -83,7 +83,7 @@ config.set("mediaGallery",{
 -- Configuration Defaults
 local cfg = config.get("mediaGallery") or {}
 local tileSize = cfg.tileSize or "160px" -- default for posters
-local pageItems = cfg.pageItems or 14 -- pagination limit
+local pageRows = cfg.pageRows or 2 -- pagination limit by rows
 
 -- Default templates for specific types if not overridden in config
 local tagDefaults = {
@@ -92,11 +92,11 @@ local tagDefaults = {
   ["book"] = {"page", "book", {"title", "author", "year"}, "score", "cover", {"description"}},
 }
 
-function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
+function widgets.mediaGallery(mediaType, customTileSize, customPageRows)
   -- 1. Determine the tag and configuration
   -- Use provided arguments or fall back to defaults
   local currentTileSize = customTileSize or tileSize
-  local currentPageItems = tonumber(customPageItems) or pageItems
+  local currentPageRows = tonumber(customPageRows) or pageRows
    
   -- Generate a unique ID for this specific widget instance to prevent crosstalk
   local uid = "mg_" .. mediaType:gsub("%W", "") .. "_" .. math.random(1000, 9999)
@@ -309,7 +309,7 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
         const uid = "]] .. uid .. [[";
         let currentPage = 1;
         let sortDirection = "asc";
-        const itemsPerPage = ]] .. currentPageItems .. [[;
+        const pageRows = ]] .. currentPageRows .. [[;
         
         const init = () => {
             const root = document.getElementById(uid);
@@ -355,6 +355,10 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
                 const sortField = sortSelect.value;
                 const allCards = Array.from(galleryWrapper.querySelectorAll(".media-card"));
                 
+                // Dynamic Calculation of items per page based on current columns
+                const columns = getComputedStyle(galleryWrapper).gridTemplateColumns.split(' ').length;
+                const itemsPerPage = Math.max(1, columns * pageRows);
+
                 const filteredCards = allCards.filter(card => {
                     const data = card.getAttribute("data-filter") || "";
                     return keywords.every(word => data.includes(word));
@@ -409,7 +413,7 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
                         e.preventDefault();
                         currentPage = page;
                         updateDisplay();
-              //          root.scrollIntoView({behavior: 'smooth', block: 'start'});
+              //         root.scrollIntoView({behavior: 'smooth', block: 'start'});
                     };
                     return btn;
                 };
@@ -453,7 +457,7 @@ function widgets.mediaGallery(mediaType, customTileSize, customPageItems)
             });
 
             window.addEventListener('resize', () => {
-                 checkOverflows();
+                 updateDisplay();
             });
 
             updateDisplay();
@@ -481,7 +485,7 @@ virtualPage.define {
   run = function(mediaType)
     mediaType = mediaType or "movie"
     local header = "# Gallery: " .. mediaType:upper()
-    return header .. "\n${widgets.mediaGallery(\"" .. mediaType .. "\",\"" .. tileSize .. "\",\"" .. pageItems .. "\")}\n"
+    return header .. "\n${widgets.mediaGallery(\"" .. mediaType .. "\",\"" .. tileSize .. "\",\"" .. pageRows .. "\")}\n"
   end
 }
 ```
@@ -824,7 +828,6 @@ html{
   margin-bottom: 2px;
 }
 ```
-
 
 ## Discussions to this library
 * [SilverBullet Community](https://community.silverbullet.md/t/simple-media-gallery-for-books-movie-tv-series-games-etc/3795?u=mr.red)
