@@ -27,7 +27,7 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 
 ### **⚙️ Customizable**
 * **Flexible Path Patterns:** Configure your journal file structure (e.g., `Journal/2024/05/2024-05-20_Mon`). 
-* **Localization Support:** Easily change month names and weekday abbreviations to match your preferred language.
+* **Localization Support:** Easily change month names and weekday abbreviations to match your preferred language. Choose whether to start weeks on Sunday or Monday.
 
 
 ## Config Example and default values
@@ -37,7 +37,8 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 config.set("FloatingJournalCalendar", {
   journalPathPattern = 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#',
   monthNames = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
-  dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+  dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"},
+  weekStartsSunday = false
 })    
 ```
 
@@ -45,7 +46,6 @@ config.set("FloatingJournalCalendar", {
 > Copy this into a `space-lua` block on your config page to change default values
 
 ## Floating Journal Calendar Intergation
-
 ```space-style
 /* priority: 1000 */
 body.sb-dragging-active { user-select: none !important; -webkit-user-select: none !important; }
@@ -77,7 +77,7 @@ html[data-theme="light"] #sb-journal-root {
     --jc-accent-color: var(--ui-accent-color);
 }
       
-        
+      
           .jc-card {
               background: var(--jc-background);
               color: var(--jc-text-color);
@@ -91,14 +91,14 @@ html[data-theme="light"] #sb-journal-root {
           }
                   
           .jc-header {
-            /*  background: var(--jc-elements-background);*/
+            /* background: var(--jc-elements-background);*/
               padding: 6px 8px;
               cursor: grab;
               display: flex;
               align-items: center;
               justify-content: space-between;
               gap: 6px;
-            /*  border-bottom: 1px solid var(--jc-border-color); */
+            /* border-bottom: 1px solid var(--jc-border-color); */
           }
                   
           .jc-nav-btn,
@@ -143,7 +143,10 @@ html[data-theme="light"] #sb-journal-root {
               padding: 2px 4px;
               cursor: pointer;
           }
-                  
+          .jc-select option {
+              background: var(--modal-help-background-color);
+          }
+          
           .jc-grid {
               display: grid;
               grid-template-columns: repeat(7, 1fr);
@@ -183,7 +186,7 @@ html[data-theme="light"] #sb-journal-root {
           }
                   
           .jc-day.sun {
-              color: oklch(0.60.20 30);
+              color: oklch(0.6 0.2 30);
               font-weight: bold;
           }
                   
@@ -224,9 +227,7 @@ html[data-theme="light"] #sb-journal-root {
               /* Ensure red dot is visible on sunday if text is red, though dot bg is distinct enough */
               box-shadow: 0 0 0 1px white;
           }
-
 ```
-
 
 ```space-lua
 -- priority: -1
@@ -235,7 +236,8 @@ config.define("FloatingJournalCalendar", {
   properties = {
     journalPathPattern = schema.string(),
     monthNames = { type = "array", items = { type = "string" } },
-    dayNames = { type = "array", items = { type = "string" } }
+    dayNames = { type = "array", items = { type = "string" } },
+    weekStartsSunday = schema.boolean()
   }
 })
 
@@ -258,6 +260,7 @@ function toggleFloatingJournalCalendar()
     local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#'
     local month_names = quote_list(cfg.monthNames or {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"})
     local day_names = quote_list(cfg.dayNames or {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
+    local week_starts_sunday = cfg.weekStartsSunday == true
 
     local all_pages = space.listPages()
     local page_map_items = {}
@@ -351,6 +354,7 @@ function toggleFloatingJournalCalendar()
         const session = "]]..sessionID..[[";
         const months = ]]..month_names..[[;
         const days = ]]..day_names..[[;
+        const weekStartsSunday = ]]..tostring(week_starts_sunday)..[[;
         let existing = ]]..existing_pages_json..[[;
         const pattern = "]]..path_pattern..[[";
         const root = document.getElementById("sb-journal-root");
@@ -386,7 +390,12 @@ function toggleFloatingJournalCalendar()
             document.getElementById("jc-month").innerHTML = months.map((n, i) => `<option value="${i}" ${i===m?'selected':''}>${n}</option>`).join('');
             let years = []; for(let i=y-10; i<=y+10; i++) years.push(i);
             document.getElementById("jc-year").innerHTML = years.map(v => `<option value="${v}" ${v===y?'selected':''}>${v}</option>`).join('');
-            document.getElementById("jc-labels").innerHTML = days.map((d, i) => `<div class="jc-lbl ${i===6?'sun':''}">${d}</div>`).join('');
+            
+            const displayDays = weekStartsSunday ? [days[6], ...days.slice(0, 6)] : days;
+            document.getElementById("jc-labels").innerHTML = displayDays.map((d, i) => {
+                const isSun = weekStartsSunday ? i === 0 : i === 6;
+                return `<div class="jc-lbl ${isSun ? 'sun' : ''}">${d}</div>`;
+            }).join('');
             
             document.querySelectorAll('.jc-lbl').forEach(el => {
               el.textContent = el.textContent.slice(0, 3);
@@ -395,7 +404,7 @@ function toggleFloatingJournalCalendar()
             const grid = document.getElementById("jc-days");
             grid.innerHTML = "";
             const firstDay = new Date(y, m, 1).getDay();
-            const offset = (firstDay === 0) ? 6 : firstDay - 1;
+            const offset = weekStartsSunday ? firstDay : (firstDay === 0 ? 6 : firstDay - 1);
             const lastDay = new Date(y, m + 1, 0).getDate();
 
             for(let i=0; i<offset; i++) grid.appendChild(Object.assign(document.createElement("div"), {className:"jc-day empty"}));
@@ -450,7 +459,7 @@ function toggleFloatingJournalCalendar()
                 d.onclick = (e) => window.dispatchEvent(new CustomEvent("sb-journal-event", { detail: { action:"navigate", path: basePath, session, ctrlKey: e.ctrlKey, metaKey: e.metaKey }}));
                 
                 d.ondragstart = (e) => {
-                    e.dataTransfer.setData("text/plain", "[[" + basePath +  "]].."]]"..[[");
+                    e.dataTransfer.setData("text/plain", "[[" + basePath + "]].."]]"..[[");
                     e.dataTransfer.dropEffect = "copy";
                 };
 
@@ -539,7 +548,6 @@ command.define {
     name = "Journal: Floating Calendar",
     run = function() toggleFloatingJournalCalendar() end
 }
-
 ```
 
 ## Discussion to this library
