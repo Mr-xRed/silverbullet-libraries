@@ -260,7 +260,7 @@ function toggleFloatingJournalCalendar()
     local path_pattern = cfg.journalPathPattern or 'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#'
     local month_names = quote_list(cfg.monthNames or {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"})
     local day_names = quote_list(cfg.dayNames or {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"})
-    local week_starts_sunday = cfg.weekStartsSunday == true
+    local week_starts_sunday = cfg.weekStartsSunday or false
 
     local all_pages = space.listPages()
     local page_map_items = {}
