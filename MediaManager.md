@@ -25,6 +25,9 @@ A unified media library for SilverBullet that lets you search, fetch, and store 
 > To use **movies and TV series**, you must configure a free OMDb API key
 > Get one at [**omdbapi.com**](https://omdbapi.com/apikey.aspx) and add it to your SilverBullet config.
 
+> **warning** Google Books API key
+> The Google Books API allows a limited number of \_anonymous\_ queries per day. To prevent quota problems, it is recommended to request a (free) API key and add it to your Silverbullet config - see [Google Books API Documentation](https://developers.google.com/books/docs/v1/using#APIKey) for instructions.
+
 > **Info** Copyright Info
 > Google Books data is provided by the Google Books API. Metadata and covers remain the property of their respective rights holders.
 
@@ -54,6 +57,10 @@ description: "${description}"
 
 config.set("omdbmanager", {
     omdb_apikey = "abc123"
+})
+
+config.set("googlebooksapi", {
+    apikey = "abc123"
 })
 ```
 
@@ -195,7 +202,10 @@ MediaManager.providers = {
 
             if not resp.ok then error("Failed to fetch from Open Library: " .. resp.status) end
             local data = resp.body
-            if #data.docs == 0 then return nil end
+            if #data.docs == 0 then 
+                editor.flashNotification("Open Library returned no results")
+                return nil
+            end
 
             local options = {}
             for i, doc in ipairs(data.docs) do
@@ -278,12 +288,22 @@ MediaManager.providers = {
     gbook = {
         configKey = "bookmanager",
         search = function(queryString)
-            local url = "https://www.googleapis.com/books/v1/volumes?q=" .. string.gsub(queryString, " ", "+") .. "&maxResults=10"
+            local cfg = config.get("googlebooksapi") or {}
+            local apiKey = cfg.apikey or ""
+            local url = "https://www.googleapis.com/books/v1/volumes?q=" .. string.gsub(queryString, " ", "+") .. "&maxResults=10&key=" .. apiKey
             local resp = net.proxyFetch(url, { method = "GET", headers = { Accept = "application/json" } })
 
             if not resp.ok then error("Failed to fetch from Google Books: " .. resp.status) end
             local data = resp.body
-            if data.totalItems == 0 then return nil end
+            if data.error then 
+                editor.flashNotification("Google Books API returned an error. Configuring an API Key might resolve this error")
+                return nil
+            end
+          
+            if data.totalItems == 0 then
+                editor.flashNotification("Google Books returned no results")
+                return nil
+            end
 
             local options = {}
             for i, doc in ipairs(data.items) do
@@ -316,7 +336,9 @@ MediaManager.providers = {
               safeBook['cover_image_url'] = ""
             end
             -- if the 'Books page' has a larger image, get that from the Books page. 
-            local work_url = book.selfLink
+            local cfg = config.get("googlebooksapi") or {}
+            local apiKey = cfg.apikey or ""
+            local work_url = book.selfLink .. "?key=" .. apiKey
             local work_resp = net.proxyFetch(work_url, { method = "GET", headers = { Accept = "application/json" } })
             local info = work_resp.ok and work_resp.body and work_resp.body.volumeInfo
             local images = info and info.imageLinks
