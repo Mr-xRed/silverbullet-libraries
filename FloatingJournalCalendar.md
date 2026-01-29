@@ -475,8 +475,8 @@ function toggleFloatingJournalCalendar()
         });
 
         window.addEventListener("resize", clamp);
-        document.getElementById("jc-prev").onclick = () => { vDate.setMonth(vDate.getMonth()-1); render(); };
-        document.getElementById("jc-next").onclick = () => { vDate.setMonth(vDate.getMonth()+1); render(); };
+        document.getElementById("jc-prev").onclick = () => { vDate.setDate(1); vDate.setMonth(vDate.getMonth()-1); render(); };
+        document.getElementById("jc-next").onclick = () => { vDate.setDate(1); vDate.setMonth(vDate.getMonth()+1); render(); };
         
         document.getElementById("jc-today").onclick = () => { 
             vDate = new Date(); 
@@ -484,7 +484,7 @@ function toggleFloatingJournalCalendar()
             render(); 
         };
 
-        document.getElementById("jc-month").onchange = (e) => { vDate.setMonth(parseInt(e.target.value)); render(); };
+        document.getElementById("jc-month").onchange = (e) => { vDate.setDate(1); vDate.setMonth(parseInt(e.target.value)); render(); };
         document.getElementById("jc-year").onchange = (e) => { vDate.setFullYear(parseInt(e.target.value)); render(); };
         document.getElementById("jc-close-btn").onclick = () => root.remove();
 
