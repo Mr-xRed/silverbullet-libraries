@@ -171,28 +171,6 @@ close = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#
 filterOff = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-filterOff"></use></svg>',
 filterOn = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-filterOn"></use></svg>',
 window = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-window"></use></svg>'
- }
-
- local ICONS_EMOJI = {
-   grid      = "🗄️",
-   list      = "📋",
-   tree      = "🌲",
-   folderCollapse = "−",
-   folderExpand = "✚",
-   refresh = "🔁",
-   folder    = "📁",
-   folderUp  = "📂",
-   fileMD    = "📝",
-   filePDF   = "📄",
-   fileEX    = "🔲",
-   fileDIO   = "📐",
-   file      = "❓",
-   fileIMG   = "🖼️",
-   home      = "🏠",
-   close     = "❎",
-   filterOff = "😎",
-   filterOn  = "👀",
-   window    = "🪟"
 }
 
 -- ------------- Load Config -------------
