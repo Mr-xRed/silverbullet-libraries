@@ -10,7 +10,7 @@ files:
 pageDecoration.prefix: "🗂️ "
 ---
 # 🗂️ Document Explorer (Ver. 1.0.11)
-![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DocumentExplorer_Screenshot.png)
+![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DocumentExplorer_Screenshot.png)
 
 ## Features
 • Dynamic View Modes:

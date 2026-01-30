@@ -20,7 +20,7 @@ pageDecoration.prefix: "🛠️ "
 - Button-Size and Style configurable through Space-Style (Documentation -> Soon)
 - Added **YouTube**/**Peertube**/Vimeo** **Support for the [Floating Page Library](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingPage.md)
 
-![UAPC-Screenshot|1000px](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/UAPC-Screenshot.png)
+![UAPC-Screenshot|1000px](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/UAPC-Screenshot.png)
 
 
 ## Known Issues

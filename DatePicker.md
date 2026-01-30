@@ -6,7 +6,7 @@ pageDecoration.prefix: "🛠️ "
 # Date Picker as Slash Command
 This simple slash command let’s you pick a date from a calendar and adds it to your page as a WikiLink.
 
-![DatePicker](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/DatePicker.png)
+![DatePicker](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DatePicker.png)
 
 
 ```space-lua

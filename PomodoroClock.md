@@ -10,7 +10,7 @@ ${widgets.commandButton("Pomodoro Clock","Floating: Pomodoro Clock")}
 
 A minimalist Pomodoro timer designed to stay out of your way until you inevitably lose focus. It features a circular progress visualization, session tracking, and a draggable interface that remembers its place—unlike some of your more "inspired" ideas.
 
-![Pomodoro_Screenshot|500](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/Pomodoro_Screenshot.png)
+![Pomodoro_Screenshot|500](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/Pomodoro_Screenshot.png)
 
 ## **Core Functions**
 

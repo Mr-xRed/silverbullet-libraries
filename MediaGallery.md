@@ -25,11 +25,11 @@ Add as Widget to any page: `${widgets.mediaGallery("books","180px","12")}`
 
 ## Configuration: Example for Pages:
 
-![Pages Configuration Example](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/MediaGallery_config.png)
+![Pages Configuration Example](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/MediaGallery_config.png)
 
 ## Configuration: Example for Objects:
 
-![Objects Configuration Example](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/MediaGallery_objects_config.png)
+![Objects Configuration Example](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/MediaGallery_objects_config.png)
 ## Configuration Example and Field description:
 
 ```

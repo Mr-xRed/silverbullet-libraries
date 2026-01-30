@@ -15,7 +15,7 @@ pageDecoration.prefix: "🛠️ "
 >
 > `config.set("tableSort", { enabled = false })` - enable/disable for Sorting&Filter to autostart (default: true)
 
-![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/TableSortAndFilters-Screenshot.png)
+![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/TableSortAndFilters-Screenshot.png)
 
 ## Config Example:
 
