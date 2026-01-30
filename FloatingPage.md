@@ -5,7 +5,7 @@ files:
 - UnifiedAdvancedPanelControl.js
 pageDecoration.prefix: "📃 "
 ---
-# Open Floating Page
+# Open Page in a Floating Window or SidePanel 
 
 > **warning** PROOF OF CONCEPT - EXPERIMENTAL ONLY
  
@@ -27,11 +27,28 @@ or
 
 Lorem ipsum dolor sit amet, https://example.com consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation [Wikipedia](https://wikipedia.org) ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in velit esse cillum dolore eu fugiat nulla pariatur. Sint occaecat cupidatat non proident,  [[CONFIG|Configuration]]  sunt in culpa qui officia deserunt mollit anim id est laborum.
 
+## To Configure a ShortcutKey to the commands you can use the `command.update` function:
+```lua
+-- priority: -1
+command.update {
+  name = "Navigate: Open in Left Panel",
+  key = "Ctrl-Alt-a",
+}
+
+command.update {
+  name = "Navigate: Open in Right Panel",
+  key = "Ctrl-Alt-s",
+}
+```
+
+
+
 # Implementation
 
-## Page Picker in Floating Window
+## Page Picker in Floating Window or SidePanel
 
 ```space-lua
+
 command.define {
   name = "Navigate: Open as Floating Window",
   key = "Ctrl-Shift-o",
