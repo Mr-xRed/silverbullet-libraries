@@ -734,7 +734,7 @@ html[data-theme="light"] {
   border-radius: 6px;
   box-shadow: 0 4px 15px 0 oklch(0 0 0 / 0.5);
   padding: 4px;
-  width: 80px;
+/*  width: 80px;*/
 }
 
 #explorer-context-menu .menu-item {

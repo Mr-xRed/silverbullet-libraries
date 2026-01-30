@@ -376,19 +376,6 @@ export function showDocked(content, side = "rhs", titleLabel = null) {
   panel.className = `sb-panel ${side} is-expanded`;
   panel.dataset.synthetic = "true";
 
-  // Try to use saved widths if available (best-effort)
-  try {
-    const key = side === "lhs" ? "lhsPanelWidth" : "rhsPanelWidth";
-    const saved = localStorage.getItem(key) || null;
-    if (saved) {
-      panel.style.setProperty("--sb-panel-width", parseInt(saved, 10) + "px");
-    } else {
-      panel.style.setProperty("--sb-panel-width", "600px");
-    }
-  } catch (e) {
-    panel.style.setProperty("--sb-panel-width", "600px");
-  }
-
   // Iframe creation (same handling as show)
   const iframe = document.createElement("iframe");
   iframe.className = "sb-window-iframe";
@@ -1116,6 +1103,17 @@ export function initPanelControls(options = {}) {
   };
   const SPM = _makeSPM(configOverrides);
   SPM.init();
+
+  // Keep the SPM object in sync with clientStore saves
+  window.addEventListener("sb-save-lhs", (e) => {
+    if (window.SilverBulletPanelManager) window.SilverBulletPanelManager.savedLHS = String(e.detail.value);
+  });
+  window.addEventListener("sb-save-rhs", (e) => {
+    if (window.SilverBulletPanelManager) window.SilverBulletPanelManager.savedRHS = String(e.detail.value);
+  });
+  window.addEventListener("sb-save-bhs", (e) => {
+    if (window.SilverBulletPanelManager) window.SilverBulletPanelManager.savedBHS = String(e.detail.value);
+  });
 
   // Wire the previously-used 'sb-window-mode' event to call enableWindow (this was handled in Lua before).
   window.addEventListener("sb-window-mode", function(e) {
