@@ -189,6 +189,9 @@
   border-radius: 6px;
   cursor: pointer;
 }
+.explorer-close-btn {
+  margin-left: 8px;
+}
 
 .explorer-action-btn { font-size: 1.1em; }
 .explorer-action-btn:hover { background: var(--explorer-hover-bg); }
