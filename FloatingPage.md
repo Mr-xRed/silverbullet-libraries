@@ -7,8 +7,6 @@ pageDecoration.prefix: "📃 "
 ---
 # Open Page in a Floating Window or SidePanel 
 
-> **warning** PROOF OF CONCEPT - EXPERIMENTAL ONLY
- 
 > **success** Shortcut Keys & Mouse Trigger
 > `Ctrl-Alt-o`                   - Opens the Page Picker to chose the Page
 > Ctrl-Alt-Enter/Cmd-Alt-Enter - Opens the page under the cursor in a Floating Window

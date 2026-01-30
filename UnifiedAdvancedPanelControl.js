@@ -7,6 +7,7 @@
  *
  * Exports:
  * - show(content, titleLabel)
+ * - showDocked(content, panelID)
  * - enableWindow(panelSelector)
  * - disableWindow(panelSelector)
  * - closeAll()

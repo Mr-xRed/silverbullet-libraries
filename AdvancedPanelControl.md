@@ -84,7 +84,7 @@ config.set("AdvancedPanelControl", {
 :root {
   
 /* --- Panel Control variables ---*/  
-  --control-btn-size: 28px;
+  --control-btn-size: 18px;
   --control-btn-size-hover: 28px;
   --btn-border-radius: 15px;
   --drag-line-width: 16px;
