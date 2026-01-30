@@ -14,7 +14,7 @@ pageDecoration.prefix: "📃 "
 > Ctrl-Alt-Enter/Cmd-Alt-Enter - Opens the page under the cursor in a Floating Window
 > Ctrl-Alt-Click/Cmd-Alt-Click - Opens the clicked WikiLink under the mouse in a Floating Window
 
-## Try it out: 👉 ${widgets.commandButton("Floating: Open")}
+## Try it out: 👉 ${widgets.commandButton("⧉ Floating Window","Navigate: Open as Floating Window")} ${widgets.commandButton("⇤ Left Panel","Navigate: Open in Left Panel")} ${widgets.commandButton( "Right Panel ⇥", "Navigate: Open in Right Panel")}
 
 or 
 
@@ -33,16 +33,44 @@ Lorem ipsum dolor sit amet, https://example.com consectetur adipiscing elit, sed
 
 ```space-lua
 command.define {
-  name = "Floating: Open",
+  name = "Navigate: Open as Floating Window",
   key = "Ctrl-Shift-o",
   run = function()
     local allPages = query[[
       from index.tag "page"
       order by _.lastModified desc]]
-    local page = editor.filterBox('🔍', allPages, "Select page")
+    local page = editor.filterBox('🔍', allPages, "Select page to open as Floating Window")
     if page != nil then
       clientStore.set("explorer.suppressOnce", "true")
       js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(page.name)
+    end
+  end
+}
+
+command.define {
+  name = "Navigate: Open in Right Panel",
+  run = function()
+    local allPages = query[[
+      from index.tag "page"
+      order by _.lastModified desc]]
+    local page = editor.filterBox('🔍', allPages, "Select page to open in the Right Panel")
+    if page != nil then
+      clientStore.set("explorer.suppressOnce", "true")
+      js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked(page.name,"rhs")
+    end
+  end
+}
+
+command.define {
+  name = "Navigate: Open in Left Panel",
+  run = function()
+    local allPages = query[[
+      from index.tag "page"
+      order by _.lastModified desc]]
+    local page = editor.filterBox('🔍', allPages, "Select page to open in the Left Panel")
+    if page != nil then
+      clientStore.set("explorer.suppressOnce", "true")
+      js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked(page.name,"lhs")
     end
   end
 }

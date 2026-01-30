@@ -169,7 +169,6 @@ header.appendChild(dockRHSBtn);
 
 
 
-
   const closeBtn = document.createElement("div");
   closeBtn.className = "sb-window-close-btn";
   closeBtn.innerHTML = "✕";
@@ -346,6 +345,113 @@ function dockFloatingWindow(container, side) {
   container.remove();
 }
 
+/**
+ * Show content directly as a synthetic docked panel (LHS/RHS).
+ *
+ * Usage:
+ *  showDocked(content, "rhs"|"lhs", titleLabel?)
+ *
+ * - Creates a synthetic panel (.sb-panel) with an iframe
+ * - Sets dataset.synthetic="true" so SPM treats it as JS-managed
+ * - If panel already exists on the side, shows flashNotification and returns
+ */
+export function showDocked(content, side = "rhs", titleLabel = null) {
+  const isUrl = content.startsWith("http://") || content.startsWith("https://");
+  const isHtml = content.trim().startsWith("<") && content.trim().endsWith(">");
+
+  const main = document.querySelector("#sb-main");
+  if (!main) return;
+
+  // Prevent duplicate synthetic panels on same side
+  if (main.querySelector(`.sb-panel.${side}`)) {
+    window.dispatchEvent(
+      new CustomEvent("flashNotification", {
+        detail: { value: `Panel already docked on ${side.toUpperCase()}. Close it first.` }
+      })
+    );
+    return;
+  }
+
+  const panel = document.createElement("div");
+  panel.className = `sb-panel ${side} is-expanded`;
+  panel.dataset.synthetic = "true";
+
+  // Try to use saved widths if available (best-effort)
+  try {
+    const key = side === "lhs" ? "lhsPanelWidth" : "rhsPanelWidth";
+    const saved = localStorage.getItem(key) || null;
+    if (saved) {
+      panel.style.setProperty("--sb-panel-width", parseInt(saved, 10) + "px");
+    } else {
+      panel.style.setProperty("--sb-panel-width", "600px");
+    }
+  } catch (e) {
+    panel.style.setProperty("--sb-panel-width", "600px");
+  }
+
+  // Iframe creation (same handling as show)
+  const iframe = document.createElement("iframe");
+  iframe.className = "sb-window-iframe";
+  iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen";
+  iframe.referrerPolicy = "strict-origin-when-cross-origin";
+  iframe.setAttribute("allowfullscreen", "true");
+
+  iframe.onload = () => {
+    try {
+      const doc = iframe.contentDocument;
+      if (!doc) return;
+
+      const style = doc.createElement("style");
+      style.textContent = `
+        #sb-top,
+        #sb-main .sb-panel,
+        #sb-root .sb-bhs {
+          display: none !important;
+        }
+      `;
+      doc.head.appendChild(style);
+
+      const kill = () => {
+        doc.querySelector("#sb-top")?.remove();
+        doc.querySelectorAll("#sb-main .sb-panel").forEach(el => el.remove());
+        doc.querySelector("#sb-root .sb-bhs")?.remove();
+      };
+
+      kill();
+      const observer = new MutationObserver(kill);
+      observer.observe(doc.body, { childList: true, subtree: true });
+
+    } catch (e) {
+      console.warn("Cross-origin iframe detected: DOM modification skipped.", e);
+    }
+  };
+
+  if (isHtml) {
+    const blob = new Blob([content], { type: 'text/html' });
+    iframe.src = URL.createObjectURL(blob);
+  } else if (isUrl) {
+    iframe.src = content;
+  } else {
+    iframe.src = window.location.origin + "/" + encodeURIComponent(content);
+  }
+
+  panel.appendChild(iframe);
+
+  if (side === "lhs") {
+    main.insertBefore(panel, main.firstChild);
+  } else {
+    main.appendChild(panel);
+  }
+
+  // Let the SPM observer pick it up; also trigger an immediate refresh if available
+  try {
+    if (window.SilverBulletPanelManager && typeof window.SilverBulletPanelManager.layout.refresh === "function") {
+      window.SilverBulletPanelManager.layout.refresh();
+    }
+  } catch (e) {}
+
+  return panel;
+}
 
 function cssPx(varName, fallback = 0) {
   const v = getComputedStyle(document.documentElement).getPropertyValue(varName);
@@ -401,7 +507,7 @@ export function enableWindow(panelSelector = "#sb-main .sb-panel") {
       return;
     }
 
-/*    const PANEL_ID = container.querySelector(".sb-panel")?.id || type;
+ /*    const PANEL_ID = container.querySelector(".sb-panel")?.id || type;
     window.dispatchEvent(new CustomEvent("sb-close-panel", { detail: { type: PANEL_ID } }));*/
 
     // Native panel (managed by Lua)
@@ -605,7 +711,7 @@ function _makeSPM(configOverrides = {}) {
     closeBtn.innerHTML = "✕";
     closeBtn.title = "Close Panel";
 
-    
+
     closeBtn.onclick = (e) => {
       e.stopPropagation();
 
@@ -632,7 +738,7 @@ function _makeSPM(configOverrides = {}) {
       window.dispatchEvent(new CustomEvent("sb-close-panel", { detail: { type: type.toLowerCase() } }));
     };
     */
-    
+
     // Full Screen Button
     const maxBtn = SPM.ui.createControl("", btnClass);
     maxBtn.innerHTML = "⛶";
@@ -956,13 +1062,6 @@ SPM.events.initSwipe = () => {
     iframe.addEventListener("load", attach);
   });
 };
-
-
-
-
-
-
-
 
 
 
