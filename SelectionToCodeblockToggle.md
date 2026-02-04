@@ -3,7 +3,7 @@ name: "Library/Mr-xRed/SelectionToCodeblockToggle"
 tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---
-r4-9# Selection to custom CodeBlock
+# Selection to custom CodeBlock
 
 This `space-lua` will create custom shortcut commands (Ctrl-Alt-1 to Ctrl-Alt-9) for converting current selection or current line into the specific CodeBlock.
 
