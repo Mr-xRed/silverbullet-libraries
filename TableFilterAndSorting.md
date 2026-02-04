@@ -32,8 +32,8 @@ config.set("tableSort", { enabled = false })
 
 /*---------- System Styles Overrides ----------*/
 
-#sb-main .cm-editor .sb-lua-directive-block .button-bar { top: -40px; padding:0; border-radius: 2em; opacity:0.3; transition: all 0.5s ease;}
-#sb-main .cm-editor .sb-lua-directive-block .button-bar:hover { opacity:1;}
+#sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar { top: -40px; padding:0; border-radius: 2em; opacity:0.2; transition: all 0.5s ease;} 
+#sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar:hover { opacity:1;}
 
 /*---------- Sorting and Filter Styles ----------*/
  .sortable-header { 
