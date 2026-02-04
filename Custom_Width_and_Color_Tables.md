@@ -68,7 +68,7 @@ Use it Like this:
 | 3  | Carol Davis | carol@mail.com | HR | Recruiter | 2024-02-19 |
 
 ### Sea
-| ID #sea #t80p| Name | Email | Phone | Country | Dep. | Role |
+| ID #sea #t80p #c2p| Name #c10p| Email #c20p | Phone #c10p| Country #c10p| Dep. #c5p| Role |
 |----|------|--------|--------|----------|-------------|--------|
 | 1  | Alice | alice@example.com | +1-555-1234 | USA | Sales | Manager |
 | 2  | Bob   | bob@example.com   | +44-555-5678 | UK  | IT    | Engineer |
@@ -82,7 +82,7 @@ Use it Like this:
 | 3  | Carol | Davis | carol@mail.com | +49-555-3000 | HR | Analyst | Germany |
 
 ### Wine
-| ID #wine| Name | Phone | Country | City | Dep. | Role | Hire Date | Status |
+| ID #wine #c1p| Name | Phone | Country | City | Dep. | Role | Hire Date | Status |
 |----|------|--------|----------|--------|-------------|--------|-------------|----------|
 | 1  | Alice Smith | +1-555-1234 | USA | New York | Sales | Manager | 2023-04-12 | Active |
 | 2  | Bob Johnson | +44-555-5678 | UK | London | IT | Developer | 2022-11-05 | Inactive |
@@ -268,24 +268,62 @@ html[data-theme="light"] {
 
 ```
 
-### Table Width with Tag
+### Table and Column Width with Tag
 ```space-style
-table .sb-hashtag[data-tag-name="t30p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t30p"],
-table .sb-hashtag[data-tag-name="t40p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t40p"],
-table .sb-hashtag[data-tag-name="t50p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t50p"],
-table .sb-hashtag[data-tag-name="t60p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t60p"],
-table .sb-hashtag[data-tag-name="t70p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t70p"],
-table .sb-hashtag[data-tag-name="t80p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t80p"],
-table .sb-hashtag[data-tag-name="t90p"],.sb-lua-directive-block.sb-hashtag[data-tag-name="t90p"] {
+
+.sb-table-widget table {
+  table-layout: fixed !important;
+  width: 100%; 
+}
+
+/* Hide all width-control hashtags (tXXp and cXXp) from the UI */
+table .sb-hashtag[data-tag-name^="t"], 
+table .sb-hashtag[data-tag-name^="c"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name^="t"],
+.sb-lua-directive-block .sb-hashtag[data-tag-name^="c"] {
   display: none !important;
 }
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t30p"]) {width:30% !important;}
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t40p"]) {width:40% !important;}
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t50p"]) {width:50% !important;}
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t60p"]) {width:60% !important;}
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t70p"]) {width:70% !important;}
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t80p"]) {width:80% !important;}
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t90p"]) {width:90% !important;}
+
+/* Hide the control hashtags so they don't clutter your headers */
+.sb-table-widget .sb-hashtag[data-tag-name^="t"],
+.sb-table-widget .sb-hashtag[data-tag-name^="c"] {
+  display: none !important;
+}
+
+/* Overall Table Width Controls (via the widget container) */
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t30p"]) { width: 30% !important; }
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t40p"]) { width: 40% !important; }
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t50p"]) { width: 50% !important; }
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t60p"]) { width: 60% !important; }
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t70p"]) { width: 70% !important; }
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t80p"]) { width: 80% !important; }
+.sb-table-widget:has(.sb-hashtag[data-tag-name="t90p"]) { width: 90% !important; }
+
+/* Individual Column Width Controls */
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c1p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c1p"]){ width: 1% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c2p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c2p"]) { width: 2% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c5p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c5p"]) { width: 5% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c10p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c10p"]) { width: 10% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c20p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c20p"]) { width: 20% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c30p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c30p"]) { width: 30% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c40p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c40p"]) { width: 40% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c50p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c50p"]) { width: 50% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c60p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c60p"]) { width: 60% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c70p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c70p"]) { width: 70% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c80p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c80p"]) { width: 80% !important; }
+.sb-table-widget td:has(.sb-hashtag[data-tag-name="c90p"]),
+.sb-lua-directive-block td:has(.sb-hashtag[data-tag-name="c90p"]) { width: 90% !important; }
 ```
 
 
