@@ -56,6 +56,9 @@ config.set("mediaGallery",{
 ```space-style
 /* priority: 100 */
 
+#sb-main .cm-editor .sb-lua-directive-block:has(.media-gallery-wrapper) .button-bar { top: -40px; padding:0; border-radius: 2em; opacity:0.2; transition: all 0.5s ease;} 
+#sb-main .cm-editor .sb-lua-directive-block:has(.media-gallery-wrapper) .button-bar:hover { opacity:1;}
+
 /* Status-specific badge colors */
 .media-score[data-status="to-read"] {
   background: oklch(0.6 0.18 20); /* Reddish */
