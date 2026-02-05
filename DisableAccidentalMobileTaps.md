@@ -93,6 +93,18 @@ function setupStreamlinedShield()
         }
       };
 
+      // NEW: Intercept programmatic focus attempts by the app
+      document.addEventListener('focus', (e) => {
+        if (window.sbShieldDisabledManually) return;
+        if (isUnlocked) return;
+
+        // If the editor tries to grab focus while locked, deny it.
+        if (e.target.closest('#sb-editor')) {
+          e.preventDefault();
+          e.target.blur();
+        }
+      }, true); // Capture phase is essential here
+
       document.addEventListener('focusout', (e) => {
         if (e.target.closest('#sb-editor')) lock();
       }, true);
@@ -126,7 +138,7 @@ command.define {
       editor.flashNotification("Shield ENGAGED. Double-tap/Hold to edit.", "info")
     else
       js.window.sbShieldDisabledManually = true
-      editor.flashNotification("Shield DISARMED. Normal tapping restored.", "info")
+      editor.flashNotification("Shield  is DISARMED. Normal tapping restored.", "info")
     end
   end
 }
@@ -136,6 +148,8 @@ command.define {
 -- event.listen { name = "editor:pageLoaded", run = function() setupStreamlinedShield() end }
 
 ```
+
+
 
 ## Discussions about this library
 * [SilverBullet Community](https://community.silverbullet.md/t/fixing-the-silverbullet-mobile-keyboard-drama-disable-accidental-taps/3709?u=mr.red)
