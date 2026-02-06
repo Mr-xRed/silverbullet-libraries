@@ -479,7 +479,8 @@ export function enableWindow(panelSelector = "#sb-main .sb-panel") {
   panelCloseBtn.addEventListener("pointerdown", e => {e.stopPropagation();});
  
   panelCloseBtn.className = "sb-window-close-btn";
-  panelCloseBtn.innerHTML = "✕";
+  panelCloseBtn.title = "Hide Window";
+  panelCloseBtn.innerHTML = "⯌";
   // position it flush-right (same style as floating window close)
   panelCloseBtn.style.right = "0px";
   
@@ -506,6 +507,7 @@ export function enableWindow(panelSelector = "#sb-main .sb-panel") {
 
    const panelRevertBtn = document.createElement("div");
   panelRevertBtn.className = "sb-window-close-btn";
+  panelRevertBtn.title = "Toggle Window/Panel Mode";
   panelRevertBtn.innerHTML = "⧉";
   panelRevertBtn.style.right = "26px";
   panelRevertBtn.onclick = (e) => {
