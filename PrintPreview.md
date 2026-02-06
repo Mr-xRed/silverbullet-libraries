@@ -63,6 +63,7 @@ author: "Mr-xRed"
 ## Implementation
 
 ```space-lua
+-- priority: -1
 config.define("PrintPreview", {
   type = "object",
   properties = {

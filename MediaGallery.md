@@ -83,6 +83,8 @@ config.set("mediaGallery",{
 ## Implementation
 
 ```space-lua
+-- priority: -1
+
 -- Configuration Defaults
 local cfg = config.get("mediaGallery") or {}
 local tileSize = cfg.tileSize or "160px" -- default for posters

@@ -249,7 +249,7 @@ Licensed under the ISC and MIT licenses.
 ### Multilingual SlashCommands
 
 ```space-lua
--- prioity: 0
+-- prioity: -1
 config.define("admonLang", {
     type = "string",
     enum = {"en", "de", "fr", "it", "zh", "es", "hu", "ro", "cs", "pl", "pt"}
