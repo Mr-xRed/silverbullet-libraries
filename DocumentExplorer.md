@@ -120,7 +120,7 @@ html[data-theme="light"]{
 ```
 
 ## For the Window
-```css
+```space-style
 :root{
   --header-height: 20px;                         /* Header height, drag-area */
   --frame-width: 5px;                            /* frame thickness */
@@ -768,6 +768,12 @@ end
 
 local script = [[
 (function() {
+    const style = document.createElement('style');
+    style.id = 'doc-ex-hiding-style';
+    style.innerHTML = `.doc-ex-hiding { visibility: hidden !important; }`;
+    if (!parent.document.getElementById(style.id)) {
+        parent.document.head.appendChild(style);
+    }
 
 // ---------------- Keyboard Navigation ----------------
 let focusedIndex = -1;
@@ -1240,11 +1246,54 @@ async function watchdog() {
 }
 
 // ---------------- Execution ----------------
+
+// ---- FOUC PREVENTION & STATE MANAGEMENT ----
+// 1. Inject CSS to hide panel during window transition
+(function() { // Wrapped in IIFE to avoid polluting global scope
+    const style = document.createElement('style');
+    style.id = 'doc-ex-hiding-style';
+    style.innerHTML = `.doc-ex-hiding { visibility: hidden !important; }`;
+    if (!parent.document.getElementById(style.id)) {
+        parent.document.head.appendChild(style);
+    }
+})();
+
+// 2. Add MutationObserver to track panel/window state
+if (window.explorerModeWatcher) {
+    window.explorerModeWatcher.disconnect();
+}
+setTimeout(() => {
+  const panelSelector = '.sb-panel.]] .. PANEL_ID .. [[';
+  const panelElement = parent.document.querySelector(panelSelector);
+  if (panelElement) {
+      const observer = new MutationObserver(async (mutationsList) => {
+          for(const mutation of mutationsList) {
+              if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                  const isDetached = panelElement.classList.contains('is-detached-window');
+                  const currentMode = isDetached ? "window" : "panel";
+                  const lastKnownMode = await syscall("clientStore.get", "explorer.currentDisplayMode") || "panel";
+                  if (currentMode !== lastKnownMode) {
+                      await syscall("clientStore.set", "explorer.currentDisplayMode", currentMode);
+                  }
+              }
+          }
+      });
+      observer.observe(panelElement, { attributes: true });
+      window.explorerModeWatcher = observer;
+      // Set initial state
+      const isDetached = panelElement.classList.contains('is-detached-window');
+      syscall("clientStore.set", "explorer.currentDisplayMode", isDetached ? "window" : "panel");
+  }
+}, 100);
+// ---- END ----
+
 setTimeout(() => {
     restoreTreeState(); 
     initTreePersistence();
     refreshActiveHighlight(); 
 }, 50);
+
+
 
 // Clear any existing watchdog to prevent memory leaks on panel redraw
 if (window.highlightWatchdog) clearInterval(window.highlightWatchdog);
@@ -1514,7 +1563,7 @@ command.define {
 
 command.define {
   name = "Navigate: Document Explorer Window",
-  hide = true,
+ -- hide = true,
   run = function()
       local selector = "#sb-main .sb-panel." .. PANEL_ID
       if not PANEL_VISIBLE then
