@@ -184,7 +184,6 @@ config.set("tableSort", { enabled = false })
 ```
 
 ## Filter and Sort Tables
-
 ```space-lua
 -- priority: -1
 
@@ -224,7 +223,7 @@ function enableTableSorter()
     (function() {
         const style = document.createElement('style');
         style.innerHTML = `
-           
+            
         `;
         document.head.appendChild(style);
 
@@ -472,11 +471,6 @@ function enableTableSorter()
 /* ---- Hoist dropdown menus next to the table (not into <body>) ---- */
 
 
-
-
-
-
-  
         function resetAll(table) {
             const tableKey = getTableKey(table);
             sessionStorage.removeItem(tableKey + '-filters');
@@ -490,8 +484,16 @@ function enableTableSorter()
                     cont.classList.remove('active');
                 }
             });
+            
+            const tbody = table.tBodies[0];
+            if (tbody) {
+                const rows = Array.from(tbody.rows);
+                rows.sort((a, b) => (parseInt(a.dataset.orgIndex) || 0) - (parseInt(b.dataset.orgIndex) || 0));
+                tbody.append(...rows);
+                rows.forEach(r => r.style.display = "");
+            }
+
             populateFilters(table);
-            Array.from(table.tBodies[0]?.rows || []).forEach(r => r.style.display = "");
         }
 
         function injectResetButton() {
@@ -515,6 +517,12 @@ function enableTableSorter()
             const headerRow = table.querySelector("thead tr") || table.rows[0];
             if (!headerRow) return;
             table.dataset.sortedInit = "true";
+
+            // Track original order for reset functionality
+            Array.from(table.tBodies[0]?.rows || []).forEach((row, i) => {
+                if (row.dataset.orgIndex === undefined) row.dataset.orgIndex = i;
+            });
+
             const tableKey = getTableKey(table);
             const savedSort = JSON.parse(sessionStorage.getItem(tableKey + '-sort') || "null");
 
@@ -526,7 +534,7 @@ function enableTableSorter()
                 cell.appendChild(wrap);
                 const cont = document.createElement("div");
                 cont.className = "filter-container";
-            /*    cont.setAttribute("data-icon", "🔽");*/
+            /* cont.setAttribute("data-icon", "🔽");*/
                 cell.appendChild(cont);
 
                 cell._sortHandler = (e) => {
@@ -599,9 +607,8 @@ else
     cleanupSorter()
     return
 end
-
-
 ```
+
 
 ## Discussion to this Library
 - [Silverbullet Community](https://community.silverbullet.md/t/todo-task-manager-global-interactive-table-sorter-filtering/3767?u=mr.red)
