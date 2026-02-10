@@ -302,11 +302,14 @@ function enableTableSorter()
                     menu = document.createElement('div');
                     menu.className = 'custom-dropdown-menu';
                     container.appendChild(menu);
-                    container.onclick = (e) => {
+                    const filterInteractionHandler = (e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         document.querySelectorAll('.custom-dropdown-menu').forEach(m => m !== menu && m.classList.remove('show'));
                         menu.classList.toggle('show');
                     };
+                    container.onmousedown = filterInteractionHandler;
+                    container.ontouchstart = filterInteractionHandler;
                 }
 
                 const uniqueValues = new Set();
@@ -523,12 +526,15 @@ function enableTableSorter()
                 btn.className = 'global-reset-btn';
                 btn.title = 'Reset Table Filters/Sorting';
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-restart-icon lucide-list-restart"><path d="M21 5H3"/><path d="M7 12H3"/><path d="M7 19H3"/><path d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"/><path d="M11 10v4h4"/></svg>`;
-                btn.onclick = (e) => {
+                const resetHandler = (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     const block = bar.closest('.sb-lua-directive-block');
                     const table = block?.nextElementSibling?.querySelector('table') || block?.querySelector('table');
                     if (table) resetAll(table);
                 };
+                btn.onmousedown = resetHandler;
+                btn.ontouchstart = resetHandler;
                 bar.appendChild(btn);
             });
 
@@ -553,10 +559,13 @@ function enableTableSorter()
                 btn.className = 'global-reset-btn';
                 btn.title = 'Reset Table Filters/Sorting';
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-restart-icon lucide-list-restart"><path d="M21 5H3"/><path d="M7 12H3"/><path d="M7 19H3"/><path d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"/><path d="M11 10v4h4"/></svg>`;
-                btn.onclick = (e) => {
+                const resetHandler = (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     resetAll(table);
                 };
+                btn.onmousedown = resetHandler;
+                btn.ontouchstart = resetHandler;
                 
                 bar.appendChild(btn);
                 
@@ -592,6 +601,7 @@ function enableTableSorter()
                 cell.appendChild(cont);
 
                 cell._sortHandler = (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     if (e.target.closest('.filter-container')) return;
                     Array.from(headerRow.cells).forEach(c => { if(c!==cell) c.classList.remove("sort-asc", "sort-desc"); });
@@ -600,7 +610,8 @@ function enableTableSorter()
                     cell.classList.add(isAsc ? "sort-desc" : "sort-asc");
                     sortTable(table, idx, !isAsc);
                 };
-                cell.addEventListener('click', cell._sortHandler);
+                cell.addEventListener('mousedown', cell._sortHandler);
+                cell.addEventListener('touchstart', cell._sortHandler);
 
                 if (savedSort && savedSort.index === idx) {
                     cell.classList.add(savedSort.asc ? "sort-asc" : "sort-desc");
@@ -632,6 +643,8 @@ function enableTableSorter()
             obs.disconnect();
             document.querySelectorAll(".sortable-header").forEach(c => {
                 c.removeEventListener('click', c._sortHandler);
+                c.removeEventListener('mousedown', c._sortHandler);
+                c.removeEventListener('touchstart', c._sortHandler);
                 c.classList.remove("sortable-header", "sort-asc", "sort-desc");
                 c.querySelector(".sort-indicator-wrapper")?.remove();
                 c.querySelector(".filter-container")?.remove();
