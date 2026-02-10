@@ -32,7 +32,8 @@ config.set("tableSort", { enabled = false })
 
 /*---------- System Styles Overrides ----------*/
 
-#sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar { top: -40px; padding:0; border-radius: 2em; opacity:0.2; transition: all 0.5s ease;} 
+#sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar
+{ top: -40px; padding:0; border-radius: 2em; opacity:0.2; transition: all 0.5s ease;} 
 #sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar:hover { opacity:1;}
 
 /*---------- Sorting and Filter Styles ----------*/
@@ -180,7 +181,22 @@ config.set("tableSort", { enabled = false })
     border: 1px solid rgba(128, 128, 128, 0.3); border-radius: 4px;
 }
 
-            
+
+
+.button-bar .global-reset-btn { margin-left: auto; background: transparent; border: 1px solid transparent; cursor: pointer; opacity: 0.6; padding: 4px; border-radius: 4px; transition: all 0.2s; color: inherit; }
+    
+.button-bar .global-reset-btn:hover { opacity: 1; background-color: var(--sb-secondary-background, rgba(0,0,0,0.05)); border-color: var(--sb-border-color, #ddd); }
+        
+#sb-main .cm-editor .sb-table-widget {
+    overflow: visible !important;
+    position: relative !important;
+}
+
+.button-bar {
+    position: absolute;
+    top: -30px;
+    right: 0px;
+}
 ```
 
 ## Filter and Sort Tables
@@ -497,18 +513,56 @@ function enableTableSorter()
         }
 
         function injectResetButton() {
+            // Case 1: Existing button bars (Widgets)
             document.querySelectorAll('.button-bar').forEach(bar => {
                 if (bar.querySelector('.global-reset-btn')) return;
+                // Ignore button bars that we injected ourselves (handled in Case 2 logic logic via absence check, preventing loops)
+                if (bar.dataset.generated) return;
+
                 const btn = document.createElement('button');
                 btn.className = 'global-reset-btn';
                 btn.title = 'Reset Table Filters/Sorting';
                 btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-restart-icon lucide-list-restart"><path d="M21 5H3"/><path d="M7 12H3"/><path d="M7 19H3"/><path d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"/><path d="M11 10v4h4"/></svg>`;
-                btn.onclick = () => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
                     const block = bar.closest('.sb-lua-directive-block');
                     const table = block?.nextElementSibling?.querySelector('table') || block?.querySelector('table');
                     if (table) resetAll(table);
                 };
                 bar.appendChild(btn);
+            });
+
+            // Case 2: Orphan tables (Markdown tables not in a widget/query block)
+            document.querySelectorAll('.sb-table-widget').forEach(widget => {
+                // Skip if it's inside a Lua block (already handled by Case 1 via the outer button bar)
+                if (widget.closest('.sb-lua-directive-block')) return;
+                
+                // Skip if we already injected one or one exists
+                if (widget.querySelector('.button-bar')) return;
+
+                const table = widget.querySelector('table');
+                if (!table) return;
+
+                const bar = document.createElement('div');
+                bar.className = 'button-bar';
+                bar.dataset.generated = "true"; // Mark as auto-generated for cleanup
+                // I tweaked this CSS slightly to ensure it doesn't collapse or overlap the header
+                bar.style.cssText = "display: flex; justify-content: flex-end; margin-bottom: 4px; padding: 2px 4px; min-height: 24px;";
+
+                const btn = document.createElement('button');
+                btn.className = 'global-reset-btn';
+                btn.title = 'Reset Table Filters/Sorting';
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-restart-icon lucide-list-restart"><path d="M21 5H3"/><path d="M7 12H3"/><path d="M7 19H3"/><path d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"/><path d="M11 10v4h4"/></svg>`;
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    resetAll(table);
+                };
+                
+                bar.appendChild(btn);
+                
+                // Insert before the table (inside the .sb-table-widget wrapper)
+                // This is the specific part you asked to fix/maintain for Markdown tables.
+                widget.insertBefore(bar, table);
             });
         }
 
@@ -538,6 +592,7 @@ function enableTableSorter()
                 cell.appendChild(cont);
 
                 cell._sortHandler = (e) => {
+                    e.stopPropagation();
                     if (e.target.closest('.filter-container')) return;
                     Array.from(headerRow.cells).forEach(c => { if(c!==cell) c.classList.remove("sort-asc", "sort-desc"); });
                     const isAsc = cell.classList.contains("sort-asc");
@@ -582,6 +637,9 @@ function enableTableSorter()
                 c.querySelector(".filter-container")?.remove();
             });
             document.querySelectorAll(".global-reset-btn").forEach(b => b.remove());
+            // Cleanup generated button bars for markdown tables
+            document.querySelectorAll(".button-bar[data-generated='true']").forEach(b => b.remove());
+
             document.querySelectorAll("tbody tr").forEach(r => r.style.display = "");
             document.querySelectorAll("table").forEach(t => {
                 delete t.dataset.sortedInit;
@@ -612,4 +670,3 @@ end
 
 ## Discussion to this Library
 - [Silverbullet Community](https://community.silverbullet.md/t/todo-task-manager-global-interactive-table-sorter-filtering/3767?u=mr.red)
-- 
