@@ -549,7 +549,11 @@ local function openTaskEditor(taskData, extraCols)
         fieldsJSON = "[" .. table.concat(parts, ",") .. "]"
     end
 
-    local taskNameSafe = string.gsub(tostring(taskData.name or ""), '"', '\\"')
+    -- FIX: Use raw text and strip attributes to preserve tags like #tag
+    local rawText = taskData.text or taskData.name or ""
+    local cleanDescription = rawText:gsub("%s*%[[^%]]+%]", "")
+    cleanDescription = cleanDescription:match("^%s*(.-)%s*$") or ""
+    local taskNameSafe = string.gsub(tostring(cleanDescription), '"', '\\"')
     taskNameSafe = string.gsub(taskNameSafe, '\n', ' ')
     local isChecked = (taskData.state == "x" or taskData.state == "X") and "checked" or ""
 
@@ -571,6 +575,26 @@ local function openTaskEditor(taskData, extraCols)
       </div>
 
       <div id="te-dynamic-fields"></div>
+
+      <div class="te-attr-row">
+        <div class="te-attr-col">
+          <label class="te-label" style="font-size: 0.8em;">Attr Name</label>
+          <input type="text" id="te-new-key" class="te-input" placeholder="e.g. due, priority">
+        </div>
+        <div class="te-attr-col" style="flex: 0.6;">
+          <label class="te-label" style="font-size: 0.8em;">Type</label>
+          <select id="te-new-type" class="te-attr-select">
+            <option value="string">String</option>
+            <option value="date">Date</option>
+            <option value="datetime">DateTime</option>
+          </select>
+        </div>
+        <div class="te-attr-col">
+          <label class="te-label" style="font-size: 0.8em;">Value</label>
+          <input type="text" id="te-new-val" class="te-input">
+        </div>
+        <button id="te-add-attr-btn" class="te-btn">Add</button>
+      </div>
 
       <div class="te-actions">
         <button class="te-btn te-cancel" id="te-cancel-btn">Cancel</button>
@@ -597,33 +621,55 @@ local function openTaskEditor(taskData, extraCols)
              return val;
         };
 
-        fields.forEach(f => {
+        const createFieldInput = (key, val, type, label) => {
             const group = document.createElement('div');
             group.className = 'te-group';
-            const label = document.createElement('label');
-            label.className = 'te-label';
-            label.innerText = f.label;
+            const lbl = document.createElement('label');
+            lbl.className = 'te-label';
+            lbl.innerText = label || key;
             const input = document.createElement('input');
             input.className = 'te-input';
-            input.dataset.key = f.key;
+            input.dataset.key = key;
             
-            const isTime = f.type === 'dateTime' || f.type.includes('hh') || f.type.includes('mm');
-            const isDate = !isTime && (f.type === 'date' || f.type.includes('YY') || f.type.includes('MM'));
+            const isTime = type === 'datetime' || type === 'datetime-local' || type === 'dateTime' || (type && (type.includes('hh') || type.includes('mm')));
+            const isDate = !isTime && (type === 'date' || (type && (type.includes('YY') || type.includes('MM'))));
 
             if (isTime) {
                  input.type = 'datetime-local';
-                 input.value = formatForInput(f.value, 'datetime-local');
+                 input.value = formatForInput(val, 'datetime-local');
             } else if (isDate) {
                  input.type = 'date';
-                 input.value = formatForInput(f.value, 'date');
+                 input.value = formatForInput(val, 'date');
             } else {
                  input.type = 'text';
-                 input.value = f.value;
+                 input.value = val;
             }
-            group.appendChild(label);
+            group.appendChild(lbl);
             group.appendChild(input);
             container.appendChild(group);
+        };
+
+        fields.forEach(f => {
+            createFieldInput(f.key, f.value, f.type, f.label);
         });
+
+        const newKeyInp = document.getElementById('te-new-key');
+        const newTypeSel = document.getElementById('te-new-type');
+        const newValInp = document.getElementById('te-new-val');
+
+        newTypeSel.onchange = () => {
+            if(newTypeSel.value === 'date') newValInp.type = 'date';
+            else if(newTypeSel.value === 'datetime') newValInp.type = 'datetime-local';
+            else newValInp.type = 'text';
+        };
+
+        document.getElementById('te-add-attr-btn').onclick = () => {
+            const key = newKeyInp.value.trim();
+            if(!key) return;
+            createFieldInput(key, newValInp.value, newTypeSel.value);
+            newKeyInp.value = "";
+            newValInp.value = "";
+        };
 
         const cleanup = () => { 
             window.removeEventListener("keydown", handleKey, true);
@@ -634,7 +680,7 @@ local function openTaskEditor(taskData, extraCols)
             const newText = document.getElementById('te-main-input').value;
             const newState = document.getElementById('te-status-checkbox').checked ? "x" : " ";
             const attributes = [];
-            const inputs = container.querySelectorAll('input');
+            const inputs = container.querySelectorAll('.te-input[data-key]');
             inputs.forEach(inp => {
                 let val = inp.value;
                 if (inp.type === 'datetime-local' && val.includes("T")) val = val.replace("T", " ");
@@ -646,9 +692,7 @@ local function openTaskEditor(taskData, extraCols)
             cleanup();
         };
 
-        // Aggressive Focus Trap & Key Stopper
         const handleKey = (e) => {
-            // Stop CM from seeing anything
             e.stopPropagation();
 
             const focusables = card.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
@@ -656,7 +700,6 @@ local function openTaskEditor(taskData, extraCols)
             const last = focusables[focusables.length - 1];
 
             if (e.key === "Tab") {
-                // Prevent focus escaping the modal
                 if (e.shiftKey) {
                     if (document.activeElement === first) {
                         last.focus();
