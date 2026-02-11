@@ -191,6 +191,7 @@ ${KanbanBoard(
 }
 .kanban-field-key {
   font-weight: bold;
+  white-space: nowrap;
 }
 
 
