@@ -22,6 +22,7 @@ This widget creates a customizable Kanban board to visualize and manage tasks fr
 > **warning** Warning
 > Make sure to Refresh the widget if you manually modified the markdown task
 > If your task name ends in `#tag` you need to add a space after it before changing its status by Drag&Drop
+> To work properly the attribute values WILL be wrapped in `""` for safer handling strings, and consistency, even if it’s not always necessary. This is not a bug just a heads-up.
 
 ## How it Works
 
@@ -67,13 +68,13 @@ ${KanbanBoard(
 
 ## DEMO Tasks
 - [ ] Multi line normal priority task #testTag
-      [due: 2026-02-14][priority: ][scheduled: 2026-02-15]
-      [status: todo][contact: Michael]
-* [ ] Multi line task supported - but experimental
-      [priority: ] [status: review]
-* [ ] Another normal task [status: doing]#helloworld [due: 2026-02-13][scheduled: 2026-04-01] #testTag
-- [x] Completed task [priority: 1] [status: done]
-- [ ] High priority task with tags [status: todo][priority: 5]
+      [due: "2026-02-15"][priority: "1"][scheduled: "2026-02-27"]
+      [status: "todo"][contact: "Michael"]
+* [x] Multi line task supported - but experimental
+      [priority: ] [status: "done"]
+* [ ] Another normal task [status: "doing"]#helloworld [due: "2026-02-13"][scheduled: "2026-04-01"] #testTag
+- [ ] Completed task [priority: "1"] [status: "review"]
+- [ ] High priority task with tags [status: "todo"][priority: "5"]
 
 ## DEMO WIDGET
 
@@ -697,28 +698,25 @@ function updateTaskRemote(pageName, pos, range, originalName, finalState, newTex
     -- 3. Update Attributes (In-Place or Append)
     for _, attr in ipairs(attributes) do
         local key = attr.key
-        local val = attr.value
+        local val = tostring(attr.value or "")
+        
+        -- MODIFICATION: Strip existing quotes if they are already there to avoid double-wrapping
+        if val:sub(1,1) == '"' and val:sub(-1,-1) == '"' then
+            val = val:sub(2, -2)
+        end
+        local quotedVal = '"' .. val .. '"'
+
         -- Basic validation
         if key and key ~= "" then
              -- Regex to find [key: value] regardless of where it is (line 1, 2, or 99)
              local attrPattern = "(%[" .. escapeLuaPattern(key) .. "%s*:%s*.-%])"
              
              if taskBlock:find(attrPattern) then
-                 -- Attribute exists, replace it in place
-                 if val and val ~= "" then
-                    taskBlock = taskBlock:gsub(attrPattern, "[" .. key .. ": " .. val .. "]")
-                 else
-                    -- If value is empty, arguably we should remove it, but user asked to fix parsing not logic.
-                    -- We'll just update it to empty or keep logic consistent with "update".
-                    taskBlock = taskBlock:gsub(attrPattern, "[" .. key .. ": " .. val .. "]")
-                 end
+                 -- Attribute exists, replace it in place with quoted value
+                 taskBlock = taskBlock:gsub(attrPattern, "[" .. key .. ": " .. quotedVal .. "]")
              else
-                 -- Attribute does not exist, append to end of block
-                 if val and val ~= "" then
-                    -- Append before the final newline if it exists, to keep it clean, or just append.
-                    -- Simple append:
-                    taskBlock = taskBlock .. " [" .. key .. ": " .. val .. "]"
-                 end
+                 -- Attribute does not exist, append to end of block with quoted value
+                 taskBlock = taskBlock .. " [" .. key .. ": " .. quotedVal .. "]"
              end
         end
     end
@@ -728,14 +726,9 @@ function updateTaskRemote(pageName, pos, range, originalName, finalState, newTex
     local completedPattern = "(%[completed%s*:%s*.-%])"
     
     if finalState == "x" or finalState == "X" then
-        if taskBlock:find(completedPattern) then
-             -- Already has completed tag, maybe update it? Or leave it?
-             -- Usually we only add it if missing, or update if we just checked it.
-             -- For simplicity, we assume if it's checked, ensure the tag exists.
-             -- If we want to strictly follow previous logic: "append... timestamp"
-             -- Let's just ensure it exists.
-        else
-             taskBlock = taskBlock .. " [completed: " .. timestamp .. "]"
+        if not taskBlock:find(completedPattern) then
+             -- MODIFICATION: Wrap completion timestamp in quotes
+             taskBlock = taskBlock .. ' [completed: "' .. timestamp .. '"]'
         end
     else
         -- Task is NOT done. Remove completed tag if it exists anywhere in the block.
@@ -762,18 +755,22 @@ function updateTaskStatus(pageName, pos, range, statusKey, newStatus, toggleStat
     if not content then return end
 
     -- AST Calculation: Get specific task block
-    -- pos is 0-indexed in JS (likely), range is {start, end}
-    -- Lua is 1-indexed.
     local blockStart = pos + 1
     local blockLen = range[2] - range[1]
     
     -- Safety check: Ensure we aren't going out of bounds
     if blockStart + blockLen - 1 > #content then
-        -- Fallback if file changed drastically (rare race condition)
         return 
     end
 
     local taskBlock = content:sub(blockStart, blockStart + blockLen - 1)
+    
+    -- MODIFICATION: Ensure new status is wrapped in quotes
+    local cleanStatus = tostring(newStatus or "")
+    if cleanStatus:sub(1,1) == '"' and cleanStatus:sub(-1,-1) == '"' then
+        cleanStatus = cleanStatus:sub(2, -2)
+    end
+    local quotedStatus = '"' .. cleanStatus .. '"'
     
     -- 1. Update Status Attribute
     -- Find [status: value] anywhere in the multi-line block
@@ -781,10 +778,10 @@ function updateTaskStatus(pageName, pos, range, statusKey, newStatus, toggleStat
     
     if taskBlock:find(attrPattern) then
         -- Replace existing tag in-place (preserves position)
-        taskBlock = taskBlock:gsub(attrPattern, "[".. statusKey ..": " .. newStatus .. "]")
+        taskBlock = taskBlock:gsub(attrPattern, "[".. statusKey ..": " .. quotedStatus .. "]")
     else
         -- Append to end if not found
-        taskBlock = taskBlock .. "[".. statusKey ..": " .. newStatus .. "]"
+        taskBlock = taskBlock .. "[".. statusKey ..": " .. quotedStatus .. "]"
     end
 
     -- 2. Update Checkbox State if requested
@@ -880,7 +877,9 @@ function KanbanBoard(taskQuery, options)
             table.sort(tasks, function(a, b)
                 local function parseRank(val)
                     if type(val) == "table" then val = val[1] end
-                    local n = tonumber(tostring(val or ""):match("%d+"))
+                    -- MODIFICATION: Avoided string chaining for parse logic
+                    local sRank = tostring(val or "")
+                    local n = tonumber(sRank:match("%d+"))
                     return n or -1 -- Use -1 for nil to sort them at the bottom
                 end
                 
@@ -925,12 +924,14 @@ function KanbanBoard(taskQuery, options)
                           valStr = "[" .. table.concat(v, ",") .. "]"
                       else
                           local s = tostring(v)
+                          -- MODIFICATION: Avoiding chaining
                           s = s:gsub('\\', '\\\\')
                           s = s:gsub('"', '\\"')
                           valStr = '"' .. s .. '"'
                       end
                 else
                     local s = tostring(v)
+                    -- MODIFICATION: Avoiding chaining
                     s = s:gsub('\\', '\\\\')
                     s = s:gsub('"', '\\"')
                     s = s:gsub('\n', '\\n')
@@ -970,7 +971,6 @@ function KanbanBoard(taskQuery, options)
                 html = html .. '</div>'
             end
             
-         --   html = html .. '<div class="kanban-card-page">[[' .. taskPage .. ']]</div>'
             html = html .. '</div>' -- close kanban-card
             html = html .. '</div>' -- close kanban-card-wrapper
         end
