@@ -15,6 +15,7 @@ This widget creates a customizable Kanban board to visualize and manage tasks fr
 ## Known issues and bugs🐞:
 - No support when you have a [[WikiLink]] in your tasks
 - Tags(`#tag`) can be added to the name, but they cannot be edited because they are interpreted as `[tags: {tag,test}]`
+- if you complete the task either in the modal window or in the markdown `[x]` it wont update the `status` attribute
   and many more undocumented ones: 🪲🪳🕷️🦟
 
 
