@@ -69,12 +69,13 @@ ${KanbanBoard(
 ## DEMO Tasks
 - [ ] Multi line normal priority task #testTag
       [due: "2026-02-15"][priority: "1"][scheduled: "2026-02-27"]
-      [status: "todo"][contact: "Michael"]
+      [contact: "Michael"] [status: "todo"]
 * [x] Multi line task supported - but experimental
       [priority: ] [status: "done"]
-* [ ] Another normal task [status: "doing"]#helloworld [due: "2026-02-13"][scheduled: "2026-04-01"] #testTag
+* [ ] #helloworld Another normal task to test [status: "doing"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag
 - [ ] Completed task [priority: "1"] [status: "review"]
 - [ ] High priority task with tags [status: "todo"][priority: "5"]
+- [ ] New task with at tag at the end #testTag [status: "todo"]
 
 ## DEMO WIDGET
 
@@ -137,13 +138,15 @@ ${KanbanBoard(
 .kanban-card {
   background: var(--modal-background-color);
   border: 1px solid var(--modal-border-color);
-  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0 0 0 / 0.3);
+  border-radius: 10px;
   padding: 10px;
   cursor: grab;
   position: relative;
   width: 100%; /* added: responsive width */
   box-sizing: border-box; /* added */
-  min-width: 0; /* added: allow shrinking */
+  min-width: 100; /* added: allow shrinking */
+
 }
 
 .kanban-card-name {
@@ -781,7 +784,7 @@ function updateTaskStatus(pageName, pos, range, statusKey, newStatus, toggleStat
         taskBlock = taskBlock:gsub(attrPattern, "[".. statusKey ..": " .. quotedStatus .. "]")
     else
         -- Append to end if not found
-        taskBlock = taskBlock .. "[".. statusKey ..": " .. quotedStatus .. "]"
+        taskBlock = taskBlock .. " [".. statusKey ..": " .. quotedStatus .. "]"
     end
 
     -- 2. Update Checkbox State if requested
