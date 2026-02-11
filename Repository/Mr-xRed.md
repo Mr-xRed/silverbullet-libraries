@@ -15,6 +15,11 @@ uri: github:Mr-xRed/silverbullet-libraries/TaskManager.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TaskManager.md
 description: "TaskManager"
 ---
+name: "✅ Kanban Board (⚠️ WORK IN PROGRESS)"
+uri: github:Mr-xRed/silverbullet-libraries/KanbanBoard.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/KanbanBoard.md
+description: "This widget creates a customizable Kanban board to visualize and manage tasks from your notes."
+---
 name: "🛠️ TableFilterAndSorting"
 uri: github:Mr-xRed/silverbullet-libraries/TableFilterAndSorting.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TableFilterAndSorting.md
