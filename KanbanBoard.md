@@ -20,10 +20,9 @@ This widget creates a customizable Kanban board to visualize and manage tasks fr
 - and some more undocumented ones: 🪲🪳🕷️🦟
 
 
-> **warning** Warning
+> **warning** Important
 >   - IMPORTANT!!! - After `System: Reload` and the KanbanBoard Widget on your Page make sure to also Reload the page (`Client: Reload UI` or `Ctrl-R` or `F5`)
 >   -  Make sure to Refresh the widget if you manually modified the markdown task
->   -  If your task name ends in `#tag` you need to add a space after it before changing its status by Drag&Drop
 >   -  To work properly the attribute values WILL be wrapped in `""` for safer handling strings, and consistency, even if it’s not always necessary. This is not a bug just a heads-up.
 
 ## How it Works
