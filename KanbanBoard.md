@@ -3,7 +3,7 @@ name: "Library/Mr-xRed/KanbanBoard"
 tags: meta/library
 pageDecoration.prefix: "✅ "
 ---
-
+  
 > **warning** Caution - BETA PREVIEW!
 >  THIS IS STILL WORK IN PROGRESS! DON’T USE IT ON YOUR PRODUCTION TASKS, IT COULD MESS THEM UP!
 
@@ -11,12 +11,12 @@ pageDecoration.prefix: "✅ "
 
 This widget creates a customizable Kanban board to visualize and manage tasks from your notes.
 
-## Known issues and bugs🐞:
-- No support when you have a [[WikiLink]] in your tasks
-- Tags(`#tag`) can be added to the name, but they cannot be edited because they are interpreted as `[tags: {tag,test}]`
-- if you complete the task either in the modal window or in the markdown `[x]` it wont update the `status` attribute
-- if you manually edit the status to “done” it won’t complete the task, it only moves the task to the done column
-- and many more undocumented ones: 🪲🪳🕷️🦟
+## Known issues and bugs:
+- 🐞 if you complete the task either in the modal window or in the markdown `[x]` it wont update the `status` attribute
+- 🐞 if you manually edit the status to “done” it won’t complete the task, it only moves the task to the done column
+- **✅ FIXED** - ~~No support when you have a [[WikiLink]] in your tasks~~
+- **✅ FIXED** - ~~Tags(`#tag`) can be added to the name, but they cannot be edited in the name~~
+- and some more undocumented ones: 🪲🪳🕷️🦟
 
 
 > **warning** Warning
@@ -68,15 +68,16 @@ ${KanbanBoard(
 
 
 ## DEMO Tasks
-- [ ] Multi line normal priority task #testTag
-      [due: "2026-02-15"][priority: "2"][scheduled: "2026-02-27"]
-      [contact: "Michael"] [status: "todo"]
-* [x] Multi line task supported - but experimental
-      [priority: ] [status: "done"]
-* [ ] #helloworld Another normal task to test starting with a tag [status: "todo"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "1"]
-- [ ] Completed task [priority: "1"] [status: "review"]
-- [ ] High priority task with tags [status: "todo"][priority: "5"]
-- [ ] New task with at tag at the end #testTag [status: "doing"]
+- [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hastag
+      [due: "2026-02-20"][priority: "3"][scheduled: "2026-02-27"]
+      [contact: "George"] [status: "todo"]
+* [ ] Task with a #hashtag and special @ # - * , ! ; $ \ | / characters
+      [status: "doing"]  [priority: "1"] [due: "2026-02-25"]
+* [ ] Another normal task  with a #tag in the name [status: "review"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "1"]
+- [x] Completed task [priority: ""] [status: "done"] [completed: "2026-02-13 00:01"]
+- [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
+      [status: "todo"][priority: "5"] 
+- [ ] New task with at tag at the #end [status: "doing"]
 
 ## DEMO WIDGET
 
@@ -432,6 +433,7 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
 ```
 
 ## Lua Implementation
+
 ```space-lua
 -- ------------- Helper: Escape Magic Characters for Lua Patterns -------------
 local function escapeLuaPattern(s)
@@ -445,13 +447,62 @@ local function openTaskEditor(taskData)
     local existing = js.window.document.getElementById("sb-taskeditor")
     if existing then existing.remove() end
 
+    -- START of new logic
+    -- Get the full, raw task name, including hashtags and wikilinks, from the source document.
+    local fullName = taskData.name -- Fallback to the clean name from the parser
+
+    -- List of meta-keys that are not custom attributes, used to identify true attributes.
+    local ignoredKeys = {
+      ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
+      toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
+      ilinks =true
+    }
+    
+    local content = space.readPage(taskData.page)
+    if content and taskData.pos and taskData.range then
+        local blockStart = taskData.pos + 1
+        local blockLen = taskData.range[2] - taskData.range[1]
+
+        if blockStart > 0 and blockLen > 0 and blockStart + blockLen - 1 <= #content then
+            local taskBlock = content:sub(blockStart, blockStart + blockLen - 1)
+            
+            -- Find the starting position of the first attribute (e.g., [due: ...]) in the raw text
+            -- by checking for all known attribute keys from the parsed taskData.
+            local first_attr_pos = -1
+            for key, _ in pairs(taskData) do
+                if not ignoredKeys[key] then -- This key is a custom attribute
+                    local pattern = "%[" .. escapeLuaPattern(key) .. "%s*:"
+                    local pos = taskBlock:find(pattern)
+                    if pos and (first_attr_pos == -1 or pos < first_attr_pos) then
+                        first_attr_pos = pos
+                    end
+                end
+            end
+
+            -- The name is everything before the first attribute.
+            local name_part
+            if first_attr_pos > -1 then
+                name_part = taskBlock:sub(1, first_attr_pos - 1)
+            else
+                name_part = taskBlock -- No attributes found
+            end
+            
+            -- Extract the name from this part (the text after the checkbox)
+            local extractedName = name_part:match("^%s*[%*%-]%s*%[ ?[xX]? ?%]%s*(.*)")
+            if extractedName then
+               fullName = extractedName:match("^%s*(.-)%s*$") -- trim whitespace
+            end
+        end
+    end
+    -- END of new logic
+
     local function uniqueHandler(e)
         if e.detail.session == sessionID then
             updateTaskRemote(
                 taskData.page, 
                 taskData.pos,
                 taskData.range, -- PASSING RANGE FROM AST
-                taskData.name,  -- PASSING ORIGINAL NAME
+                fullName,  -- PASSING FULL, RAW NAME
                 e.detail.state, 
                 e.detail.text, 
                 e.detail.attributes
@@ -461,11 +512,8 @@ local function openTaskEditor(taskData)
     end
     js.window.addEventListener("sb-save-task", uniqueHandler)
     
-    -- MODIFICATION: Added 'tags' to ignoredKeys to prevent duplicate attribute generation
-    local ignoredKeys = {
-      ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
-      toPos = true, state = true, done = true, itags = true, header = true, completed = true
-    }
+    -- This list is used to determine which fields to show in the editor UI.
+    -- local ignoredKeys is defined above
     local existingFields = {}
     for key, value in pairs(taskData) do
         if not ignoredKeys[key] then
@@ -493,7 +541,7 @@ local function openTaskEditor(taskData)
     end
     local fieldsJSON = "[" .. table.concat(parts, ",") .. "]"
 
-    local taskNameSafe = string.gsub(tostring(taskData.name or ""), '"', '\\"')
+    local taskNameSafe = string.gsub(tostring(fullName or ""), '"', '\\"')
     taskNameSafe = string.gsub(taskNameSafe, '\n', ' ')
     local isChecked = (taskData.state == "x" or taskData.state == "X") and "checked" or ""
 
@@ -694,9 +742,12 @@ function updateTaskRemote(pageName, pos, range, originalName, finalState, newTex
     -- We replace the first occurrence of the original name with the new text.
     -- This attempts to preserve the rest of the line or subsequent lines.
     if originalName and newText and originalName ~= newText then
-         local safeOldName = escapeLuaPattern(originalName)
-         -- We only replace it if we find it, avoiding method chaining
-         taskBlock = taskBlock:gsub(safeOldName, newText, 1)
+         -- Use string.find with plain=true for a literal search, which is safer than using gsub with a pattern.
+         -- This avoids issues with special characters in the task name.
+         local start, finish = string.find(taskBlock, originalName, 1, true)
+         if start then
+             taskBlock = taskBlock:sub(1, start - 1) .. newText .. taskBlock:sub(finish + 1)
+         end
     end
 
     -- 3. Update Attributes (In-Place or Append)
@@ -827,6 +878,12 @@ end)
 
 -- ------------- Main Kanban Board Function -------------
 function KanbanBoard(taskQuery, options)
+    -- List of meta-keys that are not custom attributes, used to identify true attributes.
+    local ignoredKeys = {
+      ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
+      toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
+      ilinks =true
+    }
     local statusKey = "status"
     local rankKey = nil
     local columnOrder = {}
@@ -912,10 +969,48 @@ function KanbanBoard(taskQuery, options)
             end
             -- [[ MODIFICATION END ]] --
             
-            local taskName = (task.name or "")
+            -- START: New logic to get full task name for card display
+            -- This parses the name from the source document to include hashtags, etc. on the card.
+            local fullName = task.name -- Fallback
+
+            local content = space.readPage(task.page)
+            if content and task.pos and task.range then
+                local blockStart = task.pos + 1
+                local blockLen = task.range[2] - task.range[1]
+
+                if blockStart > 0 and blockLen > 0 and blockStart + blockLen - 1 <= #content then
+                    local taskBlock = content:sub(blockStart, blockStart + blockLen - 1)
+                    
+                    local first_attr_pos = -1
+                    for key, _ in pairs(task) do
+                        if not ignoredKeys[key] then -- This key is a custom attribute
+                            local pattern = "%[" .. escapeLuaPattern(key) .. "%s*:"
+                            local pos = taskBlock:find(pattern)
+                            if pos and (first_attr_pos == -1 or pos < first_attr_pos) then
+                                first_attr_pos = pos
+                            end
+                        end
+                    end
+
+                    local name_part
+                    if first_attr_pos > -1 then
+                        name_part = taskBlock:sub(1, first_attr_pos - 1)
+                    else
+                        name_part = taskBlock -- No attributes found
+                    end
+                    
+                    local extractedName = name_part:match("^%s*[%*%-]%s*%[ ?[xX]? ?%]%s*(.*)")
+                    if extractedName then
+                       fullName = extractedName:match("^%s*(.-)%s*$") -- trim whitespace
+                    end
+                end
+            end
+            
+            local taskName = (fullName or "")
                   taskName = taskName:gsub('"', '&quot;')
                   taskName = taskName:gsub('<', '&lt;')
                   taskName = taskName:gsub('>', '&gt;')
+            -- END: New logic
             local taskPage = task.page
             local taskPos = task.pos
             local taskRef = task.ref
