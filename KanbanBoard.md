@@ -14,6 +14,7 @@ This widget creates a customizable Kanban board to visualize and manage tasks fr
 ## Known issues and bugs:
 - 🐞 if you complete the task either in the modal window or in the markdown `[x]` it wont update the `status` attribute
 - 🐞 if you manually edit the status to “done” it won’t complete the task, it only moves the task to the done column
+- 🚫 emoji attributes `📅2026-04-02` for due dates or similars are not supported, and not planned for future relases either
 - **✅ FIXED** - ~~No support when you have a [[WikiLink]] in your tasks~~
 - **✅ FIXED** - ~~Tags(`#tag`) can be added to the name, but they cannot be edited in the name~~
 - and some more undocumented ones: 🪲🪳🕷️🦟
@@ -69,8 +70,8 @@ ${KanbanBoard(
 
 ## DEMO Tasks
 - [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hastag
-      [due: "2026-02-20"][priority: "3"][scheduled: "2026-02-27"]
-      [contact: "George"] [status: "todo"]
+      [priority: "3"][scheduled: "2026-02-27"]
+      [contact: "George"] [status: "todo"] [due: "2026-03-02"]
 * [ ] Task with a #hashtag and special @ # - * , ! ; $ \ | / characters
       [status: "doing"]  [priority: "1"] [due: "2026-02-25"]
 * [ ] Another normal task  with a #tag in the name [status: "review"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "1"]
