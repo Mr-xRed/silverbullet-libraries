@@ -55,12 +55,12 @@ ${KanbanBoard(
   {
     {"Column", "status"},
     {"Columns", {
-      {"todo", "📝 To Do"},
-      {"doing", "⏳ In Progress"},
-      {"review", "👀 Needs Review"},
-      {"done", "✅ Done"}
+      {"todo", "📝 To Do","blue"},
+      {"doing", "⏳ In Progress","red"},
+      {"review", "👀 Needs Review","yellow"},
+      {"done", "✅ Done","green"}
     }},
-    {"Rank", "priority"},
+    {"SortDefault", "priority"},
     {"Fields", {"priority", "completed"}}
   }
 )}
@@ -69,15 +69,15 @@ ${KanbanBoard(
 
 ## DEMO Tasks
 - [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hastag
-      [priority: "3"][scheduled: "2026-02-27"]
-      [contact: "George"] [status: "todo"] [due: "2026-03-02"]
+      [priority: "1"][scheduled: "2026-02-27"]
+      [contact: "George"] [status: "doing"] [due: "2026-03-02"]
 * [ ] Task with a #hashtag and special @ # - * , ! ; $ \ | / characters
-      [status: "doing"]  [priority: "1"] [due: "2026-02-25"]
-* [ ] Another normal task  with a #tag in the name [status: "review"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "1"]
-- [x] Completed task [priority: ""] [status: "done"] [completed: "2026-02-13 00:01"]
+      [status: "todo"]  [priority: "1"] [due: "2026-02-25"]
+* [ ] Another normal task  with a #tag in the name [status: "review"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"]
+- [x] Completed task [priority: "1"] [status: "done"] [completed: "2026-02-13 00:01"]
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
       [status: "todo"][priority: "5"] 
-- [ ] New task with at tag at the #end [status: "doing"]
+- [ ] New task with at tag at the #end [status: "doing"] [priority: "4"]
 
 ## DEMO WIDGET
 
@@ -86,12 +86,12 @@ ${KanbanBoard(
   {
     {"Column", "status"},
     {"Columns", {
-      {"todo", "📝 To Do"},
-      {"doing", "⏳ In Progress"},
-      {"review", "👀 Needs Review"},
-      {"done", "✅ Done"}
+      {"todo", "📝 To Do","blue"},
+      {"doing", "⏳ In Progress","red"},
+      {"review", "👀 Needs Review","yellow"},
+      {"done", "✅ Done","green"}
     }},
-    {"Rank", "priority"},
+    {"SortDefault", "priority"},
     {"Fields", {"priority", "scheduled", "due", "status", "tags", "contact"}}
   }
 )}
@@ -99,7 +99,12 @@ ${KanbanBoard(
 # Implementation
 
 ## CSS Styling
+
 ```space-style
+
+#sb-main .cm-editor .sb-lua-directive-block:has(.kanban-board) .button-bar { top: -40px; padding:0; border-radius: 2em; opacity:0.2; transition: all 0.5s ease;} 
+#sb-main .cm-editor .sb-lua-directive-block:has(.kanban-board) .button-bar:hover { opacity:1;}
+
 
 /* Kanban Board Styles */
 .kanban-board {
@@ -198,6 +203,138 @@ ${KanbanBoard(
 .kanban-field-key {
   font-weight: bold;
   white-space: nowrap;
+}
+
+/* ---------------------------------
+   Kanban Controls (Filter / Sort / Pagination)
+   — mirrored from MediaGallery media-controls
+---------------------------------- */
+
+.kanban-controls {
+  padding: 10px 20px 10px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kanban-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.kanban-filter-label,
+.kanban-sort-label {
+  font-weight: 600;
+  font-size: 0.9em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.kanban-search-input {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--modal-border-color);
+  background: var(--modal-background-color);
+  color: var(--modal-color);
+  font-size: 0.9em;
+  outline: none;
+}
+
+.kanban-sort-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-sort-select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--modal-border-color);
+  background: var(--modal-background-color);
+  color: var(--modal-color);
+  font-size: 0.85em;
+  outline: none;
+  cursor: pointer;
+}
+
+.kanban-sort-buttons {
+  display: flex;
+  border: 1px solid var(--modal-border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.kanban-sort-btn {
+  padding: 6px 10px;
+  border: none;
+  background: var(--modal-background-color);
+  color: var(--text-muted);
+  font-size: 0.75em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kanban-sort-btn:hover {
+  background: var(--modal-border-color);
+  color: var(--modal-color);
+}
+
+.kanban-sort-btn.active {
+  background: var(--ui-accent-color);
+  color: white;
+}
+
+.kanban-pagination {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85em;
+  color: var(--text-muted);
+}
+
+.kanban-page-btn {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--modal-border-color);
+  background: var(--modal-background-color);
+  color: var(--modal-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kanban-page-btn:hover {
+  background: var(--modal-border-color);
+}
+
+.kanban-page-btn.active {
+  background: var(--ui-accent-color);
+  color: white;
+  border-color: var(--ui-accent-color);
+}
+
+/* ---------------------------------
+   Column Card Colors (optional accent color per column)
+   The --column-card-color variable is set inline on .kanban-column-colored.
+   All derived colors are computed from it via relative oklch syntax.
+---------------------------------- */
+
+html[data-theme='dark'] .kanban-column-colored .kanban-card {
+  background: oklch(from var(--column-card-color) 0.3 0.2 h / 0.35);
+  border-color: oklch(from var(--column-card-color) 0.55 0.2 h / 0.65);
+  box-shadow: 0 0 10px oklch(from var(--column-card-color) 0.3 0.2 h / 0.2);
+}
+
+html[data-theme='light'] .kanban-column-colored .kanban-card {
+  background: oklch(from var(--column-card-color) 0.95 0.1 h / 0.55);
+  border-color: oklch(from var(--column-card-color) 0.6 0.15 h / 0.75);
+  box-shadow: 0 0 10px oklch(from var(--column-card-color) 0.7 0.15 h / 0.15);
 }
 
 
@@ -885,9 +1022,10 @@ function KanbanBoard(taskQuery, options)
       ilinks =true
     }
     local statusKey = "status"
-    local rankKey = nil
+    local sortDefault = nil -- default sort field, set via {"SortDefault", "fieldname"}
     local columnOrder = {}
     local columnTitles = {}
+    local columnColors = {} -- optional accent color per column, set via 3rd element in Columns config
     local fields = {} -- New: For custom fields
 
     for _, opt in ipairs(options) do
@@ -900,9 +1038,12 @@ function KanbanBoard(taskQuery, options)
             local title = colData[2]
             table.insert(columnOrder, status)
             columnTitles[status] = title
+            if colData[3] and colData[3] ~= "" then -- optional accent color
+                columnColors[status] = tostring(colData[3])
+            end
           end
         end
-        if opt[1] == "Rank" then rankKey = opt[2] end
+        if opt[1] == "SortDefault" then sortDefault = opt[2] end -- read SortDefault option
         if opt[1] == "Fields" then fields = opt[2] or {} end -- New
     end
 
@@ -927,35 +1068,67 @@ function KanbanBoard(taskQuery, options)
     end
 
     local boardId = "kanban-" .. tostring(math.random(100000))
+
+    -- Build sort options: SortDefault first (if set), then "name", then remaining fields
+    local sortFields = {}
+    local seenSortFields = {}
+    if sortDefault and sortDefault ~= "" then
+        table.insert(sortFields, sortDefault)
+        seenSortFields[sortDefault] = true
+    end
+    if not seenSortFields["name"] then
+        table.insert(sortFields, "name")
+        seenSortFields["name"] = true
+    end
+    for _, f in ipairs(fields) do
+        if f and not seenSortFields[f] then
+            table.insert(sortFields, f)
+            seenSortFields[f] = true
+        end
+    end
+
+    local sortOptionsHtml = ""
+    for _, f in ipairs(sortFields) do
+        local label = f:sub(1,1):upper() .. f:sub(2):gsub("_", " ")
+        sortOptionsHtml = sortOptionsHtml .. "<option value='" .. f .. "'>" .. label .. "</option>"
+    end
+
+    -- Controls bar (filter + sort + pagination) — same structure as MediaGallery media-controls
+    local controlsHtml = [[
+    <div class="kanban-controls">
+      <div class="kanban-filter-container">
+        <label class="kanban-filter-label">Filter: </label>
+        <input type="text" class="kanban-search-input" placeholder="Search tasks...">
+      </div>
+      <div class="kanban-sort-container">
+        <label class="kanban-sort-label">Order by: </label>
+        <select class="kanban-sort-select">
+    ]] .. sortOptionsHtml .. [[
+        </select>
+        <div class="kanban-sort-buttons">
+          <button class="kanban-sort-btn active" data-dir="asc" title="Sort A-Z">A-Z</button>
+          <button class="kanban-sort-btn" data-dir="desc" title="Sort Z-A">Z-A</button>
+        </div>
+      </div>
+      <div class="kanban-pagination"></div>
+    </div>
+    ]]
     
-    local html = '<div id="' .. boardId .. '" class="kanban-board">'
+    local html = '<div id="' .. boardId .. '">'
+    html = html .. controlsHtml
+    html = html .. '<div class="kanban-board">'
     
     for _, status in ipairs(columnOrder) do
         local title = columnTitles[status]
         local tasks = tasksByStatus[status]
-        
-        if rankKey then
-            table.sort(tasks, function(a, b)
-                local function parseRank(val)
-                    if type(val) == "table" then val = val[1] end
-                    -- MODIFICATION: Avoided string chaining for parse logic
-                    local sRank = tostring(val or "")
-                    local n = tonumber(sRank:match("%d+"))
-                    return n or -1 -- Use -1 for nil to sort them at the bottom
-                end
-                
-                local rA = parseRank(a[rankKey])
-                local rB = parseRank(b[rankKey])
-                
-                if rA ~= rB then
-                    return rA > rB -- Higher number on top
-                else
-                    return tostring(a.name) < tostring(b.name) -- Tie-breaker
-                end
-            end)
+
+        -- Build optional color class and inline CSS variable for this column
+        local colorAttr = ""
+        if columnColors[status] then
+            colorAttr = ' kanban-column-colored" style="--column-card-color: ' .. columnColors[status]
         end
-        
-        html = html .. '<div class="kanban-column" data-status="' .. status .. '">'
+
+        html = html .. '<div class="kanban-column' .. colorAttr .. '" data-status="' .. status .. '">'
         html = html .. '<div class="kanban-column-title">' .. title .. ' (' .. #tasks .. ')</div>'
         html = html .. '<div class="kanban-cards">'
         
@@ -1050,13 +1223,42 @@ function KanbanBoard(taskQuery, options)
             local taskJson = "{" .. table.concat(jsonParts, ",") .. "}"
             local taskJsonSafe = tostring(taskJson):gsub('"', '&quot;')
 
+            -- Build filter content string for search (name + all visible field values)
+            local filterParts = {string.lower(tostring(fullName or ""))}
+            for _, fieldKey in ipairs(fields) do
+                local fv = task[fieldKey]
+                if fv then
+                    if type(fv) == "table" then
+                        table.insert(filterParts, string.lower(table.concat(fv, " ")))
+                    else
+                        table.insert(filterParts, string.lower(tostring(fv)))
+                    end
+                end
+            end
+            local filterContent = table.concat(filterParts, " ")
+                  filterContent = filterContent:gsub('"', '&quot;')
+
+            -- Build sort data attributes for all sortable fields
+            local sortDataAttr = ' data-sort-name="' .. taskName .. '"'
+            for _, f in ipairs(sortFields) do
+                if f ~= "name" then
+                    local sv = task[f]
+                    if sv == nil then sv = "" end
+                    if type(sv) == "table" then sv = table.concat(sv, ", ") end
+                    local svSafe = tostring(sv):gsub("'", "&#39;")
+                    sortDataAttr = sortDataAttr .. " data-sort-" .. f .. "='" .. svSafe .. "'"
+                end
+            end
+
             -- The card itself is no longer the draggable item if it's a link
             html = html .. '<div class="kanban-card-wrapper">'
             
             html = html .. '<div class="kanban-card" draggable="true" ' ..
                 'data-task-page="' .. taskPage .. '" ' ..
                 'data-task-pos="' .. taskPos .. '" ' ..
-                'data-task-json="' .. taskJsonSafe .. '">'
+                'data-task-json="' .. taskJsonSafe .. '" ' ..
+                'data-filter="' .. filterContent .. '"' ..
+                sortDataAttr .. '>'
             
             html = html .. '<div class="kanban-card-edit">✎</div>'
 
@@ -1086,17 +1288,163 @@ function KanbanBoard(taskQuery, options)
         html = html .. '</div></div>'
     end
     
-    html = html .. '</div>'
+    html = html .. '</div>' -- close kanban-board
+    html = html .. '</div>' -- close boardId wrapper
     
     local jsCode = [[
     (function() {
         const boardId = "]] .. boardId .. [[";
         const statusKey = "]] .. statusKey .. [[";
+
+        // ----- Filter / Sort / Pagination state (mirrored from MediaGallery) -----
+        let currentPage = 1;
+        let sortDirection = "asc";
+        const CARDS_PER_COLUMN_PAGE = 20; // max cards shown per column when paginating
         
         const init = () => {
-            const board = document.getElementById(boardId);
-            if (!board) return false;
+            const root = document.getElementById(boardId);
+            if (!root) return false;
 
+            const board = root.querySelector(".kanban-board");
+            const input = root.querySelector(".kanban-search-input");
+            const sortSelect = root.querySelector(".kanban-sort-select");
+            const sortBtns = root.querySelectorAll(".kanban-sort-btn");
+            const paginationContainer = root.querySelector(".kanban-pagination");
+
+            if (!board || !input || !paginationContainer) return false;
+
+            // ----- Filter + Sort + Pagination logic (same as MediaGallery updateDisplay) -----
+            const updateDisplay = () => {
+                const rawQuery = input.value.toLowerCase().trim();
+                const keywords = rawQuery.split(/\s+/).filter(k => k.length > 0);
+                const sortField = sortSelect.value;
+
+                // Collect all cards across all columns
+                const allWrappers = Array.from(board.querySelectorAll(".kanban-card-wrapper"));
+
+                // Filter
+                const filtered = allWrappers.filter(wrapper => {
+                    const card = wrapper.querySelector(".kanban-card");
+                    if (!card) return false;
+                    const data = card.getAttribute("data-filter") || "";
+                    return keywords.every(word => data.includes(word));
+                });
+
+                // Sort within each column independently
+                const columns = Array.from(board.querySelectorAll(".kanban-column"));
+                columns.forEach(col => {
+                    const cardsContainer = col.querySelector(".kanban-cards");
+                    if (!cardsContainer) return;
+
+                    // Get filtered wrappers that belong to this column
+                    const colWrappers = filtered.filter(w => cardsContainer.contains(w));
+                    const allColWrappers = Array.from(cardsContainer.querySelectorAll(".kanban-card-wrapper"));
+
+                    // Hide all first
+                    allColWrappers.forEach(w => { w.style.display = "none"; });
+
+                    // Sort the filtered subset
+                    colWrappers.sort((a, b) => {
+                        const cardA = a.querySelector(".kanban-card");
+                        const cardB = b.querySelector(".kanban-card");
+                        if (!cardA || !cardB) return 0;
+
+                        let valA = cardA.getAttribute("data-sort-" + sortField) || "";
+                        let valB = cardB.getAttribute("data-sort-" + sortField) || "";
+
+                        // Attempt numeric conversion for numeric-looking fields
+                        const numA = parseFloat(valA.replace(/[^0-9.]/g, ''));
+                        const numB = parseFloat(valB.replace(/[^0-9.]/g, ''));
+                        if (!isNaN(numA) && !isNaN(numB)) {
+                            return sortDirection === "asc" ? numA - numB : numB - numA;
+                        }
+
+                        return sortDirection === "asc"
+                            ? valA.localeCompare(valB)
+                            : valB.localeCompare(valA);
+                    });
+
+                    // Pagination per column
+                    const totalItems = colWrappers.length;
+                    const totalPages = Math.max(1, Math.ceil(totalItems / CARDS_PER_COLUMN_PAGE));
+                    const safePage = Math.min(currentPage, totalPages);
+                    const start = (safePage - 1) * CARDS_PER_COLUMN_PAGE;
+                    const end = start + CARDS_PER_COLUMN_PAGE;
+
+                    colWrappers.slice(start, end).forEach((w, idx) => {
+                        w.style.display = "";
+                        w.style.order = idx;
+                    });
+                });
+
+                // Render global pagination based on the column with the most filtered cards
+                const maxItems = columns.reduce((max, col) => {
+                    const cardsContainer = col.querySelector(".kanban-cards");
+                    if (!cardsContainer) return max;
+                    const count = filtered.filter(w => cardsContainer.contains(w)).length;
+                    return Math.max(max, count);
+                }, 0);
+                const totalPages = Math.max(1, Math.ceil(maxItems / CARDS_PER_COLUMN_PAGE));
+                renderPagination(totalPages);
+            };
+
+            // ----- Pagination renderer (same as MediaGallery renderPagination) -----
+            const renderPagination = (totalPages) => {
+                paginationContainer.innerHTML = "";
+                if (totalPages <= 1) return;
+
+                const createBtn = (page, text, active) => {
+                    const btn = document.createElement("button");
+                    btn.textContent = text !== undefined ? text : page;
+                    btn.className = "kanban-page-btn" + (active ? " active" : "");
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        currentPage = page;
+                        updateDisplay();
+                    };
+                    return btn;
+                };
+
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                if (endPage === totalPages) startPage = Math.max(1, endPage - 4);
+
+                if (startPage > 1) {
+                    paginationContainer.appendChild(createBtn(1, 1, false));
+                    if (startPage > 2) paginationContainer.appendChild(document.createTextNode("..."));
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    paginationContainer.appendChild(createBtn(i, i, i === currentPage));
+                }
+
+                if (endPage < totalPages) {
+                    if (endPage < totalPages - 1) paginationContainer.appendChild(document.createTextNode("..."));
+                    paginationContainer.appendChild(createBtn(totalPages, totalPages, false));
+                }
+            };
+
+            // ----- Event listeners for controls (same pattern as MediaGallery) -----
+            input.addEventListener("input", () => {
+                currentPage = 1;
+                updateDisplay();
+            });
+
+            sortSelect.addEventListener("change", () => {
+                updateDisplay();
+            });
+
+            sortBtns.forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    sortBtns.forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    sortDirection = btn.getAttribute("data-dir");
+                    updateDisplay();
+                });
+            });
+
+            // ----- Existing drag-and-drop logic (unchanged) -----
             let draggedCard = null;
 
             board.addEventListener('click', (e) => {
@@ -1168,6 +1516,9 @@ function KanbanBoard(taskQuery, options)
                     }
                 }
             });
+
+            // Initial render
+            updateDisplay();
             return true;
         };
         
