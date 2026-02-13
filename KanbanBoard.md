@@ -61,7 +61,8 @@ ${KanbanBoard(
       {"done", "✅ Done","green"}
     }},
     {"SortDefault", "priority"},
-    {"Fields", {"priority", "completed"}}
+    {"Fields", {"priority", "completed"}},
+    {"HideKeys", {"tags"}}
   }
 )}
 ```
@@ -69,15 +70,15 @@ ${KanbanBoard(
 
 ## DEMO Tasks
 - [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hastag
-      [priority: "1"][scheduled: "2026-02-27"]
+      [priority: "1"][scheduled: "2026-02-27"][taskID:"T-01-26"]
       [contact: "George"] [status: "doing"] [due: "2026-03-02"]
 * [ ] Task with a #hashtag and special @ # - * , ! ; $ \ | / characters
-      [status: "todo"]  [priority: "1"] [due: "2026-02-25"]
-* [ ] Another normal task  with a #tag in the name [status: "review"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"]
-- [x] Completed task [priority: "1"] [status: "done"] [completed: "2026-02-13 00:01"]
+      [status: "todo"]  [priority: "1"] [due: "2026-02-25"][taskID:"T-02-26"]
+* [ ] Another normal task  with a #tag in the name [status: "review"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID:"T-03-26"]
+- [x] Completed task [priority: "1"] [status: "done"] [completed: "2026-02-13 00:01"][taskID:"T-06-26"]
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
-      [status: "todo"][priority: "5"] 
-- [ ] New task with at tag at the #end [status: "doing"] [priority: "4"]
+      [status: "todo"][priority: "5"] [taskID:"T-04-26"]
+- [ ] New task with at tag at the #end [status: "doing"] [priority: "4"][taskID:"T-05-26"]
 
 ## DEMO WIDGET
 
@@ -92,7 +93,8 @@ ${KanbanBoard(
       {"done", "✅ Done","green"}
     }},
     {"SortDefault", "priority"},
-    {"Fields", {"priority", "scheduled", "due", "status", "tags", "contact"}}
+    {"Fields", {"taskID","priority", "scheduled", "due", "status", "contact", "tags"}},
+    {"HideKeys", {"taskID", "tags"}}
   }
 )}
 
@@ -1027,6 +1029,7 @@ function KanbanBoard(taskQuery, options)
     local columnTitles = {}
     local columnColors = {} -- optional accent color per column, set via 3rd element in Columns config
     local fields = {} -- New: For custom fields
+    local hideKeys = {} -- field keys whose label is hidden on cards, set via {"HideKeys", {"key1","key2"}}
 
     for _, opt in ipairs(options) do
         if opt[1] == "Column" then statusKey = opt[2] end
@@ -1045,6 +1048,11 @@ function KanbanBoard(taskQuery, options)
         end
         if opt[1] == "SortDefault" then sortDefault = opt[2] end -- read SortDefault option
         if opt[1] == "Fields" then fields = opt[2] or {} end -- New
+        if opt[1] == "HideKeys" then -- build a lookup set of keys whose label to hide on cards
+            for _, k in ipairs(opt[2] or {}) do
+                hideKeys[tostring(k)] = true
+            end
+        end
     end
 
     local tasksByStatus = {}
@@ -1272,8 +1280,13 @@ function KanbanBoard(taskQuery, options)
                     local fieldValue = task[fieldKey]
                     if fieldValue then
                         if type(fieldValue) == "table" then fieldValue = table.concat(fieldValue, ", ") end
+                        -- Render key label only when it is not in the hideKeys lookup
+                        local keyHtml = ""
+                        if not hideKeys[fieldKey] then
+                            keyHtml = '<span class="kanban-field-key">' .. fieldKey .. ': </span>'
+                        end
                         html = html .. '<div class="kanban-card-field">' ..
-                           '<span class="kanban-field-key">' .. fieldKey .. ': </span>' ..
+                           keyHtml ..
                            '<span class="kanban-field-value">' .. tostring(fieldValue) .. '</span>' ..
                            '</div>'
                     end
@@ -1540,6 +1553,7 @@ function KanbanBoard(taskQuery, options)
     }
 end
 ```
+
 
 ## Discussions to this library
 - [Silverbullet Community](https://community.silverbullet.md/t/kanban-integration-with-tasks/925/12?u=mr.red)
