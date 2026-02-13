@@ -956,7 +956,7 @@ function KanbanBoard(taskQuery, options)
         end
         
         html = html .. '<div class="kanban-column" data-status="' .. status .. '">'
-        html = html .. '<div class="kanban-column-title">' .. title .. '</div>'
+        html = html .. '<div class="kanban-column-title">' .. title .. ' (' .. #tasks .. ')</div>'
         html = html .. '<div class="kanban-cards">'
         
         for _, task in ipairs(tasks) do
