@@ -44,8 +44,9 @@ The Kanban board works by querying tasks and organizing them into columns based 
 *   **`options`**: (Required) A table to configure the board's behavior.
     *   **`Column`**: The task attribute to use for column status (e.g., `"status"`).
     *   **`Columns`**: An ordered list of columns, where each column is a `{status, title}` pair (e.g., `{{'todo', 'To Do'}, {'doing', 'In Progress'}}`).
-    *   **`Rank`**: (Optional) The task attribute to use for sorting cards within columns (higher numbers on top). E.g. `priority`.
+    *   **`SortDefault`**: (Optional) The task attribute to use for default sorting cards within columns. e.g. `priority`.
     *   **`Fields`**: (Optional) A list of task attributes to display on the card. E.g. `{"due", "priority"}`.
+    *   **HideKeys**: (Optional) Hide certain attribute keys/labels from the card. This can be usefull if you have a longer text or a title as attribute and want to display the whole thin
 
 ### Example with all options
 
@@ -71,14 +72,14 @@ ${KanbanBoard(
 ## DEMO Tasks
 - [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hastag
       [priority: "1"][scheduled: "2026-02-27"][taskID:"T-01-26"]
-      [contact: "George"] [status: "doing"] [due: "2026-03-02"]
+      [contact: "George"] [status: "👀"] [due: "2026-03-02"]
 * [ ] Task with a #hashtag and special @ # - * , ! ; $ \ | / characters
-      [status: "todo"]  [priority: "1"] [due: "2026-02-25"][taskID:"T-02-26"]
-* [ ] Another normal task  with a #tag in the name [status: "review"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID:"T-03-26"]
-- [x] Completed task [priority: "1"] [status: "done"] [completed: "2026-02-13 00:01"][taskID:"T-06-26"]
+      [status: "📥"]  [priority: "1"] [due: "2026-02-25"][taskID:"T-02-26"]
+* [ ] Another normal task  with a #tag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID:"T-03-26"]
+- [x] Completed task [priority: "1"] [status: "✅"] [completed: "2026-02-13 00:01"][taskID:"T-06-26"]
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
-      [status: "todo"][priority: "5"] [taskID:"T-04-26"]
-- [ ] New task with at tag at the #end [status: "doing"] [priority: "4"][taskID:"T-05-26"]
+      [status: "📥"][priority: "5"] [taskID:"T-04-26"]
+- [ ] New task with at tag at the #end [status: "⏳"] [priority: "4"][taskID:"T-05-26"]
 
 ## DEMO WIDGET
 
@@ -87,10 +88,10 @@ ${KanbanBoard(
   {
     {"Column", "status"},
     {"Columns", {
-      {"todo", "📝 To Do","blue"},
-      {"doing", "⏳ In Progress","red"},
-      {"review", "👀 Needs Review","yellow"},
-      {"done", "✅ Done","green"}
+      {"📥", "To Do","blue"},
+      {"⏳", "In Progress","red"},
+      {"👀", "Needs Review","yellow"},
+      {"✅", "Done","green"}
     }},
     {"SortDefault", "priority"},
     {"Fields", {"taskID","priority", "scheduled", "due", "status", "contact", "tags"}},
