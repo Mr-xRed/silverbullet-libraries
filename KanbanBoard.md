@@ -12,11 +12,11 @@ pageDecoration.prefix: "✅ "
 This widget creates a customizable Kanban board to visualize and manage tasks from your notes.
 
 ## Known issues and bugs:
-- 🐞 if you complete the task either in the modal window or in the markdown `[x]` it wont update the `status` attribute
-- 🐞 if you manually edit the status to “done” it won’t complete the task, it only moves the task to the done column
-- 🚫 emoji attributes `📅2026-04-02` for due dates or similars are not supported, and not planned for future relases either
+- **✅ FIXED** - ~~if the task completed in the modal window or in the markdown `[x]` it wont update the `status` attribute~~
+- **✅ FIXED** - ~~if the status is edited to “done” it won’t complete the task, it only moves the task to the done column~~
 - **✅ FIXED** - ~~No support when you have a [[WikiLink]] in your tasks~~
 - **✅ FIXED** - ~~Tags(`#tag`) can be added to the name, but they cannot be edited in the name~~
+- 🚫 emoji attributes `📅2026-04-02` for due dates or similars are not supported, and not planned for future relases either
 - and some more undocumented ones: 🪲🪳🕷️🦟
 
 
@@ -71,15 +71,15 @@ ${KanbanBoard(
 
 ## DEMO Tasks
 - [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hastag
-      [priority: "1"][scheduled: "2026-02-27"][taskID:"T-01-26"]
-      [contact: "George"] [status: "👀"] [due: "2026-03-02"]
-* [ ] Task with a #hashtag and special @ # - * , ! ; $ \ | / characters
-      [status: "📥"]  [priority: "1"] [due: "2026-02-25"][taskID:"T-02-26"]
-* [ ] Another normal task  with a #tag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID:"T-03-26"]
-- [x] Completed task [priority: "1"] [status: "✅"] [completed: "2026-02-13 00:01"][taskID:"T-06-26"]
+      [priority: "1"][scheduled: "2026-02-27"][taskID: "T-01-26"]
+      [contact: "George"] [status: "⏳"] [due: "2026-03-02"]  
+* [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
+      [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
+* [ ] Another normal task  with a #tag in the name [status: "📥"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID: "T-03-26"]
+- [ ] Completed task [priority: "3"] [status: "⏳"][taskID: "T-06-26"] 
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
-      [status: "📥"][priority: "5"] [taskID:"T-04-26"]
-- [ ] New task with at tag at the #end [status: "⏳"] [priority: "4"][taskID:"T-05-26"]
+      [status: "👀"][priority: "5"] [taskID:"T-04-26"]
+- [ ] New task with at tag at the #end [status: "👀"] [priority: "4"][taskID:"T-05-26"]
 
 ## DEMO WIDGET
 
@@ -592,10 +592,12 @@ local function openTaskEditor(taskData)
     local fullName = taskData.name -- Fallback to the clean name from the parser
 
     -- List of meta-keys that are not custom attributes, used to identify true attributes.
+    -- MODIFICATION: Added _kanbanStatusKey, _kanbanDoneStatus, _kanbanDefaultStatus so they
+    -- are never shown as editable fields in the modal editor.
     local ignoredKeys = {
       ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
       toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
-      ilinks =true
+      ilinks = true, _kanbanStatusKey = true, _kanbanDoneStatus = true, _kanbanDefaultStatus = true
     }
     
     local content = space.readPage(taskData.page)
@@ -635,6 +637,12 @@ local function openTaskEditor(taskData)
         end
     end
     -- END of new logic
+
+    -- MODIFICATION START: Read kanban config passed by the JS click handler for bidirectional sync
+    local boardStatusKey = tostring(taskData._kanbanStatusKey or "status")
+    local doneStatus     = tostring(taskData._kanbanDoneStatus or "")
+    local defaultStatus  = tostring(taskData._kanbanDefaultStatus or "")
+    -- MODIFICATION END
 
     local function uniqueHandler(e)
         if e.detail.session == sessionID then
@@ -732,6 +740,12 @@ local function openTaskEditor(taskData)
 
     js.window.document.body.appendChild(container)
 
+    -- MODIFICATION START: Escape and pass kanban config into the modal JS closure
+    local boardStatusKeySafe = string.gsub(boardStatusKey, '"', '\\"')
+    local doneStatusSafe     = string.gsub(doneStatus,     '"', '\\"')
+    local defaultStatusSafe  = string.gsub(defaultStatus,  '"', '\\"')
+    -- MODIFICATION END
+
     local script = [[
     (function() {
         const session = "]] .. sessionID .. [[";
@@ -739,6 +753,12 @@ local function openTaskEditor(taskData)
         const container = document.getElementById('te-dynamic-fields');
         const root = document.getElementById('sb-taskeditor');
         const card = document.getElementById('te-card-inner');
+
+        // MODIFICATION START: Kanban config for bidirectional checkbox <-> status sync
+        const boardStatusKey = "]] .. boardStatusKeySafe .. [[";
+        const doneStatus     = "]] .. doneStatusSafe .. [[";
+        const defaultStatus  = "]] .. defaultStatusSafe .. [[";
+        // MODIFICATION END
 
         const formatForInput = (val, type) => {
              if(!val) return "";
@@ -780,6 +800,35 @@ local function openTaskEditor(taskData)
             createFieldInput(f.key, f.value, type);
         });
 
+        // MODIFICATION START: Bidirectional live sync between checkbox and status attribute
+        if (boardStatusKey && doneStatus) {
+            const checkbox = document.getElementById('te-status-checkbox');
+
+            // Bug 2 fix: on open, if status field already equals doneStatus, check the box
+            if (!checkbox.checked) {
+                const statusInput = container.querySelector('.te-input[data-key="' + boardStatusKey + '"]');
+                if (statusInput && statusInput.value.trim().toLowerCase() === doneStatus.toLowerCase()) {
+                    checkbox.checked = true;
+                }
+            }
+
+            // Bug 1 fix: checkbox → status field (live)
+            checkbox.addEventListener('change', function() {
+                const statusInput = container.querySelector('.te-input[data-key="' + boardStatusKey + '"]');
+                if (statusInput) {
+                    statusInput.value = this.checked ? doneStatus : defaultStatus;
+                }
+            });
+
+            // Bug 2 fix: status field → checkbox (live, via delegation)
+            container.addEventListener('input', function(e) {
+                if (e.target.matches && e.target.matches('.te-input[data-key]') && e.target.dataset.key === boardStatusKey) {
+                    checkbox.checked = (e.target.value.trim().toLowerCase() === doneStatus.toLowerCase());
+                }
+            });
+        }
+        // MODIFICATION END
+
         const newKeyInp = document.getElementById('te-new-key');
         const newTypeSel = document.getElementById('te-new-type');
         const newValInp = document.getElementById('te-new-val');
@@ -805,7 +854,7 @@ local function openTaskEditor(taskData)
         
         const save = () => {
             const newText = document.getElementById('te-main-input').value;
-            const newState = document.getElementById('te-status-checkbox').checked ? "x" : " ";
+            let newState = document.getElementById('te-status-checkbox').checked ? "x" : " ";
             const attributes = [];
             const inputs = container.querySelectorAll('.te-input[data-key]');
             inputs.forEach(inp => {
@@ -813,6 +862,22 @@ local function openTaskEditor(taskData)
                 if (inp.type === 'datetime-local' && val.includes("T")) val = val.replace("T", " ");
                 attributes.push({ key: inp.dataset.key, value: val });
             });
+
+            // MODIFICATION START: Safety-net sync at save time (checkbox state is authoritative
+            // at this point because live sync already kept the two fields in step).
+            // Bug 1: checked → ensure status == doneStatus (add if missing)
+            // Bug 2: unchecked + status was doneStatus → revert status to defaultStatus
+            if (boardStatusKey && doneStatus) {
+                let statusAttr = attributes.find(a => a.key === boardStatusKey);
+                if (newState === "x") {
+                    if (statusAttr) statusAttr.value = doneStatus;
+                    else attributes.push({ key: boardStatusKey, value: doneStatus });
+                } else if (statusAttr && statusAttr.value.trim().toLowerCase() === doneStatus.toLowerCase()) {
+                    statusAttr.value = defaultStatus;
+                }
+            }
+            // MODIFICATION END
+
             window.dispatchEvent(new CustomEvent("sb-save-task", { 
                 detail: { session: session, text: newText, state: newState, attributes: attributes } 
             }));
@@ -1102,6 +1167,15 @@ function KanbanBoard(taskQuery, options)
         sortOptionsHtml = sortOptionsHtml .. "<option value='" .. f .. "'>" .. label .. "</option>"
     end
 
+    -- MODIFICATION START: Serialize columnOrder to JSON for the board JS so the click handler
+    -- can pass doneStatus / defaultStatus to the task editor (needed for Bug 1 & 2 fixes).
+    local columnOrderParts = {}
+    for _, s in ipairs(columnOrder) do
+        table.insert(columnOrderParts, '"' .. s:gsub('"', '\\"') .. '"')
+    end
+    local columnOrderJson = "[" .. table.concat(columnOrderParts, ",") .. "]"
+    -- MODIFICATION END
+
     -- Controls bar (filter + sort + pagination) — same structure as MediaGallery media-controls
     local controlsHtml = [[
     <div class="kanban-controls">
@@ -1309,6 +1383,8 @@ function KanbanBoard(taskQuery, options)
     (function() {
         const boardId = "]] .. boardId .. [[";
         const statusKey = "]] .. statusKey .. [[";
+        // MODIFICATION: Column order array for passing done/default status to the task editor
+        const columnOrder = ]] .. columnOrderJson .. [[;
 
         // ----- Filter / Sort / Pagination state (mirrored from MediaGallery) -----
         let currentPage = 1;
@@ -1468,6 +1544,12 @@ function KanbanBoard(taskQuery, options)
                     const card = editBtn.closest('.kanban-card');
                     try {
                         const taskData = JSON.parse(card.dataset.taskJson);
+                        // MODIFICATION START: Pass kanban config so the editor can sync
+                        // the status attribute with the Completed checkbox (Bug 1 & 2 fix).
+                        taskData._kanbanStatusKey  = statusKey;
+                        taskData._kanbanDoneStatus    = columnOrder.length > 0 ? columnOrder[columnOrder.length - 1] : "";
+                        taskData._kanbanDefaultStatus = columnOrder.length > 0 ? columnOrder[0] : "";
+                        // MODIFICATION END
                         window.dispatchEvent(new CustomEvent("sb-kanban-edit-task", { detail: taskData }));
                     } catch(err) { console.error("Failed to parse task data", err); }
                 }
@@ -1530,6 +1612,71 @@ function KanbanBoard(taskQuery, options)
                     }
                 }
             });
+
+            // MODIFICATION START: On load, sync cards whose markdown checkbox state does not
+            // match the column they are currently rendered in. Two directions are handled:
+            // Direction 1: task is [x] in markdown but not in the done column → move it there.
+            // Direction 2: task is [ ] in markdown but sitting in the done column → move it back to the first column.
+            const syncCheckedTasks = () => {
+                if (columnOrder.length === 0) return;
+                const doneStatus    = columnOrder[columnOrder.length - 1];
+                const defaultStatus = columnOrder[0];
+                const doneColumn    = board.querySelector('.kanban-column[data-status="' + doneStatus + '"]');
+                const defaultColumn = board.querySelector('.kanban-column[data-status="' + defaultStatus + '"]');
+                if (!doneColumn || !defaultColumn) return;
+                const doneCardsContainer    = doneColumn.querySelector('.kanban-cards');
+                const defaultCardsContainer = defaultColumn.querySelector('.kanban-cards');
+                if (!doneCardsContainer || !defaultCardsContainer) return;
+
+                const allCards = Array.from(board.querySelectorAll('.kanban-card'));
+                allCards.forEach(card => {
+                    const column = card.closest('.kanban-column');
+                    if (!column) return;
+                    const currentStatus = column.dataset.status;
+
+                    try {
+                        const taskData = JSON.parse(card.dataset.taskJson);
+                        const isChecked = (taskData.state === 'x' || taskData.state === 'X');
+                        const range = taskData.range;
+
+                        if (isChecked && currentStatus !== doneStatus) {
+                            // Task is checked [x] in markdown but not in the done column → move it there
+                            doneCardsContainer.appendChild(card.closest('.kanban-card-wrapper'));
+                            if (taskData.page && taskData.pos != null && range) {
+                                window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
+                                    detail: {
+                                        action: "move",
+                                        page: taskData.page,
+                                        pos: taskData.pos,
+                                        range: range,
+                                        statusKey: statusKey,
+                                        newStatus: doneStatus,
+                                        toggleState: "checked"
+                                    }
+                                }));
+                            }
+                        } else if (!isChecked && currentStatus === doneStatus) {
+                            // Task is unchecked [ ] in markdown but still in the done column → move it back to default
+                            defaultCardsContainer.appendChild(card.closest('.kanban-card-wrapper'));
+                            if (taskData.page && taskData.pos != null && range) {
+                                window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
+                                    detail: {
+                                        action: "move",
+                                        page: taskData.page,
+                                        pos: taskData.pos,
+                                        range: range,
+                                        statusKey: statusKey,
+                                        newStatus: defaultStatus,
+                                        toggleState: "unchecked"
+                                    }
+                                }));
+                            }
+                        }
+                    } catch(err) { console.error("syncCheckedTasks error", err); }
+                });
+            };
+            syncCheckedTasks();
+            // MODIFICATION END
 
             // Initial render
             updateDisplay();
