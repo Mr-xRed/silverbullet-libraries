@@ -57,7 +57,7 @@ ${KanbanBoard(
   {
     {"Column", "status"},
     {"Columns", {
-      {"todo", "📝 To Do","blue"},
+      {"todo", "📝 To Do","purple"},
       {"doing", "⏳ In Progress","red"},
       {"review", "👀 Needs Review","yellow"},
       {"done", "✅ Done","green"}
@@ -89,9 +89,9 @@ ${KanbanBoard(
   {
     {"Column", "status"},
     {"Columns", {
-      {"📥", "To Do","blue"},
-      {"⏳", "In Progress","red"},
-      {"👀", "Needs Review","yellow"},
+      {"📥", "To Do","purple"},
+      {"⏳", "In Progress","blue"},
+      {"👀", "Needs Review","orange"},
       {"✅", "Done","green"}
     }},
     {"SortDefault", "priority"},
