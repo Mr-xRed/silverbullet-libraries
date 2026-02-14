@@ -124,14 +124,14 @@ ${KanbanBoard(
 
 .kanban-column {
   flex: 1;
-  min-width: 200px;
+  min-width: 250px;
   max-width: 500px;
   /* MODIFICATION: Removed the duplicate `min-width: 0` that was overriding the 250px
      above and causing columns to squish on mobile. Added flex-shrink: 0 so columns
      hold their minimum width and the board scrolls horizontally instead. */
   flex-shrink: 0;
-  background: var(--modal-help-background-color);
-  border-radius: 8px;
+  background: oklch(from var(--modal-help-background-color) l c h / 0.4);
+  border-radius: 18px;
   padding: 10px;
   display: flex;
   flex-direction: column;
@@ -154,7 +154,7 @@ ${KanbanBoard(
 .kanban-card {
   background: var(--modal-background-color);
   border: 1px solid var(--modal-border-color);
-  box-shadow: 0 0 10px rgba(0 0 0 / 0.3);
+  box-shadow: 0 0 5px rgba(0 0 0 / 0.8);
   border-radius: 10px;
   padding: 10px;
   cursor: grab;
@@ -307,13 +307,13 @@ ${KanbanBoard(
 html[data-theme='dark'] .kanban-column-colored .kanban-card {
   background: oklch(from var(--column-card-color) 0.3 0.2 h / 0.35);
   border-color: oklch(from var(--column-card-color) 0.55 0.2 h / 0.65);
-  box-shadow: 0 0 10px oklch(from var(--column-card-color) 0.3 0.2 h / 0.2);
+  box-shadow: 0 0 5px oklch(from var(--column-card-color) 0.3 0.2 h / 0.5);
 }
 
 html[data-theme='light'] .kanban-column-colored .kanban-card {
   background: oklch(from var(--column-card-color) 0.95 0.1 h / 0.55);
   border-color: oklch(from var(--column-card-color) 0.6 0.15 h / 0.75);
-  box-shadow: 0 0 10px oklch(from var(--column-card-color) 0.7 0.15 h / 0.15);
+  box-shadow: 0 0 5px oklch(from var(--column-card-color) 0.7 0.15 h / 0.5);
 }
 
 
