@@ -21,8 +21,9 @@ This widget creates a customizable Kanban board to visualize and manage tasks fr
 
 
 > **warning** Important
->   - IMPORTANT!!! - After `System: Reload` and the KanbanBoard Widget on your Page make sure to also Reload the page (`Client: Reload UI` or `Ctrl-R` or `F5`)
->   -  Make sure to Refresh the widget if you manually modified the markdown task
+>   - IMPORTANT!!! - After `System: Reload` and if a KanbanBoard Widget is on your Page make sure to also Reload the page (`Client: Reload UI` or `Ctrl-R` or `F5`)
+>   -  Make sure to Refresh the widget if you manually modified the markdown task.
+>   -  If you manually update the task in the markdown make sure to reload the widget for the changes to take effect.
 >   -  To work properly the attribute values WILL be wrapped in `""` for safer handling strings, and consistency, even if it’s not always necessary. This is not a bug just a heads-up.
 
 ## How it Works
