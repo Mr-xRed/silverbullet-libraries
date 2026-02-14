@@ -71,13 +71,13 @@ ${KanbanBoard(
 
 
 ## DEMO Tasks
-- [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hastag
+- [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hashtag 
       [priority: "1"][scheduled: "2026-02-27"][taskID: "T-01-26"]
       [contact: "George"] [status: "⏳"] [due: "2026-03-02"]  
 * [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
       [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
 * [ ] Another normal task  with a #tag in the name [status: "📥"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID: "T-03-26"]
-- [ ] Completed task [priority: "3"] [status: "⏳"][taskID: "T-06-26"] 
+- [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"]  [completed: "2026-02-14 13:54"]
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
       [status: "👀"][priority: "5"] [taskID:"T-04-26"]
 - [ ] New task with at tag at the #end [status: "👀"] [priority: "4"][taskID:"T-05-26"]
@@ -117,14 +117,19 @@ ${KanbanBoard(
   padding: 10px;
   overflow-x: auto;
   align-items: normal;
-  justify-content: center;
+  /* MODIFICATION: Switched to flex-start so overflow-x: auto can
+     scroll from the leftmost column without clipping. */
+  justify-content: flex-start;
 }
 
 .kanban-column {
   flex: 1;
-  min-width: 250px;
-  max-width: 400px;
-  min-width: 0;
+  min-width: 200px;
+  max-width: 500px;
+  /* MODIFICATION: Removed the duplicate `min-width: 0` that was overriding the 250px
+     above and causing columns to squish on mobile. Added flex-shrink: 0 so columns
+     hold their minimum width and the board scrolls horizontally instead. */
+  flex-shrink: 0;
   background: var(--modal-help-background-color);
   border-radius: 8px;
   padding: 10px;
@@ -156,8 +161,6 @@ ${KanbanBoard(
   position: relative;
   width: 100%; /* added: responsive width */
   box-sizing: border-box; /* added */
-  min-width: 100; /* added: allow shrinking */
-
 }
 
 .kanban-card-name {
@@ -210,8 +213,8 @@ ${KanbanBoard(
 }
 
 /* ---------------------------------
-   Kanban Controls (Filter / Sort / Pagination)
-   — mirrored from MediaGallery media-controls
+   Kanban Controls (Filter / Sort)
+   — pagination removed; mirrored from MediaGallery media-controls otherwise
 ---------------------------------- */
 
 .kanban-controls {
@@ -293,34 +296,6 @@ ${KanbanBoard(
 .kanban-sort-btn.active {
   background: var(--ui-accent-color);
   color: white;
-}
-
-.kanban-pagination {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85em;
-  color: var(--text-muted);
-}
-
-.kanban-page-btn {
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid var(--modal-border-color);
-  background: var(--modal-background-color);
-  color: var(--modal-color);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.kanban-page-btn:hover {
-  background: var(--modal-border-color);
-}
-
-.kanban-page-btn.active {
-  background: var(--ui-accent-color);
-  color: white;
-  border-color: var(--ui-accent-color);
 }
 
 /* ---------------------------------
@@ -1177,7 +1152,7 @@ function KanbanBoard(taskQuery, options)
     local columnOrderJson = "[" .. table.concat(columnOrderParts, ",") .. "]"
     -- MODIFICATION END
 
-    -- Controls bar (filter + sort + pagination) — same structure as MediaGallery media-controls
+    -- Controls bar (filter + sort) — MODIFICATION: pagination removed, it is not used in the Kanban Board
     local controlsHtml = [[
     <div class="kanban-controls">
       <div class="kanban-filter-container">
@@ -1194,7 +1169,6 @@ function KanbanBoard(taskQuery, options)
           <button class="kanban-sort-btn" data-dir="desc" title="Sort Z-A">Z-A</button>
         </div>
       </div>
-      <div class="kanban-pagination"></div>
     </div>
     ]]
     
@@ -1387,10 +1361,8 @@ function KanbanBoard(taskQuery, options)
         // MODIFICATION: Column order array for passing done/default status to the task editor
         const columnOrder = ]] .. columnOrderJson .. [[;
 
-        // ----- Filter / Sort / Pagination state (mirrored from MediaGallery) -----
-        let currentPage = 1;
+        // ----- Filter / Sort state (mirrored from MediaGallery; pagination removed) -----
         let sortDirection = "asc";
-        const CARDS_PER_COLUMN_PAGE = 20; // max cards shown per column when paginating
         
         const init = () => {
             const root = document.getElementById(boardId);
@@ -1400,11 +1372,10 @@ function KanbanBoard(taskQuery, options)
             const input = root.querySelector(".kanban-search-input");
             const sortSelect = root.querySelector(".kanban-sort-select");
             const sortBtns = root.querySelectorAll(".kanban-sort-btn");
-            const paginationContainer = root.querySelector(".kanban-pagination");
 
-            if (!board || !input || !paginationContainer) return false;
+            if (!board || !input) return false;
 
-            // ----- Filter + Sort + Pagination logic (same as MediaGallery updateDisplay) -----
+            // ----- Filter + Sort logic (same as MediaGallery updateDisplay; pagination removed) -----
             const updateDisplay = () => {
                 const rawQuery = input.value.toLowerCase().trim();
                 const keywords = rawQuery.split(/\s+/).filter(k => k.length > 0);
@@ -1455,69 +1426,16 @@ function KanbanBoard(taskQuery, options)
                             : valB.localeCompare(valA);
                     });
 
-                    // Pagination per column
-                    const totalItems = colWrappers.length;
-                    const totalPages = Math.max(1, Math.ceil(totalItems / CARDS_PER_COLUMN_PAGE));
-                    const safePage = Math.min(currentPage, totalPages);
-                    const start = (safePage - 1) * CARDS_PER_COLUMN_PAGE;
-                    const end = start + CARDS_PER_COLUMN_PAGE;
-
-                    colWrappers.slice(start, end).forEach((w, idx) => {
+                    // Show all filtered+sorted cards (no pagination)
+                    colWrappers.forEach((w, idx) => {
                         w.style.display = "";
                         w.style.order = idx;
                     });
                 });
-
-                // Render global pagination based on the column with the most filtered cards
-                const maxItems = columns.reduce((max, col) => {
-                    const cardsContainer = col.querySelector(".kanban-cards");
-                    if (!cardsContainer) return max;
-                    const count = filtered.filter(w => cardsContainer.contains(w)).length;
-                    return Math.max(max, count);
-                }, 0);
-                const totalPages = Math.max(1, Math.ceil(maxItems / CARDS_PER_COLUMN_PAGE));
-                renderPagination(totalPages);
-            };
-
-            // ----- Pagination renderer (same as MediaGallery renderPagination) -----
-            const renderPagination = (totalPages) => {
-                paginationContainer.innerHTML = "";
-                if (totalPages <= 1) return;
-
-                const createBtn = (page, text, active) => {
-                    const btn = document.createElement("button");
-                    btn.textContent = text !== undefined ? text : page;
-                    btn.className = "kanban-page-btn" + (active ? " active" : "");
-                    btn.onclick = (e) => {
-                        e.preventDefault();
-                        currentPage = page;
-                        updateDisplay();
-                    };
-                    return btn;
-                };
-
-                let startPage = Math.max(1, currentPage - 2);
-                let endPage = Math.min(totalPages, startPage + 4);
-                if (endPage === totalPages) startPage = Math.max(1, endPage - 4);
-
-                if (startPage > 1) {
-                    paginationContainer.appendChild(createBtn(1, 1, false));
-                    if (startPage > 2) paginationContainer.appendChild(document.createTextNode("..."));
-                }
-
-                for (let i = startPage; i <= endPage; i++) {
-                    paginationContainer.appendChild(createBtn(i, i, i === currentPage));
-                }
-
-                if (endPage < totalPages) {
-                    if (endPage < totalPages - 1) paginationContainer.appendChild(document.createTextNode("..."));
-                    paginationContainer.appendChild(createBtn(totalPages, totalPages, false));
-                }
             };
 
             // ----- Event listeners for controls (same pattern as MediaGallery) -----
             input.addEventListener("input", () => {
-                currentPage = 1;
                 updateDisplay();
             });
 
@@ -1535,7 +1453,7 @@ function KanbanBoard(taskQuery, options)
                 });
             });
 
-            // ----- Existing drag-and-drop logic (unchanged) -----
+            // ----- Drag-and-drop logic -----
             let draggedCard = null;
 
             board.addEventListener('click', (e) => {
@@ -1556,6 +1474,7 @@ function KanbanBoard(taskQuery, options)
                 }
             });
 
+            // --- Mouse drag events ---
             board.addEventListener('dragstart', (e) => {
                 if (e.target.classList.contains('kanban-card')) {
                     draggedCard = e.target;
@@ -1613,6 +1532,96 @@ function KanbanBoard(taskQuery, options)
                     }
                 }
             });
+
+            // MODIFICATION START: Add Touch support for drag and drop on mobile with delay
+            let isDragging = false;
+            let dragTimer = null;
+            let touchStartX, touchStartY;
+
+            board.addEventListener('touchstart', e => {
+                const card = e.target.closest('.kanban-card');
+                if (card && e.touches.length === 1) {
+                    const touch = e.touches[0];
+                    touchStartX = touch.clientX;
+                    touchStartY = touch.clientY;
+
+                    dragTimer = setTimeout(() => {
+                        isDragging = true;
+                        draggedCard = card;
+                        draggedCard.style.opacity = '0.5';
+                    }, 200); // 200ms delay
+                }
+            }, { passive: true });
+            
+            board.addEventListener('touchmove', e => {
+                if (dragTimer) {
+                    const touch = e.touches[0];
+                    const deltaX = Math.abs(touch.clientX - touchStartX);
+                    const deltaY = Math.abs(touch.clientY - touchStartY);
+
+                    if (deltaX > 10 || deltaY > 10) {
+                        clearTimeout(dragTimer);
+                        dragTimer = null;
+                    }
+                }
+
+                if (!isDragging || !draggedCard) return;
+                
+                e.preventDefault();
+
+                const touch = e.touches[0];
+                const elementOver = document.elementFromPoint(touch.clientX, touch.clientY);
+                const columnOver = elementOver ? elementOver.closest('.kanban-column') : null;
+                if (columnOver) {
+                    const cardsContainer = columnOver.querySelector('.kanban-cards');
+                    cardsContainer.appendChild(draggedCard.closest('.kanban-card-wrapper'));
+                }
+            }, { passive: false });
+            
+            board.addEventListener('touchend', e => {
+                if (dragTimer) {
+                    clearTimeout(dragTimer);
+                    dragTimer = null;
+                }
+                
+                if (!isDragging || !draggedCard) return;
+
+                isDragging = false;
+                draggedCard.style.opacity = '';
+
+                const column = draggedCard.closest('.kanban-column');
+                if (column) {
+                    const newStatus = column.dataset.status;
+                    const page = draggedCard.dataset.taskPage;
+                    const pos = parseInt(draggedCard.dataset.taskPos, 10);
+                    
+                    let range = null;
+                    try {
+                        const data = JSON.parse(draggedCard.dataset.taskJson);
+                        range = data.range;
+                    } catch(err) { console.log("No range found"); }
+
+                    const allColumns = Array.from(board.querySelectorAll('.kanban-column'));
+                    const isLastColumn = allColumns.indexOf(column) === allColumns.length - 1;
+                    const toggleState = isLastColumn ? "checked" : "unchecked";
+                    
+                    if (page && !isNaN(pos) && newStatus && range) {
+                        window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
+                            detail: {
+                                action: "move",
+                                page: page,
+                                pos: pos,
+                                range: range,
+                                statusKey: statusKey,
+                                newStatus: newStatus,
+                                toggleState: toggleState
+                            }
+                        }));
+                    }
+                }
+                draggedCard = null;
+            });
+            // MODIFICATION END
 
             // MODIFICATION START: On load, sync cards whose markdown checkbox state does not
             // match the column they are currently rendered in. Two directions are handled:
