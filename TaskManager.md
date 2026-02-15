@@ -396,6 +396,11 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
 ```space-lua
 -- priority: -1
 
+-- ------------- Helper: Escape Magic Characters for Lua Patterns -------------
+local function escapeLuaPattern(s)
+    return s:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?])", "%%%1")
+end
+
 -- ------------- Load Config & Default Values -------------
 local cfg = config.get("taskManager") or {}
 local open = cfg.open or "☐"
@@ -433,60 +438,94 @@ local function toggleTaskRemote(pageName, pos, currentState, queryText)
 
     js.window.setTimeout(function()  
         codeWidget.refreshAll()  
-    end, 200) 
+    end, 500) 
 end
 
--- ------------- Update Task Attributes Function -------------
-local function updateTaskRemote(pageName, pos, finalState, newText, attributes)
+-- ------------- Update Task Attributes Function (Updated for AST/Multi-line) -------------
+local function updateTaskRemote(pageName, pos, range, originalName, finalState, newText, attributes)
     local content = space.readPage(pageName)
     if not content then return end
 
-    local lineEnd = content:find("\n", pos + 1) or (#content + 1)
-    local originalLine = content:sub(pos + 1, lineEnd - 1)
-    
-    local indent, bullet = originalLine:match("^(%s*)([%*%-]?)")
-    indent = indent or ""
-    bullet = bullet or "*"
-    if bullet == "" then bullet = "*" end
+    -- Use the AST Range to get the EXACT block of this task, preserving newlines
+    local blockStart = pos + 1
+    local blockLen = range[2] - range[1]
+    local taskBlock = content:sub(blockStart, blockStart + blockLen - 1)
 
-    -- Use the state passed from the modal
+    -- 1. Update State (Checkbox)
     local stateMark = "[ ]"
-    if finalState == "x" or finalState == "X" then 
-        stateMark = "[x]" 
+    if finalState == "x" or finalState == "X" then stateMark = "[x]" end
+
+    -- If the block has no task marker yet (new task being created from a plain line),
+    -- prepend one instead of trying to replace a non-existent checkbox.
+    -- Build the line directly from newText so step 2 has nothing left to replace.
+    if not taskBlock:find("^%s*[%*%-]%s*%[") then
+        taskBlock = "* " .. stateMark .. " " .. (newText or taskBlock)
+        newText = originalName
+    else
+        taskBlock = taskBlock:gsub("^(%s*[%*%-]%s*)%[[ xX]?%]", "%1" .. stateMark, 1)
     end
 
-    -- Logic for auto-timestamping "completed" attribute
-    local hasCompleted = false
-    local timestamp = os.date("%Y-%m-%d %H:%M")
-    
-    local attrString = ""
+    -- 2. Update Description (Name)
+    -- Use string.find with plain=true for a literal search, which is safer than using gsub with a pattern.
+    -- This avoids issues with special characters in the task name.
+    if originalName and newText and originalName ~= newText then
+        local start, finish = string.find(taskBlock, originalName, 1, true)
+        if start then
+            taskBlock = taskBlock:sub(1, start - 1) .. newText .. taskBlock:sub(finish + 1)
+        end
+    end
+
+    -- 3. Update Attributes (In-Place or Append)
     for _, attr in ipairs(attributes) do
-        local key = attr.key:lower()
-        -- Skip existing completed tags if we are in 'x' state (we'll re-add/refresh it)
-        -- Or skip it if we are in ' ' state (we want to remove it)
-        if key ~= "completed" then
-            if attr.value and attr.value ~= "" then
-                attrString = attrString .. " [" .. attr.key .. ": " .. attr.value .. "]"
+        local key = attr.key
+        local val = tostring(attr.value or "")
+
+        -- Strip existing quotes to avoid double-wrapping, then re-wrap in ""
+        if val:sub(1, 1) == '"' and val:sub(-1, -1) == '"' then
+            val = val:sub(2, -2)
+        end
+        local quotedVal = '"' .. val .. '"'
+
+        if key and key ~= "" then
+            -- Regex to find [key: value] regardless of where it is (line 1, 2, or 99)
+            local attrPattern = "(%[" .. escapeLuaPattern(key) .. "%s*:%s*.-%])"
+            
+            if taskBlock:find(attrPattern) then
+                -- Attribute exists, replace it in place with quoted value
+                taskBlock = taskBlock:gsub(attrPattern, "[" .. key .. ": " .. quotedVal .. "]")
+            else
+                -- Attribute does not exist, append to end of block with quoted value
+                taskBlock = taskBlock .. " [" .. key .. ": " .. quotedVal .. "]"
             end
         end
     end
+
+    -- 4. Handle "completed" timestamp special logic
+    local timestamp = os.date("%Y-%m-%d %H:%M")
+    local completedPattern = "(%[completed%s*:%s*.-%])"
     
-    -- If state is checked, append the current completion timestamp
     if finalState == "x" or finalState == "X" then
-        attrString = attrString .. " [completed: " .. timestamp .. "]"
+        if not taskBlock:find(completedPattern) then
+            -- Wrap completion timestamp in quotes
+            taskBlock = taskBlock .. ' [completed: "' .. timestamp .. '"]'
+        end
+    else
+        -- Task is NOT done. Remove completed tag if it exists anywhere in the block.
+        if taskBlock:find(completedPattern) then
+            taskBlock = taskBlock:gsub(completedPattern, "")
+        end
     end
 
-    local newLine = indent .. bullet .. " " .. stateMark .. " " .. newText .. attrString
-
-    local prefix = content:sub(1, pos)
-    local suffix = content:sub(lineEnd)
+    -- Write back
+    local prefix = content:sub(1, blockStart - 1)
+    local suffix = content:sub(blockStart + blockLen)
     
-    local finalContent = prefix .. newLine .. suffix
+    local finalContent = prefix .. taskBlock .. suffix
     space.writePage(pageName, finalContent)
 
     js.window.setTimeout(function()  
         codeWidget.refreshAll()  
-    end, 200)
+    end, 500)
 end
 
 -- ------------- Task Editor Modal (JS Bridge) -------------
@@ -496,22 +535,54 @@ local function openTaskEditor(taskData, extraCols)
     local existing = js.window.document.getElementById("sb-taskeditor")
     if existing then existing.remove() end
 
-    local fields = {}
-    for _, col in ipairs(extraCols) do
-        local key = col[2]
-        if key ~= "completed" then -- We handle completed automatically now
-            local label = col[1] or key or "Unknown"
-            local val = taskData[key]
-            
-            if val == nil then val = "" end
-            if type(val) == "table" then val = "" end 
-            
-            table.insert(fields, {
-                label = tostring(label),
-                key = tostring(key),
-                type = col[3] or "string",
-                value = tostring(val)
-            })
+    -- List of meta-keys that are not custom attributes
+    local ignoredKeys = {
+      ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
+      toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
+      ilinks = true, _isNewTask = true
+    }
+
+    -- Backwards compatibility: construct range from pos/toPos if range is missing
+    if not taskData.range and taskData.pos and taskData.toPos then
+        taskData.range = { taskData.pos, taskData.toPos }
+    end
+
+    -- Read full raw name from source (including hashtags, wikilinks, etc.)
+    local fullName = taskData.text or taskData.name or ""
+
+    local content = space.readPage(taskData.page)
+    if content and taskData.pos and taskData.range then
+        local blockStart = taskData.pos + 1
+        local blockLen = taskData.range[2] - taskData.range[1]
+
+        if blockStart > 0 and blockLen > 0 and blockStart + blockLen - 1 <= #content then
+            local taskBlock = content:sub(blockStart, blockStart + blockLen - 1)
+
+            -- Find the starting position of the first attribute (e.g., [due: ...]) in the raw text
+            -- by checking for all known attribute keys from the parsed taskData.
+            local first_attr_pos = -1
+            for key, _ in pairs(taskData) do
+                if not ignoredKeys[key] then
+                    local pattern = "%[" .. escapeLuaPattern(key) .. "%s*:"
+                    local p = taskBlock:find(pattern)
+                    if p and (first_attr_pos == -1 or p < first_attr_pos) then
+                        first_attr_pos = p
+                    end
+                end
+            end
+
+            -- The name is everything before the first attribute.
+            local name_part
+            if first_attr_pos > -1 then
+                name_part = taskBlock:sub(1, first_attr_pos - 1)
+            else
+                name_part = taskBlock -- No attributes found
+            end
+
+            local extractedName = name_part:match("^%s*[%*%-]%s*%[ ?[xX]? ?%]%s*(.*)")
+            if extractedName then
+               fullName = extractedName:match("^%s*(.-)%s*$") -- trim whitespace
+            end
         end
     end
 
@@ -519,7 +590,9 @@ local function openTaskEditor(taskData, extraCols)
         if e.detail.session == sessionID then
             updateTaskRemote(
                 taskData.page, 
-                taskData.pos, 
+                taskData.pos,
+                taskData.range,
+                fullName,
                 e.detail.state, 
                 e.detail.text, 
                 e.detail.attributes
@@ -529,31 +602,40 @@ local function openTaskEditor(taskData, extraCols)
     end
     js.window.addEventListener("sb-save-task", uniqueHandler)
 
-    local fieldsJSON = "[]"
-    if #fields > 0 then
-        local parts = {}
-        for _, f in ipairs(fields) do
-            local safeLabel = string.gsub(tostring(f.label), '"', '\\"')
-            local safeKey = string.gsub(tostring(f.key), '"', '\\"')
-            local safeVal = string.gsub(tostring(f.value), '"', '\\"')
-            safeVal = string.gsub(safeVal, '\n', ' ')
+    -- Build fields from existing task attributes
+    local existingFields = {}
+    for key, value in pairs(taskData) do
+        if not ignoredKeys[key] then
+            if type(value) ~= "table" then
+                table.insert(existingFields, {
+                    key = tostring(key),
+                    value = tostring(value)
+                })
+            end
+        end
+    end
 
-            table.insert(parts, string.format(
-                [[{ "label": "%s", "key": "%s", "type": "%s", "value": "%s" }]], 
-                safeLabel, 
-                safeKey, 
-                f.type, 
-                safeVal
-            ))
+    local fieldsJSON = "[]"
+    if #existingFields > 0 then
+        local parts = {}
+        for _, f in ipairs(existingFields) do
+            if f.key:lower() ~= "completed" then
+                local safeLabel = string.gsub(tostring(f.key), '"', '\\"')
+                local safeKey = string.gsub(tostring(f.key), '"', '\\"')
+                local safeVal = string.gsub(tostring(f.value), '"', '\\"')
+                safeVal = string.gsub(safeVal, '\n', ' ')
+                table.insert(parts, string.format(
+                    [[{ "label": "%s", "key": "%s", "type": "string", "value": "%s" }]], 
+                    safeLabel, safeKey, safeVal
+                ))
+            end
         end
         fieldsJSON = "[" .. table.concat(parts, ",") .. "]"
     end
 
     -- FIX: Use raw text and strip attributes to preserve tags like #tag
-    local rawText = taskData.text or taskData.name or ""
-    local cleanDescription = rawText:gsub("%s*%[[^%]]+%]", "")
-    cleanDescription = cleanDescription:match("^%s*(.-)%s*$") or ""
-    local taskNameSafe = string.gsub(tostring(cleanDescription), '"', '\\"')
+    -- (fullName already contains the clean name without attributes)
+    local taskNameSafe = string.gsub(tostring(fullName or ""), '"', '\\"')
     taskNameSafe = string.gsub(taskNameSafe, '\n', ' ')
     local isChecked = (taskData.state == "x" or taskData.state == "X") and "checked" or ""
 
@@ -641,8 +723,17 @@ local function openTaskEditor(taskData, extraCols)
                  input.type = 'date';
                  input.value = formatForInput(val, 'date');
             } else {
-                 input.type = 'text';
-                 input.value = val;
+                 // Auto-detect type from value format when no explicit type hint is given
+                 if (val && val.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)) {
+                     input.type = 'datetime-local';
+                     input.value = formatForInput(val, 'datetime-local');
+                 } else if (val && val.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                     input.type = 'date';
+                     input.value = formatForInput(val, 'date');
+                 } else {
+                     input.type = 'text';
+                     input.value = val;
+                 }
             }
             group.appendChild(lbl);
             group.appendChild(input);
@@ -847,7 +938,7 @@ end
 
                     local cells = {
                         dom.td {
-                                  widgets.button(editTask,function() openTaskEditor(t, extraCols) end,
+                                  widgets.button(editTask,function() openTaskEditor(t) end,
                                   { class = "btn-edit-task", title = "Edit Attributes" }), 
                                   widgets.button(isDone and done or open,
                                   function() toggleTaskRemote(t.page, t.pos, t.state, t.text) end,
@@ -944,11 +1035,63 @@ local function openInlineTaskEditor(taskData, existingFields)
     local existing = js.window.document.getElementById("sb-taskeditor")
     if existing then existing.remove() end
 
+    -- List of meta-keys that are not custom attributes
+    local ignoredKeys = {
+      ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
+      toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
+      ilinks = true, _isNewTask = true
+    }
+
+    -- Backwards compatibility: construct range from pos/toPos if range is missing
+    if not taskData.range and taskData.pos and taskData.toPos then
+        taskData.range = { taskData.pos, taskData.toPos }
+    end
+
+    -- Read full raw name from source (including hashtags, wikilinks, etc.)
+    local fullName = taskData.name or ""
+
+    local content = space.readPage(taskData.page)
+    if content and taskData.pos and taskData.range then
+        local blockStart = taskData.pos + 1
+        local blockLen = taskData.range[2] - taskData.range[1]
+
+        if blockStart > 0 and blockLen > 0 and blockStart + blockLen - 1 <= #content then
+            local taskBlock = content:sub(blockStart, blockStart + blockLen - 1)
+
+            -- Find the starting position of the first attribute in the raw text
+            -- by checking for all known attribute keys embedded in taskData.
+            local first_attr_pos = -1
+            for key, _ in pairs(taskData) do
+                if not ignoredKeys[key] then
+                    local pattern = "%[" .. escapeLuaPattern(key) .. "%s*:"
+                    local p = taskBlock:find(pattern)
+                    if p and (first_attr_pos == -1 or p < first_attr_pos) then
+                        first_attr_pos = p
+                    end
+                end
+            end
+
+            local name_part
+            if first_attr_pos > -1 then
+                name_part = taskBlock:sub(1, first_attr_pos - 1)
+            else
+                name_part = taskBlock -- No attributes found
+            end
+
+            local extractedName = name_part:match("^%s*[%*%-]%s*%[ ?[xX]? ?%]%s*(.*)")
+            if extractedName then
+               fullName = extractedName:match("^%s*(.-)%s*$") -- trim whitespace
+            end
+        end
+    end
+
     local function uniqueHandler(e)
         if e.detail.session == sessionID then
             updateTaskRemote(
                 taskData.page, 
-                taskData.pos, 
+                taskData.pos,
+                taskData.range,
+                fullName,
                 e.detail.state, 
                 e.detail.text, 
                 e.detail.attributes
@@ -958,8 +1101,26 @@ local function openInlineTaskEditor(taskData, existingFields)
     end
     js.window.addEventListener("sb-save-task", uniqueHandler)
 
+    -- Build fields: first try from taskData attributes (embedded by inlineEditTask),
+    -- then fall back to existingFields (from regex parsing) if taskData has none.
+    local attributeFields = {}
+    for key, value in pairs(taskData) do
+        if not ignoredKeys[key] then
+            if type(value) ~= "table" then
+                table.insert(attributeFields, {
+                    key = tostring(key),
+                    value = tostring(value)
+                })
+            end
+        end
+    end
+
+    if #attributeFields == 0 and existingFields and #existingFields > 0 then
+        attributeFields = existingFields
+    end
+
     local parts = {}
-    for _, f in ipairs(existingFields) do
+    for _, f in ipairs(attributeFields) do
         -- Skip 'completed' from being rendered in dynamic list as we manage it via checkbox
         if f.key:lower() ~= "completed" then
             local safeLabel = string.gsub(tostring(f.key), '"', '\\"')
@@ -974,9 +1135,11 @@ local function openInlineTaskEditor(taskData, existingFields)
     end
     local fieldsJSON = "[" .. table.concat(parts, ",") .. "]"
 
-    local taskNameSafe = string.gsub(tostring(taskData.name or ""), '"', '\\"')
+    local taskNameSafe = string.gsub(tostring(fullName or ""), '"', '\\"')
     taskNameSafe = string.gsub(taskNameSafe, '\n', ' ')
     local isChecked = (taskData.state == "x" or taskData.state == "X") and "checked" or ""
+
+    local modalHeader = taskData._isNewTask and "New Task" or "Inline Task Editor"
 
     local container = js.window.document.createElement("div")
     container.id = "sb-taskeditor"
@@ -985,7 +1148,7 @@ local function openInlineTaskEditor(taskData, existingFields)
     
     </style>
     <div class="te-card" id="te-card-inner">
-      <div class="te-header">Inline Task Editor</div>
+      <div class="te-header">]] .. modalHeader .. [[</div>
       
       <div class="te-row">
         <input type="checkbox" id="te-status-checkbox" class="te-checkbox" ]] .. isChecked .. [[>
@@ -1061,8 +1224,17 @@ local function openInlineTaskEditor(taskData, existingFields)
                  input.type = 'date';
                  input.value = formatForInput(val, 'date');
             } else {
-                 input.type = 'text';
-                 input.value = val;
+                 // Auto-detect type from value format
+                 if(val && val.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)) {
+                     input.type = 'datetime-local';
+                     input.value = formatForInput(val, 'datetime-local');
+                 } else if(val && val.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                     input.type = 'date';
+                     input.value = formatForInput(val, 'date');
+                 } else {
+                     input.type = 'text';
+                     input.value = val;
+                 }
             }
             group.appendChild(label);
             group.appendChild(input);
@@ -1070,10 +1242,7 @@ local function openInlineTaskEditor(taskData, existingFields)
         };
 
         fields.forEach(f => {
-            let type = "string";
-            if(f.value.match(/^\d{4}-\d{2}-\d{2}$/)) type = "date";
-            if(f.value.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)) type = "datetime";
-            createFieldInput(f.key, f.value, type);
+            createFieldInput(f.key, f.value, f.type || "string");
         });
 
         const newKeyInp = document.getElementById('te-new-key');
@@ -1149,6 +1318,34 @@ end
 
 
 local function inlineEditTask()
+    local cursor = editor.getCursor()
+    local currentPage = editor.getCurrentPage()
+
+    -- Query all tasks from the index to get AST data (including multi-line range).
+    -- Filter to the current page and find the task whose range contains the cursor.
+    local foundTask = nil
+    for t in query[[from index.tag "task"]] do
+        if t.page == currentPage then
+            -- Backwards compatibility: construct range from pos/toPos if range is missing
+            if not t.range and t.pos and t.toPos then
+                t.range = { t.pos, t.toPos }
+            end
+            -- Check if the cursor sits inside this task's range
+            if t.range and t.pos <= cursor and t.range[2] >= cursor then
+                foundTask = t
+                break
+            end
+        end
+    end
+
+    if foundTask then
+        -- Found via AST index — open with full multi-line range
+        openInlineTaskEditor(foundTask, {})
+        return
+    end
+
+    -- Fallback: cursor is not on an indexed task (e.g. unsaved page, plain line).
+    -- Parse the current line manually so the editor still opens.
     local line = editor.getCurrentLine()
     local lineContent = line.text
 
@@ -1156,11 +1353,14 @@ local function inlineEditTask()
       lineContent:match("^(%s*[%-%*])%s*%[([ xX])%](.*)")
 
     if not prefix then
+      -- Not a task line at all — open editor to create a new task in place.
       openInlineTaskEditor({
         name = lineContent:match("^%s*(.-)%s*$") or "",
         state = " ",
-        page = editor.getCurrentPage(),
-        pos = line.from
+        page = currentPage,
+        pos = line.from,
+        range = {line.from, line.to},
+        _isNewTask = true
       }, {})
       return
     end
@@ -1180,23 +1380,30 @@ local function inlineEditTask()
     cleanText = cleanText:gsub("%s*%[[^%]]+%]", "")
     cleanText = cleanText:match("^%s*(.-)%s*$") or ""
 
-    openInlineTaskEditor({
+    -- Embed parsed attributes into taskData so openInlineTaskEditor can
+    -- locate first_attr_pos in the raw source for full name extraction.
+    local taskData = {
       name = cleanText,
       state = state,
-      page = editor.getCurrentPage(),
-      pos = line.from
-    }, attributes)
+      page = currentPage,
+      pos = line.from,
+      range = {line.from, line.to}
+    }
+    for _, attr in ipairs(attributes) do
+      taskData[attr.key] = attr.value
+    end
+
+    openInlineTaskEditor(taskData, attributes)
   end
 
 
 command.define {
   name = "Task Editor: Inline",
   key = "Alt-Shift-e",
+  mac = "Alt-Cmd-e",
   run = function() inlineEditTask() end
 }
 ```
 
-
 ## Discussion to this Library
 - [Silverbullet Community](https://community.silverbullet.md/t/todo-task-manager-global-interactive-table-sorter-filtering/3767?u=mr.red)
-
