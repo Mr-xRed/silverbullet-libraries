@@ -23,6 +23,8 @@ pageDecoration.prefix: "🛠️ "
 
 -- Table Sorting is enabled by default. To disable it and use only the comands use following config
 config.set("tableSort", { enabled = false })
+-- to disable it us: 
+config.set("multilineTables", { enabled = false })
 
 ```
 
@@ -745,7 +747,96 @@ else
     cleanupSorter()
     return
 end
+
+
+
+
+-- -------------------------------------
+-- Adding Multiline support inside cells
+-- -------------------------------------
+-- to disable it us: config.set("multilineTables.enabled", false)
+
+
+function enableMultilineTables()
+    local scriptId = "sb-multiline-tables-runtime"
+    local existing = js.window.document.getElementById(scriptId)
+    
+    if existing then 
+        return 
+    end
+
+    local scriptEl = js.window.document.createElement("script")
+    scriptEl.id = scriptId
+    scriptEl.innerHTML = [[
+    (function() {
+        function processTable(table) {
+            if (table.dataset.multilineProcessed) return;
+            
+            const cells = table.querySelectorAll('td, th');
+            cells.forEach(cell => {
+                const raw = cell.innerHTML;
+                if (raw.includes('&lt;br&gt;') || 
+                    raw.includes('&lt;br/&gt;') || 
+                    raw.includes('<br>') ||
+                    raw.includes('\\n')) {
+                    
+                    let content = raw;
+                    // Replace escaped or literal <br> tags
+                    content = content.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+                    // Replace literal \n strings
+                    content = content.replace(/\\n/g, '<br>');
+                    
+                    cell.innerHTML = content;
+                }
+            });
+            table.dataset.multilineProcessed = "true";
+        }
+
+        document.querySelectorAll("table").forEach(processTable);
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach(mutation => {
+                if (mutation.addedNodes.length) {
+                    document.querySelectorAll("table").forEach(processTable);
+                }
+            });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        window.addEventListener("sb-multiline-cleanup", function cleanup() {
+            observer.disconnect();
+            document.querySelectorAll("table").forEach(t => delete t.dataset.multilineProcessed);
+            window.removeEventListener("sb-multiline-cleanup", cleanup);
+        });
+    })();
+    ]]
+    js.window.document.body.appendChild(scriptEl)
+end
+
+function disableMultilineTables()
+    local event = js.window.document.createEvent("Event")
+    event.initEvent("sb-multiline-cleanup", true, true)
+    js.window.dispatchEvent(event)
+    
+    local scriptId = "sb-multiline-tables-runtime"
+    local existing = js.window.document.getElementById(scriptId)
+    if existing then
+        existing.remove()
+    end
+end
+
+local multilineEnabled = config.get("multilineTables.enabled")
+
+if multilineEnabled == nil then multilineEnabled = true end
+if multilineEnabled then enableMultilineTables() end
+
+command.define { name = "Table: Enable Multiline", run = function() enableMultilineTables() end }
+command.define { name = "Table: Disable Multiline", run = function() disableMultilineTables() end }
+
 ```
+
+
 
 
 ## Discussion to this Library
