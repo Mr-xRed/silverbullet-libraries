@@ -243,6 +243,34 @@ function enableTableSorter()
         `;
         document.head.appendChild(style);
 
+        // Fix: flag to tell the document click handler to skip one closing cycle
+        // when a filter menu was just opened via mousedown (desktop: mousedown fires
+        // first and opens the menu, then the browser fires click which would close it)
+        let _skipNextDocClick = false;
+
+        // Fix: document-level capture-phase guard for markdown tables only.
+        // SilverBullet/CM6 registers its edit-mode trigger with a capture listener
+        // higher in the DOM, so bubble-phase stopPropagation on the widget is too late.
+        // By capturing at document level we sit above CM in the event chain and can
+        // intercept mouseup and click before CM ever sees them — but only for our
+        // interactive elements inside markdown widgets (not lua/query widgets).
+        const _mdTableEventGuard = (e) => {
+            if (e.button !== undefined && e.button !== 0) return;
+            const target = e.target;
+            if (!target.closest('.sortable-header') && !target.closest('.filter-container') && !target.closest('.global-reset-btn')) return;
+            const widget = target.closest('.sb-table-widget');
+            if (!widget) return;
+            if (widget.closest('.sb-lua-directive-block')) return;
+            // If consuming a click event, reset the skip flag so the menu-close
+            // handler isn't left in a permanently-skipped state
+            if (e.type === 'click') { _skipNextDocClick = false; }
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        };
+        document.addEventListener('mouseup', _mdTableEventGuard, true);
+        document.addEventListener('click', _mdTableEventGuard, true);
+
         // Helper to find a stable ID for a table based on its position
         function getTableKey(table) {
             if (table.id) return table.id;
@@ -307,9 +335,18 @@ function enableTableSorter()
                         e.stopPropagation();
                         document.querySelectorAll('.custom-dropdown-menu').forEach(m => m !== menu && m.classList.remove('show'));
                         menu.classList.toggle('show');
+                        // Fix: if the menu just became visible, tell the document click
+                        // handler (which fires right after this mousedown on desktop) to
+                        // skip its closing cycle so the menu stays open
+                        if (menu.classList.contains('show')) {
+                            _skipNextDocClick = true;
+                        }
                     };
                     container.onmousedown = filterInteractionHandler;
                     container.ontouchstart = filterInteractionHandler;
+                    // Fix: prevent mouseup from reaching CodeMirror, which watches mouseup
+                    // to activate edit mode when a click is completed inside its DOM
+                    container.onmouseup = (e) => { e.preventDefault(); e.stopPropagation(); };
                 }
 
                 const uniqueValues = new Set();
@@ -535,6 +572,9 @@ function enableTableSorter()
                 };
                 btn.onmousedown = resetHandler;
                 btn.ontouchstart = resetHandler;
+                // Fix: prevent mouseup from reaching CodeMirror, which watches mouseup
+                // to activate edit mode when a click is completed inside its DOM
+                btn.onmouseup = (e) => { e.preventDefault(); e.stopPropagation(); };
                 bar.appendChild(btn);
             });
 
@@ -548,6 +588,12 @@ function enableTableSorter()
 
                 const table = widget.querySelector('table');
                 if (!table) return;
+
+                // Fix: intercept mouseup at the widget wrapper level for markdown tables only.
+                // CM lives above this widget in the DOM and watches mouseup to activate
+                // edit mode; stopping it here prevents that without affecting query/widget tables.
+                widget._mouseupGuard = (e) => { e.preventDefault(); e.stopPropagation(); };
+                widget.addEventListener('mouseup', widget._mouseupGuard);
 
                 const bar = document.createElement('div');
                 bar.className = 'button-bar';
@@ -566,6 +612,9 @@ function enableTableSorter()
                 };
                 btn.onmousedown = resetHandler;
                 btn.ontouchstart = resetHandler;
+                // Fix: prevent mouseup from reaching CodeMirror, which watches mouseup
+                // to activate edit mode when a click is completed inside its DOM
+                btn.onmouseup = (e) => { e.preventDefault(); e.stopPropagation(); };
                 
                 bar.appendChild(btn);
                 
@@ -612,6 +661,10 @@ function enableTableSorter()
                 };
                 cell.addEventListener('mousedown', cell._sortHandler);
                 cell.addEventListener('touchstart', cell._sortHandler);
+                // Fix: prevent mouseup from reaching CodeMirror, which watches mouseup
+                // to activate edit mode when a click is completed inside its DOM
+                cell._sortUpHandler = (e) => { e.preventDefault(); e.stopPropagation(); };
+                cell.addEventListener('mouseup', cell._sortUpHandler);
 
                 if (savedSort && savedSort.index === idx) {
                     cell.classList.add(savedSort.asc ? "sort-asc" : "sort-desc");
@@ -622,7 +675,10 @@ function enableTableSorter()
             injectResetButton();
         }
 
+        // Fix: check the flag before closing menus — if a filter was just opened via
+        // mousedown, skip this one click cycle so the menu stays visible on desktop
         document.addEventListener('click', () => {
+            if (_skipNextDocClick) { _skipNextDocClick = false; return; }
             document.querySelectorAll('.custom-dropdown-menu').forEach(m => m.classList.remove('show'));
         });
 
@@ -645,6 +701,7 @@ function enableTableSorter()
                 c.removeEventListener('click', c._sortHandler);
                 c.removeEventListener('mousedown', c._sortHandler);
                 c.removeEventListener('touchstart', c._sortHandler);
+                c.removeEventListener('mouseup', c._sortUpHandler);
                 c.classList.remove("sortable-header", "sort-asc", "sort-desc");
                 c.querySelector(".sort-indicator-wrapper")?.remove();
                 c.querySelector(".filter-container")?.remove();
@@ -652,6 +709,16 @@ function enableTableSorter()
             document.querySelectorAll(".global-reset-btn").forEach(b => b.remove());
             // Cleanup generated button bars for markdown tables
             document.querySelectorAll(".button-bar[data-generated='true']").forEach(b => b.remove());
+            // Cleanup widget-level mouseup guards added to markdown table wrappers
+            document.querySelectorAll('.sb-table-widget').forEach(w => {
+                if (w._mouseupGuard) {
+                    w.removeEventListener('mouseup', w._mouseupGuard);
+                    delete w._mouseupGuard;
+                }
+            });
+            // Cleanup document-level capture guards for markdown table edit-mode prevention
+            document.removeEventListener('mouseup', _mdTableEventGuard, true);
+            document.removeEventListener('click', _mdTableEventGuard, true);
 
             document.querySelectorAll("tbody tr").forEach(r => r.style.display = "");
             document.querySelectorAll("table").forEach(t => {

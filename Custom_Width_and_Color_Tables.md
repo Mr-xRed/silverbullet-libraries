@@ -92,23 +92,27 @@ Use it Like this:
 
 ### Color Themes
 ```space-style
+
 /*   Adds a rounded corner to the tables   */
 .sb-table-widget:has(table),
 .sb-lua-directive-block:has(table) {
   border-radius: 15px !important;
   border: 2px solid rgba(0,0,0,0.5);
- /* overflow: hidden;*/
   box-shadow: 0 1px 6px oklch(20% 0 250 / 0.5),
               0 6px 12px oklch(20% 0 250 / 0.4);
 }
 
-/*
-tbody tr:hover td {
-        font-weight: 900;
-        transition: transform 0.5s ease;
+#sb-main .cm-editor .sb-table-widget table {
+    border-radius: inherit;
+    overflow: hidden;
 }
-*/
-table {}
+
+#sb-main .cm-editor .sb-markdown-widget .content,
+#sb-main .cm-editor .sb-lua-directive-block .content,
+#sb-main .cm-editor .sb-lua-directive-inline .content {
+      border-radius: 14px;
+}
+
 
 /* Hide specific colour tags inside tables */
 
