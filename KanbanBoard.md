@@ -18,14 +18,28 @@ This widget creates a customisable Kanban board to visualize and manage tasks fr
 
 ## How it Works
 
-The Kanban board works by querying tasks and organising them into columns based on a specific attribute, typically `status`. You can define the columns and their corresponding status values in the widget's parameters.
+The Kanban board works by querying tasks and organising them into columns based on a specific attribute, typically `status`
+You can define the columns and their corresponding status values in the widget's parameters.
 
-**Features:**
-- **Customizable Columns:** Define your own workflow stages.
-- **Drag and Drop:** Move tasks between columns to update their status.
-- **Priority Ranking:** Tasks can be ranked within columns.
-- **Quick Edit:** Edit task details directly from the board.
-- **Modern UI:** A clean and responsive interface.
+### ✨ Features
+
+- **Customisable columns** — define your own workflow stages with labels, emoji, and optional accent colours per column
+- **Drag & drop** — move cards between columns; status attribute and checkbox state update automatically in the source markdown
+- **Bidirectional markdown sync** — tick `[x]` directly in the markdown and the card moves to the done column on the next widget load; uncheck it and it moves back
+- **Quick Edit modal** — edit task name, any attribute, and completion state without leaving the board
+- **Custom card fields** — choose which task attributes are shown on each card
+- **HideKeys** — display an attribute value without showing its label (handy for IDs or long text)
+- **Filter & sort controls** — live filter across all columns, sort by any attribute ascending or descending
+- **WikiLink & hashtag support** — both are parsed correctly in card titles and are preserved when you edit through the modal
+- **Mobile-friendly** — columns hold their minimum width and the board scrolls horizontally on narrow screens instead of squishing
+
+
+### 🚫 Known Limitations
+
+- **Emoji-style date attributes** (e.g. `📅 2026-04-02`) are not supported and are not planned
+- After **System: Reload**, if a Kanban Board widget is on the page, also reload the page itself (`Client: Reload UI`, `Ctrl+R`, or `F5`)
+- Manual markdown edits to a task require a widget refresh to appear on the board
+- Attribute values are always wrapped in double quotes - this is intentional, not a bug
 
 ## Setup and Configuration
 
@@ -89,15 +103,6 @@ ${KanbanBoard(
     {"HideKeys", {"taskID", "tags"}}
   }
 )}
-
-## Known issues and bugs:
-- **✅ FIXED** - ~~if the task completed in the modal window or in the markdown `[x]` it wont update the `status` attribute~~
-- **✅ FIXED** - ~~if the status is edited to “done” it won’t complete the task, it only moves the task to the done column~~
-- **✅ FIXED** - ~~No support when you have a [[WikiLink]] in your tasks~~
-- **✅ FIXED** - ~~Tags(`#tag`) can be added to the name, but they cannot be edited in the name~~
-- 🚫 emoji attributes `📅2026-04-02` for due dates or similars are not supported, and not planned for future relases either
-- and some more undocumented ones: 🪲🪳🕷️🦟
-
 
 # Implementation
 
