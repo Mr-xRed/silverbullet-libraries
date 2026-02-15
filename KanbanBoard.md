@@ -3,32 +3,22 @@ name: "Library/Mr-xRed/KanbanBoard"
 tags: meta/library
 pageDecoration.prefix: "✅ "
 ---
-  
-> **warning** Caution - BETA PREVIEW!
->  THIS IS STILL WORK IN PROGRESS! DON’T USE IT ON YOUR PRODUCTION TASKS, IT COULD MESS THEM UP!
 
-# Kanban Board (WORK IN PROGRESS)
+# Kanban Board
 
-This widget creates a customizable Kanban board to visualize and manage tasks from your notes.
-
-## Known issues and bugs:
-- **✅ FIXED** - ~~if the task completed in the modal window or in the markdown `[x]` it wont update the `status` attribute~~
-- **✅ FIXED** - ~~if the status is edited to “done” it won’t complete the task, it only moves the task to the done column~~
-- **✅ FIXED** - ~~No support when you have a [[WikiLink]] in your tasks~~
-- **✅ FIXED** - ~~Tags(`#tag`) can be added to the name, but they cannot be edited in the name~~
-- 🚫 emoji attributes `📅2026-04-02` for due dates or similars are not supported, and not planned for future relases either
-- and some more undocumented ones: 🪲🪳🕷️🦟
-
+This widget creates a customisable Kanban board to visualize and manage tasks from your notes.
 
 > **warning** Important
->   - IMPORTANT!!! - After `System: Reload` and if a KanbanBoard Widget is on your Page make sure to also Reload the page (`Client: Reload UI` or `Ctrl-R` or `F5`)
->   -  Make sure to Refresh the widget if you manually modified the markdown task.
->   -  If you manually update the task in the markdown make sure to reload the widget for the changes to take effect.
->   -  To work properly the attribute values WILL be wrapped in `""` for safer handling strings, and consistency, even if it’s not always necessary. This is not a bug just a heads-up.
+>   * After **System: Reload**, if a Kanban Board widget is present on the page, also reload the page itself
+>     (`Client: Reload UI`, `Ctrl + R`, or `F5`).
+>   * If you manually edit a task in the markdown, you **must refresh the widget** for changes to appear.
+>   * Widget updates are not automatic. Any manual markdown change requires a widget reload.   
+>   * Attribute values are always wrapped in double quotes `""` for safety and consistency, even when technically optional.
+>     This is expected behaviour, not a bug.
 
 ## How it Works
 
-The Kanban board works by querying tasks and organizing them into columns based on a specific attribute, typically `status`. You can define the columns and their corresponding status values in the widget's parameters.
+The Kanban board works by querying tasks and organising them into columns based on a specific attribute, typically `status`. You can define the columns and their corresponding status values in the widget's parameters.
 
 **Features:**
 - **Customizable Columns:** Define your own workflow stages.
@@ -100,25 +90,43 @@ ${KanbanBoard(
   }
 )}
 
+## Known issues and bugs:
+- **✅ FIXED** - ~~if the task completed in the modal window or in the markdown `[x]` it wont update the `status` attribute~~
+- **✅ FIXED** - ~~if the status is edited to “done” it won’t complete the task, it only moves the task to the done column~~
+- **✅ FIXED** - ~~No support when you have a [[WikiLink]] in your tasks~~
+- **✅ FIXED** - ~~Tags(`#tag`) can be added to the name, but they cannot be edited in the name~~
+- 🚫 emoji attributes `📅2026-04-02` for due dates or similars are not supported, and not planned for future relases either
+- and some more undocumented ones: 🪲🪳🕷️🦟
+
+
 # Implementation
 
 ## CSS Styling
 
 ```space-style
 
-#sb-main .cm-editor .sb-lua-directive-block:has(.kanban-board) .button-bar { top: -40px; padding:0; border-radius: 2em; opacity:0.2; transition: all 0.5s ease;} 
-#sb-main .cm-editor .sb-lua-directive-block:has(.kanban-board) .button-bar:hover { opacity:1;}
+#sb-main .cm-editor .sb-lua-directive-block:has(.kanban-board) .button-bar { 
+  top: -40px; 
+  padding:0; 
+  border-radius: 2em; 
+  opacity:0.2; 
+  transition: all 0.5s ease;
+} 
+#sb-main .cm-editor .sb-lua-directive-block:has(.kanban-board) .button-bar:hover { 
+  opacity:1;
+}
 
 
-/* Kanban Board Styles */
+/* ---------------------------------
+   Kanban Board Layout
+---------------------------------- */
+
 .kanban-board {
   display: flex;
   gap: 10px;
   padding: 10px;
   overflow-x: auto;
   align-items: normal;
-  /* MODIFICATION: Switched to flex-start so overflow-x: auto can
-     scroll from the leftmost column without clipping. */
   justify-content: flex-start;
 }
 
@@ -126,9 +134,6 @@ ${KanbanBoard(
   flex: 1;
   min-width: 250px;
   max-width: 500px;
-  /* MODIFICATION: Removed the duplicate `min-width: 0` that was overriding the 250px
-     above and causing columns to squish on mobile. Added flex-shrink: 0 so columns
-     hold their minimum width and the board scrolls horizontally instead. */
   flex-shrink: 0;
   background: oklch(from var(--modal-help-background-color) l c h / 0.4);
   border-radius: 18px;
@@ -151,6 +156,11 @@ ${KanbanBoard(
   flex-grow: 1;
 }
 
+
+/* ---------------------------------
+   Kanban Cards
+---------------------------------- */
+
 .kanban-card {
   background: var(--modal-background-color);
   border: 1px solid var(--modal-border-color);
@@ -159,16 +169,20 @@ ${KanbanBoard(
   padding: 10px;
   cursor: grab;
   position: relative;
-  width: 100%; /* added: responsive width */
-  box-sizing: border-box; /* added */
+  width: 100%; 
+  box-sizing: border-box; 
+}
+
+.kanban-card-name,
+.kanban-card-page {
+  overflow: hidden; 
+  text-overflow: ellipsis;
+  white-space: nowrap; 
 }
 
 .kanban-card-name {
   font-weight: bold;
   margin-bottom: 4px;
-  overflow: hidden; /* added */
-  text-overflow: ellipsis; /* added */
-  white-space: nowrap; /* added */
   display: block;
   padding-right: 10px;
   text-decoration-line: none;
@@ -177,9 +191,6 @@ ${KanbanBoard(
 .kanban-card-page {
   font-size: 0.8em;
   opacity: 0.7;
-  overflow: hidden; /* added */
-  text-overflow: ellipsis; /* added */
-  white-space: nowrap; /* added */
 }
 
 .kanban-card-edit {
@@ -191,6 +202,7 @@ ${KanbanBoard(
   padding: 2px;
   z-index: 1;
 }
+
 .kanban-card-edit:hover {
   opacity: 1;
 }
@@ -203,18 +215,20 @@ ${KanbanBoard(
   font-size: 0.85em;
   opacity: 0.8;
 }
+
 .kanban-card-field {
   display: flex;
   gap: 4px;
 }
+
 .kanban-field-key {
   font-weight: bold;
   white-space: nowrap;
 }
 
+
 /* ---------------------------------
    Kanban Controls (Filter / Sort)
-   — pagination removed; mirrored from MediaGallery media-controls otherwise
 ---------------------------------- */
 
 .kanban-controls {
@@ -298,10 +312,9 @@ ${KanbanBoard(
   color: white;
 }
 
+
 /* ---------------------------------
    Column Card Colors (optional accent color per column)
-   The --column-card-color variable is set inline on .kanban-column-colored.
-   All derived colors are computed from it via relative oklch syntax.
 ---------------------------------- */
 
 html[data-theme='dark'] .kanban-column-colored .kanban-card {
@@ -341,6 +354,7 @@ html[data-theme='light'] {
     --taskedit-modal-border: var(--modal-border-color);
   }
 }
+
 
 /* ---------------------------------
    Edit Task Modal
@@ -393,7 +407,6 @@ html[data-theme='light'] {
   font-size: 1.1em;
   font-weight: bold;
   margin-bottom: 10px;
-
   color: var(--taskedit-modal-header);
 }
 
@@ -412,9 +425,14 @@ html[data-theme='light'] {
 .te-label {
   font-size: 0.8em;
   opacity: 0.7;
-
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.te-input,
+.te-attr-select {
+  background: var(--taskedit-modal-input-bg);
+  color: var(--taskedit-modal-color);
 }
 
 .te-input {
@@ -423,9 +441,6 @@ html[data-theme='light'] {
 
   padding: 4px 6px;
   border-radius: 6px;
-
-  background: var(--taskedit-modal-input-bg);
-  color: var(--taskedit-modal-color);
 
   border: 1px solid transparent;
   outline: none;
@@ -443,7 +458,6 @@ html[data-theme='light'] {
 .te-checkbox {
   width: 18px;
   height: 18px;
-
   cursor: pointer;
   accent-color: var(--ui-accent-color);
 }
@@ -459,9 +473,7 @@ html[data-theme='light'] {
   padding: 6px 12px;
   border-radius: 6px;
   border: none;
-
   cursor: pointer;
-
   font-size: 0.9em;
   font-weight: 600;
 }
@@ -512,14 +524,6 @@ html[data-theme='light'] {
   flex: 1;
 }
 
-.te-attr-select {
-  padding: 4px;
-  border-radius: 4px;
-
-  background: var(--taskedit-modal-input-bg);
-  color: var(--taskedit-modal-color);
-}
-
 
 /* ---------------------------------
    Native Date Picker Styling
@@ -545,7 +549,6 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
   flex: 1 1 0;
 }
 
-
 ```
 
 ## Lua Implementation
@@ -568,7 +571,6 @@ local function openTaskEditor(taskData)
     local fullName = taskData.name -- Fallback to the clean name from the parser
 
     -- List of meta-keys that are not custom attributes, used to identify true attributes.
-    -- MODIFICATION: Added _kanbanStatusKey, _kanbanDoneStatus, _kanbanDefaultStatus so they
     -- are never shown as editable fields in the modal editor.
     local ignoredKeys = {
       ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
@@ -625,8 +627,8 @@ local function openTaskEditor(taskData)
             updateTaskRemote(
                 taskData.page, 
                 taskData.pos,
-                taskData.range, -- PASSING RANGE FROM AST
-                fullName,  -- PASSING FULL, RAW NAME
+                taskData.range, 
+                fullName,
                 e.detail.state, 
                 e.detail.text, 
                 e.detail.attributes
