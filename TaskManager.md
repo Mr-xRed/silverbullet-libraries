@@ -1398,7 +1398,7 @@ local function inlineEditTask()
 
 
 command.define {
-  name = "Task Editor: Inline",
+  name = "Task: Add/Edit task Inline",
   key = "Alt-Shift-e",
   mac = "Alt-Cmd-e",
   run = function() inlineEditTask() end
