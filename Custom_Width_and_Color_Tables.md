@@ -92,11 +92,6 @@ Use it Like this:
 
 ### Color Themes
 ```space-style
-/*
-#sb-main .cm-editor td {
-    white-space: normal;
-}
-*/
 
 /*   Adds a rounded corner to the tables   */
 .sb-table-widget:has(table),
@@ -106,25 +101,13 @@ Use it Like this:
   box-shadow: 0 1px 6px oklch(20% 0 250 / 0.5),
               0 6px 12px oklch(20% 0 250 / 0.4);
 }
-/*
-#sb-main .cm-editor .sb-table-widget table {
-    border-radius: inherit;
-    overflow: hidden;
-}
-
-#sb-main .cm-editor .sb-markdown-widget .content,
-#sb-main .cm-editor .sb-lua-directive-block .content,
-#sb-main .cm-editor .sb-lua-directive-inline .content {
-      border-radius: 14px;
-}
-*/
 
 #sb-main .cm-editor .sb-lua-directive-block .content,
 #sb-main .cm-editor .sb-markdown-widget .content,
 #sb-main .cm-editor .sb-table-widget .content,
 #sb-main .cm-editor .sb-lua-directive-inline .content{
   overflow: auto;
-  border-radius: 14px;
+  border-radius: 13px;
 }
 
 
