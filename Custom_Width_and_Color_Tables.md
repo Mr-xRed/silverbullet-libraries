@@ -93,6 +93,10 @@ Use it Like this:
 ### Color Themes
 ```space-style
 
+#sb-main .cm-editor td {
+    white-space: normal;
+}
+
 /*   Adds a rounded corner to the tables   */
 .sb-table-widget:has(table),
 .sb-lua-directive-block:has(table) {
