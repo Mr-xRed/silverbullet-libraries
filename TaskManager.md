@@ -538,7 +538,7 @@ local function openTaskEditor(taskData, extraCols)
     -- List of meta-keys that are not custom attributes
     local ignoredKeys = {
       ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
-      toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
+      toPos = true, state = true, done = true, itags = true, header = true, links = true,
       ilinks = true, _isNewTask = true
     }
 
@@ -992,7 +992,7 @@ event.listen {
         -- Some sandboxes restrict os.date; we use a simple format
         local completedAt = os.date("%Y-%m-%dT%H:%M:%S")
         -- Append the timestamp at the end
-        local newText = string.gsub(text, "%[%s*%]", "[x]") .. " [completed: " .. completedAt .. "]"
+        local newText = string.gsub(text, "%[%s*%]", "[x]") .. " [completed: \"" .. completedAt .. "\"]"
         
         editor.dispatch({
           changes = {
@@ -1038,7 +1038,7 @@ local function openInlineTaskEditor(taskData, existingFields)
     -- List of meta-keys that are not custom attributes
     local ignoredKeys = {
       ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
-      toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
+      toPos = true, state = true, done = true, itags = true, header = true, links = true,
       ilinks = true, _isNewTask = true
     }
 

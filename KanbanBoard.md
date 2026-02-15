@@ -572,7 +572,7 @@ local function openTaskEditor(taskData)
     -- are never shown as editable fields in the modal editor.
     local ignoredKeys = {
       ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
-      toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
+      toPos = true, state = true, done = true, itags = true, header = true, links = true,
       ilinks = true, _kanbanStatusKey = true, _kanbanDoneStatus = true, _kanbanDefaultStatus = true
     }
     
@@ -1062,7 +1062,7 @@ function KanbanBoard(taskQuery, options)
     -- List of meta-keys that are not custom attributes, used to identify true attributes.
     local ignoredKeys = {
       ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
-      toPos = true, state = true, done = true, itags = true, header = true, completed = true, links = true,
+      toPos = true, state = true, done = true, itags = true, header = true, links = true,
       ilinks =true
     }
     local statusKey = "status"
