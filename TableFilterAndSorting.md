@@ -37,6 +37,7 @@ config.set("multilineTables", { enabled = false })
 #sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar
 { top: -40px; padding:0; border-radius: 2em; opacity:0.2; transition: all 0.5s ease;} 
 #sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar:hover { opacity:1;}
+#sb-main .cm-editor .sb-table-widget { overflow: visible !important; position: relative !important;}
 
 /*---------- Sorting and Filter Styles ----------*/
  .sortable-header { 
@@ -188,6 +189,14 @@ config.set("multilineTables", { enabled = false })
 .button-bar .global-reset-btn { margin-left: auto; background: transparent; border: 1px solid transparent; cursor: pointer; opacity: 0.6; padding: 4px; border-radius: 4px; transition: all 0.2s; color: inherit; }
     
 .button-bar .global-reset-btn:hover { opacity: 1; background-color: var(--sb-secondary-background, rgba(0,0,0,0.05)); border-color: var(--sb-border-color, #ddd); }
+
+.button-bar {
+    position: absolute;
+    top: -30px;
+    right: 0px;
+}
+
+
 ```
 
 ## Filter and Sort Tables
@@ -608,10 +617,22 @@ function enableTableSorter()
                 btn.onmouseup = (e) => { e.preventDefault(); e.stopPropagation(); };
                 
                 bar.appendChild(btn);
-                
-                // Insert before the table (inside the .sb-table-widget wrapper)
-                // This is the specific part you asked to fix/maintain for Markdown tables.
-                widget.insertBefore(bar, table);
+
+                // Mirror the query/widget DOM hierarchy:
+                // div[data-md-wrapper] > div.button-bar + div.content > span.wrapper > table
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'content';
+                const wrapperSpan = document.createElement('span');
+                wrapperSpan.className = 'wrapper';
+                wrapperSpan.appendChild(table);
+                contentDiv.appendChild(wrapperSpan);
+
+                const outerDiv = document.createElement('div');
+                outerDiv.dataset.mdWrapper = "true"; // Mark for cleanup
+                outerDiv.appendChild(bar);
+                outerDiv.appendChild(contentDiv);
+
+                widget.appendChild(outerDiv);
             });
         }
 
@@ -700,6 +721,15 @@ function enableTableSorter()
             document.querySelectorAll(".global-reset-btn").forEach(b => b.remove());
             // Cleanup generated button bars for markdown tables
             document.querySelectorAll(".button-bar[data-generated='true']").forEach(b => b.remove());
+            // Cleanup outer wrapper divs added to markdown table wrappers, restoring table to widget
+            document.querySelectorAll("[data-md-wrapper='true']").forEach(outerDiv => {
+                const table = outerDiv.querySelector('table');
+                const widget = outerDiv.parentElement;
+                if (table && widget) {
+                    widget.appendChild(table);
+                }
+                outerDiv.remove();
+            });
             // Cleanup widget-level mouseup guards added to markdown table wrappers
             document.querySelectorAll('.sb-table-widget').forEach(w => {
                 if (w._mouseupGuard) {

@@ -119,6 +119,15 @@ Use it Like this:
 }
 */
 
+#sb-main .cm-editor .sb-lua-directive-block .content,
+#sb-main .cm-editor .sb-markdown-widget .content,
+#sb-main .cm-editor .sb-table-widget .content,
+#sb-main .cm-editor .sb-lua-directive-inline .content{
+  overflow: auto;
+  border-radius: 14px;
+}
+
+
 /* Hide specific colour tags inside tables */
 
 .sb-table-widget .sb-hashtag[data-tag-name="silver"],
