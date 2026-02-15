@@ -188,17 +188,6 @@ config.set("multilineTables", { enabled = false })
 .button-bar .global-reset-btn { margin-left: auto; background: transparent; border: 1px solid transparent; cursor: pointer; opacity: 0.6; padding: 4px; border-radius: 4px; transition: all 0.2s; color: inherit; }
     
 .button-bar .global-reset-btn:hover { opacity: 1; background-color: var(--sb-secondary-background, rgba(0,0,0,0.05)); border-color: var(--sb-border-color, #ddd); }
-        
-#sb-main .cm-editor .sb-table-widget {
-    overflow: visible !important;
-    position: relative !important;
-}
-
-.button-bar {
-    position: absolute;
-    top: -30px;
-    right: 0px;
-}
 ```
 
 ## Filter and Sort Tables

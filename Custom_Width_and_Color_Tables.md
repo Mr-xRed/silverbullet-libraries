@@ -92,10 +92,11 @@ Use it Like this:
 
 ### Color Themes
 ```space-style
-
+/*
 #sb-main .cm-editor td {
     white-space: normal;
 }
+*/
 
 /*   Adds a rounded corner to the tables   */
 .sb-table-widget:has(table),
@@ -105,7 +106,7 @@ Use it Like this:
   box-shadow: 0 1px 6px oklch(20% 0 250 / 0.5),
               0 6px 12px oklch(20% 0 250 / 0.4);
 }
-
+/*
 #sb-main .cm-editor .sb-table-widget table {
     border-radius: inherit;
     overflow: hidden;
@@ -116,7 +117,7 @@ Use it Like this:
 #sb-main .cm-editor .sb-lua-directive-inline .content {
       border-radius: 14px;
 }
-
+*/
 
 /* Hide specific colour tags inside tables */
 
@@ -278,12 +279,7 @@ html[data-theme="light"] {
 
 ### Table and Column Width with Tag
 ```space-style
-
-.sb-table-widget table {
-  table-layout: fixed !important;
-  width: 100%; 
-}
-
+ 
 /* Hide all width-control hashtags (tXXp and cXXp) from the UI */
 table .sb-hashtag[data-tag-name^="t"], 
 table .sb-hashtag[data-tag-name^="c"],
@@ -299,13 +295,13 @@ table .sb-hashtag[data-tag-name^="c"],
 }
 
 /* Overall Table Width Controls (via the widget container) */
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t30p"]) { width: 30% !important; }
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t40p"]) { width: 40% !important; }
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t50p"]) { width: 50% !important; }
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t60p"]) { width: 60% !important; }
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t70p"]) { width: 70% !important; }
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t80p"]) { width: 80% !important; }
-.sb-table-widget:has(.sb-hashtag[data-tag-name="t90p"]) { width: 90% !important; }
+#sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t30p"]) { width: 30% !important; }
+#sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t40p"]) { width: 40% !important; }
+#sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t50p"]) { width: 50% !important; }
+#sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t60p"]) { width: 60% !important; }
+#sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t70p"]) { width: 70% !important; }
+#sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t80p"]) { width: 80% !important; }
+#sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t90p"]) { width: 90% !important; }
 
 /* Individual Column Width Controls */
 .sb-table-widget td:has(.sb-hashtag[data-tag-name="c1p"]),
