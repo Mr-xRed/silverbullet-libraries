@@ -38,6 +38,7 @@ You can define the columns and their corresponding status values in the widget's
 
 - **Emoji-style date attributes** (e.g. `📅 2026-04-02`) are not supported and are not planned
 - After **System: Reload**, if a Kanban Board widget is on the page, also reload the page itself (`Client: Reload UI`, `Ctrl+R`, or `F5`)
+- Keep the Order of the elements organized & sorted: don`t mix `tags` in the description and also between `attributes`.
 - Manual markdown edits to a task require a widget refresh to appear on the board
 - Attribute values are always wrapped in double quotes - this is intentional, not a bug
 
@@ -75,15 +76,15 @@ ${KanbanBoard(
 
 
 ## DEMO Tasks
-- [ ] Multi line normal task with a #hashtag and a [[WikiLink]] in the name and at the end #hashtag 
-      [priority: "1"][scheduled: "2026-02-27"][taskID: "T-01-26"]
-      [contact: "George"] [status: "⏳"] [due: "2026-03-02"]  
+- [ ] [priority: "1"] Multi line task with a #hashtag and a [[WikiLink]] in the name and at the end #hashtag 
+      [scheduled: "2026-02-27"][taskID: "T-01-26"]
+      [contact: "George"] [status: "📥"] [due: "2026-03-02"]  
 * [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
       [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
-* [ ] Another normal task  with a #tag in the name [status: "📥"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID: "T-03-26"]
+* [ ] Another normal task  with a #tag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID: "T-03-26"]
 - [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"]  [completed: "2026-02-14 13:54"]
-- [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
-      [status: "👀"][priority: "5"] [taskID:"T-04-26"]
+- [x] High priority with two [[WikiLink]] in [[name]] #TestTag
+      [status: "✅"][priority: "5"] [taskID:"T-04-26"]
 - [ ] New task with at tag at the #end [status: "👀"] [priority: "4"][taskID:"T-05-26"]
 
 ## DEMO WIDGET
@@ -109,6 +110,28 @@ ${KanbanBoard(
 ## CSS Styling
 
 ```space-style
+.kanban-reset-filter-btn {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--modal-border-color);
+  background: var(--modal-background-color);
+  color: var(--text-muted);
+  font-size: 0.85em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: normal;
+  flex-shrink: 0;
+}
+
+.kanban-reset-filter-btn:hover {
+  background: var(--ui-accent-color);
+  color: var(--modal-selected-option-color);
+}
+
+.kanban-reset-filter-btn:active {
+  opacity: 0.7;
+}
 
 #sb-main .cm-editor .sb-lua-directive-block:has(.kanban-board) .button-bar { 
   top: -40px; 
@@ -591,31 +614,19 @@ local function openTaskEditor(taskData)
         if blockStart > 0 and blockLen > 0 and blockStart + blockLen - 1 <= #content then
             local taskBlock = content:sub(blockStart, blockStart + blockLen - 1)
             
-            -- Find the starting position of the first attribute (e.g., [due: ...]) in the raw text
-            -- by checking for all known attribute keys from the parsed taskData.
-            local first_attr_pos = -1
-            for key, _ in pairs(taskData) do
-                if not ignoredKeys[key] then -- This key is a custom attribute
-                    local pattern = "%[" .. escapeLuaPattern(key) .. "%s*:"
-                    local pos = taskBlock:find(pattern)
-                    if pos and (first_attr_pos == -1 or pos < first_attr_pos) then
-                        first_attr_pos = pos
-                    end
+            -- Extract the first line only (name is always on the first line).
+            -- Strip the checkbox prefix, then remove all [key: value] attribute patterns
+            -- regardless of their position (before, after, or mixed with the name).
+            -- [[WikiLinks]] are safe: %[%a requires a letter after [, so [[ never matches.
+            local firstLine = taskBlock:match("^([^\n]*)") or taskBlock
+            local afterCheckbox = firstLine:match("^%s*[%*%-]%s*%[[ xX]?%]%s*(.*)")
+            if afterCheckbox then
+                local cleaned = afterCheckbox
+                cleaned = cleaned:gsub("%[%a[%w_%-]*%s*:[^%]]*%]", "")
+                cleaned = cleaned:match("^%s*(.-)%s*$")
+                if cleaned and cleaned ~= "" then
+                    fullName = cleaned
                 end
-            end
-
-            -- The name is everything before the first attribute.
-            local name_part
-            if first_attr_pos > -1 then
-                name_part = taskBlock:sub(1, first_attr_pos - 1)
-            else
-                name_part = taskBlock -- No attributes found
-            end
-            
-            -- Extract the name from this part (the text after the checkbox)
-            local extractedName = name_part:match("^%s*[%*%-]%s*%[ ?[xX]? ?%]%s*(.*)")
-            if extractedName then
-               fullName = extractedName:match("^%s*(.-)%s*$") -- trim whitespace
             end
         end
     end
@@ -988,7 +999,7 @@ function updateTaskRemote(pageName, pos, range, originalName, finalState, newTex
     space.writePage(pageName, finalContent)
 
     js.window.setTimeout(function()  
-        codeWidget.refreshAll()  
+        codeWidget.refreshAll()  -- Refresh Widget after Editing
     end, 200)
 end
 
@@ -1042,7 +1053,7 @@ function updateTaskStatus(pageName, pos, range, statusKey, newStatus, toggleStat
     space.writePage(pageName, finalContent)
 
     js.window.setTimeout(function()  
-        codeWidget.refreshAll()  
+         codeWidget.refreshAll() -- Refresh widget after Drag and Drop
     end, 200)
 end
 
@@ -1160,11 +1171,13 @@ function KanbanBoard(taskQuery, options)
     -- MODIFICATION END
 
     -- Controls bar (filter + sort) — MODIFICATION: pagination removed, it is not used in the Kanban Board
+    -- MODIFICATION START: Added reset filter button to clear the persisted filter state
     local controlsHtml = [[
     <div class="kanban-controls">
       <div class="kanban-filter-container">
         <label class="kanban-filter-label">Filter: </label>
         <input type="text" class="kanban-search-input" placeholder="Search tasks...">
+        <button class="kanban-reset-filter-btn" title="Reset filter">✕</button>
       </div>
       <div class="kanban-sort-container">
         <label class="kanban-sort-label">Order by: </label>
@@ -1178,10 +1191,15 @@ function KanbanBoard(taskQuery, options)
       </div>
     </div>
     ]]
+    -- MODIFICATION END
     
     local html = '<div id="' .. boardId .. '">'
     html = html .. controlsHtml
-    html = html .. '<div class="kanban-board">'
+    -- MODIFICATION START: Board starts invisible to prevent flash-of-all-cards before
+    -- updateDisplay() runs in init() and applies the persisted filter. Visibility is
+    -- restored by JS after updateDisplay() completes on first init.
+    html = html .. '<div class="kanban-board" style="visibility:hidden">'
+    -- MODIFICATION END
     
     for _, status in ipairs(columnOrder) do
         local title = columnTitles[status]
@@ -1194,7 +1212,9 @@ function KanbanBoard(taskQuery, options)
         end
 
         html = html .. '<div class="kanban-column' .. colorAttr .. '" data-status="' .. status .. '">'
-        html = html .. '<div class="kanban-column-title">' .. title .. ' (' .. #tasks .. ')</div>'
+        -- MODIFICATION START: Count is wrapped in a span so updateDisplay() can live-update it
+        html = html .. '<div class="kanban-column-title">' .. title .. ' (<span class="kanban-col-count">' .. #tasks .. '</span>)</div>'
+        -- MODIFICATION END
         html = html .. '<div class="kanban-cards">'
         
         for _, task in ipairs(tasks) do
@@ -1218,37 +1238,30 @@ function KanbanBoard(taskQuery, options)
 
                 if blockStart > 0 and blockLen > 0 and blockStart + blockLen - 1 <= #content then
                     local taskBlock = content:sub(blockStart, blockStart + blockLen - 1)
-                    
-                    local first_attr_pos = -1
-                    for key, _ in pairs(task) do
-                        if not ignoredKeys[key] then -- This key is a custom attribute
-                            local pattern = "%[" .. escapeLuaPattern(key) .. "%s*:"
-                            local pos = taskBlock:find(pattern)
-                            if pos and (first_attr_pos == -1 or pos < first_attr_pos) then
-                                first_attr_pos = pos
-                            end
-                        end
-                    end
 
-                    local name_part
-                    if first_attr_pos > -1 then
-                        name_part = taskBlock:sub(1, first_attr_pos - 1)
-                    else
-                        name_part = taskBlock -- No attributes found
-                    end
-                    
-                    local extractedName = name_part:match("^%s*[%*%-]%s*%[ ?[xX]? ?%]%s*(.*)")
-                    if extractedName then
-                       fullName = extractedName:match("^%s*(.-)%s*$") -- trim whitespace
+                    -- Extract the first line only (name is always on the first line).
+                    -- Strip the checkbox prefix, then remove all [key: value] attribute patterns
+                    -- regardless of their position (before, after, or mixed with the name).
+                    -- [[WikiLinks]] are safe: %[%a requires a letter after [, so [[ never matches.
+                    local firstLine = taskBlock:match("^([^\n]*)") or taskBlock
+                    local afterCheckbox = firstLine:match("^%s*[%*%-]%s*%[[ xX]?%]%s*(.*)")
+                    if afterCheckbox then
+                        local cleaned = afterCheckbox
+                        cleaned = cleaned:gsub("%[%a[%w_%-]*%s*:[^%]]*%]", "")
+                        cleaned = cleaned:match("^%s*(.-)%s*$")
+                        if cleaned and cleaned ~= "" then
+                            fullName = cleaned
+                        end
                     end
                 end
             end
             
-            local taskName = (fullName or "")
-                  taskName = taskName:gsub('"', '&quot;')
-                  taskName = taskName:gsub('<', '&lt;')
-                  taskName = taskName:gsub('>', '&gt;')
             -- END: New logic
+            local taskName = (fullName or "")
+            taskName = taskName:gsub('"', '&quot;')
+            taskName = taskName:gsub('<', '&lt;')
+            taskName = taskName:gsub('>', '&gt;')
+
             local taskPage = task.page
             local taskPos = task.pos
             local taskRef = task.ref
@@ -1379,8 +1392,20 @@ function KanbanBoard(taskQuery, options)
             const input = root.querySelector(".kanban-search-input");
             const sortSelect = root.querySelector(".kanban-sort-select");
             const sortBtns = root.querySelectorAll(".kanban-sort-btn");
+            // MODIFICATION START: Reset filter button reference
+            const resetBtn = root.querySelector(".kanban-reset-filter-btn");
+            // MODIFICATION END
 
             if (!board || !input) return false;
+
+            // MODIFICATION START: Restore persisted filter value from window-level state so the
+            // filter survives widget refreshes triggered by drag-and-drop or task saves.
+            // window._kanbanFilterState holds the last value typed by the user and is cleared
+            // only when the reset button is pressed or the page is reloaded.
+            if (window._kanbanFilterState) {
+                input.value = window._kanbanFilterState;
+            }
+            // MODIFICATION END
 
             // ----- Filter + Sort logic (same as MediaGallery updateDisplay; pagination removed) -----
             const updateDisplay = () => {
@@ -1438,11 +1463,20 @@ function KanbanBoard(taskQuery, options)
                         w.style.display = "";
                         w.style.order = idx;
                     });
+
+                    // MODIFICATION START: Live-update the column card count to reflect
+                    // how many cards are currently visible after filtering.
+                    const countEl = col.querySelector(".kanban-col-count");
+                    if (countEl) countEl.textContent = colWrappers.length;
+                    // MODIFICATION END
                 });
             };
 
             // ----- Event listeners for controls (same pattern as MediaGallery) -----
             input.addEventListener("input", () => {
+                // MODIFICATION START: Persist filter value so it survives widget refreshes
+                window._kanbanFilterState = input.value;
+                // MODIFICATION END
                 updateDisplay();
             });
 
@@ -1460,8 +1494,20 @@ function KanbanBoard(taskQuery, options)
                 });
             });
 
+            // MODIFICATION START: Reset filter button — clears persisted state and re-renders
+            if (resetBtn) {
+                resetBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    input.value = "";
+                    window._kanbanFilterState = "";
+                    updateDisplay();
+                });
+            }
+            // MODIFICATION END
+
             // ----- Drag-and-drop logic -----
             let draggedCard = null;
+            let sourceColumn = null;
 
             board.addEventListener('click', (e) => {
                 const editBtn = e.target.closest('.kanban-card-edit');
@@ -1485,6 +1531,7 @@ function KanbanBoard(taskQuery, options)
             board.addEventListener('dragstart', (e) => {
                 if (e.target.classList.contains('kanban-card')) {
                     draggedCard = e.target;
+                    sourceColumn = e.target.closest('.kanban-column');
                     setTimeout(() => { e.target.style.opacity = '0.5'; }, 0);
                 }
             });
@@ -1493,6 +1540,7 @@ function KanbanBoard(taskQuery, options)
                 if (draggedCard) {
                     draggedCard.style.opacity = '';
                     draggedCard = null;
+                    sourceColumn = null;
                 }
             });
 
@@ -1522,7 +1570,19 @@ function KanbanBoard(taskQuery, options)
 
                         // Append the entire wrapper, not just the card
                         column.querySelector('.kanban-cards').appendChild(draggedCard.closest('.kanban-card-wrapper'));
-                        
+
+                        // Update counts by actually counting visible cards in both columns
+                        if (sourceColumn && sourceColumn !== column) {
+                            const sourceCount = sourceColumn.querySelector('.kanban-col-count');
+                            const sourceVisible = Array.from(sourceColumn.querySelectorAll('.kanban-card-wrapper'))
+                                .filter(w => w.style.display !== 'none').length;
+                            if (sourceCount) sourceCount.textContent = sourceVisible;
+                        }
+                        const destCount = column.querySelector('.kanban-col-count');
+                        const destVisible = Array.from(column.querySelectorAll('.kanban-card-wrapper'))
+                            .filter(w => w.style.display !== 'none').length;
+                        if (destCount) destCount.textContent = destVisible;
+  
                         if (page && !isNaN(pos) && newStatus && range) {
                             window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
                                 detail: {
@@ -1555,8 +1615,9 @@ function KanbanBoard(taskQuery, options)
                     dragTimer = setTimeout(() => {
                         isDragging = true;
                         draggedCard = card;
+                        sourceColumn = card.closest('.kanban-column');
                         draggedCard.style.opacity = '0.5';
-                    }, 200); // 200ms delay
+                    }, 500); // 200ms delay
                 }
             }, { passive: true });
             
@@ -1611,6 +1672,18 @@ function KanbanBoard(taskQuery, options)
                     const allColumns = Array.from(board.querySelectorAll('.kanban-column'));
                     const isLastColumn = allColumns.indexOf(column) === allColumns.length - 1;
                     const toggleState = isLastColumn ? "checked" : "unchecked";
+
+                    // Update counts by actually counting visible cards in both columns
+                    if (sourceColumn && sourceColumn !== column) {
+                        const sourceCount = sourceColumn.querySelector('.kanban-col-count');
+                        const sourceVisible = Array.from(sourceColumn.querySelectorAll('.kanban-card-wrapper'))
+                            .filter(w => w.style.display !== 'none').length;
+                        if (sourceCount) sourceCount.textContent = sourceVisible;
+                    }
+                    const destCount = column.querySelector('.kanban-col-count');
+                    const destVisible = Array.from(column.querySelectorAll('.kanban-card-wrapper'))
+                        .filter(w => w.style.display !== 'none').length;
+                    if (destCount) destCount.textContent = destVisible;
                     
                     if (page && !isNaN(pos) && newStatus && range) {
                         window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
@@ -1627,6 +1700,7 @@ function KanbanBoard(taskQuery, options)
                     }
                 }
                 draggedCard = null;
+                sourceColumn = null;
             });
             // MODIFICATION END
 
@@ -1697,6 +1771,10 @@ function KanbanBoard(taskQuery, options)
 
             // Initial render
             updateDisplay();
+            // MODIFICATION START: Reveal the board only after updateDisplay() has applied the
+            // filter, so cards never flash visible before being hidden by the filter logic.
+            board.style.visibility = "visible";
+            // MODIFICATION END
             return true;
         };
         
