@@ -54,7 +54,7 @@ You can define the columns and their corresponding status values in the widget's
     *   **`Fields`**: (Optional) A list of task attributes to display on the card. E.g. `{"due", "priority"}`.
     *   **HideKeys**: (Optional) Hide certain attribute keys/labels from the card. This can be usefull if you have a longer text or a title as attribute and want to display the whole thin
 
-### Example with all options
+### Widget example with all options
 
 ```lua
 ${KanbanBoard(
@@ -74,6 +74,16 @@ ${KanbanBoard(
 )}
 ```
 
+### Configuration options
+
+```lua
+
+-- Disable automatic adding/removing of the [completed: "«datetime»"] attribute
+
+config.set("kanban", { completedAttribute = false })
+
+```
+
 
 ## DEMO Tasks
 - [ ] [priority: "1"] Multi line task with a #wine hashtag and a [[WikiLink]] in the name and at the end #mint
@@ -84,8 +94,8 @@ ${KanbanBoard(
 * [ ] Another normal task  with a #tag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
 - [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"]  [completed: "2026-02-14 13:54"]
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
-      [status: "⏳"][priority: "5"] [taskID: "T-04-26"] [completed: "2026-02-18 15:33"]
-- [ ] New task with at tag at the #end [status: "👀"] [priority: "4"][taskID:"T-05-26"]
+      [status: "⏳"][priority: "5"] [taskID: "T-04-26"] 
+- [ ] New task with at tag at the #end [status: "👀"] [priority: "4"][taskID:"T-05-26"]  
 
 ## DEMO WIDGET
 
