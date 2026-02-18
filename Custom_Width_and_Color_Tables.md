@@ -113,23 +113,23 @@ Use it Like this:
 
 /* Hide specific colour tags inside tables */
 
-.sb-table-widget .sb-hashtag[data-tag-name="silver"],
-.sb-table-widget .sb-hashtag[data-tag-name="burgundy"],
-.sb-table-widget .sb-hashtag[data-tag-name="maroon"],
-.sb-table-widget .sb-hashtag[data-tag-name="hazel"],
-.sb-table-widget .sb-hashtag[data-tag-name="mint"],
-.sb-table-widget .sb-hashtag[data-tag-name="sea"],
-.sb-table-widget .sb-hashtag[data-tag-name="grape"],
-.sb-table-widget .sb-hashtag[data-tag-name="wine"],
+.sb-table-widget table .sb-hashtag[data-tag-name="silver"],
+.sb-table-widget table .sb-hashtag[data-tag-name="burgundy"],
+.sb-table-widget table .sb-hashtag[data-tag-name="maroon"],
+.sb-table-widget table .sb-hashtag[data-tag-name="hazel"],
+.sb-table-widget table .sb-hashtag[data-tag-name="mint"],
+.sb-table-widget table .sb-hashtag[data-tag-name="sea"],
+.sb-table-widget table .sb-hashtag[data-tag-name="grape"],
+.sb-table-widget table .sb-hashtag[data-tag-name="wine"],
 
-.sb-lua-directive-block .sb-hashtag[data-tag-name="silver"],
-.sb-lua-directive-block .sb-hashtag[data-tag-name="burgundy"],
-.sb-lua-directive-block .sb-hashtag[data-tag-name="maroon"],
-.sb-lua-directive-block .sb-hashtag[data-tag-name="hazel"],
-.sb-lua-directive-block .sb-hashtag[data-tag-name="mint"],
-.sb-lua-directive-block .sb-hashtag[data-tag-name="sea"],
-.sb-lua-directive-block .sb-hashtag[data-tag-name="grape"],
-.sb-lua-directive-block .sb-hashtag[data-tag-name="wine"]{
+.sb-lua-directive-block table .sb-hashtag[data-tag-name="silver"],
+.sb-lua-directive-block table .sb-hashtag[data-tag-name="burgundy"],
+.sb-lua-directive-block table .sb-hashtag[data-tag-name="maroon"],
+.sb-lua-directive-block table .sb-hashtag[data-tag-name="hazel"],
+.sb-lua-directive-block table .sb-hashtag[data-tag-name="mint"],
+.sb-lua-directive-block table .sb-hashtag[data-tag-name="sea"],
+.sb-lua-directive-block table .sb-hashtag[data-tag-name="grape"],
+.sb-lua-directive-block table .sb-hashtag[data-tag-name="wine"]{
   display: none !important;
 }
 

@@ -76,12 +76,12 @@ ${KanbanBoard(
 
 
 ## DEMO Tasks
-- [ ] [priority: "1"] Multi line task with a #hashtag and a [[WikiLink]] in the name and at the end #hashtag 
+- [ ] [priority: "1"] Multi line task with a #wine hashtag and a [[WikiLink]] in the name and at the end #mint
       [scheduled: "2026-02-27"][taskID: "T-01-26"]
       [contact: "George"] [status: "📥"] [due: "2026-03-02"]  
 * [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
       [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
-* [ ] Another normal task  with a #tag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #testTag [priority: "2"][taskID: "T-03-26"]
+* [ ] Another normal task  with a #tag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
 - [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"]  [completed: "2026-02-14 13:54"]
 - [x] High priority with two [[WikiLink]] in [[name]] #TestTag
       [status: "✅"][priority: "5"] [taskID:"T-04-26"]
@@ -100,8 +100,8 @@ ${KanbanBoard(
       {"✅", "Done","green"}
     }},
     {"SortDefault", "priority"},
-    {"Fields", {"taskID","priority", "scheduled", "due", "status", "contact", "tags"}},
-    {"HideKeys", {"taskID", "tags"}}
+    {"Fields", {"taskID","priority", "scheduled", "due", "status", "contact","tags"}},
+    {"HideKeys", {"taskID","tags"}}
   }
 )}
 
@@ -1349,15 +1349,38 @@ function KanbanBoard(taskQuery, options)
                 for _, fieldKey in ipairs(fields) do
                     local fieldValue = task[fieldKey]
                     if fieldValue then
-                        if type(fieldValue) == "table" then fieldValue = table.concat(fieldValue, ", ") end
                         -- Render key label only when it is not in the hideKeys lookup
                         local keyHtml = ""
                         if not hideKeys[fieldKey] then
                             keyHtml = '<span class="kanban-field-key">' .. fieldKey .. ': </span>'
                         end
+
+                        local valueHtml = ""
+                        -- MODIFICATION START: Render "tag" field as SilverBullet hashtag links
+                        if fieldKey == "tags" then
+                            local tagList = {}
+                            if type(fieldValue) == "table" then
+                                tagList = fieldValue
+                            else
+                                tagList = {tostring(fieldValue)}
+                            end
+                            local tagHtmlParts = {}
+                            for _, tagText in ipairs(tagList) do
+                                local t = tostring(tagText)
+                                t = t:gsub("^#", "") -- strip leading # if already present
+                                local tagLink = '<a class="sb-hashtag" href="/tag%3A' .. t .. '" rel="tag" data-tag-name="' .. t .. '"><span class="sb-hashtag-text">#' .. t .. '</span></a>'
+                                table.insert(tagHtmlParts, tagLink)
+                            end
+                            valueHtml = table.concat(tagHtmlParts, " ")
+                        -- MODIFICATION END
+                        else
+                            if type(fieldValue) == "table" then fieldValue = table.concat(fieldValue, ", ") end
+                            valueHtml = '<span class="kanban-field-value">' .. tostring(fieldValue) .. '</span>'
+                        end
+
                         html = html .. '<div class="kanban-card-field">' ..
                            keyHtml ..
-                           '<span class="kanban-field-value">' .. tostring(fieldValue) .. '</span>' ..
+                           valueHtml ..
                            '</div>'
                     end
                 end
@@ -1796,7 +1819,6 @@ function KanbanBoard(taskQuery, options)
     }
 end
 ```
-
 
 ## Discussions to this library
 - [Silverbullet Community](https://community.silverbullet.md/t/kanban-integration-with-tasks/925/12?u=mr.red)
