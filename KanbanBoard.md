@@ -91,11 +91,12 @@ config.set("kanban", { completedAttribute = false })
       [contact: "#George"] [status: "📥"] [due: "2026-03-02"]  
 * [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
       [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
-* [ ] Another normal task  with a #tag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
-- [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"]  [completed: "2026-02-14 13:54"]
+* [ ] Another normal task  with a #TestTag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
+- [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"] [completed: "2026-02-14 13:54"]
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
       [status: "⏳"][priority: "5"] [taskID: "T-04-26"] 
-- [ ] New task with at tag at the #end [status: "👀"] [priority: "4"][taskID:"T-05-26"]  
+- [ ] New task with at tag at the end #TestTag [status: "👀"] [priority: "4"][taskID:"T-05-26"]
+- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "✅"] [kanbanHide: "true"]  [completed: "2026-02-18 21:20"]
 
 ## DEMO WIDGET
 
@@ -612,7 +613,7 @@ local function openTaskEditor(taskData)
     local ignoredKeys = {
       ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
       toPos = true, state = true, done = true, itags = true, header = true, links = true,
-      ilinks = true, _kanbanStatusKey = true, _kanbanDoneStatus = true, _kanbanDefaultStatus = true
+      ilinks = true, _kanbanStatusKey = true, _kanbanDoneStatus = true, _kanbanDefaultStatus = true, kanbanHide = true
     }
     
     local content = space.readPage(taskData.page)
@@ -695,6 +696,8 @@ local function openTaskEditor(taskData)
     local taskNameSafe = string.gsub(tostring(fullName or ""), '"', '\\"')
     taskNameSafe = string.gsub(taskNameSafe, '\n', ' ')
     local isChecked = (taskData.state == "x" or taskData.state == "X") and "checked" or ""
+    local isHidden = (tostring(taskData.kanbanHide or ""):lower() == "true")
+    local isHiddenChecked = isHidden and "checked" or ""
 
     local container = js.window.document.createElement("div")
     container.id = "sb-taskeditor"
@@ -705,6 +708,11 @@ local function openTaskEditor(taskData)
       <div class="te-row">
         <input type="checkbox" id="te-status-checkbox" class="te-checkbox" ]] .. isChecked .. [[>
         <label for="te-status-checkbox" style="cursor:pointer">Completed</label>
+      </div>
+
+      <div class="te-row">
+        <input type="checkbox" id="te-hide-checkbox" class="te-checkbox" ]] .. isHiddenChecked .. [[>
+        <label for="te-hide-checkbox" style="cursor:pointer">Hide / Show Card</label>
       </div>
 
       <div class="te-group">
@@ -858,6 +866,7 @@ local function openTaskEditor(taskData)
         const save = () => {
             const newText = document.getElementById('te-main-input').value;
             let newState = document.getElementById('te-status-checkbox').checked ? "x" : " ";
+            const isHidden = document.getElementById('te-hide-checkbox').checked;
             const attributes = [];
             const inputs = container.querySelectorAll('.te-input[data-key]');
             inputs.forEach(inp => {
@@ -865,6 +874,19 @@ local function openTaskEditor(taskData)
                 if (inp.type === 'datetime-local' && val.includes("T")) val = val.replace("T", " ");
                 attributes.push({ key: inp.dataset.key, value: val });
             });
+
+            let hideAttr = attributes.find(a => a.key === 'kanbanHide');
+            if (isHidden) {
+                if (hideAttr) {
+                    hideAttr.value = "true";
+                } else {
+                    attributes.push({ key: 'kanbanHide', value: 'true' });
+                }
+            } else {
+                if (hideAttr) {
+                    hideAttr.value = "";
+                }
+            }
 
             // MODIFICATION START: Safety-net sync at save time (checkbox state is authoritative
             // at this point because live sync already kept the two fields in step).
@@ -962,25 +984,24 @@ function updateTaskRemote(pageName, pos, range, originalName, finalState, newTex
     for _, attr in ipairs(attributes) do
         local key = attr.key
         local val = tostring(attr.value or "")
-        
-        -- MODIFICATION: Strip existing quotes if they are already there to avoid double-wrapping
-        if val:sub(1,1) == '"' and val:sub(-1,-1) == '"' then
-            val = val:sub(2, -2)
-        end
-        local quotedVal = '"' .. val .. '"'
+        local attrPattern = "%s*%[" .. escapeLuaPattern(key) .. "%s*:%s*.-%]"
 
-        -- Basic validation
-        if key and key ~= "" then
-             -- Regex to find [key: value] regardless of where it is (line 1, 2, or 99)
-             local attrPattern = "(%[" .. escapeLuaPattern(key) .. "%s*:%s*.-%])"
-             
-             if taskBlock:find(attrPattern) then
-                 -- Attribute exists, replace it in place with quoted value
-                 taskBlock = taskBlock:gsub(attrPattern, "[" .. key .. ": " .. quotedVal .. "]")
-             else
-                 -- Attribute does not exist, append to end of block with quoted value
-                 taskBlock = taskBlock .. " [" .. key .. ": " .. quotedVal .. "]"
-             end
+        if val == "" then
+            taskBlock = taskBlock:gsub(attrPattern, "")
+        else
+            if val:sub(1,1) == '"' and val:sub(-1,-1) == '"' then
+                val = val:sub(2, -2)
+            end
+            local quotedVal = '"' .. val .. '"'
+
+            if key and key ~= "" then
+                 local plainPattern = "(%[" .. escapeLuaPattern(key) .. "%s*:%s*.-%])"
+                 if taskBlock:find(plainPattern) then
+                     taskBlock = taskBlock:gsub(plainPattern, "[" .. key .. ": " .. quotedVal .. "]")
+                 else
+                     taskBlock = taskBlock .. " [" .. key .. ": " .. quotedVal .. "]"
+                 end
+            end
         end
     end
 
@@ -1108,7 +1129,7 @@ function KanbanBoard(taskQuery, options)
     local ignoredKeys = {
       ref = true, tag = true, tags = true, name = true, text = true, page = true, pos = true, range = true,
       toPos = true, state = true, done = true, itags = true, header = true, links = true,
-      ilinks =true
+      ilinks =true, kanbanHide = true
     }
     local statusKey = "status"
     local sortDefault = nil -- default sort field, set via {"SortDefault", "fieldname"}
@@ -1205,6 +1226,7 @@ function KanbanBoard(taskQuery, options)
         <label class="kanban-filter-label">Filter: </label>
         <input type="text" class="kanban-search-input" placeholder="Search tasks...">
         <button class="kanban-reset-filter-btn" title="Reset filter">✕</button>
+        <button class="kanban-toggle-hidden-btn kanban-reset-filter-btn" title="Show hidden cards"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
       <div class="kanban-sort-container">
         <label class="kanban-sort-label">Order by: </label>
@@ -1358,12 +1380,15 @@ function KanbanBoard(taskQuery, options)
             -- The card itself is no longer the draggable item if it's a link
             html = html .. '<div class="kanban-card-wrapper">'
             
+            local isHidden = tostring(task.kanbanHide or ""):lower() == "true"
+
             html = html .. '<div class="kanban-card" draggable="true" ' ..
                 'data-task-page="' .. taskPage .. '" ' ..
                 'data-task-pos="' .. taskPos .. '" ' ..
                 'data-task-json="' .. taskJsonSafe .. '" ' ..
                 'data-filter="' .. filterContent .. '"' ..
-                sortDataAttr .. '>'
+                sortDataAttr ..
+                (isHidden and ' data-kanban-hidden="true"' or '') .. '>'
             
             html = html .. '<div class="kanban-card-edit">✎</div>'
 
@@ -1472,6 +1497,7 @@ function KanbanBoard(taskQuery, options)
             const sortBtns = root.querySelectorAll(".kanban-sort-btn");
             // MODIFICATION START: Reset filter button reference
             const resetBtn = root.querySelector(".kanban-reset-filter-btn");
+            const toggleHiddenBtn = root.querySelector(".kanban-toggle-hidden-btn");
             // MODIFICATION END
 
             if (!board || !input) return false;
@@ -1487,6 +1513,7 @@ function KanbanBoard(taskQuery, options)
 
             // ----- Filter + Sort logic (same as MediaGallery updateDisplay; pagination removed) -----
             const updateDisplay = () => {
+                const showHidden = board.classList.contains("show-hidden");
                 const rawQuery = input.value.toLowerCase().trim();
                 const keywords = rawQuery.split(/\s+/).filter(k => k.length > 0);
                 const sortField = sortSelect.value;
@@ -1498,6 +1525,11 @@ function KanbanBoard(taskQuery, options)
                 const filtered = allWrappers.filter(wrapper => {
                     const card = wrapper.querySelector(".kanban-card");
                     if (!card) return false;
+                    
+                    if (!showHidden && card.dataset.kanbanHidden === "true") {
+                        return false;
+                    }
+
                     const data = card.getAttribute("data-filter") || "";
                     return keywords.every(word => data.includes(word));
                 });
@@ -1578,6 +1610,22 @@ function KanbanBoard(taskQuery, options)
                     e.preventDefault();
                     input.value = "";
                     window._kanbanFilterState = "";
+                    updateDisplay();
+                });
+            }
+            if (toggleHiddenBtn) {
+                const eyeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+                const eyeOffIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
+                toggleHiddenBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    board.classList.toggle("show-hidden");
+                    if (board.classList.contains("show-hidden")) {
+                        toggleHiddenBtn.innerHTML = eyeOffIcon;
+                        toggleHiddenBtn.title = "Hide hidden cards";
+                    } else {
+                        toggleHiddenBtn.innerHTML = eyeIcon;
+                        toggleHiddenBtn.title = "Show hidden cards";
+                    }
                     updateDisplay();
                 });
             }
