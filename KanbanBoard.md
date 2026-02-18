@@ -78,13 +78,13 @@ ${KanbanBoard(
 ## DEMO Tasks
 - [ ] [priority: "1"] Multi line task with a #wine hashtag and a [[WikiLink]] in the name and at the end #mint
       [scheduled: "2026-02-27"][taskID: "T-01-26"]
-      [contact: "George"] [status: "📥"] [due: "2026-03-02"]  
+      [contact: "#George"] [status: "📥"] [due: "2026-03-02"]  
 * [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
       [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
 * [ ] Another normal task  with a #tag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
 - [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"]  [completed: "2026-02-14 13:54"]
-- [x] High priority with two [[WikiLink]] in [[name]] #TestTag
-      [status: "✅"][priority: "5"] [taskID:"T-04-26"]
+- [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
+      [status: "⏳"][priority: "5"] [taskID: "T-04-26"] [completed: "2026-02-18 15:33"]
 - [ ] New task with at tag at the #end [status: "👀"] [priority: "4"][taskID:"T-05-26"]
 
 ## DEMO WIDGET
@@ -580,7 +580,6 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
 ```
 
 ## Lua Implementation
-
 ```space-lua
 -- ------------- Helper: Escape Magic Characters for Lua Patterns -------------
 local function escapeLuaPattern(s)
@@ -1375,7 +1374,33 @@ function KanbanBoard(taskQuery, options)
                         -- MODIFICATION END
                         else
                             if type(fieldValue) == "table" then fieldValue = table.concat(fieldValue, ", ") end
-                            valueHtml = '<span class="kanban-field-value">' .. tostring(fieldValue) .. '</span>'
+                            local rawVal = tostring(fieldValue)
+                            -- MODIFICATION START: Render any #hashtag tokens inside field values
+                            -- as SilverBullet hashtag links. Non-hashtag segments are wrapped in
+                            -- a plain <span>. This is intentionally separate from the "tags" key
+                            -- logic above, which handles tag arrays that have no leading #.
+                            if rawVal:find("#[%w_%-]+") then
+                                local hashParts = {}
+                                local scanPos = 1
+                                while scanPos <= #rawVal do
+                                    local s, e, tag = rawVal:find("#([%w_%-]+)", scanPos)
+                                    if s then
+                                        if s > scanPos then
+                                            table.insert(hashParts, '<span class="kanban-field-value">' .. rawVal:sub(scanPos, s - 1) .. '</span>')
+                                        end
+                                        local tagLink = '<a class="sb-hashtag" href="/tag%3A' .. tag .. '" rel="tag" data-tag-name="' .. tag .. '"><span class="sb-hashtag-text">#' .. tag .. '</span></a>'
+                                        table.insert(hashParts, tagLink)
+                                        scanPos = e + 1
+                                    else
+                                        table.insert(hashParts, '<span class="kanban-field-value">' .. rawVal:sub(scanPos) .. '</span>')
+                                        break
+                                    end
+                                end
+                                valueHtml = table.concat(hashParts, "")
+                            else
+                                valueHtml = '<span class="kanban-field-value">' .. rawVal .. '</span>'
+                            end
+                            -- MODIFICATION END
                         end
 
                         html = html .. '<div class="kanban-card-field">' ..
