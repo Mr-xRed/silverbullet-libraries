@@ -1379,11 +1379,13 @@ function KanbanBoard(taskQuery, options)
                             -- as SilverBullet hashtag links. Non-hashtag segments are wrapped in
                             -- a plain <span>. This is intentionally separate from the "tags" key
                             -- logic above, which handles tag arrays that have no leading #.
-                            if rawVal:find("#[%w_%-]+") then
+                           -- if rawVal:find("#[%w_%-]+") then
+                                if rawVal:find("#[^%s%[%]%(%)%{%}%<>\"',;:!?@#\\/]+") then
                                 local hashParts = {}
                                 local scanPos = 1
                                 while scanPos <= #rawVal do
-                                    local s, e, tag = rawVal:find("#([%w_%-]+)", scanPos)
+                                    -- local s, e, tag = rawVal:find("#([%w_%-]+)", scanPos)
+                                    local s, e, tag = rawVal:find("#([^%s%[%]%(%)%{%}%<>\"',;:!?@#\\/]+)", scanPos)
                                     if s then
                                         if s > scanPos then
                                             table.insert(hashParts, '<span class="kanban-field-value">' .. rawVal:sub(scanPos, s - 1) .. '</span>')
