@@ -975,18 +975,20 @@ function updateTaskRemote(pageName, pos, range, originalName, finalState, newTex
     end
 
     -- 4. Handle "completed" timestamp special logic
-    local timestamp = os.date("%Y-%m-%d %H:%M")
-    local completedPattern = "(%[completed%s*:%s*.-%])"
-    
-    if finalState == "x" or finalState == "X" then
-        if not taskBlock:find(completedPattern) then
-             -- MODIFICATION: Wrap completion timestamp in quotes
-             taskBlock = taskBlock .. ' [completed: "' .. timestamp .. '"]'
-        end
-    else
-        -- Task is NOT done. Remove completed tag if it exists anywhere in the block.
-        if taskBlock:find(completedPattern) then
-            taskBlock = taskBlock:gsub(completedPattern, "")
+    if config.get("kanban.completedAttribute", true) then
+        local timestamp = os.date("%Y-%m-%d %H:%M")
+        local completedPattern = "(%[completed%s*:%s*.-%])"
+        
+        if finalState == "x" or finalState == "X" then
+            if not taskBlock:find(completedPattern) then
+                 -- MODIFICATION: Wrap completion timestamp in quotes
+                 taskBlock = taskBlock .. ' [completed: "' .. timestamp .. '"]'
+            end
+        else
+            -- Task is NOT done. Remove completed tag if it exists anywhere in the block.
+            if taskBlock:find(completedPattern) then
+                taskBlock = taskBlock:gsub(completedPattern, "")
+            end
         end
     end
 
@@ -1042,6 +1044,22 @@ function updateTaskStatus(pageName, pos, range, statusKey, newStatus, toggleStat
          taskBlock = taskBlock:gsub("^(%s*[%*%-]%s*)%[[ xX]?%]", "%1[x]", 1)
     elseif toggleState == "unchecked" then
          taskBlock = taskBlock:gsub("^(%s*[%*%-]%s*)%[[xX]%]", "%1[ ]", 1)
+    end
+
+    -- 3. Handle "completed" timestamp special logic (mirrors updateTaskRemote)
+    if config.get("kanban.completedAttribute", true) then
+        local timestamp = os.date("%Y-%m-%d %H:%M")
+        local completedPattern = "(%[completed%s*:%s*.-%])"
+
+        if toggleState == "checked" then
+            if not taskBlock:find(completedPattern) then
+                taskBlock = taskBlock .. ' [completed: "' .. timestamp .. '"]'
+            end
+        else
+            if taskBlock:find(completedPattern) then
+                taskBlock = taskBlock:gsub(completedPattern, "")
+            end
+        end
     end
 
     -- Write back using specific range
