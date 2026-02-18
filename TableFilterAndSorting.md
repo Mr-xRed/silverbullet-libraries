@@ -555,7 +555,8 @@ function enableTableSorter()
 
         function injectResetButton() {
             // Case 1: Existing button bars (Widgets)
-            document.querySelectorAll('.button-bar').forEach(bar => {
+            // document.querySelectorAll('.button-bar').forEach(bar => {
+            document.querySelectorAll('.sb-lua-directive-block:has(table) .button-bar').forEach(bar => {
                 if (bar.querySelector('.global-reset-btn')) return;
                 // Ignore button bars that we injected ourselves (handled in Case 2 logic logic via absence check, preventing loops)
                 if (bar.dataset.generated) return;
@@ -853,6 +854,7 @@ if multilineEnabled then enableMultilineTables() end
 
 command.define { name = "Table: Enable Multiline", run = function() enableMultilineTables() end }
 command.define { name = "Table: Disable Multiline", run = function() disableMultilineTables() end }
+
 
 ```
 
