@@ -766,7 +766,6 @@ if enabled then
     enableTableSorter()
 else
     cleanupSorter()
-    return
 end
 
 
@@ -775,7 +774,7 @@ end
 -- -------------------------------------
 -- Adding Multiline support inside cells
 -- -------------------------------------
--- to disable it us: config.set("multilineTables.enabled", false)
+-- to disable it us: config.set("multilineTables", { enabled = false })
 
 
 function enableMultilineTables()
@@ -847,10 +846,14 @@ function disableMultilineTables()
     end
 end
 
-local multilineEnabled = config.get("multilineTables.enabled")
+local multilineCfg = config.get("multilineTables") or {}
+local multilineEnabled = multilineCfg.enabled ~= false
 
-if multilineEnabled == nil then multilineEnabled = true end
-if multilineEnabled then enableMultilineTables() end
+if multilineEnabled then
+  enableMultilineTables()
+else
+  disableMultilineTables()
+end
 
 command.define { name = "Table: Enable Multiline", run = function() enableMultilineTables() end }
 command.define { name = "Table: Disable Multiline", run = function() disableMultilineTables() end }
