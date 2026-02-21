@@ -32,11 +32,11 @@ ${KanbanBoard(
 * [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
       [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
 * [ ] Another normal task  with a #TestTag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
-- [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"] [completed: "2026-02-14 13:54"]
+- [ ] Completed task [priority: "3"] [status: "👀"][taskID: "T-06-26"]
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
       [status: "⏳"][priority: "5"] [taskID: "T-04-26"] 
-- [ ] New task with at tag at the end #TestTag [status: "👀"] [priority: "4"][taskID:"T-05-26"]  
-- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "✅"] [kanbanHide: "true"]  [completed: "2026-02-18 21:20"]
+- [ ] New task with at tag at the end #TestTag [status: "👀"] [priority: "4"][taskID:"T-05-26"]   
+- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "✅"] [kanbanHide: "true"] [completed: "2026-02-18 21:20"]
 
 
 ## How it Works
@@ -1040,7 +1040,7 @@ function updateTaskRemote(pageName, pos, range, originalName, finalState, newTex
         if finalState == "x" or finalState == "X" then
             if not taskBlock:find(completedPattern) then
                  -- MODIFICATION: Wrap completion timestamp in quotes
-                 taskBlock = taskBlock .. ' [completed: "' .. timestamp .. '"]'
+                 taskBlock = taskBlock .. '[completed: "' .. timestamp .. '"]'
             end
         else
             -- Task is NOT done. Remove completed tag if it exists anywhere in the block.
@@ -1111,7 +1111,7 @@ function updateTaskStatus(pageName, pos, range, statusKey, newStatus, toggleStat
 
         if toggleState == "checked" then
             if not taskBlock:find(completedPattern) then
-                taskBlock = taskBlock .. ' [completed: "' .. timestamp .. '"]'
+                taskBlock = taskBlock .. '[completed: "' .. timestamp .. '"]'
             end
         else
             if taskBlock:find(completedPattern) then
