@@ -18,7 +18,7 @@ pageDecoration.prefix: "🛠️ "
 - Panel sizing is persisted via clientStore (LHS, RHS, BHS).
 - Panel constraints configurable (min/max width and height).
 - Button-Size and Style configurable through Space-Style (Documentation -> Soon)
-- Added **YouTube**/**Peertube**/Vimeo** **Support for the [Floating Page Library](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingPage.md)
+- Added **YouTube**/**Peertube**/**Vimeo** Support for the [Floating Page Library](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingPage.md)
 
 ![UAPC-Screenshot|1000px](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/UAPC-Screenshot.png)
 
@@ -51,12 +51,14 @@ config.set("AdvancedPanelControl", {
   maxWidth = "1000", -- max Width Constraints for LHS and RHS
   minHeight = "100", -- min Height Constraints for BHS
   maxHeight = "500", -- max Height Constraints for BHS
+  titleBar = false, -- show/hide title bar in synthetic panels
+  buttonBar = false -- show/hide button bar in synthetic panels
 })
 ```
 
 
 > **warning** IMPORTANT!
-> For this Library to work as intended you need to remove all your previous custom space-styles or Libraries which you added previously to manipulate the panels, otherwise it will conflict with them!
+> For this Library to work as intended you need to remove/disable all your previous custom space-styles or Libraries which you added previously to manipulate the panels, otherwise it will conflict with them!
 
 ## Implementation
 
@@ -610,6 +612,8 @@ function initPanelControls()
   local cfg = config.get("AdvancedPanelControl") or {}
   local panelMode = cfg.mode or "auto"
   local gesturesEnabled = cfg.gestures ~= false
+  local titleBar = cfg.titleBar or false
+  local buttonBar = cfg.buttonBar or false
 
   -- Dimensional Constraints
   local minWidth = cfg.minWidth or "300"
@@ -634,6 +638,8 @@ function initPanelControls()
     jsModule.initPanelControls({
       panelMode = panelMode,
       gestures = gesturesEnabled,
+      titleBar = titleBar,
+      buttonBar = buttonBar,
       constraints = { minW = tonumber(minWidth), maxW = tonumber(maxWidth), minH = tonumber(minHeight), maxH = tonumber(maxHeight) },
       positions = { lhs = lhsPos, rhs = rhsPos },
       savedLHS = savedLHS,

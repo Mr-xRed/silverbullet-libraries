@@ -210,23 +210,36 @@ header.appendChild(dockRHSBtn);
       const doc = iframe.contentDocument;
       if (!doc) return;
 
-      // ===SAFETY NET: CSS HIDE (instant + future-proof) === 
-      const style = doc.createElement("style");
-      style.textContent = `
-        #sb-top,
+      const apm = window.SilverBulletPanelManager;
+      const showTitleBar = apm?.config?.titleBar === true;
+      const showButtonBar = apm?.config?.buttonBar === true;
+
+      let cssToInject = `
         #sb-main .sb-panel,
         #sb-root .sb-bhs {
           display: none !important;
         }
       `;
+      if (!showTitleBar) {
+        cssToInject += "#sb-top { display: none !important; }";
+      }
+      if (!showButtonBar) {
+        cssToInject += ".sb-actions.hamburger { display: none !important; }";
+      }
+      
+      const style = doc.createElement("style");
+      style.textContent = cssToInject;
       doc.head.appendChild(style);
 
-      // ====HARD DELETE: remove only the children, never parents ==== 
       const kill = () => {
-        doc.querySelector("#sb-top")?.remove();
+        if (!showTitleBar) {
+          doc.querySelector("#sb-top")?.remove();
+        }
+        if (!showButtonBar) {
+          doc.querySelectorAll(".sb-actions.hamburger").forEach(el => el.remove());
+        }
         doc.querySelectorAll("#sb-main .sb-panel").forEach(el => el.remove());
         doc.querySelector("#sb-root .sb-bhs")?.remove();
-     //   doc.querySelector("#custom-styles")?.remove();
       };
 
       // First pass
@@ -389,18 +402,34 @@ export function showDocked(content, side = "rhs", titleLabel = null) {
       const doc = iframe.contentDocument;
       if (!doc) return;
 
-      const style = doc.createElement("style");
-      style.textContent = `
-        #sb-top,
+      const apm = window.SilverBulletPanelManager;
+      const showTitleBar = apm?.config?.titleBar === true;
+      const showButtonBar = apm?.config?.buttonBar === true;
+
+      let cssToInject = `
         #sb-main .sb-panel,
         #sb-root .sb-bhs {
           display: none !important;
         }
       `;
+      if (!showTitleBar) {
+        cssToInject += "#sb-top { display: none !important; }";
+      }
+      if (!showButtonBar) {
+        cssToInject += ".sb-actions.hamburger { display: none !important; }";
+      }
+      
+      const style = doc.createElement("style");
+      style.textContent = cssToInject;
       doc.head.appendChild(style);
 
       const kill = () => {
-        doc.querySelector("#sb-top")?.remove();
+        if (!showTitleBar) {
+          doc.querySelector("#sb-top")?.remove();
+        }
+        if (!showButtonBar) {
+          doc.querySelectorAll(".sb-actions.hamburger").forEach(el => el.remove());
+        }
         doc.querySelectorAll("#sb-main .sb-panel").forEach(el => el.remove());
         doc.querySelector("#sb-root .sb-bhs")?.remove();
       };
@@ -1097,6 +1126,8 @@ export function initPanelControls(options = {}) {
       mode: options.panelMode || (options.mode || "auto"),
       gestures: (typeof options.gestures === "boolean") ? options.gestures : (options.gesturesEnabled !== undefined ? options.gesturesEnabled : true),
       constraints: options.constraints || (options.constraints || null),
+      titleBar: options.titleBar === true,
+      buttonBar: options.buttonBar === true,
     //  positions: options.positions || (options.positions || null),
       prefixes: { handle: "sb-drag-handle-", controls: "sb-panel-controls-" }
     },
