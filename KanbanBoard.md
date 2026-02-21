@@ -420,7 +420,8 @@ html[data-theme='light'] {
 
 .te-card {
   width: 420px;
-  max-width: 80vw;
+  max-width: 90vw;
+  max-height: 85vh;
 
   display: flex;
   flex-direction: column;
@@ -440,6 +441,10 @@ html[data-theme='light'] {
   display: flex;
   flex-direction: column;
   gap: 15px;
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 5px;
 }
 
 .te-header {
@@ -453,6 +458,7 @@ html[data-theme='light'] {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  min-width: 0;
 }
 
 .te-row {
@@ -587,6 +593,21 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
 .te-attr-row .te-attr-col:last-of-type {
   flex: 1 1 0;
 }
+
+/* Make modal responsive on wider screens */
+@media (min-width: 600px) {
+  .te-card {
+    width: 90vw;
+    max-width: 1200px;
+  }
+  #te-dynamic-fields {
+    display: grid;
+    /* Create responsive columns that are at least 280px wide */
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 15px;
+  }
+}
+
 
 ```
 
