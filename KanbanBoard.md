@@ -8,15 +8,46 @@ pageDecoration.prefix: "✅ "
 
 This widget creates a customisable Kanban board to visualize and manage tasks from your notes.
 
-> **warning** Important
->   * If you manually edit a task in the markdown, you **must refresh the widget** for changes to appear.
->   * Attribute values are always wrapped in double quotes `""` for safety and consistency, even when technically optional.
->     This is expected behaviour, not a bug.
+## DEMO WIDGET
+${KanbanBoard(
+  query[[from index.tag "task" where page == _CTX.currentPage.name]], 
+  {
+    {"Column", "status"},
+    {"Columns", {
+      {"📥", "To Do","purple"},
+      {"⏳", "In Progress","blue"},
+      {"👀", "Needs Review","orange"},
+      {"✅", "Done","green"}
+    }},
+    {"SortDefault", "priority"},
+    {"Fields", {"taskID","priority", "scheduled", "due", "status", "contact","tags"}},
+    {"HideKeys", {"taskID","tags"}}
+  }
+)}
+
+## DEMO Tasks
+- [ ] [priority: "1"] Multi line task with a #wine hashtag and a [[WikiLink]] in the name and at the end #mint
+      [scheduled: "2026-02-27"][taskID: "T-01-26"]
+      [contact: "#George"] [status: "📥"] [due: "2026-03-02"]  
+* [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
+      [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
+* [ ] Another normal task  with a #TestTag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
+- [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"] [completed: "2026-02-14 13:54"]
+- [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
+      [status: "⏳"][priority: "5"] [taskID: "T-04-26"] 
+- [ ] New task with at tag at the end #TestTag [status: "👀"] [priority: "4"][taskID:"T-05-26"]  
+- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "✅"] [kanbanHide: "true"]  [completed: "2026-02-18 21:20"]
+
 
 ## How it Works
 
 The Kanban board works by querying tasks and organising them into columns based on a specific attribute, typically `status`
 You can define the columns and their corresponding status values in the widget's parameters.
+
+> **warning** Important
+>   * If you manually edit a task in the markdown, you **must refresh the widget** for changes to appear.
+>   * Attribute values are always wrapped in double quotes `""` for safety and consistency, even when technically optional.
+>     This is expected behaviour, not a bug.
 
 ### ✨ Features
 
@@ -51,7 +82,7 @@ You can define the columns and their corresponding status values in the widget's
     *   **`Fields`**: (Optional) A list of task attributes to display on the card. E.g. `{"due", "priority"}`.
     *   **HideKeys**: (Optional) Hide certain attribute keys/labels from the card. This can be usefull if you have a longer text or a title as attribute and want to display the whole thin
 
-### Widget example with all options
+### Widget example
 
 ```lua
 ${KanbanBoard(
@@ -76,42 +107,12 @@ ${KanbanBoard(
 ```lua
 
 -- Disable automatic adding/removing of the [completed: "«datetime»"] attribute
+-- Default is true
 
 config.set("kanban", { completedAttribute = false })
 
 ```
 
-
-## DEMO Tasks
-- [ ] [priority: "1"] Multi line task with a #wine hashtag and a [[WikiLink]] in the name and at the end #mint
-      [scheduled: "2026-02-27"][taskID: "T-01-26"]
-      [contact: "#George"] [status: "📥"] [due: "2026-03-02"]  
-* [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
-      [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
-* [ ] Another normal task  with a #TestTag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
-- [x] Completed task [priority: "3"] [status: "✅"][taskID: "T-06-26"] [completed: "2026-02-14 13:54"]
-- [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
-      [status: "⏳"][priority: "5"] [taskID: "T-04-26"] 
-- [ ] New task with at tag at the end #TestTag [status: "👀"] [priority: "4"][taskID:"T-05-26"]
-- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "✅"] [kanbanHide: "true"]  [completed: "2026-02-18 21:20"]
-
-## DEMO WIDGET
-
-${KanbanBoard(
-  query[[from index.tag "task" where page == _CTX.currentPage.name]], 
-  {
-    {"Column", "status"},
-    {"Columns", {
-      {"📥", "To Do","purple"},
-      {"⏳", "In Progress","blue"},
-      {"👀", "Needs Review","orange"},
-      {"✅", "Done","green"}
-    }},
-    {"SortDefault", "priority"},
-    {"Fields", {"taskID","priority", "scheduled", "due", "status", "contact","tags"}},
-    {"HideKeys", {"taskID","tags"}}
-  }
-)}
 
 # Implementation
 
@@ -220,7 +221,7 @@ ${KanbanBoard(
   font-weight: bold;
   margin-bottom: 4px;
   display: block;
-  padding-right: 10px;
+/*  padding-right: 10px;*/
   text-decoration-line: none;
 }
 
@@ -230,13 +231,14 @@ ${KanbanBoard(
 }
 
 .kanban-card-edit {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  cursor: pointer;
-  opacity: 0.5;
-  padding: 2px;
-  z-index: 1;
+    position: absolute;
+    font-size: 20px;
+    bottom: 0px;
+    right: 5px;
+    cursor: pointer;
+    opacity: 0.5;
+    padding: 5px;
+    z-index: 1;
 }
 
 .kanban-card-edit:hover {
@@ -399,27 +401,28 @@ html[data-theme='light'] {
 #sb-taskeditor {
   position: fixed;
   inset: 0;
-
   width: 100vw;
   height: 100vh;
-
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Aligns card to the top */
   justify-content: center;
-
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(14px);
   z-index: 200;
-
   font-family: var(--ui-font);
   transition: opacity 0.3s ease;
+  
+  /* Add padding and allow the background to scroll if content overflows */
+  padding: 5vh 15px 15px;
+  box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .te-card {
-  width: 420px;
-  max-width: 90vw;
-  max-height: 85vh;
-
+  width: 100%;
+  max-width: 500px; /* Base width for mobile */
+  max-height: 90vh; /* Max height relative to viewport */
+  
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -439,7 +442,7 @@ html[data-theme='light'] {
   flex-direction: column;
   gap: 15px;
   flex-grow: 1;
-  overflow-y: auto;
+  overflow-y: auto; /* Scroll ONLY the fields area */
   overflow-x: hidden;
   padding: 5px;
 }
@@ -449,6 +452,7 @@ html[data-theme='light'] {
   font-weight: bold;
   margin-bottom: 10px;
   color: var(--taskedit-modal-header);
+  flex-shrink: 0; /* Prevent header from shrinking */
 }
 
 .te-group {
@@ -509,6 +513,7 @@ html[data-theme='light'] {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 15px;
+  flex-shrink: 0; /* Prevent action buttons from shrinking */
 }
 
 .te-btn {
@@ -544,6 +549,7 @@ html[data-theme='light'] {
 .te-attr-row {
   display: flex;
   align-items: flex-end;
+  flex-wrap: wrap; /* Allow wrapping on small screens */
   gap: 10px;
 
   margin-top: 10px;
@@ -556,14 +562,15 @@ html[data-theme='light'] {
     from var(--taskedit-modal-input-bg)
     calc(l - 0.1) c h / 0.1
   );
+  flex-shrink: 0; /* Prevent this from shrinking */
 }
 
 .te-attr-col {
   display: flex;
-  min-width: 0;
   flex-direction: column;
   gap: 4px;
-  flex: 1;
+  flex: 1; /* Allow flex-grow */
+  min-width: 150px; /* But prevent squishing by forcing a wrap */
 }
 
 
@@ -591,17 +598,24 @@ input[type="datetime-local"]::-webkit-datetime-edit-fields-wrapper {
   flex: 1 1 0;
 }
 
-/* Make modal responsive on wider screens */
-@media (min-width: 600px) {
+/* Responsive improvements for the modal */
+@media (min-width: 768px) {
   .te-card {
-    width: 90vw;
-    max-width: 1200px;
+    max-width: 800px;
   }
   #te-dynamic-fields {
     display: grid;
-    /* Create responsive columns that are at least 280px wide */
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 15px;
+    gap: 20px;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .te-card {
+    max-width: 1100px;
+  }
+  #te-dynamic-fields {
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }
 
