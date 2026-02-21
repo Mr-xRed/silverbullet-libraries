@@ -9,10 +9,7 @@ pageDecoration.prefix: "✅ "
 This widget creates a customisable Kanban board to visualize and manage tasks from your notes.
 
 > **warning** Important
->   * After **System: Reload**, if a Kanban Board widget is present on the page, also reload the page itself
->     (`Client: Reload UI`, `Ctrl + R`, or `F5`).
 >   * If you manually edit a task in the markdown, you **must refresh the widget** for changes to appear.
->   * Widget updates are not automatic. Any manual markdown change requires a widget reload.   
 >   * Attribute values are always wrapped in double quotes `""` for safety and consistency, even when technically optional.
 >     This is expected behaviour, not a bug.
 
@@ -1125,22 +1122,25 @@ function updateTaskStatus(pageName, pos, range, statusKey, newStatus, toggleStat
 end
 
 -- ------------- Event Listeners -------------
-js.window.addEventListener("sb-kanban-edit-task", function(e)
-  openTaskEditor(e.detail)
-end)
+if not js.window.kanbanListenersAdded then
+    js.window.addEventListener("sb-kanban-edit-task", function(e)
+      openTaskEditor(e.detail)
+    end)
 
-js.window.addEventListener("sb-kanban-dnd-update", function(e)
-    if e.detail and e.detail.action == "move" then
-        updateTaskStatus(
-            e.detail.page, 
-            e.detail.pos, 
-            e.detail.range, -- PASSING RANGE
-            e.detail.statusKey, 
-            e.detail.newStatus, 
-            e.detail.toggleState
-        )
-    end
-end)
+    js.window.addEventListener("sb-kanban-dnd-update", function(e)
+        if e.detail and e.detail.action == "move" then
+            updateTaskStatus(
+                e.detail.page, 
+                e.detail.pos, 
+                e.detail.range, -- PASSING RANGE
+                e.detail.statusKey, 
+                e.detail.newStatus, 
+                e.detail.toggleState
+            )
+        end
+    end)
+    js.window.kanbanListenersAdded = true
+end
 
 -- ------------- Main Kanban Board Function -------------
 function KanbanBoard(taskQuery, options)
