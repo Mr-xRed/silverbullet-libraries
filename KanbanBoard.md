@@ -46,8 +46,6 @@ You can define the columns and their corresponding status values in the widget's
 
 > **warning** Important
 >   * If you manually edit a task in the markdown, you **must refresh the widget** for changes to appear.
->   * Attribute values are always wrapped in double quotes `""` for safety and consistency, even when technically optional.
->     This is expected behaviour, not a bug.
 
 ### ✨ Features
 
@@ -65,8 +63,7 @@ You can define the columns and their corresponding status values in the widget's
 ### 🚫 Known Limitations
 
 - **Emoji-style date attributes** (e.g. `📅 2026-04-02`) are not supported and are not planned
-- After **System: Reload**, if a Kanban Board widget is on the page, also reload the page itself (`Client: Reload UI`, `Ctrl+R`, or `F5`)
-- Keep the Order of the elements organized & sorted: don`t mix `tags` in the description and also between `attributes`.
+- Keep the Order of the elements organized & sorted: don’t mix tags in the description and neither between `attributes`
 - Manual markdown edits to a task require a widget refresh to appear on the board
 - Attribute values are always wrapped in double quotes - this is intentional, not a bug
 
