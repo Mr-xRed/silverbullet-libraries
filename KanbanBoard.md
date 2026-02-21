@@ -729,9 +729,7 @@ local function openTaskEditor(taskData)
       <div class="te-row">
         <input type="checkbox" id="te-status-checkbox" class="te-checkbox" ]] .. isChecked .. [[>
         <label for="te-status-checkbox" style="cursor:pointer">Completed</label>
-      </div>
-
-      <div class="te-row">
+        <span style="margin-left: 20px;"></span>
         <input type="checkbox" id="te-hide-checkbox" class="te-checkbox" ]] .. isHiddenChecked .. [[>
         <label for="te-hide-checkbox" style="cursor:pointer">Hide / Show Card</label>
       </div>
