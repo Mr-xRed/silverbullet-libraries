@@ -169,7 +169,9 @@ home = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#i
 close = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-close"></use></svg>',
 filterOff = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-filterOff"></use></svg>',
 filterOn = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-filterOn"></use></svg>',
-window = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-window"></use></svg>'
+window = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-window"></use></svg>',
+newPage = '<svg class="icon-svg"><use href="/.fs/Library/Mr-xRed/lucide-icons.svg#icon-newPage"></use></svg>',
+
 }
 
 -- ------------- Load Config -------------
@@ -521,6 +523,24 @@ local function renderTree(files, prefix)
 end
 
 
+function createNewPage()
+    local currentPath = clientStore.get(PATH_KEY) or ""
+    local fullPathFromPrompt = editor.prompt("Enter page name with full path:", currentPath)
+
+    if fullPathFromPrompt and fullPathFromPrompt:gsub("/$","") ~= currentPath:gsub("/$","") then
+        local pageName = fullPathFromPrompt:gsub("%.md$", "")
+
+        if space.pageExists(pageName) then
+            editor.flashNotification("Page '" .. pageName .. ".md' already exists.", "error")
+            return
+        end
+        space.writePage(pageName, "")
+        editor.navigate("/" .. pageName)
+        refreshExplorer()
+        editor.flashNotification("Created page: " .. pageName .. ".md")
+    end
+end
+
 function deleteFileWithConfirm(path)  
   if not path then return end  
   if editor.confirm("Are you sure you want to delete " .. path .. "?") then  
@@ -613,6 +633,11 @@ end
                               class="explorer-action-btn]] .. activeClass .. [[" id="filter-btn" 
                               onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">]])
       table.insert(h, (filterDisabled and ICONS.filterOn or ICONS.filterOff))
+      table.insert(h, [[</div>
+                        <div title="New Page" 
+                              class="explorer-action-btn" 
+                              onclick="syscall('lua.evalExpression', 'createNewPage()')">]])
+      table.insert(h, ICONS.newPage)
       table.insert(h, [[</div>
                  </div>  
                   <div class="action-buttons" style="display: flex; gap: 4px;">
