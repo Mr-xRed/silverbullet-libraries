@@ -757,7 +757,7 @@ html[data-theme="light"] {
   border-radius: 4px;
   font-size: 0.85em;
   color: var(--explorer-text-color);
-  text-align: center;
+  text-align: left;
 }
 
 #explorer-context-menu .menu-item:hover {

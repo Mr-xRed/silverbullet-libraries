@@ -9,7 +9,9 @@ files:
 - hybrid-cursor.svg
 pageDecoration.prefix: "🗂️ "
 ---
-# 🗂️ Document Explorer (Ver. 1.0.12)
+
+# 🗂️ Document Explorer (Ver. 1.1.0)
+
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DocumentExplorer_Screenshot.png)
 
 ## Features
@@ -25,6 +27,13 @@ pageDecoration.prefix: "🗂️ "
 • ==Responsive design==: Adjustable panel width using your mouse.
 - With instructions for a Color Theme
 
+## ⚠️ Know Limitations and Warnings
+- you need to confirm the files one by one when `Cut & Pasting` or when batch `Rename` multiple files, because DocumentExplorer uses the built-in `Rename` function from Silverbullet, which will also update the backlinks inside the pages. this has its limitation on renaming multiple files at once.
+- ⚠️❗️ When renaming a folder with multiple files in it, the Backlinks are not correctly updated
+    - recommandation: instead of Renaming the folder, use batch-cut/paste on the files
+- ⚠️❗️ [Silverbullet - BUG when renaming files with a "(" in its name the backlinks will malform](https://github.com/silverbulletmd/silverbullet/issues/1850)
+
+  
 ## Currently supported extension:
 * Pages: .md
 * Images: .png, .jpg, .jpeg, .webp, .gif, .svg
@@ -46,8 +55,10 @@ pageDecoration.prefix: "🗂️ "
 * **`treeFolderFirst`**    - sort order in treeview: folders then files (default: false)
 * **`recoverAfterRefresh`** - Recover after Page refresh - Reopen DocEx when you Refresh the page (default: true) 
 
+
 > **note** Note
 > Copy this into a `space-lua` block in your config page to change the default values.
+
 
 ```lua
 config.set("explorer", {
@@ -77,8 +88,8 @@ Licensed under the ISC and MIT licenses.
 > **tip** Tip
 > Make sure you copy this as space-style so it won't get overwritten with future updates!
 
-```css
 
+```css
 html[data-theme="dark"]{
   /*Main UI Color*/
   --explorer-bg-color: var(--top-background-color);
@@ -573,6 +584,67 @@ function batchDeleteFiles()
   editor.flashNotification("Deleted " .. count .. " item(s).")
 end
 
+-- ---------- Clipboard Copy (read+write files into current folder) ----------
+-- Cut/Move is handled from JS via renamePrefixCommand so wikilinks get updated.
+function clipboardPaste()
+  local pathsStr = clientStore.get("explorer.clipboard.paths")
+  local destFolder = clientStore.get(PATH_KEY) or ""
+  if destFolder ~= "" and not destFolder:match("/$") then
+    destFolder = destFolder .. "/"
+  end
+
+  if not pathsStr or pathsStr == "" then
+    editor.flashNotification("Clipboard is empty.", "error")
+    return
+  end
+
+  local copied = 0
+  local skipped = 0
+
+  for srcPath in pathsStr:gmatch("[^\n]+") do
+    -- Get just the filename (last path component)
+    local fileName = srcPath:match("([^/]+)$") or srcPath
+
+    -- Build actual source file path (add .md if no extension)
+    local srcFile = srcPath
+    if not srcPath:match("%.[^.]+$") then
+      srcFile = srcPath .. ".md"
+    end
+
+    -- Build destination file path (preserve extension)
+    local destFile = destFolder .. fileName
+    if not destFile:match("%.[^.]+$") then
+      destFile = destFile .. ".md"
+    end
+
+    -- Skip if destination already exists
+    if space.fileExists(destFile) then
+      skipped = skipped + 1
+    else
+      local data = space.readFile(srcFile)
+      space.writeFile(destFile, data)
+      copied = copied + 1
+    end
+  end
+
+  refreshExplorer()
+
+  local msg = "Copied " .. copied .. " item(s)."
+  if skipped > 0 then
+    msg = msg .. " Skipped " .. skipped .. " (already exist in destination)."
+  end
+  editor.flashNotification(msg)
+end
+
+-- ---------- Destination existence check (called from JS before each move) ----------
+-- Returns "true" or "false" as a string so the JS syscall result is unambiguous.
+function explorerDestExists(path)
+  if space.fileExists(path) then return "true" end
+  -- Also check with .md extension for pages stored without it
+  if not path:match("%.[^.]+$") and space.fileExists(path .. ".md") then return "true" end
+  return "false"
+end
+
 -- ---------- drawPanel function ----------
     local function drawPanel()
       local currentWidth = clientStore.get("explorer.panelWidth") or config.get("explorer.panelWidth") or 0.8
@@ -1019,16 +1091,67 @@ if (contextMenuEnabled) {
     menu.style.zIndex = '1000';
     document.body.appendChild(menu);
 
-    window.oncontextmenu = function(e) {
+    window.oncontextmenu = async function(e) {
     const tile = e.target.closest('.grid-tile, .tree-folder'); // Added .tree-folder selector
-    if (!tile || tile.innerText.includes("..")) return; 
-    
+    const onGrid = !!(e.target.closest('#explorerGrid, .document-explorer'));
+
+    // If not on a tile and not on the grid, bail out entirely
+    if (!onGrid && !tile) return;
+    // Skip the folderup ".." tile
+    if (tile && tile.innerText.includes("..")) return;
+
     e.preventDefault();
-    
+
     const panel = document.querySelector(".explorer-panel");
     const isTreeView = panel.classList.contains("mode-tree");
     const isBadgeClick = e.target.closest('.hybrid-md-badge');
-    
+
+    // --- Clipboard State (fetched async so Paste can appear when relevant) ---
+    const clipPaths = await syscall('clientStore.get', 'explorer.clipboard.paths');
+    const hasClipboard = !!(clipPaths && clipPaths.trim() !== '');
+
+    // --- Grid-level menu (right-click on empty space in the grid) ---
+    if (!tile) {
+        if (!hasClipboard) return; // Nothing useful to show
+        let menuContent = `<div class="menu-item" id="ctx-paste">Paste here</div>`;
+        menu.innerHTML = menuContent;
+        menu.style.display = 'block';
+        let posX = e.clientX;
+        let posY = e.clientY;
+        if (posX + menu.offsetWidth > window.innerWidth) posX -= menu.offsetWidth;
+        if (posY + menu.offsetHeight > window.innerHeight) posY -= menu.offsetHeight;
+        menu.style.left = posX + 'px';
+        menu.style.top = posY + 'px';
+
+        document.getElementById('ctx-paste').onclick = async () => {
+            menu.style.display = 'none';
+            const clipOp = await syscall('clientStore.get', 'explorer.clipboard.operation');
+            if (clipOp === 'cut') {
+                const paths = clipPaths.split('\n').filter(Boolean);
+                const grid = document.getElementById('explorerGrid');
+                const destFolder = grid ? (grid.getAttribute('data-current-path') || '') : '';
+                let moved = 0, skipped = 0;
+                for (const srcPath of paths) {
+                    const fileName = srcPath.split('/').pop();
+                    const destPath = (destFolder.replace(/\/$/, '') ? destFolder.replace(/\/$/, '') + '/' : '') + fileName;
+                    if (srcPath === destPath) { skipped++; continue; }
+                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists("${destPath}")`);
+                    if (existsResult === 'true') { skipped++; continue; }
+                    await syscall('system.invokeFunction', 'index.renamePrefixCommand', { oldPrefix: srcPath, newPrefix: destPath });
+                    moved++;
+                }
+                await syscall('clientStore.set', 'explorer.clipboard.paths', '');
+                await syscall('clientStore.set', 'explorer.clipboard.operation', '');
+                await syscall('lua.evalExpression', 'refreshExplorer()');
+                const msg = `Moved ${moved} item(s).${skipped > 0 ? ' Skipped ' + skipped + ' (already exist or same location).' : ''}`;
+                await syscall('lua.evalExpression', `editor.flashNotification("${msg}")`);
+            } else {
+                await syscall('lua.evalExpression', 'clipboardPaste()');
+            }
+        };
+        return;
+    }
+
     // Determine if it's a folder
     let isFolder = tile.classList.contains('folder-tile') || 
                    tile.classList.contains('tree-folder') || 
@@ -1063,7 +1186,10 @@ if (contextMenuEnabled) {
     let menuContent = "";
 
     if (isBatchMode) {
-        // Batch mode: only show rename and delete for the selection
+        // Batch mode: only show copy/cut/paste/rename/delete for the selection
+        menuContent += `<div class="menu-item" id="ctx-copy">Copy ${batchCount} items</div>`;
+        menuContent += `<div class="menu-item" id="ctx-cut">Cut ${batchCount} items</div>`;
+        if (hasClipboard) menuContent += `<div class="menu-item" id="ctx-paste">Paste here</div>`;
         menuContent += `<div class="menu-item" id="ctx-rename">Rename ${batchCount} items</div>`;
         menuContent += `<div class="menu-item delete" id="ctx-delete">Delete ${batchCount} items</div>`;
     } else {
@@ -1085,6 +1211,9 @@ if (contextMenuEnabled) {
             menuContent += `<div class="menu-item" id="ctx-dock-left">Dock Left</div>`;
         }
 
+        menuContent += `<div class="menu-item" id="ctx-copy">Copy</div>`;
+        menuContent += `<div class="menu-item" id="ctx-cut">Cut</div>`;
+        if (hasClipboard) menuContent += `<div class="menu-item" id="ctx-paste">Paste here</div>`;
         menuContent += `<div class="menu-item" id="ctx-rename">Rename</div>`;
         if (!isFolder || isBadgeClick) {
             menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
@@ -1152,6 +1281,93 @@ if (contextMenuEnabled) {
         };
     }
 
+    // Handle Copy: store paths + operation in clientStore (single or batch)
+    if (document.getElementById('ctx-copy')) {
+        document.getElementById('ctx-copy').onclick = async () => {
+            menu.style.display = 'none';
+            const pathsToStore = isBatchMode ? Array.from(selectedPaths).join('\n') : internalPath;
+            await syscall('clientStore.set', 'explorer.clipboard.paths', pathsToStore);
+            await syscall('clientStore.set', 'explorer.clipboard.operation', 'copy');
+            const count = isBatchMode ? batchCount : 1;
+            await syscall('lua.evalExpression', `editor.flashNotification("${count} item(s) copied to clipboard.")`);
+            if (isBatchMode) clearSelection();
+        };
+    }
+
+    // Handle Cut: store paths + operation in clientStore (single or batch)
+    if (document.getElementById('ctx-cut')) {
+        document.getElementById('ctx-cut').onclick = async () => {
+            menu.style.display = 'none';
+            const pathsToStore = isBatchMode ? Array.from(selectedPaths).join('\n') : internalPath;
+            await syscall('clientStore.set', 'explorer.clipboard.paths', pathsToStore);
+            await syscall('clientStore.set', 'explorer.clipboard.operation', 'cut');
+            const count = isBatchMode ? batchCount : 1;
+            await syscall('lua.evalExpression', `editor.flashNotification("${count} item(s) cut to clipboard.")`);
+            if (isBatchMode) clearSelection();
+        };
+    }
+
+    // Handle Paste: cut uses renamePrefixCommand (updates wikilinks), copy uses Lua clipboardPaste()
+    if (document.getElementById('ctx-paste')) {
+        document.getElementById('ctx-paste').onclick = async () => {
+            menu.style.display = 'none';
+            const clipPaths = await syscall('clientStore.get', 'explorer.clipboard.paths');
+            const clipOp   = await syscall('clientStore.get', 'explorer.clipboard.operation');
+            if (!clipPaths || clipPaths.trim() === '') return;
+
+            if (clipOp === 'cut') {
+                // --- MOVE via renamePrefixCommand ---
+                // SilverBullet will automatically update all wikilinks pointing to moved files.
+                const paths = clipPaths.split('\n').filter(Boolean);
+
+                // Read destination folder from the DOM (already set as data-current-path)
+                const grid = document.getElementById('explorerGrid');
+                const destFolder = grid ? (grid.getAttribute('data-current-path') || '') : '';
+
+                let moved = 0;
+                let skipped = 0;
+
+                for (const srcPath of paths) {
+                    const fileName = srcPath.split('/').pop();
+                    // Build destination path (strip trailing slash from folder, rejoin with filename)
+                    const destPath = (destFolder.replace(/\/$/, '') ? destFolder.replace(/\/$/, '') + '/' : '') + fileName;
+
+                    // Skip if source and destination resolve to the same path
+                    if (srcPath === destPath) {
+                        skipped++;
+                        continue;
+                    }
+
+                    // Skip if destination already exists (ask Lua, returns "true"/"false" string)
+                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists("${destPath}")`);
+                    if (existsResult === 'true') {
+                        skipped++;
+                        continue;
+                    }
+
+                    // renamePrefixCommand with both oldPrefix and newPrefix performs a silent move
+                    // and updates all wikilinks across the space automatically.
+                    await syscall('system.invokeFunction', 'index.renamePrefixCommand', {
+                        oldPrefix: srcPath,
+                        newPrefix: destPath
+                    });
+                    moved++;
+                }
+
+                // Clear clipboard so files can't be moved twice
+                await syscall('clientStore.set', 'explorer.clipboard.paths', '');
+                await syscall('clientStore.set', 'explorer.clipboard.operation', '');
+                await syscall('lua.evalExpression', 'refreshExplorer()');
+
+                const msg = `Moved ${moved} item(s).${skipped > 0 ? ' Skipped ' + skipped + ' (already exist or same location).' : ''}`;
+                await syscall('lua.evalExpression', `editor.flashNotification("${msg}")`);
+            } else {
+                // --- COPY via Lua (read+write files, existence check inside Lua) ---
+                await syscall('lua.evalExpression', 'clipboardPaste()');
+            }
+        };
+    }
+
     // Handle Rename: single or batch
     document.getElementById('ctx-rename').onclick = async () => {
         menu.style.display = 'none';
@@ -1181,7 +1397,7 @@ if (contextMenuEnabled) {
             if (isBatchMode) {
                 // Batch delete: confirm once, then delete each file one by one via Lua
                 const pathsArray = Array.from(selectedPaths);
-                const confirmed = await syscall('editor.confirm', `Are your sure you want to delete these ${pathsArray.length} items?`);
+                const confirmed = await syscall('editor.confirm', `Delete ${pathsArray.length} items?`);
                 if (confirmed) {
                     // Store paths as newline-separated string to avoid JSON parsing issues in Lua
                     await syscall('clientStore.set', 'explorer.batchSelectedPaths', pathsArray.join('\n'));
@@ -1720,8 +1936,6 @@ command.define {
   end
 }
 ```
-
-
 
 ## Discussions to this library
 * [SilverBullet Community](https://community.silverbullet.md/t/document-explorer-image-gallery-for-silverbullet/3647?u=mr.red)
