@@ -21,6 +21,7 @@ pageDecoration.prefix: "🗂️ "
 • Real-Time ==Filtering== by filename or extension
 • ==Drag&Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
 • Context Menu: ==Right-click== for quick File/Folder renaming and deletion.
+• ==Batch Selection==: Hold `Ctrl` (or `Cmd` on Mac) and click to select multiple files, then right-click for batch Rename or Delete.
 • ==Responsive design==: Adjustable panel width using your mouse.
 - With instructions for a Color Theme
 
@@ -35,7 +36,7 @@ pageDecoration.prefix: "🗂️ "
 > `Ctrl-Alt-e` - Toggle Document Explorer
 
 ## Configuration Options and Defaults:
-* **`position`**           - Where the panel is docked (“lhs”|“rhs” - left/right hand side) (default: lhs)
+* **`position`**           - Where the panel is docked ("lhs"|"rhs" - left/right hand side) (default: lhs)
 * **`homeDirName`**        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
 * **`goToCurrentDir`**     - Start navigation in the Directory of the currently opened page (default: true)
 * **`tileSize`**           - Grid Tile size, recommended between 60px-120px (default: "80px") 
@@ -74,7 +75,7 @@ Licensed under the ISC and MIT licenses.
 ## Space-Style Color Theming Example
 
 > **tip** Tip
-> Make sure you copy this as space-style so it won’t get overwritten with future updates!
+> Make sure you copy this as space-style so it won't get overwritten with future updates!
 
 ```css
 
@@ -553,6 +554,25 @@ function deleteFileWithConfirm(path)
   end  
 end
 
+-- ---------- Batch Delete (reads paths from clientStore to avoid JS escaping issues) ----------
+-- Paths are stored as newline-separated string to avoid needing json.decode
+function batchDeleteFiles()
+  local pathsStr = clientStore.get("explorer.batchSelectedPaths")
+  if not pathsStr or pathsStr == "" then return end
+  local count = 0
+  for path in pathsStr:gmatch("[^\n]+") do
+    local fileToDelete = path
+    if not path:match("%.[^.]+$") then
+        fileToDelete = path .. ".md"
+    end
+    space.deleteFile(fileToDelete)
+    count = count + 1
+  end
+  clientStore.set("explorer.batchSelectedPaths", "")
+  refreshExplorer()
+  editor.flashNotification("Deleted " .. count .. " item(s).")
+end
+
 -- ---------- drawPanel function ----------
     local function drawPanel()
       local currentWidth = clientStore.get("explorer.panelWidth") or config.get("explorer.panelWidth") or 0.8
@@ -818,6 +838,12 @@ window.addEventListener('keydown', function(e) {
             e.preventDefault();
             return;
         }
+        // Also clear batch selection on Escape
+        if (selectedPaths.size > 0) {
+            clearSelection();
+            e.preventDefault();
+            return;
+        }
     }
 
     // 2. SEARCH FOCUS: "/" key
@@ -902,7 +928,59 @@ window.addEventListener('keydown', function(e) {
         }
     }
 });
-  
+
+// ---------------- Batch Selection ----------------
+let selectedPaths = new Set();
+
+// Extract the full path from a tile element (handles both file tiles and folder tiles)
+function getFullTilePath(tile) {
+    // For folder tiles, the onclick contains path:{...}
+    const onclick = tile.getAttribute('onclick') || '';
+    const folderMatch = onclick.match(/path\s*:\s*['"]([^'"]+)['"]/);
+    if (folderMatch) {
+        return folderMatch[1].replace(/\/$/, '');
+    }
+    // For file tiles, the title attribute holds the full path (without leading slash)
+    return (tile.getAttribute('title') || '').replace(/^\//, '');
+}
+
+function toggleTileSelection(tile) {
+    if (!tile || tile.classList.contains('folderup-tile')) return;
+    const path = getFullTilePath(tile);
+    if (!path) return;
+
+    if (selectedPaths.has(path)) {
+        selectedPaths.delete(path);
+        tile.classList.remove('is-selected');
+    } else {
+        selectedPaths.add(path);
+        tile.classList.add('is-selected');
+    }
+}
+
+function clearSelection() {
+    selectedPaths.clear();
+    document.querySelectorAll('.is-selected').forEach(el => el.classList.remove('is-selected'));
+}
+
+// Capture-phase click handler: intercept Ctrl/Cmd+Click for batch selection
+document.addEventListener('click', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        const tile = e.target.closest('.grid-tile');
+        if (!tile || tile.classList.contains('folderup-tile')) return;
+        // Prevent the tile's inline onclick from firing
+        e.stopPropagation();
+        e.preventDefault();
+        toggleTileSelection(tile);
+    } else {
+        // Regular click - clear selection unless clicking on the context menu
+        const isContextMenu = e.target.closest('#explorer-context-menu');
+        if (!isContextMenu && selectedPaths.size > 0) {
+            clearSelection();
+        }
+    }
+}, true); // capture phase ensures we run before inline onclick handlers
+
 // ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
     // 1. Decode Base64 to a binary string
@@ -976,29 +1054,43 @@ if (contextMenuEnabled) {
     let internalPath = targetPath.replace(/^[\/]?\.fs\//, "").replace(/^\//, "");
     if (isFolder) internalPath = internalPath.replace(/\/$/, "");
 
+    // --- Batch Mode Detection ---
+    // Batch mode is active when multiple items are selected
+    const isBatchMode = selectedPaths.size > 1;
+    const batchCount = selectedPaths.size;
+
     // --- Build Menu Content ---
     let menuContent = "";
-    
-    // ADDED: Open option for folders in Tree View
-    if (isFolder && isTreeView) {
-        menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold;">Focus</div>`;
+
+    if (isBatchMode) {
+        // Batch mode: only show rename and delete for the selection
+        menuContent += `<div class="menu-item" id="ctx-rename">Rename ${batchCount} items</div>`;
+        menuContent += `<div class="menu-item delete" id="ctx-delete">Delete ${batchCount} items</div>`;
+    } else {
+        // Single item mode (original logic)
+
+        // ADDED: Open option for folders in Tree View
+        if (isFolder && isTreeView) {
+            menuContent += `<div class="menu-item" id="ctx-open" style="font-weight:bold;">Focus</div>`;
+        }
+
+        // NEW: Preview option for files
+        if (!isFolder || isBadgeClick) {
+            menuContent += `<div class="menu-item" id="ctx-preview">Pop-Out</div>`;
+        }
+
+        // NEW: Dock options (Dock Right / Dock Left) inserted between Pop-Out and Rename/Delete
+        if (!isFolder || isBadgeClick) {
+            menuContent += `<div class="menu-item" id="ctx-dock-right">Dock Right</div>`;
+            menuContent += `<div class="menu-item" id="ctx-dock-left">Dock Left</div>`;
+        }
+
+        menuContent += `<div class="menu-item" id="ctx-rename">Rename</div>`;
+        if (!isFolder || isBadgeClick) {
+            menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
+        }
     }
 
-    // NEW: Preview option for files
-    if (!isFolder || isBadgeClick) {
-        menuContent += `<div class="menu-item" id="ctx-preview">Pop-Out</div>`;
-    }
-
-    // NEW: Dock options (Dock Right / Dock Left) inserted between Pop-Out and Rename/Delete
-    if (!isFolder || isBadgeClick) {
-        menuContent += `<div class="menu-item" id="ctx-dock-right">Dock Right</div>`;
-        menuContent += `<div class="menu-item" id="ctx-dock-left">Dock Left</div>`;
-    }
-
-    menuContent += `<div class="menu-item" id="ctx-rename">Rename</div>`;
-    if (!isFolder || isBadgeClick) {
-        menuContent += `<div class="menu-item delete" id="ctx-delete">Delete</div>`;
-    }
     menu.innerHTML = menuContent;
 
     // --- Position Menu ---
@@ -1012,7 +1104,7 @@ if (contextMenuEnabled) {
 
     // --- Action Handlers ---
     
-    // Handle the Open command
+    // Handle the Open command (single mode only)
     if (document.getElementById('ctx-open')) {
         document.getElementById('ctx-open').onclick = async () => {
             menu.style.display = 'none';
@@ -1022,7 +1114,7 @@ if (contextMenuEnabled) {
         };
     }
 
-    // Handle the Preview command
+    // Handle the Preview command (single mode only)
     if (document.getElementById('ctx-preview')) {
         document.getElementById('ctx-preview').onclick = async () => {
             menu.style.display = 'none';
@@ -1036,7 +1128,7 @@ if (contextMenuEnabled) {
         };
     }
 
-    // Handle Dock Right
+    // Handle Dock Right (single mode only)
     if (document.getElementById('ctx-dock-right')) {
         document.getElementById('ctx-dock-right').onclick = async () => {
             menu.style.display = 'none';
@@ -1048,7 +1140,7 @@ if (contextMenuEnabled) {
         };
     }
 
-    // Handle Dock Left
+    // Handle Dock Left (single mode only)
     if (document.getElementById('ctx-dock-left')) {
         document.getElementById('ctx-dock-left').onclick = async () => {
             menu.style.display = 'none';
@@ -1060,18 +1152,46 @@ if (contextMenuEnabled) {
         };
     }
 
+    // Handle Rename: single or batch
     document.getElementById('ctx-rename').onclick = async () => {
         menu.style.display = 'none';
-        let renamePath = internalPath;
-        if (!isFolder && !internalPath.match(/\.[^.]+$/)) renamePath += ".md";
-        await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
-        await syscall('lua.evalExpression', 'refreshExplorer()');
+        if (isBatchMode) {
+            // Batch rename: invoke rename dialog for each selected item one by one
+            const pathsToRename = Array.from(selectedPaths);
+            for (const batchPath of pathsToRename) {
+                let renamePath = batchPath;
+                if (!batchPath.match(/\.[^.]+$/)) renamePath = batchPath + '.md';
+                await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
+            }
+            clearSelection();
+            await syscall('lua.evalExpression', 'refreshExplorer()');
+        } else {
+            // Single rename (original logic)
+            let renamePath = internalPath;
+            if (!isFolder && !internalPath.match(/\.[^.]+$/)) renamePath += ".md";
+            await syscall("system.invokeFunction", "index.renamePrefixCommand", { oldPrefix: renamePath });
+            await syscall('lua.evalExpression', 'refreshExplorer()');
+        }
     };
 
+    // Handle Delete: single or batch
     if (document.getElementById('ctx-delete')) {
         document.getElementById('ctx-delete').onclick = async () => {
             menu.style.display = 'none';
-            await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+            if (isBatchMode) {
+                // Batch delete: confirm once, then delete each file one by one via Lua
+                const pathsArray = Array.from(selectedPaths);
+                const confirmed = await syscall('editor.confirm', `Are your sure you want to delete these ${pathsArray.length} items?`);
+                if (confirmed) {
+                    // Store paths as newline-separated string to avoid JSON parsing issues in Lua
+                    await syscall('clientStore.set', 'explorer.batchSelectedPaths', pathsArray.join('\n'));
+                    await syscall('lua.evalExpression', 'batchDeleteFiles()');
+                }
+                clearSelection();
+            } else {
+                // Single delete (original logic)
+                await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+            }
         };
     }
 };

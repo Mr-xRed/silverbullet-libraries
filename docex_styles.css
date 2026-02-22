@@ -310,6 +310,17 @@
   background: oklch(0.75 0 0 / 0.15);
 }
 
+/* --- Batch Selection Highlight --- */
+.grid-tile.is-selected {
+  outline: 2px solid var(--explorer-accent-color);
+  outline-offset: -2px;
+  background: oklch(from var(--explorer-accent-color) l c h / 0.18);
+}
+
+.grid-tile.is-selected:hover {
+  background: oklch(from var(--explorer-accent-color) l c h / 0.30);
+}
+
 .hybrid-virtual-entry .grid-tile:hover, .grid-tile:hover { background: var(--explorer-hover-bg); }
 
 .grid-tile.is-dragging {
@@ -863,4 +874,3 @@ html[data-theme="light"]{
   --file-dio-color: oklch(0.65 0.15 90); 
   --file-unk-color: oklch(0.65 0 0);
 }
-
