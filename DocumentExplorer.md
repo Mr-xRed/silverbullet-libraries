@@ -28,10 +28,11 @@ pageDecoration.prefix: "🗂️ "
 - With instructions for a Color Theme
 
 ## ⚠️ Know Limitations and Warnings
-- you need to confirm the files one by one when `Cut & Pasting` or when batch `Rename` multiple files, because DocumentExplorer uses the built-in `Rename` function from Silverbullet, which will also update the backlinks inside the pages. this has its limitation on renaming multiple files at once.
-- ⚠️❗️ When renaming a folder with multiple files in it, the Backlinks are not correctly updated
+- The Built-In Rename function in Silverbullet has couple of limitation affecting the Backlinks, when renaming multiple files at once:
+    - ❗️⚠️ You need to confirm the files one by one when `Cut & Pasting` or when batch `Rename` multiple files, because DocumentExplorer uses the built-in `Rename` function from Silverbullet, which will also update the backlinks inside the pages. 
+    - ❗️⚠️ When renaming a folder with multiple files in it, the Backlinks are not correctly updated
     - recommandation: instead of Renaming the folder, use batch-cut/paste on the files
-- ⚠️❗️ [Silverbullet - BUG when renaming files with a "(" in its name the backlinks will malform](https://github.com/silverbulletmd/silverbullet/issues/1850)
+    - ❗️⚠️ [Silverbullet - BUG when renaming files with a "(" in its name the backlinks will malform](https://github.com/silverbulletmd/silverbullet/issues/1850)
 
   
 ## Currently supported extension:
