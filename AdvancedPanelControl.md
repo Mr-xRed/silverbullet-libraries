@@ -65,7 +65,7 @@ config.set("AdvancedPanelControl", {
 ### Default overrides
 ```space-style
 
-#sb-main .cm-editor .cm-content {padding: 5px 90px;}
+#sb-main .cm-editor .cm-content {padding: 5px 40px;}
 
 @media (max-width: 600px) {#sb-main .cm-editor .cm-content {padding: 5px 0px;}}
 
