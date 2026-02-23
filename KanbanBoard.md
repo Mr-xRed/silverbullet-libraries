@@ -36,7 +36,7 @@ ${KanbanBoard(
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
       [status: "⏳"][priority: "5"] [taskID: "T-04-26"] 
 - [ ] New task with at tag at the end #TestTag [status: "👀"] [priority: "4"][taskID:"T-05-26"]   
-- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "✅"] [kanbanHide: "true"] [completed: "2026-02-18 21:20"]
+- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "done"] [kanbanHide: "true"] [completed: "2026-02-18 21:20"]
 
 
 ## How it Works

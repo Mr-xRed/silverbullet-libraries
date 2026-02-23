@@ -35,6 +35,11 @@ uri: github:Mr-xRed/silverbullet-libraries/PomodoroClock.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PomodoroClock.md
 description: "Floating Pomodoro: The productivity tool you didn’t ask for, but are getting anyway"
 ---
+name: "📍 Floating Cursor Positionm"
+uri: github:Mr-xRed/silverbullet-libraries/FloatingCursorPosition.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingCursorPosition.md
+description: "Floating Cursor Positon: A minimal floating widget that shows the current cursor position in the editor"
+---
 name: "🖨️ PrintPreview"
 uri: github:Mr-xRed/silverbullet-libraries/PrintPreview.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PrintPreview.md
