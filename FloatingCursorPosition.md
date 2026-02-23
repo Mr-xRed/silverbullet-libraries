@@ -46,9 +46,9 @@ html[data-theme="light"] #sb-cursorpos-root {
     --cp-bg: oklch(0.90 0 0);
     --cp-border: oklch(0.80 0 0);
     --cp-text: oklch(0.20 0 0);
-    --cp-label: oklch(0.60 0 0);
+    --cp-label: oklch(0.30 0 0);
     --cp-accent: var(--ui-accent-color, oklch(0.5 0.18 200));
-    --cp-sep: oklch(0.90 0 0);
+    --cp-sep: oklch(0.70 0 0);
 }
 
 .cp-card {
