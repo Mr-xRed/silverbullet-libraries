@@ -327,6 +327,7 @@ html[data-theme="light"] {
   .toc-wrapper {
       font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
       background: var(--bg-color, transparent);
+      height: 100vh
     }
     .toc-header {
       position: sticky;
