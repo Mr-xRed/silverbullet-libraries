@@ -57,6 +57,40 @@ body.sb-dragging-active { user-select: none !important; -webkit-user-select: non
     font-family: system-ui, sans-serif;
     user-select: none;
     touch-action: none;
+    /* Anchor to the top-right corner (near the close button) */
+    transform-origin: 92% 8%;
+    will-change: transform, opacity;
+}
+
+/* Natural "Implosion" Animations */
+#sb-journal-root.jc-animate-in {
+    animation: jc-implode-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+#sb-journal-root.jc-animate-out {
+    animation: jc-implode-out 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes jc-implode-in {
+    0% { 
+        transform: scale(0); 
+        opacity: 0; 
+    }
+    100% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+}
+
+@keyframes jc-implode-out {
+    0% { 
+        transform: scale(1); 
+        opacity: 1; 
+    }
+    100% { 
+        transform: scale(0); 
+        opacity: 0; 
+    }
 }
 
 html[data-theme="dark"] #sb-journal-root {
@@ -252,7 +286,11 @@ end
 function toggleFloatingJournalCalendar()
     local existing_root = js.window.document.getElementById("sb-journal-root")
     if existing_root then 
-        existing_root.remove() 
+        -- Trigger closing animation and then remove
+        js.window.eval([[ (el) => {
+            el.classList.add("jc-animate-out");
+            setTimeout(() => el.remove(), 300);
+        }]])(existing_root)
         return 
     end
 
@@ -272,7 +310,11 @@ function toggleFloatingJournalCalendar()
     local sessionID = "jc_" .. math.floor(os.time())
     local saved_top = clientStore.get("jc_pos_top") or "80px"
     local saved_left = clientStore.get("jc_pos_left") or "auto"
-    local saved_right = (saved_left == "auto") and "20px" or "auto"
+    
+    local initial_right = "20px"
+    if saved_left ~= "auto" then
+        initial_right = "auto"
+    end
 
     js.window.addEventListener("sb-journal-event", function(e)
         if e.detail.session == sessionID then
@@ -319,12 +361,13 @@ function toggleFloatingJournalCalendar()
 
     local container = js.window.document.createElement("div")
     container.id = "sb-journal-root"
+    container.classList.add("jc-animate-in")
     container.innerHTML = [[
     <style>
       #sb-journal-root {
         top: ]] .. saved_top .. [[;
         left: ]] .. saved_left .. [[;
-        right: ]] .. saved_right .. [[;
+        right: ]] .. initial_right .. [[;
       }
       #sb-journal-root.ctrl-active .jc-day {
         cursor: copy !important;
@@ -486,7 +529,11 @@ function toggleFloatingJournalCalendar()
 
         document.getElementById("jc-month").onchange = (e) => { vDate.setDate(1); vDate.setMonth(parseInt(e.target.value)); render(); };
         document.getElementById("jc-year").onchange = (e) => { vDate.setFullYear(parseInt(e.target.value)); render(); };
-        document.getElementById("jc-close-btn").onclick = () => root.remove();
+        
+        document.getElementById("jc-close-btn").onclick = () => {
+            root.classList.add("jc-animate-out");
+            setTimeout(() => root.remove(), 300);
+        };
 
         const card = document.getElementById("jc-draggable");
         card.onpointerdown = (e) => {
@@ -522,7 +569,10 @@ function toggleFloatingJournalCalendar()
         };
 
         render();
-        setTimeout(clamp, 50);
+        // Check alignment after a short delay to ensure initial styles are applied correctly
+        setTimeout(() => {
+            if (root.style.left !== "auto") root.style.right = "auto";
+        }, 100);
     })();
     ]]
     container.appendChild(scriptEl)
