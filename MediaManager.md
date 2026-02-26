@@ -8,7 +8,8 @@ pageDecoration.prefix: "🧰 "
 
 A unified media library for SilverBullet that lets you search, fetch, and store **books, movies, and TV series** as structured pages with rich metadata.
 
-## Usage: ${widgets.commandButton("Media Manager: Add Item")}
+## Usage:
+${widgets.commandButton("Media Manager: Add Item")}
 
 ## **Main features**
 
@@ -36,7 +37,7 @@ A unified media library for SilverBullet that lets you search, fetch, and store 
 ```lua
 config.set("bookmanager",{
   prefix = "MediaDB/Books/",
-  filenameTemplate = [==[${title} (${first_publish_year})]==],
+  filenameTemplate = [==[${title} - ${first_publish_year}]==],
   pageTemplate = [==[---
 type: "book"
 title: "${title}"
@@ -50,7 +51,7 @@ dataSource: "${api}"
 cover: "${cover_image_url}"
 description: "${description}"
 ---
-# ${title} - ${author_name[1]} (${first_publish_year})
+# ${title} - ${author_name[1]} - ${first_publish_year}
 ]==]
 })
 
@@ -404,7 +405,7 @@ function MediaManager.addMedia(typeKey)
 
     local pagePrefix = cfg.prefix or defaultPrefix
     
-    local filenameTemplateStr = cfg.filenameTemplate or [==[${title} (${year})]==]
+    local filenameTemplateStr = cfg.filenameTemplate or [==[${title} - ${year}]==]
     
     -- Default templates based on type
     local defaultPageTemplate = [==[---
@@ -420,7 +421,7 @@ dataSource: "${api}"
 cover: "${cover_image_url}"
 description: "${description}"
 ---
-# ${title} - ${author_name[1]} (${first_publish_year})
+# ${title} - ${author_name[1]} - ${first_publish_year}
 ]==]
 
     if typeKey == "movie" or typeKey == "series" then
@@ -442,7 +443,7 @@ actors: "${actors}"
 imdb_rating: "${imdb_rating}"
 plot: "${plot}"
 ---
-# ${title} (${year})
+# ${title} - ${year}
 
 ![Poster](${poster})
 ]==]
