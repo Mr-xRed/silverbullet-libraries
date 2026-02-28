@@ -4,7 +4,7 @@ tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---
 
-# Custom TOC Sidepanel
+# Table of Contents for the Sidepanel
 
 **_Because scrolling through a 200-heading page to find the right section is nobody's idea of a good time._**
 
@@ -23,8 +23,9 @@ TRY IT OUT 👉 ${widgets.commandButton("Toggle Table of Contents","Toggle TOC i
 * The folding & unfolding is synced witht the page only one-directional
 * Whe there are many level one headers and they are outside the codemirror buffer, they don’t collapse
 - Sometimes you need to fold-unfold the heading in the TOC to get in sync with the Page
+- if your heading contains
 
-## Config & Defaults
+## Config & Defaults 
 
 ```lua
 config.set("SidepanelTOC", {sidePanel = "rhs"})
