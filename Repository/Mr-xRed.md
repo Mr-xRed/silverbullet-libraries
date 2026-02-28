@@ -79,8 +79,18 @@ website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/OpenWeather
 description: "OpenWeatherMap Widget and slash commands"
 ```
 
-## Productivity Shortcuts
+## Productivity Tools
 ```#meta/library/remote
+name: "🗓️ Floating Journal Calendar"
+uri: github:Mr-xRed/silverbullet-libraries/FloatingJournalCalendar.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingJournalCalendar.md
+description: "The Journal Calendar is a lightweight, interactive navigation tool for SilverBullet. It provides a sleek, floating interface that allows users to quickly browse their journal entries."
+---
+name: "🛠 Table of Contents for your Sidepanel"
+uri: github:Mr-xRed/silverbullet-libraries/TOCInSidePanel.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TOCInSidePanel.md
+description: "A collapsible Table of Contents for your sidepanel. It folds and unfolds sections in the document as you navigate the tree."
+---
 name: "🛠 DisableAccidentalMobileTaps"
 uri: github:Mr-xRed/silverbullet-libraries/DisableAccidentalMobileTaps.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DisableAccidentalMobileTaps.md
@@ -100,11 +110,6 @@ name: "🗓️ DatePicker as SlashCommand"
 uri: github:Mr-xRed/silverbullet-libraries/DatePicker.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DatePicker.md
 description: "Pick a date from a calendar and add it to your page as a WikiLink"
----
-name: "🗓️ Floating Journal Calendar"
-uri: github:Mr-xRed/silverbullet-libraries/FloatingJournalCalendar.md
-website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingJournalCalendar.md
-description: "The Journal Calendar is a lightweight, interactive navigation tool for SilverBullet. It provides a sleek, floating interface that allows users to quickly browse their journal entries."
 ```
 
 ## Styles and Visuals

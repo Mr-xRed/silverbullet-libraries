@@ -4,32 +4,30 @@ tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---
 
-${widgets.commandButton("Toggle Table of Contents","Toggle TOC in Sidebar")}
-
-# Custom TOC Sidebar
+# Custom TOC Sidepanel
 
 **_Because scrolling through a 200-heading page to find the right section is nobody's idea of a good time._**
 
 A live, collapsible **Table of Contents** that pins itself to the right-hand side (customizable) of your editor and actually keeps up with what you're doing. It folds and unfolds sections in the document as you navigate the tree.
 
+TRY IT OUT 👉 ${widgets.commandButton("Toggle Table of Contents","Toggle TOC in Sidepanel")}
+
 ## Core Features
 
-* **Live Heading Tree:** Renders all headings from the current page instantly, auto-refreshing on page load
-* **Undirectional Fold Mirroring:** Collapsing or expanding a node in the sidebar folds or unfolds the exact corresponding section in the document — one level at a time
+* **Live Heading Tree:** Renders all headings from the current page, auto-refreshing on page load
+* **Undirectional Fold Mirroring:** Collapsing or expanding a node in the sidepanel folds or unfolds the exact corresponding section in the document — one level at a time
 * **Direct Navigation:** Click any heading to jump straight to that position in the document
 * **Toolbar Controls:** One-click Expand All, Collapse All, Refresh, and Close buttons
 
 ## Known limitations and issues
+* The folding & unfolding is synced witht the page only one-directional
 * Whe there are many level one headers and they are outside the codemirror buffer, they don’t collapse
 - Sometimes you need to fold-unfold the heading in the TOC to get in sync with the Page
 
 ## Config & Defaults
 
 ```lua
-config.set("CustomTOCSidebar", {
-    autoOpenOnLoad = true,
-    sidePanel = "rhs"
-  })
+config.set("SidepanelTOC", {sidePanel = "rhs"})
 ```
 
 ## DEMO Headings
@@ -59,28 +57,29 @@ Consectetur adipiscing elit, each Silverbullet kitten purrs in markdown syntax, 
 ### Heading 3
   Curabitur pretium tincidunt lacus, and the four Silverbullet kittens, vigilant and slightly smug, guard your knowledge base from the abyss of forgotten ideas.
 
-
 ## Space-Style
-```space-style
-/* priority: -100 */
-html body {margin:0;}
 
+```space-style
+/* priority: 100 */
+html{
+    --toc-chevron-size: 14px;
+    --toc-spine-width: 3px;
+}
 /* ── Dark theme ── */
 html[data-theme="dark"] {
-    --toc-bg-color: oklch(0.65 0 0 / 0.1);
-    --toc-border-color: oklch(0.4 0 0);
+    --toc-bg-color: var(--top-background-color);
+    --toc-border-color: oklch(0.45 0 0);
     --toc-text-color: oklch(0.75 0 0);
     --toc-text-muted: oklch(0.95 0 0 / 0.65);
     --toc-accent-color: oklch(0.65 0.22 260);
     --toc-item-hover: oklch(0.65 0 0 / 0.15);
-    --toc-node-bg: oklch(0.40 0 0);
-    --toc-node-accent: oklch(0.55 0.2 250);
-    --toc-chevron-size: 14px;
+    --toc-node-bg: oklch(0.50 0 0);
+    --toc-node-accent: oklch(0.55 0.2 260);
 }
 
 /* ── Light theme ── */
 html[data-theme="light"] {
-    --toc-bg-color: oklch(0.65 0 0 / 0.1);
+    --toc-bg-color: var(--top-background-color);
     --toc-border-color: oklch(0.8 0 0);
     --toc-text-color: oklch(0.35 0 0);
     --toc-text-muted: oklch(0.35 0 0 / 0.65);
@@ -88,11 +87,12 @@ html[data-theme="light"] {
     --toc-item-hover: oklch(0.65 0 0 / 0.15);
     --toc-node-bg: oklch(0.70 0.03 240);
     --toc-node-accent: oklch(0.55 0.2 260);
-    --toc-chevron-size: 10px;
 }
 
+html body {margin:0;}
+
   .toc-wrapper {
-      font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+      font-family: var(--ui-font,"Segoe UI", Roboto, sans-serif);
       background: var(--toc-bg-color, transparent);
       height: 100vh;
       display: flex;
@@ -174,26 +174,26 @@ html[data-theme="light"] {
     .toc-item[data-level]:not([data-level="0"])::before {
       content: "";
       position: absolute;
-      left: calc((var(--indent) - 1) * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 5.5px);
+      left: calc((var(--indent) - 1) * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 7.5px - var(--toc-spine-width) / 2);
       top: -14px;
-      width: 4px;
+      width: var(--toc-spine-width);
       height: calc(100% + 14px);
       background-color: var(--toc-border-color);
       border-radius: 0;
     }
     /* Last in branch: spine stops at the horizontal midpoint turn. */
     .toc-item[data-last="true"]:not([data-level="0"])::before {
-      height: calc(50% + 16px);
+      height: calc(50% + 14px + var(--toc-spine-width) / 2);
       border-radius: 0 0 0 10px;
     }
     /* Horizontal connector. */
     .toc-item[data-level]:not([data-level="0"])::after {
       content: "";
       position: absolute;
-      left: calc((var(--indent) - 1) * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 9.5px);
-      top: calc(50% - 2px);
-      width: calc(var(--toc-chevron-size) / 2 + 4px);
-      height: 4px;
+      left: calc((var(--indent) - 1) * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 7.5px + var(--toc-spine-width) / 2);
+      top: calc(50% - var(--toc-spine-width) / 2);
+      width: calc(var(--toc-chevron-size) / 2 + var(--toc-spine-width));
+      height: var(--toc-spine-width);
       background-color: var(--toc-border-color);
     }
 
@@ -251,13 +251,41 @@ html[data-theme="light"] {
       margin-top: 4px;
       font-size: 13px;
     }
+
+    /* ── Placeholder (no headings) ── */
+    .toc-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 24px 16px;
+      color: var(--toc-text-muted);
+      text-align: center;
+    }
+    .toc-placeholder svg {
+      opacity: 0.35;
+    }
+    .toc-placeholder-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--toc-text-color);
+      opacity: 0.5;
+    }
+    .toc-placeholder-sub {
+      font-size: 11.5px;
+      opacity: 0.6;
+      line-height: 1.5;
+    }
 ```
 
 ## Implementation
+
 ```space-lua
 -- priority: 10
 
-config.define("CustomTOCSidebar", {
+config.define("SidepanelTOC", {
   type = "object",
   properties = {
     autoOpenOnLoad = { type = "boolean" },
@@ -268,8 +296,8 @@ config.define("CustomTOCSidebar", {
 local _tocVisible = false
 
 -- Returns html, script (two values) so callers can pass script as the 4th arg to editor.showPanel.
-function widgets.customTocSidebar()
-  local cfg = config.get("CustomTOCSidebar") or {}
+function widgets.SidepanelTOC()
+  local cfg = config.get("SidepanelTOC") or {}
   local sidePanel = cfg.sidePanel or "rhs"
 
   local text = editor.getText()
@@ -423,7 +451,7 @@ function widgets.customTocSidebar()
       for _, level in ipairs(activeSpines) do
         local n = tonumber(level) - 1
         table.insert(gradients, string.format(
-          "linear-gradient(to right, transparent calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 5.5px), var(--toc-border-color) calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 5.5px), var(--toc-border-color) calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 9.5px), transparent calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 9.5px))",
+          "linear-gradient(to right, transparent calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 7.5px - var(--toc-spine-width) / 2), var(--toc-border-color) calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 7.5px - var(--toc-spine-width) / 2), var(--toc-border-color) calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 7.5px + var(--toc-spine-width) / 2), transparent calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 7.5px + var(--toc-spine-width) / 2))",
           n, n, n, n
         ))
       end
@@ -472,12 +500,12 @@ function widgets.customTocSidebar()
     },
     dom.button {
       class = "toc-btn",
-      ["xonclick"] = "syscall('system.invokeCommand', 'Refresh TOC in Sidebar')",
+      ["xonclick"] = "syscall('system.invokeCommand', 'Refresh TOC in Sidepanel')",
       "XSVG_REFRESH"
     },
     dom.button {
       class = "toc-btn toc-btn-close",
-      ["xonclick"] = "syscall('system.invokeCommand','Toggle TOC in Sidebar')",
+      ["xonclick"] = "syscall('system.invokeCommand','Toggle TOC in Sidepanel')",
       "XSVG_CLOSE"
     }
   }
@@ -496,6 +524,8 @@ function widgets.customTocSidebar()
   local styles = [[
     <link rel="stylesheet" href="/.client/main.css">
     <style>
+      /* Inline fallback so spine calc()s resolve correctly before async Space-Style injection */
+  /*    html { --toc-chevron-size: 14px; --toc-spine-width: 3px; }*/
       .toc-wrapper { visibility: hidden; }
     </style>
   ]]
@@ -568,7 +598,7 @@ function widgets.customTocSidebar()
             container.innerHTML = customStyles;
           }
         } catch (e) {
-          console.warn("CustomTOCSidebar: could not inject space styles", e);
+          console.warn("SidepanelTOC: could not inject space styles", e);
         }
         applyCollapsedState();
         var wrapper = document.querySelector(".toc-wrapper");
@@ -582,35 +612,116 @@ function widgets.customTocSidebar()
   return finalHtml .. styles, script
 end
 
+-- Returns a placeholder panel html, script for pages with no headings.
+function widgets.SidepanelTOCPlaceholder()
+  local cfg = config.get("SidepanelTOC") or {}
+
+  local closeBtn = dom.div {
+    class = "toc-wrapper",
+    dom.div {
+      class = "toc-header",
+      dom.div {
+        class = "toc-toolbar",
+        dom.button {
+          class = "toc-btn toc-btn-close",
+          ["xonclick"] = "syscall('system.invokeCommand','Toggle TOC in Sidepanel')",
+          "XSVG_CLOSE"
+        }
+      }
+    },
+    dom.div {
+      class = "toc-placeholder",
+      dom.span { class = "toc-placeholder-title", "No headings" },
+      dom.span { class = "toc-placeholder-sub", "This page has no headings to display in the TOC." }
+    }
+  }
+
+  local styles = [[
+    <link rel="stylesheet" href="/.client/main.css">
+    <style>
+      .toc-wrapper { visibility: hidden; }
+    </style>
+  ]]
+
+  local finalHtml = js.tojs(closeBtn).outerHTML
+  finalHtml = finalHtml:gsub('xonclick=', 'onclick=')
+  finalHtml = finalHtml:gsub('XSVG_CLOSE', '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>')
+
+  local script = [[
+    (function() {
+      var MAX_ATTEMPTS = 40;
+      var INTERVAL_MS  = 100;
+      var attempts = 0;
+
+      function injectAndReveal() {
+        try {
+          var parentHtml = window.parent.document.documentElement;
+          var theme = parentHtml.getAttribute("data-theme");
+          if (theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+          }
+          var customStyles = window.parent.document.getElementById("custom-styles")?.innerHTML || "";
+          if (!customStyles && attempts < MAX_ATTEMPTS) {
+            attempts++;
+            setTimeout(injectAndReveal, INTERVAL_MS);
+            return;
+          }
+          if (customStyles) {
+            var container = document.getElementById("injected-custom-styles");
+            if (!container) {
+              container = document.createElement("div");
+              container.id = "injected-custom-styles";
+              document.head.appendChild(container);
+            }
+            container.innerHTML = customStyles;
+          }
+        } catch (e) {
+          console.warn("SidepanelTOC: could not inject space styles", e);
+        }
+        var wrapper = document.querySelector(".toc-wrapper");
+        if (wrapper) { wrapper.style.visibility = "visible"; }
+      }
+
+      injectAndReveal();
+    })();
+  ]]
+
+  return finalHtml .. styles, script
+end
+
 command.define {
-  name = "Toggle TOC in Sidebar",
+  name = "Toggle TOC in Sidepanel",
   run = function()
-    local cfg = config.get("CustomTOCSidebar") or {}
+    local cfg = config.get("SidepanelTOC") or {}
     local sidePanel = cfg.sidePanel or "rhs"
     if _tocVisible then
       editor.hidePanel(sidePanel)
       _tocVisible = false
       clientStore.set("customTocVisible", "false")
     else
-      local html, script = widgets.customTocSidebar()
+      local html, script = widgets.SidepanelTOC()
       if html then
         editor.showPanel(sidePanel, 1, html, script)
         _tocVisible = true
         clientStore.set("customTocVisible", "true")
       else
-        print("No headers found to display.")
+        -- No headings: show placeholder instead of doing nothing
+        local placeholderHtml, placeholderScript = widgets.SidepanelTOCPlaceholder()
+        editor.showPanel(sidePanel, 1, placeholderHtml, placeholderScript)
+        _tocVisible = true
+        clientStore.set("customTocVisible", "true")
       end
     end
   end
 }
 
 command.define {
-  name = "Refresh TOC in Sidebar",
+  name = "Refresh TOC in Sidepanel",
   run = function()
-    local cfg = config.get("CustomTOCSidebar") or {}
+    local cfg = config.get("SidepanelTOC") or {}
     local sidePanel = cfg.sidePanel or "rhs"
     if _tocVisible then
-      local html, script = widgets.customTocSidebar()
+      local html, script = widgets.SidepanelTOC()
       if html then
         editor.showPanel(sidePanel, 1, html, script)
       else
@@ -623,7 +734,7 @@ command.define {
 event.listen {
   name = "editor:pageLoaded",
   run = function(e)
-    local cfg = config.get("CustomTOCSidebar") or {}
+    local cfg = config.get("SidepanelTOC") or {}
     local sidePanel = cfg.sidePanel or "rhs"
 
     local visible = clientStore.get("customTocVisible")
@@ -632,14 +743,20 @@ event.listen {
       return
     end
 
-    local html, script = widgets.customTocSidebar()
+    local html, script = widgets.SidepanelTOC()
     if html then
       editor.showPanel(sidePanel, 1, html, script)
+      _tocVisible = true
+    else
+      -- Page has no headings: replace stale TOC with placeholder
+      local placeholderHtml, placeholderScript = widgets.SidepanelTOCPlaceholder()
+      editor.showPanel(sidePanel, 1, placeholderHtml, placeholderScript)
       _tocVisible = true
     end
   end
 }
 ```
+
 
 ## Discussions to this library
 - [Silverbullt Community](https://community.silverbullet.md/t/table-of-contents-in-sidepanel-work-in-progress/3919)
