@@ -8,18 +8,21 @@ ${widgets.commandButton("Toggle Table of Contents","Toggle TOC in Sidebar")}
 
 # Custom TOC Sidebar
 
-A live, collapsible Table of Contents that pins itself to the right-hand side of your editor and actually keeps up with what you're doing. It folds and unfolds sections in the document as you navigate the tree — because scrolling through a 200-heading page to find the right section is nobody's idea of a good time.
+**_Because scrolling through a 200-heading page to find the right section is nobody's idea of a good time._**
 
-Bild anzeigen
+A live, collapsible **Table of Contents** that pins itself to the right-hand side (customizable) of your editor and actually keeps up with what you're doing. It folds and unfolds sections in the document as you navigate the tree.
 
-## **Core Features**
+## Core Features
 
-*   **Live Heading Tree:** Renders all headings from the current page instantly, auto-refreshing on page load
-*   **Undirectional Fold Mirroring:** Collapsing or expanding a node in the sidebar folds or unfolds the exact corresponding section in the document — one level at a time
-*   **Direct Navigation:** Click any heading to jump straight to that position in the document
-*   **Toolbar Controls:** One-click Expand All, Collapse All, Refresh, and Close buttons
-*   ~~**Ancestor Highlighting:** Hover over any entry to illuminate its full parent chain and connecting spine lines~~
-  
+* **Live Heading Tree:** Renders all headings from the current page instantly, auto-refreshing on page load
+* **Undirectional Fold Mirroring:** Collapsing or expanding a node in the sidebar folds or unfolds the exact corresponding section in the document — one level at a time
+* **Direct Navigation:** Click any heading to jump straight to that position in the document
+* **Toolbar Controls:** One-click Expand All, Collapse All, Refresh, and Close buttons
+
+## Known limitations and issues
+* Whe there are many level one headers and they are outside the codemirror buffer, they don’t collapse
+- Sometimes you need to fold-unfold the heading in the TOC to get in sync with the Page
+
 ## Config & Defaults
 
 ```lua
@@ -56,6 +59,200 @@ Consectetur adipiscing elit, each Silverbullet kitten purrs in markdown syntax, 
 ### Heading 3
   Curabitur pretium tincidunt lacus, and the four Silverbullet kittens, vigilant and slightly smug, guard your knowledge base from the abyss of forgotten ideas.
 
+
+## Space-Style
+```space-style
+/* priority: -100 */
+html body {margin:0;}
+
+/* ── Dark theme ── */
+html[data-theme="dark"] {
+    --toc-bg-color: oklch(0.65 0 0 / 0.1);
+    --toc-border-color: oklch(0.4 0 0);
+    --toc-text-color: oklch(0.75 0 0);
+    --toc-text-muted: oklch(0.95 0 0 / 0.65);
+    --toc-accent-color: oklch(0.65 0.22 260);
+    --toc-item-hover: oklch(0.65 0 0 / 0.15);
+    --toc-node-bg: oklch(0.40 0 0);
+    --toc-node-accent: oklch(0.55 0.2 250);
+    --toc-chevron-size: 14px;
+}
+
+/* ── Light theme ── */
+html[data-theme="light"] {
+    --toc-bg-color: oklch(0.65 0 0 / 0.1);
+    --toc-border-color: oklch(0.8 0 0);
+    --toc-text-color: oklch(0.35 0 0);
+    --toc-text-muted: oklch(0.35 0 0 / 0.65);
+    --toc-accent-color: oklch(0.65 0.22 260);
+    --toc-item-hover: oklch(0.65 0 0 / 0.15);
+    --toc-node-bg: oklch(0.70 0.03 240);
+    --toc-node-accent: oklch(0.55 0.2 260);
+    --toc-chevron-size: 10px;
+}
+
+  .toc-wrapper {
+      font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+      background: var(--toc-bg-color, transparent);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .toc-header {
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding: 8px;
+      border-bottom: 1px solid var(--toc-border-color);
+      background: var(--toc-bg-color);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .toc-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .toc-btn {
+      font-size: 11px;
+      padding: 4px 4px;
+      border-radius: 6px;
+      border: 1px solid var(--toc-border-color);
+      background: var(--toc-bg-color);
+      color: var(--toc-text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      line-height: 1.4;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+    .toc-btn > span.p {
+      display: flex;
+    }
+    .toc-btn:hover {
+      background: var(--toc-accent-color);
+/* border-color: var(--toc-accent-color);*/
+      color: #fff;
+      box-shadow: 0 1px 4px rgba(0,122,255,0.25);
+    }
+    .toc-btn-close {
+      margin-left: auto;
+      font-size: 12px;
+      border-radius: 6px;
+    }
+
+   .toc-btn-close:hover {
+      background: oklch(0.65 0.2 30);
+    }
+   
+   .toc-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 8px 16px 8px;
+    }
+    .toc-tree { position: relative; }
+
+    .toc-item {
+      position: relative;
+      padding: 4px 8px 4px calc(var(--indent) * var(--toc-chevron-size) + 8px);
+      font-size: 12.5px;
+      color: var(--toc-text-color);
+      border-radius: 7px;
+      transition: background 0.12s ease, color 0.12s ease;
+      display: flex;
+      align-items: center;
+      background-repeat: no-repeat;
+      cursor: default;
+      line-height: 1.45;
+    }
+
+    /* ── Tree branch lines (L-shape with rounded corner) ── */
+
+    /* Vertical spine segment for the current item's branch. */
+    .toc-item[data-level]:not([data-level="0"])::before {
+      content: "";
+      position: absolute;
+      left: calc((var(--indent) - 1) * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 5.5px);
+      top: -14px;
+      width: 4px;
+      height: calc(100% + 14px);
+      background-color: var(--toc-border-color);
+      border-radius: 0;
+    }
+    /* Last in branch: spine stops at the horizontal midpoint turn. */
+    .toc-item[data-last="true"]:not([data-level="0"])::before {
+      height: calc(50% + 16px);
+      border-radius: 0 0 0 10px;
+    }
+    /* Horizontal connector. */
+    .toc-item[data-level]:not([data-level="0"])::after {
+      content: "";
+      position: absolute;
+      left: calc((var(--indent) - 1) * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 9.5px);
+      top: calc(50% - 2px);
+      width: calc(var(--toc-chevron-size) / 2 + 4px);
+      height: 4px;
+      background-color: var(--toc-border-color);
+    }
+
+    /* ── Circle node indicator ── */
+    .toc-chevron {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: var(--toc-chevron-size);
+      height: var(--toc-chevron-size);
+      border-radius: 50%;
+      background-color: var(--toc-node-bg);
+      background-size: 80% 80%;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='lightgray' viewBox='0 0 448 512'%3E%3Cpath d='M416 256c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l352 0c17.7 0 32 14.3 32 32z' /%3E%3C/svg%3E");
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+      z-index: 2;
+      margin-right: 5px;
+      transition: background-color 0.15s ease;
+    }
+    /*.toc-chevron:hover { background-size: 80% 80%;}*/
+
+    /* Leaf nodes: muted gray circle */
+    .toc-item[data-has-children="false"] > .toc-chevron {
+      background-color: var(--toc-node-bg);
+    }
+    /* Collapsed state: switch to plus icon */
+    .toc-item[data-collapsed="true"] > .toc-chevron {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='lightgray' viewBox='0 0 448 512'%3E%3Cpath d='M240 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H32c-17.7 0-32 14.3-32 32s14.3 32 32 32H176V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H384c17.7 0 32-14.3 32-32s-14.3-32-32-32H240V80z' /%3E%3C/svg%3E");
+    }
+
+    .toc-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      position: relative;
+      z-index: 2;
+      cursor: pointer;
+      flex: 1;
+    }
+    .toc-item:hover {
+      background-color: var(--toc-item-hover);
+      color: var(--toc-accent-color);
+    }
+    .toc-item:hover > .toc-chevron {
+      background-color: var(--toc-accent-color);
+    }
+
+    .toc-item[data-level="0"] {
+      font-weight: 600;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+```
+
 ## Implementation
 ```space-lua
 -- priority: 10
@@ -71,7 +268,6 @@ config.define("CustomTOCSidebar", {
 local _tocVisible = false
 
 -- Returns html, script (two values) so callers can pass script as the 4th arg to editor.showPanel.
--- The script mirrors DocumentExplorer's proven hide/load-main.css/copy-styles/reveal pattern exactly.
 function widgets.customTocSidebar()
   local cfg = config.get("CustomTOCSidebar") or {}
   local sidePanel = cfg.sidePanel or "rhs"
@@ -87,7 +283,6 @@ function widgets.customTocSidebar()
       local headerLevel = string.match(topLevelChild.type, "^ATXHeading(%d+)")
       if headerLevel then
         local headerText = ""
-        -- Skip the heading markers (e.g., ###)
         local children = {table.unpack(topLevelChild.children)}
         table.remove(children, 1)
          
@@ -116,7 +311,7 @@ function widgets.customTocSidebar()
     if h.level < minLevel then minLevel = h.level end
   end
 
-  -- Inline JS snippets (injected into onclick attrs to avoid innerHTML script-execution limitations)
+  -- Inline JS snippets
   local jsExpandAll = [[
     (function() {
       var items = document.querySelectorAll('.toc-item');
@@ -125,6 +320,7 @@ function widgets.customTocSidebar()
         items[i].style.display = '';
       }
       syscall('editor.unfoldAll');
+      typeof window.__tocSaveState === 'function' && window.__tocSaveState();
     })()
   ]]
 
@@ -141,6 +337,7 @@ function widgets.customTocSidebar()
         }
       }
       syscall('editor.foldAll');
+      typeof window.__tocSaveState === 'function' && window.__tocSaveState();
     })()
   ]]
 
@@ -151,19 +348,16 @@ function widgets.customTocSidebar()
       var item = items[index];
       var level = parseInt(item.getAttribute('data-level'));
       var collapsed = item.getAttribute('data-collapsed') === 'true';
-      function showDescendants(idx) {
-        var lvl = parseInt(items[idx].getAttribute('data-level'));
-        if (items[idx].getAttribute('data-collapsed') === 'true') return;
-        for (var i = idx + 1; i < items.length; i++) {
-          var itemLevel = parseInt(items[i].getAttribute('data-level'));
-          if (itemLevel <= lvl) break;
-          if (itemLevel === lvl + 1) { items[i].style.display = ''; showDescendants(i); }
-        }
-      }
       var pos = parseInt(item.getAttribute('data-pos'));
       if (collapsed) {
         item.setAttribute('data-collapsed', 'false');
-        showDescendants(index);
+        for (var i = index + 1; i < items.length; i++) {
+          var childLevel = parseInt(items[i].getAttribute('data-level'));
+          if (childLevel <= level) break;
+          if (childLevel === level + 1) {
+            items[i].style.display = '';
+          }
+        }
         syscall('editor.moveCursor', pos);
         syscall('editor.toggleFold');
         for (var i = index + 1; i < items.length; i++) {
@@ -186,6 +380,7 @@ function widgets.customTocSidebar()
         syscall('editor.moveCursor', pos);
         syscall('editor.fold');
       }
+      typeof window.__tocSaveState === 'function' && window.__tocSaveState();
     })(%d, event)
   ]]
 
@@ -226,10 +421,10 @@ function widgets.customTocSidebar()
     if #activeSpines > 0 then
       local gradients = {}
       for _, level in ipairs(activeSpines) do
-        local pos = (tonumber(level) - 1) * 18 + 14.5
+        local n = tonumber(level) - 1
         table.insert(gradients, string.format(
-          "linear-gradient(to right, transparent %.1fpx, var(--bt-border-color) %.1fpx, var(--bt-border-color) %.1fpx, transparent %.1fpx)",
-          pos, pos, pos + 4, pos + 4
+          "linear-gradient(to right, transparent calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 5.5px), var(--toc-border-color) calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 5.5px), var(--toc-border-color) calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 9.5px), transparent calc(%d * var(--toc-chevron-size) + var(--toc-chevron-size) / 2 + 9.5px))",
+          n, n, n, n
         ))
       end
       spineStyle = " background-image: " .. table.concat(gradients, ", ") .. ";"
@@ -267,13 +462,13 @@ function widgets.customTocSidebar()
     class = "toc-toolbar",
     dom.button {
       class = "toc-btn",
-      ["xonclick"] = jsExpandAll,
-      "XSVG_EXPAND"
+      ["xonclick"] = jsCollapseAll,
+      "XSVG_COLLAPSE"
     },
     dom.button {
       class = "toc-btn",
-      ["xonclick"] = jsCollapseAll,
-      "XSVG_COLLAPSE"
+      ["xonclick"] = jsExpandAll,
+      "XSVG_EXPAND"
     },
     dom.button {
       class = "toc-btn",
@@ -298,203 +493,12 @@ function widgets.customTocSidebar()
     }
   }
 
-  local styles = [[<style>
-html body {margin:0;}
-
-/* ── Dark theme ── */
-html[data-theme="dark"] {
-    --bg-color: oklch(0.65 0 0 / 0.1);
-    --bt-border-color: oklch(0.4 0 0);
-    --text-color: oklch(0.95 0 0 / 0.65);
-    --text-muted: oklch(0.95 0 0 / 0.65);
-    --ui-accent-color: oklch(0.65 0.22 260);
-    --sidebar-item-hover-color: oklch(0.65 0 0 / 0.15);
-    --node-bg: oklch(0.40 0 0);
-    --node-accent: oklch(0.52 0.17 250);
-}
-
-/* ── Light theme ── */
-html[data-theme="light"] {
-    --bg-color: oklch(0.65 0 0 / 0.1);
-    --bt-border-color: oklch(0.8 0 0);
-    --text-muted: oklch(0.35 0 0 / 0.65);
-    --ui-accent-color: oklch(0.65 0.22 260);
-    --sidebar-item-hover-color: oklch(0.65 0 0 / 0.15);
-    --node-bg: oklch(0.40 0 0);
-    --node-accent: oklch(0.52 0.17 250);
-}
-
-  .toc-wrapper {
-      font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-      background: var(--bg-color, transparent);
-      height: 100vh
-    }
-    .toc-header {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      padding: 8px;
-      border-bottom: 1px solid var(--bt-border-color);
-      background: var(--bg-color);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-    .toc-wrapper h3 {
-      margin: 0 0 10px 2px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-      opacity: 0.6;
-    }
-    .toc-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-    .toc-btn {
-      font-size: 11px;
-      padding: 4px 4px;
-      border-radius: 6px;
-      border: 1px solid var(--bt-border-color);
-      background: var(--bg-color);
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all 0.15s ease;
-      line-height: 1.4;
-      font-weight: 500;
-      letter-spacing: 0.01em;
-    }
-    .toc-btn > span.p {
-      display: flex;
-    }
-    .toc-btn:hover {
-      background: var(--ui-accent-color);
-/*      border-color: var(--ui-accent-color);*/
-      color: #fff;
-      box-shadow: 0 1px 4px rgba(0,122,255,0.25);
-    }
-    .toc-btn-close {
-      margin-left: auto;
-      font-size: 12px;
-      border-radius: 6px;
-    }
-
-   .toc-btn-close:hover {
-      background: oklch(0.65 0.2 30);
-    }
-   
-   .toc-scroll {
-      padding: 8px 8px 16px 8px;
-    }
-    .toc-tree { position: relative; }
-
-    .toc-item {
-      position: relative;
-      padding: 4px 8px 4px calc(var(--indent) * 18px + 8px);
-      font-size: 12.5px;
-      color: var(--text-color);
-      border-radius: 7px;
-      transition: background 0.12s ease, color 0.12s ease;
-      display: flex;
-      align-items: center;
-      background-repeat: no-repeat;
-      cursor: default;
-      line-height: 1.45;
-    }
-
-    /* ── Tree branch lines (L-shape with rounded corner) ── */
-
-    /* Vertical spine segment for the current item's branch.
-       Extended 4px upward (top: -4px, height compensated) so the line
-       reaches all the way up to the parent chevron circle. For non-first
-       siblings the 4px simply overlaps the tail of the line drawn by the
-       sibling above — same color, invisible seam. */
-  
-    .toc-item[data-level]:not([data-level="0"])::before {
-      content: "";
-      position: absolute;
-      left: calc((var(--indent) - 1) * 18px + 14.5px);
-      top: -4px;
-      width: 4px;
-      height: calc(100% + 4px);
-      background-color: var(--bt-border-color);
-      border-radius: 0;
-    }
-    /* Last in branch: spine stops at vertical midpoint (forms the L top half).
-       Height also compensated by the same 4px to keep the bottom endpoint
-       unchanged while the top is extended upward. */
-    .toc-item[data-last="true"]:not([data-level="0"])::before {
-      height: calc(55% + 4.5px);
-      border-radius: 0 0 0 10px;
-    }
-    /* Horizontal connector */
-    .toc-item[data-level]:not([data-level="0"])::after {
-      content: "";
-      position: absolute;
-      left: calc((var(--indent) - 1) * 18px + 18.5px);
-      top: calc(50% - 2px);
-      width: 11px;
-      height: 4px;
-      background-color: var(--bt-border-color);
-    }
-
-    /* ── Circle node indicator (Codepen's summary::before equivalent) ── */
-    .toc-chevron {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      min-width: 18px;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      /* Default: gray circle with minus (expanded) icon */
-      background-color: var(--node-bg);
-      background-size: 50% 50%;
-      background-repeat: no-repeat;
-      background-position: center;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23FFFFFF' viewBox='0 0 448 512'%3E%3Cpath d='M416 256c0 17.7-14.3 32-32 32L32 288c-17.7 0-32-14.3-32-32s14.3-32 32-32l352 0c17.7 0 32 14.3 32 32z' /%3E%3C/svg%3E");
-      cursor: pointer;
-      user-select: none;
-      position: relative;
-      z-index: 2;
-      margin-right: 5px;
-      transition: background-color 0.15s ease;
-    }
-    /* Leaf nodes (no TOC children): muted gray circle */
-    .toc-item[data-has-children="false"] > .toc-chevron {
-      background-color: var(--node-bg);
-    }
-    /* Collapsed state: switch to plus icon */
-    .toc-item[data-collapsed="true"] > .toc-chevron {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23FFFFFF' viewBox='0 0 448 512'%3E%3Cpath d='M240 80c0-17.7-14.3-32-32-32s-32 14.3-32 32V224H32c-17.7 0-32 14.3-32 32s14.3 32 32 32H176V432c0 17.7 14.3 32 32 32s32-14.3 32-32V288H384c17.7 0 32-14.3 32-32s-14.3-32-32-32H240V80z' /%3E%3C/svg%3E");
-    }
-
-    .toc-text {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      position: relative;
-      z-index: 2;
-      cursor: pointer;
-      flex: 1;
-    }
-    .toc-item:hover {
-      background-color: var(--sidebar-item-hover-color);
-      color: var(--ui-accent-color);
-    }
-    .toc-item:hover > .toc-chevron {
-      background-color: var(--ui-accent-color);
-    }
-
-    .toc-item[data-level="0"] {
-      font-weight: 600;
-      margin-top: 4px;
-      font-size: 13px;
-    }
-  </style>]]
+  local styles = [[
+    <link rel="stylesheet" href="/.client/main.css">
+    <style>
+      .toc-wrapper { visibility: hidden; }
+    </style>
+  ]]
 
   local finalHtml = js.tojs(tocContainer).outerHTML
   
@@ -505,6 +509,74 @@ html[data-theme="light"] {
   finalHtml = finalHtml:gsub('XSVG_CLOSE',    '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>')
 
   local script = [[
+    (function() {
+      var MAX_ATTEMPTS = 40;
+      var INTERVAL_MS  = 100;
+      var attempts = 0;
+
+      var pageName = document.querySelector('.toc-tree')?.getAttribute('data-page') || '';
+      if (!window.__tocState || window.__tocState.page !== pageName) {
+        window.__tocState = { page: pageName, collapsed: {} };
+      }
+
+      function applyCollapsedState() {
+        var saved = window.__tocState.collapsed;
+        if (!saved || Object.keys(saved).length === 0) return;
+        var items = document.querySelectorAll('.toc-item');
+        for (var i = 0; i < items.length; i++) {
+          var idx = items[i].getAttribute('data-index');
+          if (saved[idx]) {
+            items[i].setAttribute('data-collapsed', saved[idx].collapsed);
+            items[i].style.display = saved[idx].display;
+          }
+        }
+      }
+
+      window.__tocSaveState = function() {
+        var items = document.querySelectorAll('.toc-item');
+        var state = {};
+        for (var i = 0; i < items.length; i++) {
+          var idx = items[i].getAttribute('data-index');
+          state[idx] = {
+            collapsed: items[i].getAttribute('data-collapsed'),
+            display: items[i].style.display
+          };
+        }
+        window.__tocState.collapsed = state;
+      };
+
+      function injectAndReveal() {
+        try {
+          var parentHtml = window.parent.document.documentElement;
+          var theme = parentHtml.getAttribute("data-theme");
+          if (theme) {
+            document.documentElement.setAttribute("data-theme", theme);
+          }
+          var customStyles = window.parent.document.getElementById("custom-styles")?.innerHTML || "";
+          if (!customStyles && attempts < MAX_ATTEMPTS) {
+            attempts++;
+            setTimeout(injectAndReveal, INTERVAL_MS);
+            return;
+          }
+          if (customStyles) {
+            var container = document.getElementById("injected-custom-styles");
+            if (!container) {
+              container = document.createElement("div");
+              container.id = "injected-custom-styles";
+              document.head.appendChild(container);
+            }
+            container.innerHTML = customStyles;
+          }
+        } catch (e) {
+          console.warn("CustomTOCSidebar: could not inject space styles", e);
+        }
+        applyCollapsedState();
+        var wrapper = document.querySelector(".toc-wrapper");
+        if (wrapper) { wrapper.style.visibility = "visible"; }
+      }
+
+      injectAndReveal();
+    })();
   ]]
 
   return finalHtml .. styles, script
@@ -569,3 +641,5 @@ event.listen {
 }
 ```
 
+## Discussions to this library
+- [Silverbullt Community](https://community.silverbullet.md/t/table-of-contents-in-sidepanel-work-in-progress/3919)
