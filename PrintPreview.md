@@ -352,8 +352,8 @@ command.define {
     sync.performFileSync(outputFile)
 
     editor.flashNotification("HTML exported: " .. outputFile)
---    editor.openUrl("/.fs/" .. outputFile)
-     js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(outputFile, "PrintPreview")
+    editor.openUrl("/.fs/" .. outputFile)
+--     js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(outputFile, "PrintPreview")
   end
 }
 
