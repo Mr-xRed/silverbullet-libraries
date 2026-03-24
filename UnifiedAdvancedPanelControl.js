@@ -542,7 +542,7 @@ export function enableWindow(panelSelector = "#sb-main .sb-panel") {
   panelRevertBtn.onclick = (e) => {
     e.stopPropagation();
     try {
-      const selector = `#sb-main .sb-panel.${PANEL_ID}`;
+      const selector = panelType === "bhs" ? ".sb-bhs" : `#sb-main .sb-panel.${PANEL_ID}`;
       disableWindow(selector);
     } catch (err) {
       console.error("Failed to call disableWindow for panel", PANEL_ID, err);
@@ -1119,9 +1119,17 @@ SPM.events.initSwipe = () => {
  *
  * Call this from your Lua script via js.import(...).initPanelControls({...})
  */
+
 export function initPanelControls(options = {}) {
+  if (!document.getElementById("sb-bhs-state-styles")) {
+    const s = document.createElement("style");
+    s.id = "sb-bhs-state-styles";
+    s.textContent = `.sb-bhs{transition:all 0.6s cubic-bezier(0.25,1,0.5,1)!important;overflow:visible!important}.sb-bhs.is-collapsed{pointer-events:none;margin-bottom:calc(var(--sb-panel-height)*-1)}.sb-bhs.is-collapsed .sb-panel-controls-container{pointer-events:auto}.sb-bhs.is-full{position:fixed!important;z-index:98!important;top:56px!important;left:0!important;width:100vw!important;height:calc(100vh - 56px)!important;margin:0!important;transform:none!important}`;
+    (document.head||document.documentElement).appendChild(s);
+  }
 
   const configOverrides = {
+
     config: {
       mode: options.panelMode || (options.mode || "auto"),
       gestures: (typeof options.gestures === "boolean") ? options.gestures : (options.gesturesEnabled !== undefined ? options.gesturesEnabled : true),

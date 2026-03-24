@@ -407,7 +407,7 @@ html[data-theme="light"] {
 }
 
 .bhs .sb-panel-controls-container {
-  top: calc((-1 * var(--control-btn-size)) - 1px);
+  top: calc((-0.5 * var(--control-btn-size)));
   right: var(--bhs-control-postion);
 
   flex-direction: row;
@@ -470,24 +470,29 @@ html[data-theme="light"] {
   transform: none !important;
 }
 
-.sb-panel.is-full .sb-panel-controls-container{
+.sb-panel.is-full .sb-panel-controls-container {
   border: 1px solid var(--panel-border-color) !important;
-  border-radius: var(--btn-border-radius);}
-
+  border-radius: var(--btn-border-radius) !important;
+}
 
 .sb-panel.rhs.is-full { left: auto !important; right: 0 !important;}
+
+/* Ensures consistent button rounding for all orientations in full mode */
 .sb-panel.is-full .sb-panel-control-base:first-child {
   border-radius: var(--btn-border-radius) var(--btn-border-radius) 0 0;}
 .sb-panel.is-full .sb-panel-control-base:last-child {
   border-radius: 0 0 var(--btn-border-radius) var(--btn-border-radius);}
 
 
-.sb-panel.lhs.is-full .sb-panel-controls-container{ right: 15px; }
-.sb-panel.rhs.is-full .sb-panel-controls-container{ left: 15px; }
+/* RHS and LHS */
+/* Positioning and Layout */
+.sb-panel.lhs.is-full .sb-panel-controls-container { right: 15px; }
+.sb-panel.rhs.is-full .sb-panel-controls-container { left: 15px; }
 
 
+/* Hover and Opacity Effects */
 .sb-panel.is-full .sb-panel-controls-container {
-    opacity: 50%;
+   opacity: 50%;
    box-shadow: 0 0 20px #00000088;
    transition: all 0.3s ease;
 }
@@ -496,6 +501,37 @@ html[data-theme="light"] {
     opacity: 100%;
     box-shadow: 0 0 20px #000000bb;
 }
+
+/* BHS */
+/* Positioning and Layout */
+/* Hover and Opacity Effects */
+
+.sb-bhs.is-full>.sb-panel-controls-container { 
+  top: 25px; 
+  right: 50%;
+  border: 1px solid var(--panel-border-color) !important;
+  border-radius: var(--btn-border-radius) !important;
+}
+
+.sb-bhs.is-full>.sb-panel-controls-container:hover {
+    opacity: 100%;
+    box-shadow: 0 0 20px #000000bb;
+}
+
+.bhs.is-full .sb-panel-control-base:last-child{
+  border-radius: 0 var(--btn-border-radius) var(--btn-border-radius) 0 !important;
+}
+
+.bhs.is-full .sb-panel-control-base:first-child{
+  border-radius: var(--btn-border-radius) 0 0 var(--btn-border-radius) !important;
+}
+
+.sb-bhs.is-full>.sb-panel-controls-container {
+   opacity: 30%;
+   box-shadow: 0 0 20px #00000088;
+   transition: all 0.3s ease;
+}
+
 
 /* ---------------------------------------------------------
    Resize Handles
