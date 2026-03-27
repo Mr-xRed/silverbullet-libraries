@@ -1,8 +1,8 @@
------
-
-## name: “Library/Mr-xRed/FloatingJournalCalendar”
+---
+name: "Library/Mr-xRed/FloatingJournalCalendar"
 tags: meta/library
-pageDecoration.prefix: “🗓️ “
+pageDecoration.prefix: "🗓️ "
+---
 
 # Floating Journal Calendar & Page Navigation
 
@@ -58,9 +58,9 @@ config.set("FloatingJournalCalendar", {
 > 
 > **Week numbering systems:**
 > 
-> - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
-> - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
-> - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
+>  - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
+>  - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
+>  - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
 
 ## Floating Journal Calendar Intergation
 
