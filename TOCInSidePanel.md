@@ -27,7 +27,7 @@ TRY IT OUT 👉 ${widgets.commandButton("Toggle Table of Contents","Toggle TOC i
 
 ## Config & Defaults 
 
-```lua
+```
 config.set("SidepanelTOC", {sidePanel = "rhs"})
 ```
 
