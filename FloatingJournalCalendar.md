@@ -60,7 +60,7 @@ config.set("FloatingJournalCalendar", {
   footerTotalCount = true,    -- total entry count across all time
   footerLastEntry = true,     -- how many days since the last entry
   footerStreak = true,        -- 🔥 consecutive-day journaling streak
-  shiftDatePattern = '#year#-#month#-#day#'  -- plain-text date for Shift+Drag&Drop
+  shiftDatePattern = '#year#-#month#-#day#'  -- plain-text date for Shift+Click
 })    
 ```
 
@@ -1166,7 +1166,7 @@ function toggleFloatingJournalCalendar()
             section('Paths');
             makeTextInput('pattern',          'Journal path pattern');
             makeTextInput('weeklyPattern',    'Weekly note path pattern');
-            makeTextInput('shiftDatePattern', 'Shift+Drag date pattern');
+            makeTextInput('shiftDatePattern', 'Shift+Click date pattern');
 
             section('Locale');
             makeTextInput('months', 'Month names (comma-separated)');
