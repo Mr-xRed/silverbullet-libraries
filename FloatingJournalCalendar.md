@@ -37,7 +37,7 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 
 ### **⚙️ Customizable**
 
-- **Flexible Path Patterns:** Configure your journal file structure and weekly notes path (with `#weeknum#`, `#weekyear#` placeholders).
+- **Flexible Path Patterns:** Configure your journal file structure and weekly notes path (with [[Library/Mr-xRed/FloatingJournalCalendar#Date Pattern Placeholders|Pattern Placeholders]]).
 - **Week Numbering System:** Choose between `"iso"` (ISO 8601, default), `"us"` (Sunday-start, week 1 = Jan 1), or `"simple"` (plain count from Jan 1).
 - **Localization Support:** Easily change month names and weekday abbreviations. Choose whether to start weeks on Sunday or Monday.
 
@@ -54,6 +54,7 @@ config.set("FloatingJournalCalendar", {
   showWeekNumbers = true,
   weekNumberSystem = "iso",   -- "iso" | "us" | "simple"
   useHeatmap = false,         -- heatmap shading instead of dots
+  showContour = true,         -- show/hide the month outline border
   showFooter = true,          -- master footer toggle
   footerMoonPhase = true,     -- 🌔 moon phase name
   footerMonthCount = true,    -- entry count for the viewed month
@@ -69,9 +70,9 @@ config.set("FloatingJournalCalendar", {
 > 
 > **Week numbering systems:**
 > 
-> - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
-> - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
-> - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
+>   - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
+>   - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
+>   - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
 
 ## Shift+Click — Date Pattern Variables
 
@@ -87,7 +88,7 @@ All three pattern strings — `journalPathPattern`, `weeklyNotesPathPattern`, an
 | `Shift` | Click | Insert plain-text date from `shiftDatePattern` |
 | `Cmd/Ctrl + Shift` | Click | Insert `[[WikiLink\|Formatted Date]]` alias |
 
-### Date pattern Parameters
+### Date Pattern Placeholders
 
 | Placeholder | Description | Example |
 |---|---|---|
@@ -342,6 +343,7 @@ html[data-theme="light"] #sb-journal-root {
     font-size: 0.8em;
     padding: 2px 4px;
     cursor: pointer;
+    text-align: center;
 }
 
 .jc-select option {
@@ -672,6 +674,7 @@ config.define("FloatingJournalCalendar", {
     footerLastEntry        = schema.boolean(),
     footerStreak           = schema.boolean(),
     useHeatmap             = schema.boolean(),
+    showContour            = schema.boolean(),
     shiftDatePattern       = schema.string()
   }
 })
@@ -718,6 +721,8 @@ function toggleFloatingJournalCalendar()
     if footer_streak == nil then footer_streak = true end
     local use_heatmap          = cfg.useHeatmap
     if use_heatmap == nil then use_heatmap = false end
+    local show_contour         = cfg.showContour
+    if show_contour == nil then show_contour = true end
     local shift_date_pattern   = cfg.shiftDatePattern or '#year#-#month#-#day#'
 
     -- FIX 1: Use the correct JS-side keys "months" and "days" (not "monthNames"/"dayNames")
@@ -738,6 +743,7 @@ function toggleFloatingJournalCalendar()
     mark("footerLastEntry",   cfg.footerLastEntry)
     mark("footerStreak",      cfg.footerStreak)
     mark("useHeatmap",        cfg.useHeatmap)
+    mark("showContour",       cfg.showContour)
     mark("shiftDatePattern",  cfg.shiftDatePattern)
     local lua_overrides_json = "{" .. table.concat(lua_override_parts, ",") .. "}"
 
@@ -865,6 +871,7 @@ function toggleFloatingJournalCalendar()
         let footerLastEntry    = ]]..tostring(footer_last_entry)..[[;
         let footerStreak       = ]]..tostring(footer_streak)..[[;
         let useHeatmap         = ]]..tostring(use_heatmap)..[[;
+        let showContour        = ]]..tostring(show_contour)..[[;
         let   existing         = ]]..existing_pages_json..[[;
         let   pattern          = "]]..path_pattern..[[";
         let   shiftDatePattern = "]]..shift_date_pattern..[[";
@@ -892,6 +899,7 @@ function toggleFloatingJournalCalendar()
                 a('footerLastEntry', v => footerLastEntry = v);
                 a('footerStreak',    v => footerStreak    = v);
                 a('useHeatmap',      v => useHeatmap      = v);
+                a('showContour',     v => showContour     = v);
                 a('shiftDatePattern',v => shiftDatePattern= v);
                 // calSize is a pure client setting, never locked by Lua
                 a('calSize',         v => calSize         = v);
@@ -949,7 +957,8 @@ function toggleFloatingJournalCalendar()
                 draft = {
                     months, days, weekStartsSunday, showWeekNumbers, weekNumSystem,
                     weeklyPattern, pattern, shiftDatePattern, showFooter, footerMoonPhase,
-                    footerMonthCount, footerTotalCount, footerLastEntry, footerStreak, useHeatmap, calSize
+                    footerMonthCount, footerTotalCount, footerLastEntry, footerStreak,
+                    useHeatmap, showContour, calSize
                 };
                 buildSettingsBody();
 
@@ -1004,6 +1013,7 @@ function toggleFloatingJournalCalendar()
             footerLastEntry = draft.footerLastEntry;
             footerStreak    = draft.footerStreak;
             useHeatmap      = draft.useHeatmap;
+            showContour     = draft.showContour;
             shiftDatePattern= draft.shiftDatePattern;
             calSize         = draft.calSize;
             // Persist only non-lua-locked keys (calSize is never locked)
@@ -1018,7 +1028,7 @@ function toggleFloatingJournalCalendar()
                 if (calSize === 'sm') root.classList.add('jc-size-sm');
                 else if (calSize === 'lg') root.classList.add('jc-size-lg');
                 render();
-            }, 560);
+            }, 50);
         }
 
         // ── Update locked field visibility ────────────────────────────────────
@@ -1145,15 +1155,14 @@ function toggleFloatingJournalCalendar()
             section('Appearance');
             makeSelect('calSize', 'Calendar size',
                 [ ['sm','Small'], ['md','Medium'], ['lg','Large'] ]);
+            makeToggle('showContour', 'Month outline border', 'Show the SVG outline around the current month');
+            makeToggle('useHeatmap',  'Heatmap mode',         'Shade cells by activity instead of dots');
 
             section('Layout');
             makeToggle('showWeekNumbers',  'Show week numbers', '');
             makeToggle('weekStartsSunday', 'Week starts Sunday', '');
             makeSelect('weekNumSystem', 'Week number system',
                 [ ['iso','ISO 8601'],['us','US (Sun-start)'],['simple','Simple'] ]);
-
-            section('Display');
-            makeToggle('useHeatmap', 'Heatmap mode', 'Shade cells by activity instead of dots');
 
             section('Footer');
             makeToggle('showFooter',       'Show footer bar', '');
@@ -1166,7 +1175,7 @@ function toggleFloatingJournalCalendar()
             section('Paths');
             makeTextInput('pattern',          'Journal path pattern');
             makeTextInput('weeklyPattern',    'Weekly note path pattern');
-            makeTextInput('shiftDatePattern', 'Shift+Click date pattern');
+            makeTextInput('shiftDatePattern', 'Shift+Drag date pattern');
 
             section('Locale');
             makeTextInput('months', 'Month names (comma-separated)');
@@ -1700,7 +1709,12 @@ function toggleFloatingJournalCalendar()
             }
 
             // Draw month contour. Uses offsetLeft/offsetTop (layout, transform-safe).
-            drawContour(offset, lastDay);
+            if (showContour) {
+                drawContour(offset, lastDay);
+            } else {
+                const old = document.getElementById("jc-contour-svg");
+                if (old) old.remove();
+            }
             updateFooter();
         }
 
