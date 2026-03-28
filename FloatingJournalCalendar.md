@@ -17,6 +17,7 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 - **Instant Navigation:** Click any date to immediately navigate to that specific journal page.
 - **Drag&Drop**: Drag the day to add the Journal WikiLink to the page
 - **Shift+Click**: Hold `Shift` and click a day to insert a formatted plain-text date string at the cursor — format is fully customizable via `shiftDatePattern`
+- **Cmd/Ctrl+Shift+Click**: Hold `Cmd/Ctrl+Shift` and click a day to insert a WikiLink with the formatted date as alias — e.g. `[[Journal/2026/03/2026-03-28|March 28th, 2026]]`
 - **Smart Date Logic:** Highlights "Today"
 
 ### **✨ Enhanced User Interface**
@@ -31,6 +32,8 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
   e.g: `[[Journal/2024/05/2024-05-20_Mon|Selected Text]]`
 - Added `Shift + Click` to insert a plain-text formatted date string at the cursor position
   e.g: `2026-03-28`, `March 28th`, `Saturday (March 28th, 2026)`, `2026-03-28 14:38:23`
+- Added `Cmd/Ctrl + Shift + Click` to insert a WikiLink with the formatted date as alias
+  e.g: `[[Journal/2026/03/2026-03-28_Sat|March 28th, 2026]]`
 
 ### **⚙️ Customizable**
 
@@ -47,7 +50,6 @@ config.set("FloatingJournalCalendar", {
   weeklyNotesPathPattern = 'Journal/Weekly/#weekyear#-W#weeknum#',
   monthNames = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
   dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"},
-  shiftDatePattern = '#year#-#month#-#day#'  -- plain-text date for Shift+Click
   weekStartsSunday = false,
   showWeekNumbers = true,
   weekNumberSystem = "iso",   -- "iso" | "us" | "simple"
@@ -58,6 +60,7 @@ config.set("FloatingJournalCalendar", {
   footerTotalCount = true,    -- total entry count across all time
   footerLastEntry = true,     -- how many days since the last entry
   footerStreak = true,        -- 🔥 consecutive-day journaling streak
+  shiftDatePattern = '#year#-#month#-#day#'  -- plain-text date for Shift+Drag&Drop
 })    
 ```
 
@@ -72,7 +75,19 @@ config.set("FloatingJournalCalendar", {
 
 ## Shift+Click — Date Pattern Variables
 
-All three pattern strings — `journalPathPattern`, `weeklyNotesPathPattern`, and `shiftDatePattern` — share the same unified variable set. Use any combination of the placeholders below in any of them:
+All three pattern strings — `journalPathPattern`, `weeklyNotesPathPattern`, and `shiftDatePattern` — share the same unified variable set. Use any combination of the placeholders below in any of them.
+
+### Interaction Overview
+
+| Modifier | Action | Result |
+|---|---|---|
+| *(none)* | Click | Navigate to journal page |
+| `Drag` | Drag to editor | Insert `[[WikiLink]]` |
+| `Cmd/Ctrl` | Click | Insert `[[WikiLink]]` (or `[[WikiLink|Selection]]` if text selected) |
+| `Shift` | Click | Insert plain-text date from `shiftDatePattern` |
+| `Cmd/Ctrl + Shift` | Click | Insert `[[WikiLink\|Formatted Date]]` alias |
+
+### Date pattern Parameters
 
 | Placeholder | Description | Example |
 |---|---|---|
@@ -168,7 +183,7 @@ html[data-theme="dark"] #sb-journal-root {
     --jc-hover-background: oklch(0.65 0 0 / 0.5);
     --jc-text-color: var(--root-color);
     --jc-accent-color: var(--ui-accent-color);
-    --jc-outline-color: dark-gray;
+    --jc-outline-color: white;
 }
 
 html[data-theme="light"] #sb-journal-root {
@@ -769,6 +784,8 @@ function toggleFloatingJournalCalendar()
                 end
             elseif e.detail.action == "insert-date" then
                     editor.insertAtCursor(e.detail.dateText)
+            elseif e.detail.action == "insert-wikilink-alias" then
+                    editor.insertAtCursor("[[" .. e.detail.path .. "|" .. e.detail.dateText .. "]]")
             elseif e.detail.action == "navigate-week" then
                 editor.navigate(e.detail.path)
             elseif e.detail.action == "request-refresh" then
@@ -792,6 +809,7 @@ function toggleFloatingJournalCalendar()
       }
       #sb-journal-root.ctrl-active  .jc-day { cursor: copy !important; }
       #sb-journal-root.shift-active .jc-day { cursor: context-menu !important; }
+      #sb-journal-root.ctrl-active.shift-active .jc-day { cursor: alias !important; }
     </style>
     <div class="jc-card" id="jc-draggable">
         <div class="jc-flip-inner" id="jc-flip-inner">
@@ -900,7 +918,7 @@ function toggleFloatingJournalCalendar()
         let vDate = new Date();
 
         // Track modifier keys for cursor feedback and click behaviour.
-        // NOTE: We do NOT use isShiftDown for drag — Shift+Drag&Drop is unreliable on Mac/Safari.
+        // NOTE: We do NOT use isShiftDown for drag — Shift+Drag is unreliable on Mac/Safari.
         //       Shift is handled via Shift+Click instead (see el.onclick below).
         window.addEventListener("keydown", (e) => {
             if (e.ctrlKey || e.metaKey) root.classList.add("ctrl-active");
@@ -1148,7 +1166,7 @@ function toggleFloatingJournalCalendar()
             section('Paths');
             makeTextInput('pattern',          'Journal path pattern');
             makeTextInput('weeklyPattern',    'Weekly note path pattern');
-            makeTextInput('shiftDatePattern', 'Shift+Click date pattern');
+            makeTextInput('shiftDatePattern', 'Shift+Drag date pattern');
 
             section('Locale');
             makeTextInput('months', 'Month names (comma-separated)');
@@ -1649,14 +1667,26 @@ function toggleFloatingJournalCalendar()
                     el.innerHTML += `<span>${dayNum}</span>`;
 
                     el.onclick = (e) => {
-                        if (e.shiftKey) {
-                            // Shift+Click: insert a plain-text formatted date at the cursor
+                        const isCtrl  = e.ctrlKey || e.metaKey;
+                        const isShift = e.shiftKey;
+
+                        if (isCtrl && isShift) {
+                            // Ctrl/Cmd+Shift+Click: insert WikiLink|Formatted Date alias
+                            const dateText = formatDatePattern(dateObj, shiftDatePattern);
+                            window.dispatchEvent(new CustomEvent("sb-journal-event", {
+                                detail: { action: "insert-wikilink-alias", path: basePath, dateText, session }
+                            }));
+                            return;
+                        }
+                        if (isShift) {
+                            // Shift+Click: insert plain-text formatted date at cursor
                             const dateText = formatDatePattern(dateObj, shiftDatePattern);
                             window.dispatchEvent(new CustomEvent("sb-journal-event", {
                                 detail: { action: "insert-date", dateText, session }
                             }));
                             return;
                         }
+                        // Click / Ctrl+Click / Cmd+Click: navigate or insert WikiLink
                         window.dispatchEvent(new CustomEvent("sb-journal-event", {
                             detail: { action: "navigate", path: basePath, session, ctrlKey: e.ctrlKey, metaKey: e.metaKey }
                         }));
