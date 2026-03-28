@@ -16,7 +16,6 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 - **Activity Indicators:** Automatically scans your space and places a distinct dot on days that already have a journal entry.
 - **Instant Navigation:** Click any date to immediately navigate to that specific journal page.
 - **Drag&Drop**: Drag the day to add the Journal WikiLink to the page
-- **Shift+Click**: Hold `Shift` and click a day to insert a formatted plain-text date string at the cursor — format is fully customizable via `shiftDatePattern`
 - **Smart Date Logic:** Highlights "Today"
 
 ### **✨ Enhanced User Interface**
@@ -29,8 +28,6 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 - **Week Numbers:** Optional week number column — click a week number to open your weekly note.
 - Added `Cmd/Ctrl + Click` to convert the selected text to a piped WikiLink
   e.g: `[[Journal/2024/05/2024-05-20_Mon|Selected Text]]`
-- Added `Shift + Click` to insert a plain-text formatted date string at the cursor position
-  e.g: `2026-03-28`, `March 28th`, `Saturday (March 28th, 2026)`, `2026-03-28 14:38:23`
 
 ### **⚙️ Customizable**
 
@@ -47,7 +44,6 @@ config.set("FloatingJournalCalendar", {
   weeklyNotesPathPattern = 'Journal/Weekly/#weekyear#-W#weeknum#',
   monthNames = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"},
   dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"},
-  shiftDatePattern = '#year#-#month#-#day#'  -- plain-text date for Shift+Click
   weekStartsSunday = false,
   showWeekNumbers = true,
   weekNumberSystem = "iso",   -- "iso" | "us" | "simple"
@@ -57,7 +53,7 @@ config.set("FloatingJournalCalendar", {
   footerMonthCount = true,    -- entry count for the viewed month
   footerTotalCount = true,    -- total entry count across all time
   footerLastEntry = true,     -- how many days since the last entry
-  footerStreak = true,        -- 🔥 consecutive-day journaling streak
+  footerStreak = true         -- 🔥 consecutive-day journaling streak
 })    
 ```
 
@@ -69,58 +65,6 @@ config.set("FloatingJournalCalendar", {
 > - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
 > - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
 > - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
-
-## Shift+Click — Date Pattern Variables
-
-All three pattern strings — `journalPathPattern`, `weeklyNotesPathPattern`, and `shiftDatePattern` — share the same unified variable set. Use any combination of the placeholders below in any of them:
-
-| Placeholder | Description | Example |
-|---|---|---|
-| `#year#` | 4-digit year | `2026` |
-| `#YY#` | 2-digit year | `26` |
-| `#month#` | 2-digit month | `03` |
-| `#M#` | Month without leading zero | `3` |
-| `#day#` | 2-digit day | `08` |
-| `#D#` | Day without leading zero | `8` |
-| `#monthname#` | Full month name (localized) | `March` |
-| `#monthshort#` | Short month name (first 3 chars) | `Mar` |
-| `#weekday#` | Short weekday (localized) | `Sat` |
-| `#weekdayfull#` | Full weekday name (English) | `Saturday` |
-| `#ordinal#` | Day ordinal suffix | `st` · `nd` · `rd` · `th` |
-| `#HH#` | Hours (24 h, 2-digit) | `14` |
-| `#hh#` | Hours (12 h, 2-digit) | `02` |
-| `#mm#` | Minutes (2-digit) | `38` |
-| `#ss#` | Seconds (2-digit) | `07` |
-| `#weeknum#` | Week number (2-digit, zero-padded) | `03` |
-| `#weeknumraw#` | Week number (no padding) | `3` |
-| `#weekyear#` | Week-year (ISO/US/simple aware) | `2026` |
-| `#wildcard#` | Empty string (path prefix matching) | `` |
-
-### Shift+Click — `shiftDatePattern` Examples
-
-| Pattern | Result |
-|---|---|
-| `#year#-#month#-#day#` | `2026-03-28` |
-| `#monthname# #D##ordinal#` | `March 28th` |
-| `#weekdayfull# (#monthname# #D##ordinal#, #year#)` | `Saturday (March 28th, 2026)` |
-| `#year#-#month#-#day# #HH#:#mm#:#ss#` | `2026-03-28 14:38:07` |
-| `#D#. #monthname# #year#` | `28. March 2026` |
-| `#weekday#, #D#/#month#/#YY#` | `Sat, 28/03/26` |
-
-### Journal Path — `journalPathPattern` Examples
-
-| Pattern | Result |
-|---|---|
-| `Journal/#year#/#month#/#year#-#month#-#day#_#weekday#` | `Journal/2026/03/2026-03-28_Sat` |
-| `Journal/#year#/#monthname#/#D##ordinal#` | `Journal/2026/March/28th` |
-| `Diary/#year#-W#weeknum#/#weekday#` | `Diary/2026-W13/Sat` |
-
-### Weekly Notes — `weeklyNotesPathPattern` Examples
-
-| Pattern | Result |
-|---|---|
-| `Journal/Weekly/#weekyear#-W#weeknum#` | `Journal/Weekly/2026-W13` |
-| `Journal/Weekly/#year#/#monthname# W#weeknumraw#` | `Journal/Weekly/2026/March W3` |
 
 ## Floating Journal Calendar Intergation
 
@@ -656,8 +600,7 @@ config.define("FloatingJournalCalendar", {
     footerTotalCount       = schema.boolean(),
     footerLastEntry        = schema.boolean(),
     footerStreak           = schema.boolean(),
-    useHeatmap             = schema.boolean(),
-    shiftDatePattern       = schema.string()
+    useHeatmap             = schema.boolean()
   }
 })
 
@@ -703,7 +646,6 @@ function toggleFloatingJournalCalendar()
     if footer_streak == nil then footer_streak = true end
     local use_heatmap          = cfg.useHeatmap
     if use_heatmap == nil then use_heatmap = false end
-    local shift_date_pattern   = cfg.shiftDatePattern or '#year#-#month#-#day#'
 
     -- FIX 1: Use the correct JS-side keys "months" and "days" (not "monthNames"/"dayNames")
     -- so that LUA_OVERRIDES matches what buildSettingsBody() checks.
@@ -723,7 +665,6 @@ function toggleFloatingJournalCalendar()
     mark("footerLastEntry",   cfg.footerLastEntry)
     mark("footerStreak",      cfg.footerStreak)
     mark("useHeatmap",        cfg.useHeatmap)
-    mark("shiftDatePattern",  cfg.shiftDatePattern)
     local lua_overrides_json = "{" .. table.concat(lua_override_parts, ",") .. "}"
 
     local all_pages = space.listPages()
@@ -767,8 +708,6 @@ function toggleFloatingJournalCalendar()
                     local final_path = (#matches == 1) and matches[1].value or prefix
                     editor.navigate(final_path)
                 end
-            elseif e.detail.action == "insert-date" then
-                    editor.insertAtCursor(e.detail.dateText)
             elseif e.detail.action == "navigate-week" then
                 editor.navigate(e.detail.path)
             elseif e.detail.action == "request-refresh" then
@@ -790,8 +729,7 @@ function toggleFloatingJournalCalendar()
         left: ]] .. saved_left .. [[;
         right: ]] .. initial_right .. [[;
       }
-      #sb-journal-root.ctrl-active  .jc-day { cursor: copy !important; }
-      #sb-journal-root.shift-active .jc-day { cursor: context-menu !important; }
+      #sb-journal-root.ctrl-active .jc-day { cursor: copy !important; }
     </style>
     <div class="jc-card" id="jc-draggable">
         <div class="jc-flip-inner" id="jc-flip-inner">
@@ -849,7 +787,6 @@ function toggleFloatingJournalCalendar()
         let useHeatmap         = ]]..tostring(use_heatmap)..[[;
         let   existing         = ]]..existing_pages_json..[[;
         let   pattern          = "]]..path_pattern..[[";
-        let   shiftDatePattern = "]]..shift_date_pattern..[[";
         let   calSize          = 'md';
         const root             = document.getElementById("sb-journal-root");
 
@@ -874,7 +811,6 @@ function toggleFloatingJournalCalendar()
                 a('footerLastEntry', v => footerLastEntry = v);
                 a('footerStreak',    v => footerStreak    = v);
                 a('useHeatmap',      v => useHeatmap      = v);
-                a('shiftDatePattern',v => shiftDatePattern= v);
                 // calSize is a pure client setting, never locked by Lua
                 a('calSize',         v => calSize         = v);
             } catch(e) {}
@@ -899,17 +835,8 @@ function toggleFloatingJournalCalendar()
         const TOP_OFFSET = 65;
         let vDate = new Date();
 
-        // Track modifier keys for cursor feedback and click behaviour.
-        // NOTE: We do NOT use isShiftDown for drag — Shift+Click is unreliable on Mac/Safari.
-        //       Shift is handled via Shift+Click instead (see el.onclick below).
-        window.addEventListener("keydown", (e) => {
-            if (e.ctrlKey || e.metaKey) root.classList.add("ctrl-active");
-            if (e.shiftKey)             root.classList.add("shift-active");
-        });
-        window.addEventListener("keyup", (e) => {
-            if (!e.ctrlKey && !e.metaKey) root.classList.remove("ctrl-active");
-            if (!e.shiftKey)              root.classList.remove("shift-active");
-        });
+        window.addEventListener("keydown", (e) => { if (e.ctrlKey || e.metaKey) root.classList.add("ctrl-active"); });
+        window.addEventListener("keyup",   (e) => { if (!e.ctrlKey && !e.metaKey) root.classList.remove("ctrl-active"); });
 
         // ── Settings (flip card) ──────────────────────────────────────────────
         let settingsOpen = false;
@@ -930,8 +857,8 @@ function toggleFloatingJournalCalendar()
 
                 draft = {
                     months, days, weekStartsSunday, showWeekNumbers, weekNumSystem,
-                    weeklyPattern, pattern, shiftDatePattern, showFooter, footerMoonPhase,
-                    footerMonthCount, footerTotalCount, footerLastEntry, footerStreak, useHeatmap, calSize
+                    weeklyPattern, pattern, showFooter, footerMoonPhase, footerMonthCount,
+                    footerTotalCount, footerLastEntry, footerStreak, useHeatmap, calSize
                 };
                 buildSettingsBody();
 
@@ -986,7 +913,6 @@ function toggleFloatingJournalCalendar()
             footerLastEntry = draft.footerLastEntry;
             footerStreak    = draft.footerStreak;
             useHeatmap      = draft.useHeatmap;
-            shiftDatePattern= draft.shiftDatePattern;
             calSize         = draft.calSize;
             // Persist only non-lua-locked keys (calSize is never locked)
             const toSave = {};
@@ -1146,9 +1072,8 @@ function toggleFloatingJournalCalendar()
             makeToggle('footerLastEntry',  'Last entry', '');
 
             section('Paths');
-            makeTextInput('pattern',          'Journal path pattern');
-            makeTextInput('weeklyPattern',    'Weekly note path pattern');
-            makeTextInput('shiftDatePattern', 'Shift+Click date pattern');
+            makeTextInput('pattern',       'Journal path pattern');
+            makeTextInput('weeklyPattern', 'Weekly note path pattern');
 
             section('Locale');
             makeTextInput('months', 'Month names (comma-separated)');
@@ -1172,76 +1097,6 @@ function toggleFloatingJournalCalendar()
             root.style.right = "auto";
         }
 
-        // ── Unified date/path pattern formatter ───────────────────────────────
-        // Single source of truth for ALL pattern strings:
-        //   journalPathPattern, weeklyNotesPathPattern, shiftDatePattern
-        //
-        // Supported variables:
-        //   #year#        4-digit year            2026
-        //   #YY#          2-digit year            26
-        //   #month#       2-digit month           03
-        //   #M#           month, no leading zero  3
-        //   #day#         2-digit day             08
-        //   #D#           day, no leading zero    8
-        //   #monthname#   full month name         March
-        //   #monthshort#  short month name        Mar
-        //   #weekday#     short weekday (locale)  Sat
-        //   #weekdayfull# full weekday (English)  Saturday
-        //   #ordinal#     day ordinal suffix      st / nd / rd / th
-        //   #HH#          hours 24 h              14
-        //   #hh#          hours 12 h              02
-        //   #mm#          minutes                 38
-        //   #ss#          seconds                 07
-        //   #weeknum#     week number, 2-digit    03
-        //   #weeknumraw#  week number, no pad     3
-        //   #weekyear#    ISO/US/simple week-year 2026
-        //   #wildcard#    empty string (path prefix matching)
-        const WEEKDAY_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-        function ordinalSuffix(d) {
-            if (d >= 11 && d <= 13) return "th";
-            switch (d % 10) { case 1: return "st"; case 2: return "nd"; case 3: return "rd"; default: return "th"; }
-        }
-        function pad2(n) { return String(n).padStart(2, "0"); }
-
-        function formatDatePattern(dateObj, pat) {
-            const isSun  = weekStartsSunday;
-            const rawDay = dateObj.getDay();                          // 0=Sun … 6=Sat
-            const dIdx   = isSun ? rawDay : (rawDay === 0 ? 6 : rawDay - 1);
-            const dName  = days[dIdx] || WEEKDAY_FULL[rawDay].slice(0, 3);
-
-            const Y   = dateObj.getFullYear();
-            const Mo  = dateObj.getMonth();        // 0-based
-            const D   = dateObj.getDate();
-            const H   = dateObj.getHours();
-            const Min = dateObj.getMinutes();
-            const S   = dateObj.getSeconds();
-            const mName = months[Mo] || dateObj.toLocaleString("en", { month: "long" });
-
-            // Week info — getWeekInfo() is hoisted (function declaration) so safe to call here
-            const { week, weekYear } = getWeekInfo(dateObj);
-
-            return pat
-                .replace(/#year#/g,        String(Y))
-                .replace(/#YY#/g,          String(Y).slice(-2))
-                .replace(/#month#/g,       pad2(Mo + 1))
-                .replace(/#M#/g,           String(Mo + 1))
-                .replace(/#day#/g,         pad2(D))
-                .replace(/#D#/g,           String(D))
-                .replace(/#monthname#/g,   mName)
-                .replace(/#monthshort#/g,  mName.slice(0, 3))
-                .replace(/#weekdayfull#/g, WEEKDAY_FULL[rawDay])
-                .replace(/#weekday#/g,     dName)
-                .replace(/#ordinal#/g,     ordinalSuffix(D))
-                .replace(/#HH#/g,          pad2(H))
-                .replace(/#hh#/g,          pad2(H % 12 || 12))
-                .replace(/#mm#/g,          pad2(Min))
-                .replace(/#ss#/g,          pad2(S))
-                .replace(/#weeknumraw#/g,  String(week))
-                .replace(/#weeknum#/g,     pad2(week))
-                .replace(/#weekyear#/g,    String(weekYear))
-                .replace(/#wildcard#/g,    "");
-        }
-
         // ── Moon phase ────────────────────────────────────────────────────────
         const MOON_EMOJIS = ["🌑","🌒","🌓","🌔","🌕","🌖","🌗","🌘"];
         const MOON_NAMES  = ["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
@@ -1256,7 +1111,15 @@ function toggleFloatingJournalCalendar()
 
         // ── Streak + day path helper ─────────────────────────────────────────
         function buildDayPath(dt) {
-            return formatDatePattern(dt, pattern);
+            const dy = dt.getFullYear(), dm = dt.getMonth(), dd = dt.getDate();
+            const isSun = dt.getDay() === 0;
+            return pattern
+                .replace(/#year#/g,      dy)
+                .replace(/#month#/g,     String(dm + 1).padStart(2, '0'))
+                .replace(/#monthname#/g, months[dm])
+                .replace(/#day#/g,       String(dd).padStart(2, '0'))
+                .replace(/#weekday#/g,   days[isSun ? 6 : dt.getDay() - 1])
+                .replace(/#wildcard#/g,  '');
         }
 
         function computeStreak(pageNames) {
@@ -1380,7 +1243,13 @@ function toggleFloatingJournalCalendar()
         }
 
         function buildWeeklyPath(wkDate) {
-            return formatDatePattern(wkDate, weeklyPattern);
+            const { week, weekYear } = getWeekInfo(wkDate);
+            return weeklyPattern
+                .replace(/#weeknum#/g,  String(week).padStart(2, '0'))
+                .replace(/#weeknumraw#/g, String(week))
+                .replace(/#weekyear#/g, weekYear)
+                .replace(/#year#/g,     wkDate.getFullYear())
+                .replace(/#month#/g,    String(wkDate.getMonth() + 1).padStart(2, '0'));
         }
 
         // ── Itsycal-style month contour ───────────────────────────────────────
@@ -1616,7 +1485,13 @@ function toggleFloatingJournalCalendar()
                     if (dayNum === now.getDate() && m === now.getMonth() && y === now.getFullYear())
                         el.classList.add("today");
 
-                    const basePath = formatDatePattern(dateObj, pattern);
+                    const basePath = pattern
+                        .replace(/#year#/g,      y)
+                        .replace(/#month#/g,     String(m + 1).padStart(2, '0'))
+                        .replace(/#monthname#/g, months[m])
+                        .replace(/#day#/g,       String(dayNum).padStart(2, '0'))
+                        .replace(/#weekday#/g,   days[isSun ? 6 : dateObj.getDay() - 1])
+                        .replace(/#wildcard#/g,  "");
 
                     const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
                     if (matchCount > 0) {
@@ -1648,19 +1523,9 @@ function toggleFloatingJournalCalendar()
 
                     el.innerHTML += `<span>${dayNum}</span>`;
 
-                    el.onclick = (e) => {
-                        if (e.shiftKey) {
-                            // Shift+Click: insert a plain-text formatted date at the cursor
-                            const dateText = formatDatePattern(dateObj, shiftDatePattern);
-                            window.dispatchEvent(new CustomEvent("sb-journal-event", {
-                                detail: { action: "insert-date", dateText, session }
-                            }));
-                            return;
-                        }
-                        window.dispatchEvent(new CustomEvent("sb-journal-event", {
-                            detail: { action: "navigate", path: basePath, session, ctrlKey: e.ctrlKey, metaKey: e.metaKey }
-                        }));
-                    };
+                    el.onclick = (e) => window.dispatchEvent(new CustomEvent("sb-journal-event", {
+                        detail: { action: "navigate", path: basePath, session, ctrlKey: e.ctrlKey, metaKey: e.metaKey }
+                    }));
                     el.ondragstart = (e) => {
                         e.dataTransfer.setData("text/plain", "[[" + basePath + "]].."]]"..[[");
                         e.dataTransfer.dropEffect = "copy";
