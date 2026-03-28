@@ -3,11 +3,9 @@ name: "Library/Mr-xRed/FloatingJournalCalendar"
 tags: meta/library
 pageDecoration.prefix: "🗓️ "
 ---
-
 # Floating Journal Calendar & Page Navigation
 
 The **Floating Journal Calendar** is a lightweight, interactive navigation tool for SilverBullet. It provides a sleek, floating interface that allows users to quickly browse their journal entries. By scanning existing pages against a customizable date pattern, it visually identifies days with active entries, enabling seamless one-click navigation through personal history.
-
 
 ![JournalCalendar](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/JournalCalendar.png)
 
@@ -18,17 +16,16 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 - **Activity Indicators:** Automatically scans your space and places a distinct dot on days that already have a journal entry.
 - **Instant Navigation:** Click any date to immediately navigate to that specific journal page.
 - **Drag&Drop**: Drag the day to add the Journal WikiLink to the page
-- **Smart Date Logic:** Highlights “Today”
+- **Smart Date Logic:** Highlights "Today"
 
 ### **✨ Enhanced User Interface**
 
 - **Dynamic Theming:** Built-in support for both **Dark** and **Light**.
-- **Draggable & Snappable:** A “grab-and-go” header allows you to move the calendar anywhere. It features **edge-snapping** and **viewport clamping** to ensure it never gets lost off-screen.
-- **Persistent Positioning:** Remembers its last location on your screen across sessions, so it stays exactly where you’ve put it.
-- **Quick Jump:** Includes a “Today & Refresh” button `↺` to instantly return to the current month and year from anywhere in the calendar and refresh the dot’s
+- **Draggable & Snappable:** A "grab-and-go" header allows you to move the calendar anywhere. It features **edge-snapping** and **viewport clamping** to ensure it never gets lost off-screen.
+- **Persistent Positioning:** Remembers its last location on your screen across sessions, so it stays exactly where you've put it.
+- **Quick Jump:** Includes a "Today & Refresh" button `↺` to instantly return to the current month and year from anywhere in the calendar and refresh the dot's
 - **Overflow Days:** First and last days of adjacent months shown subtly in partial weeks.
 - **Week Numbers:** Optional week number column — click a week number to open your weekly note.
-
 - Added `Cmd/Ctrl + Click` to convert the selected text to a piped WikiLink
   e.g: `[[Journal/2024/05/2024-05-20_Mon|Selected Text]]`
 
@@ -49,7 +46,14 @@ config.set("FloatingJournalCalendar", {
   dayNames = {"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"},
   weekStartsSunday = false,
   showWeekNumbers = true,
-  weekNumberSystem = "iso"   -- "iso" | "us" | "simple"
+  weekNumberSystem = "iso",   -- "iso" | "us" | "simple"
+  useHeatmap = false,         -- heatmap shading instead of dots
+  showFooter = true,          -- master footer toggle
+  footerMoonPhase = true,     -- 🌔 moon phase name
+  footerMonthCount = true,    -- entry count for the viewed month
+  footerTotalCount = true,    -- total entry count across all time
+  footerLastEntry = true,     -- how many days since the last entry
+  footerStreak = true         -- 🔥 consecutive-day journaling streak
 })    
 ```
 
@@ -58,9 +62,9 @@ config.set("FloatingJournalCalendar", {
 > 
 > **Week numbering systems:**
 > 
->  - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
->  - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
->  - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
+> - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
+> - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
+> - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
 
 ## Floating Journal Calendar Intergation
 
@@ -70,7 +74,7 @@ body.sb-dragging-active { user-select: none !important; -webkit-user-select: non
         
 #sb-journal-root {
     position: fixed;
-    width: 300px;
+    width: 310px;
     z-index: 100;
     font-family: system-ui, sans-serif;
     user-select: none;
@@ -78,6 +82,10 @@ body.sb-dragging-active { user-select: none !important; -webkit-user-select: non
     transform-origin: 92% 8%;
     will-change: transform, opacity;
 }
+
+/* ── Size variants ─────────────────────────────────────────────────────── */
+#sb-journal-root.jc-size-sm { font-size: 0.75em; }
+#sb-journal-root.jc-size-lg { font-size: 1.25em; }
 
 #sb-journal-root.jc-animate-in {
     animation: jc-implode-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
@@ -117,25 +125,59 @@ html[data-theme="light"] #sb-journal-root {
     --jc-outline-color: black;
 }
 
+/* ── Card flip ────────────────────────────────────────────────────────── */
 .jc-card {
+    perspective: 1000px;
+    overflow: visible;
+    cursor: default;
+}
+
+.jc-flip-inner {
+    transform-style: preserve-3d;
+    transition: transform 0.52s cubic-bezier(0.4, 0, 0.2, 1),
+                height   0.52s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+.jc-flip-inner.flipped { transform: rotateY(180deg); }
+
+/* FIX 3: Disable all hover/pointer effects during flip animation */
+.jc-flip-inner.jc-flipping * { pointer-events: none !important; }
+
+.jc-face {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     background: var(--jc-background);
     color: var(--jc-text-color);
     border-radius: 8px;
     border: 1px solid var(--jc-border-color);
     box-shadow: 0px 4px 15px 0 oklch(0 0 0 / 0.5);
-    overflow: hidden;
     display: flex;
     flex-direction: column;
-    cursor: grab;
 }
 
+.jc-face-front { cursor: grab; }
+
+.jc-face-back {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    transform: rotateY(180deg);
+    cursor: default;
+    overflow: hidden;
+    /* FIX 5: Back face is non-interactive when not visible */
+    pointer-events: none;
+}
+
+/* FIX 5: When flipped, front is non-interactive and back becomes interactive */
+.jc-flip-inner.flipped .jc-face-front { pointer-events: none; }
+.jc-flip-inner.flipped .jc-face-back  { pointer-events: auto; }
+
 .jc-header {
-    padding: 6px 8px;
+    padding: 0.38em 0.3em;
     cursor: grab;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 6px;
+    gap: 0.3em;
 }
 
 .jc-nav-btn,
@@ -145,9 +187,14 @@ html[data-theme="light"] #sb-journal-root {
     color: var(--jc-text-color);
     border: 1px solid var(--jc-border-color);
     border-radius: 6px;
-    padding: 2px 6px;
+    padding: 2px 4px;
     cursor: pointer;
     font-size: 0.85em;
+}
+
+.jc-nav-btn,
+.jc-today-btn {
+  padding: 2px 6px; 
 }
 
 .jc-nav-btn:hover,
@@ -162,6 +209,51 @@ html[data-theme="light"] #sb-journal-root {
 
 .jc-close:hover {
     background: oklch(0.65 0.2 30);
+    color: white;
+}
+
+/* Gear — gray hover like nav buttons, not red */
+#jc-gear-btn {
+    font-size: 1.2em;
+}
+#jc-gear-btn:hover {
+    background: var(--jc-hover-background);
+    color: var(--jc-text-color);
+}
+
+/* Apply — green */
+#jc-settings-apply {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+#jc-settings-apply:hover {
+    background: oklch(0.55 0.18 145);
+    color: white;
+    border-color: oklch(0.55 0.18 145);
+}
+
+.jc-settings-label {
+  margin-bottom: 5px;
+}
+
+/* Locked toggle button in settings header */
+#jc-locked-toggle {
+    font-size: 0.72em;
+    font-family: monospace;
+    line-height: 1;
+    opacity: 0.38;
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+#jc-locked-toggle:hover {
+    background: var(--jc-hover-background);
+    color: var(--jc-text-color);
+    opacity: 0.75;
+}
+#jc-locked-toggle.active {
+    opacity: 1;
+    background: var(--jc-accent-color);
+    border-color: var(--jc-accent-color);
     color: white;
 }
 
@@ -188,8 +280,8 @@ html[data-theme="light"] #sb-journal-root {
 .jc-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
-    padding: 6px;
+    gap: 0.13em;
+    padding: 0.38em;
     position: relative;
 }
 
@@ -287,16 +379,16 @@ html[data-theme="light"] #sb-journal-root {
 
 .jc-dots-container {
     display: flex;
-    gap: 2px;
+    gap: 0.13em;
     position: absolute;
-    bottom: 5px;
+    bottom: 0.31em;
     justify-content: center;
     width: 100%;
 }
 
 .jc-dot {
-    width: 4px;
-    height: 4px;
+    width: 0.26em;
+    height: 0.26em;
     border-radius: 50%;
     box-shadow: 1px 1px 2px oklch(0 0 0 / 0.5);
 }
@@ -309,6 +401,185 @@ html[data-theme="light"] #sb-journal-root {
 .jc-day.sun .jc-dot.red {
     box-shadow: 0 0 0 1px white;
 }
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+.jc-footer {
+    border-top: 1px solid var(--jc-border-color);
+    padding: 0.25em 0.5em 0.38em;
+}
+
+.jc-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.68em;
+    opacity: 0.65;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    letter-spacing: 0.01em;
+    gap: 8px;
+}
+
+.jc-streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-weight: 600;
+    opacity: 1;
+    transition: color 0.3s;
+}
+.jc-streak-badge.streak-cold { opacity: 0.4; font-weight: normal; }
+.jc-streak-badge.streak-warm { color: oklch(0.75 0.18 60); }
+.jc-streak-badge.streak-hot  { color: oklch(0.72 0.2 45); }
+.jc-streak-badge.streak-epic { color: oklch(0.68 0.22 30); }
+
+/* ── Heatmap cells ────────────────────────────────────────────────────── */
+.jc-day.jc-heatmap {
+    background: oklch(from var(--jc-accent-color) 0.72 c h / var(--jc-heat-opacity)) !important;
+}
+.jc-day.jc-heatmap:hover {
+    background: oklch(from var(--jc-accent-color) 0.65 c h / calc(var(--jc-heat-opacity) + 0.18)) !important;
+}
+
+/* ── Gear button ──────────────────────────────────────────────────────── */
+.jc-gear-icon {
+    display: inline-block;
+    transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#jc-gear-btn:hover .jc-gear-icon { transform: rotate(60deg); }
+#jc-gear-btn.active .jc-gear-icon { transform: rotate(90deg); }
+
+/* ── Settings (back face) ─────────────────────────────────────────────── */
+.jc-settings-header {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--jc-border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82em;
+    font-weight: 600;
+    flex-shrink: 0;
+    cursor: grab;
+}
+
+.jc-settings-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 4px 10px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    user-select: none;
+}
+
+.jc-settings-section {
+    font-size: 0.62em;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    opacity: 0.4;
+    margin-top: 10px;
+    margin-bottom: 3px;
+    font-weight: 700;
+}
+
+.jc-settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px 0;
+    gap: 10px;
+    min-height: 20px;
+}
+
+.jc-settings-label {
+    font-size: 0.78em;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.jc-lua-badge {
+    font-size: 0.72em;
+    opacity: 0.45;
+    background: var(--jc-elements-background);
+    border: 1px solid var(--jc-border-color);
+    border-radius: 3px;
+    padding: 0 3px;
+    cursor: help;
+    font-family: monospace;
+}
+
+.jc-settings-row.jc-locked .jc-settings-label { opacity: 0.45; }
+
+.jc-settings-input-wrap {
+    width: 100%;
+    padding: 0.9em 0;
+}
+
+/* Toggle switch */
+.jc-toggle {
+    position: relative;
+    width: 32px;
+    height: 18px;
+    flex-shrink: 0;
+}
+.jc-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.jc-toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: oklch(0.55 0 0 / 0.25);
+    border: 1px solid var(--jc-border-color);
+    border-radius: 18px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+.jc-toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    left: 2px;
+    top: 2px;
+    background: oklch(0.85 0 0);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+    box-shadow: 0 1px 3px oklch(0 0 0 / 0.3);
+}
+html[data-theme="dark"] .jc-toggle-slider::before { background: oklch(0.65 0 0); }
+.jc-toggle input:checked + .jc-toggle-slider {
+    background: var(--jc-accent-color);
+    border-color: var(--jc-accent-color);
+}
+.jc-toggle input:checked + .jc-toggle-slider::before {
+    transform: translateX(14px);
+    background: white;
+}
+.jc-toggle input:disabled + .jc-toggle-slider { opacity: 0.3; cursor: not-allowed; }
+
+/* Select and text input in settings */
+.jc-settings-select,
+.jc-settings-input {
+    background: var(--jc-elements-background);
+    color: var(--jc-text-color);
+    border: 1px solid var(--jc-border-color);
+    border-radius: 5px;
+    font-size: 0.78em;
+    padding: 2px 5px;
+    cursor: pointer;
+    user-select: text;
+}
+.jc-settings-select { min-width: 90px; }
+.jc-settings-select option { background: var(--modal-help-background-color); }
+.jc-settings-input {
+    width: 100%;
+    box-sizing: border-box;
+    cursor: text;
+    font-family: monospace;
+    font-size: 0.96em;
+}
+.jc-settings-input:disabled,
+.jc-settings-select:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 ```
 
 ```space-lua
@@ -322,7 +593,14 @@ config.define("FloatingJournalCalendar", {
     dayNames               = { type = "array", items = { type = "string" } },
     weekStartsSunday       = schema.boolean(),
     showWeekNumbers        = schema.boolean(),
-    weekNumberSystem       = schema.string()
+    weekNumberSystem       = schema.string(),
+    showFooter             = schema.boolean(),
+    footerMoonPhase        = schema.boolean(),
+    footerMonthCount       = schema.boolean(),
+    footerTotalCount       = schema.boolean(),
+    footerLastEntry        = schema.boolean(),
+    footerStreak           = schema.boolean(),
+    useHeatmap             = schema.boolean()
   }
 })
 
@@ -353,6 +631,41 @@ function toggleFloatingJournalCalendar()
     local show_week_numbers    = cfg.showWeekNumbers
     if show_week_numbers == nil then show_week_numbers = true end
     local week_number_system   = cfg.weekNumberSystem or "iso"
+
+    local show_footer          = cfg.showFooter
+    if show_footer == nil then show_footer = true end
+    local footer_moon_phase    = cfg.footerMoonPhase
+    if footer_moon_phase == nil then footer_moon_phase = true end
+    local footer_month_count   = cfg.footerMonthCount
+    if footer_month_count == nil then footer_month_count = true end
+    local footer_total_count   = cfg.footerTotalCount
+    if footer_total_count == nil then footer_total_count = true end
+    local footer_last_entry    = cfg.footerLastEntry
+    if footer_last_entry == nil then footer_last_entry = true end
+    local footer_streak        = cfg.footerStreak
+    if footer_streak == nil then footer_streak = true end
+    local use_heatmap          = cfg.useHeatmap
+    if use_heatmap == nil then use_heatmap = false end
+
+    -- FIX 1: Use the correct JS-side keys "months" and "days" (not "monthNames"/"dayNames")
+    -- so that LUA_OVERRIDES matches what buildSettingsBody() checks.
+    local lua_override_parts = {}
+    local function mark(key, val) if val ~= nil then table.insert(lua_override_parts, '"' .. key .. '":true') end end
+    mark("pattern",           cfg.journalPathPattern)
+    mark("weeklyPattern",     cfg.weeklyNotesPathPattern)
+    mark("months",            cfg.monthNames)   -- was "monthNames" — key must match JS draft key
+    mark("days",              cfg.dayNames)     -- was "dayNames"   — key must match JS draft key
+    mark("weekStartsSunday",  cfg.weekStartsSunday)
+    mark("showWeekNumbers",   cfg.showWeekNumbers)
+    mark("weekNumSystem",     cfg.weekNumberSystem)
+    mark("showFooter",        cfg.showFooter)
+    mark("footerMoonPhase",   cfg.footerMoonPhase)
+    mark("footerMonthCount",  cfg.footerMonthCount)
+    mark("footerTotalCount",  cfg.footerTotalCount)
+    mark("footerLastEntry",   cfg.footerLastEntry)
+    mark("footerStreak",      cfg.footerStreak)
+    mark("useHeatmap",        cfg.useHeatmap)
+    local lua_overrides_json = "{" .. table.concat(lua_override_parts, ",") .. "}"
 
     local all_pages = space.listPages()
     local page_map_items = {}
@@ -419,18 +732,37 @@ function toggleFloatingJournalCalendar()
       #sb-journal-root.ctrl-active .jc-day { cursor: copy !important; }
     </style>
     <div class="jc-card" id="jc-draggable">
-        <div class="jc-header" id="jc-handle">
-            <button class="jc-nav-btn" id="jc-prev">‹</button>
-            <div class="jc-selectors">
-                <select id="jc-month" class="jc-select"></select>
-                <select id="jc-year"  class="jc-select"></select>
-                <button class="jc-today-btn" id="jc-today" title="Jump to Today & Refresh">↺</button>
+        <div class="jc-flip-inner" id="jc-flip-inner">
+            <div class="jc-face jc-face-front" id="jc-face-front">
+                <div class="jc-header" id="jc-handle">
+                    <button class="jc-nav-btn" id="jc-prev">‹</button>
+                    <div class="jc-selectors">
+                        <select id="jc-month" class="jc-select"></select>
+                        <select id="jc-year"  class="jc-select"></select>
+                        <button class="jc-today-btn" id="jc-today" title="Jump to Today & Refresh">↺</button>
+                    </div>
+                    <button class="jc-nav-btn" id="jc-next">›</button>
+                    <button class="jc-close" id="jc-gear-btn" title="Settings"><span class="jc-gear-icon">⛭</span></button>
+                    <button class="jc-close" id="jc-close-btn">✕</button>
+                </div>
+                <div class="jc-grid" id="jc-labels"></div>
+                <div class="jc-grid" id="jc-days"></div>
+                <div class="jc-footer" id="jc-footer">
+                    <div class="jc-footer-row" id="jc-footer-row"></div>
+                </div>
             </div>
-            <button class="jc-nav-btn" id="jc-next">›</button>
-            <button class="jc-close"   id="jc-close-btn">✕</button>
+            <div class="jc-face jc-face-back" id="jc-face-back">
+                <div class="jc-settings-header" id="jc-settings-header">
+                    <span>⛭ Settings</span>
+                    <div style="display:flex;gap:4px;align-items:center">
+                        <button class="jc-close" id="jc-locked-toggle" title="Show locked (lua) fields">lua</button>
+                        <button class="jc-close" id="jc-settings-apply" title="Apply & close">✓</button>
+                        <button class="jc-close" id="jc-settings-close" title="Discard & close">✕</button>
+                    </div>
+                </div>
+                <div class="jc-settings-body" id="jc-settings-body"></div>
+            </div>
         </div>
-        <div class="jc-grid" id="jc-labels"></div>
-        <div class="jc-grid" id="jc-days"></div>
     </div>
     ]]
 
@@ -440,15 +772,64 @@ function toggleFloatingJournalCalendar()
     scriptEl.innerHTML = [[
     (function() {
         const session          = "]]..sessionID..[[";
-        const months           = ]]..month_names..[[;
-        const days             = ]]..day_names..[[;
-        const weekStartsSunday = ]]..tostring(week_starts_sunday)..[[;
-        const showWeekNumbers  = ]]..tostring(show_week_numbers)..[[;
-        const weekNumSystem    = "]]..week_number_system..[[";
-        const weeklyPattern    = "]]..weekly_path_pattern..[[";
+        let months             = ]]..month_names..[[;
+        let days               = ]]..day_names..[[;
+        let weekStartsSunday   = ]]..tostring(week_starts_sunday)..[[;
+        let showWeekNumbers    = ]]..tostring(show_week_numbers)..[[;
+        let weekNumSystem      = "]]..week_number_system..[[";
+        let weeklyPattern      = "]]..weekly_path_pattern..[[";
+        let showFooter         = ]]..tostring(show_footer)..[[;
+        let footerMoonPhase    = ]]..tostring(footer_moon_phase)..[[;
+        let footerMonthCount   = ]]..tostring(footer_month_count)..[[;
+        let footerTotalCount   = ]]..tostring(footer_total_count)..[[;
+        let footerLastEntry    = ]]..tostring(footer_last_entry)..[[;
+        let footerStreak       = ]]..tostring(footer_streak)..[[;
+        let useHeatmap         = ]]..tostring(use_heatmap)..[[;
         let   existing         = ]]..existing_pages_json..[[;
-        const pattern          = "]]..path_pattern..[[";
+        let   pattern          = "]]..path_pattern..[[";
+        let   calSize          = 'md';
         const root             = document.getElementById("sb-journal-root");
+
+        const LUA_OVERRIDES = ]]..lua_overrides_json..[[;
+        const LS_KEY = 'jc_settings_v1';
+
+        (function() {
+            try {
+                const s = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+                const a = (k, setter) => { if (!LUA_OVERRIDES[k] && k in s) setter(s[k]); };
+                a('months',          v => months          = v);
+                a('days',            v => days            = v);
+                a('weekStartsSunday',v => weekStartsSunday= v);
+                a('showWeekNumbers', v => showWeekNumbers = v);
+                a('weekNumSystem',   v => weekNumSystem   = v);
+                a('weeklyPattern',   v => weeklyPattern   = v);
+                a('pattern',         v => pattern         = v);
+                a('showFooter',      v => showFooter      = v);
+                a('footerMoonPhase', v => footerMoonPhase = v);
+                a('footerMonthCount',v => footerMonthCount= v);
+                a('footerTotalCount',v => footerTotalCount= v);
+                a('footerLastEntry', v => footerLastEntry = v);
+                a('footerStreak',    v => footerStreak    = v);
+                a('useHeatmap',      v => useHeatmap      = v);
+                // calSize is a pure client setting, never locked by Lua
+                a('calSize',         v => calSize         = v);
+            } catch(e) {}
+        })();
+
+        // Apply initial size class
+        (function() {
+            root.classList.remove('jc-size-sm', 'jc-size-lg');
+            if (calSize === 'sm') root.classList.add('jc-size-sm');
+            else if (calSize === 'lg') root.classList.add('jc-size-lg');
+        })();
+
+        function saveSettings(obj) {
+            try {
+                const s = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+                Object.assign(s, obj);
+                localStorage.setItem(LS_KEY, JSON.stringify(s));
+            } catch(e) {}
+        }
 
         const SNAP       = 15;
         const TOP_OFFSET = 65;
@@ -457,17 +838,366 @@ function toggleFloatingJournalCalendar()
         window.addEventListener("keydown", (e) => { if (e.ctrlKey || e.metaKey) root.classList.add("ctrl-active"); });
         window.addEventListener("keyup",   (e) => { if (!e.ctrlKey && !e.metaKey) root.classList.remove("ctrl-active"); });
 
+        // ── Settings (flip card) ──────────────────────────────────────────────
+        let settingsOpen = false;
+        let showLocked   = false; // locked (lua) fields hidden by default
+        let draft = {}; // pending changes, only applied on ✅
+
+        function flipCard(open) {
+            settingsOpen = open;
+            const inner = document.getElementById('jc-flip-inner');
+            const front = document.getElementById('jc-face-front');
+            const back  = document.getElementById('jc-face-back');
+            const gear  = document.getElementById('jc-gear-btn');
+
+            if (open) {
+                // FIX 4: Remove contour SVG before flipping — it bleeds through on mobile
+                const existingSvg = document.getElementById("jc-contour-svg");
+                if (existingSvg) existingSvg.remove();
+
+                draft = {
+                    months, days, weekStartsSunday, showWeekNumbers, weekNumSystem,
+                    weeklyPattern, pattern, showFooter, footerMoonPhase, footerMonthCount,
+                    footerTotalCount, footerLastEntry, footerStreak, useHeatmap, calSize
+                };
+                buildSettingsBody();
+
+                const calH = front.offsetHeight;
+                inner.style.height = calH + 'px';
+
+                // Briefly measure back face natural height
+                back.style.visibility = 'hidden';
+                back.style.minHeight  = '0';
+                const rawSettingsH = back.scrollHeight;
+                back.style.minHeight  = '';
+                back.style.visibility = '';
+
+                // Cap settings height to available viewport height
+                const maxAvailH = window.innerHeight - TOP_OFFSET - 20;
+                const settingsH = Math.min(Math.max(rawSettingsH, calH), maxAvailH);
+
+                gear.classList.add('active');
+                // FIX 3: Disable pointer events on all children during flip to prevent hover flicker
+                inner.classList.add('jc-flipping');
+                setTimeout(() => inner.classList.remove('jc-flipping'), 600);
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    inner.classList.add('flipped');
+                    inner.style.height = settingsH + 'px';
+                    setTimeout(clamp, 560); // clamp after flip animation
+                }));
+            } else {
+                const calH = front.scrollHeight;
+                // FIX 3: Disable pointer events during flip-back too
+                inner.classList.add('jc-flipping');
+                setTimeout(() => inner.classList.remove('jc-flipping'), 600);
+                inner.classList.remove('flipped');
+                inner.style.height = calH + 'px';
+                gear.classList.remove('active');
+                setTimeout(() => { if (!settingsOpen) inner.style.height = ''; }, 560);
+            }
+        }
+
+        function applySettings() {
+            // Copy draft to live vars
+            months          = draft.months;
+            days            = draft.days;
+            weekStartsSunday= draft.weekStartsSunday;
+            showWeekNumbers = draft.showWeekNumbers;
+            weekNumSystem   = draft.weekNumSystem;
+            weeklyPattern   = draft.weeklyPattern;
+            pattern         = draft.pattern;
+            showFooter      = draft.showFooter;
+            footerMoonPhase = draft.footerMoonPhase;
+            footerMonthCount= draft.footerMonthCount;
+            footerTotalCount= draft.footerTotalCount;
+            footerLastEntry = draft.footerLastEntry;
+            footerStreak    = draft.footerStreak;
+            useHeatmap      = draft.useHeatmap;
+            calSize         = draft.calSize;
+            // Persist only non-lua-locked keys (calSize is never locked)
+            const toSave = {};
+            Object.keys(draft).forEach(k => { if (!LUA_OVERRIDES[k]) toSave[k] = draft[k]; });
+            saveSettings(toSave);
+            flipCard(false);
+            // Delay render until after the flip animation completes (520ms + buffer)
+            // so the SVG contour doesn't appear through the flip transition
+            setTimeout(() => {
+                root.classList.remove('jc-size-sm', 'jc-size-lg');
+                if (calSize === 'sm') root.classList.add('jc-size-sm');
+                else if (calSize === 'lg') root.classList.add('jc-size-lg');
+                render();
+            }, 560);
+        }
+
+        // ── Update locked field visibility ────────────────────────────────────
+        // Hides/shows .jc-locked rows and also hides section headers that
+        // have no visible (unlocked) children beneath them.
+        function updateLockedVisibility() {
+            const body = document.getElementById('jc-settings-body');
+            if (!body) return;
+            const children = [...body.children];
+            let lastSection = null;
+            let sectionHasUnlocked = false;
+
+            children.forEach(el => {
+                if (el.classList.contains('jc-settings-section')) {
+                    // Resolve previous section: hide it if all items below were locked
+                    if (lastSection) {
+                        lastSection.style.display = (!showLocked && !sectionHasUnlocked) ? 'none' : '';
+                    }
+                    lastSection = el;
+                    sectionHasUnlocked = false;
+                    el.style.display = ''; // tentatively show, resolved above next time
+                } else if (el.classList.contains('jc-locked')) {
+                    el.style.display = showLocked ? 'flex' : 'none';
+                } else {
+                    el.style.display = '';
+                    sectionHasUnlocked = true;
+                }
+            });
+            // Resolve the final section
+            if (lastSection) {
+                lastSection.style.display = (!showLocked && !sectionHasUnlocked) ? 'none' : '';
+            }
+
+            // Update the toggle button appearance
+            const btn = document.getElementById('jc-locked-toggle');
+            if (btn) {
+                btn.classList.toggle('active', showLocked);
+                btn.title = showLocked ? 'Hide locked (lua) fields' : 'Show locked (lua) fields';
+            }
+        }
+
+        function buildSettingsBody() {
+            const body = document.getElementById('jc-settings-body');
+            if (!body) return;
+            body.innerHTML = '';
+
+            // Stop all keyboard events from leaking to SilverBullet
+            body.onkeydown = e => e.stopPropagation();
+
+            function makeToggle(key, label, hint) {
+                const locked = !!LUA_OVERRIDES[key];
+                const row = document.createElement('div');
+                row.className = 'jc-settings-row' + (locked ? ' jc-locked' : '');
+                row.innerHTML = `
+                  <label class="jc-settings-label" title="${hint || ''}">
+                    ${label}
+                    ${locked ? '<span class="jc-lua-badge" title="Locked — set via Lua config">lua</span>' : ''}
+                  </label>
+                  <label class="jc-toggle">
+                    <input type="checkbox" ${draft[key] ? 'checked' : ''} ${locked ? 'disabled' : ''}>
+                    <span class="jc-toggle-slider"></span>
+                  </label>`;
+                if (!locked) {
+                    row.querySelector('input').onchange = e => { draft[key] = e.target.checked; };
+                }
+                body.appendChild(row);
+            }
+
+            function makeSelect(key, label, options) {
+                const locked = !!LUA_OVERRIDES[key];
+                const row = document.createElement('div');
+                row.className = 'jc-settings-row' + (locked ? ' jc-locked' : '');
+                const optHtml = options.map(([v, l]) =>
+                    `<option value="${v}" ${draft[key] === v ? 'selected' : ''}>${l}</option>`).join('');
+                row.innerHTML = `
+                  <label class="jc-settings-label">
+                    ${label}
+                    ${locked ? '<span class="jc-lua-badge" title="Locked — set via Lua config">lua</span>' : ''}
+                  </label>
+                  <select class="jc-settings-select" ${locked ? 'disabled' : ''}>${optHtml}</select>`;
+                if (!locked) {
+                    row.querySelector('select').onchange = e => { draft[key] = e.target.value; };
+                }
+                body.appendChild(row);
+            }
+
+            function makeTextInput(key, label) {
+                const locked = !!LUA_OVERRIDES[key];
+                const val = Array.isArray(draft[key]) ? draft[key].join(', ') : (draft[key] || '');
+                const wrap = document.createElement('div');
+                wrap.className = 'jc-settings-row jc-settings-input-wrap' + (locked ? ' jc-locked' : '');
+                wrap.innerHTML = `
+                  <div style="width:100%">
+                    <div class="jc-settings-label">
+                      ${label}
+                      ${locked ? '<span class="jc-lua-badge" title="Locked — set via Lua config">lua</span>' : ''}
+                    </div>
+                    <input class="jc-settings-input" type="text" value="${val.replace(/"/g,'&quot;')}"
+                      ${locked ? 'disabled readonly' : ''}>
+                  </div>`;
+                if (!locked) {
+                    const inp = wrap.querySelector('input');
+                    // Capture all keyboard events so they don't reach SilverBullet
+                    inp.addEventListener('keydown', e => e.stopPropagation());
+                    inp.addEventListener('keyup',   e => e.stopPropagation());
+                    inp.oninput = () => {
+                        if (Array.isArray(draft[key])) {
+                            draft[key] = inp.value.split(',').map(s => s.trim()).filter(Boolean);
+                        } else {
+                            draft[key] = inp.value;
+                        }
+                    };
+                }
+                body.appendChild(wrap);
+            }
+
+            function section(label) {
+                const el = document.createElement('div');
+                el.className = 'jc-settings-section';
+                el.textContent = label;
+                body.appendChild(el);
+            }
+
+            section('Appearance');
+            makeSelect('calSize', 'Calendar size',
+                [ ['sm','Small'], ['md','Medium'], ['lg','Large'] ]);
+
+            section('Layout');
+            makeToggle('showWeekNumbers',  'Show week numbers', '');
+            makeToggle('weekStartsSunday', 'Week starts Sunday', '');
+            makeSelect('weekNumSystem', 'Week number system',
+                [ ['iso','ISO 8601'],['us','US (Sun-start)'],['simple','Simple'] ]);
+
+            section('Display');
+            makeToggle('useHeatmap', 'Heatmap mode', 'Shade cells by activity instead of dots');
+
+            section('Footer');
+            makeToggle('showFooter',       'Show footer bar', '');
+            makeToggle('footerStreak',     'Streak counter 🔥', '');
+            makeToggle('footerMoonPhase',  'Moon phase', '');
+            makeToggle('footerMonthCount', 'Month entry count', '');
+            makeToggle('footerTotalCount', 'Total entry count', '');
+            makeToggle('footerLastEntry',  'Last entry', '');
+
+            section('Paths');
+            makeTextInput('pattern',       'Journal path pattern');
+            makeTextInput('weeklyPattern', 'Weekly note path pattern');
+
+            section('Locale');
+            makeTextInput('months', 'Month names (comma-separated)');
+            makeTextInput('days',   'Day names Mon–Sun (comma-separated)');
+
+            // Apply locked visibility after building
+            updateLockedVisibility();
+        }
+
+        // FIX 2: Use offsetWidth/offsetHeight — these are unaffected by CSS transforms
+        // (getBoundingClientRect returns scaled values during the open animation).
         function clamp() {
-            const rect = root.getBoundingClientRect();
-            let left = rect.left, top = rect.top;
+            const w = root.offsetWidth, h = root.offsetHeight;
+            let left = root.offsetLeft, top = root.offsetTop;
             if (left < 0) left = 0;
             if (top < TOP_OFFSET) top = TOP_OFFSET;
-            if (left + rect.width  > window.innerWidth)  left = window.innerWidth  - rect.width;
-            if (top  + rect.height > window.innerHeight) top  = window.innerHeight - rect.height;
+            if (left + w > window.innerWidth)  left = Math.max(0, window.innerWidth  - w);
+            if (top  + h > window.innerHeight) top  = Math.max(TOP_OFFSET, window.innerHeight - h);
             root.style.left  = left + "px";
             root.style.top   = top  + "px";
             root.style.right = "auto";
         }
+
+        // ── Moon phase ────────────────────────────────────────────────────────
+        const MOON_EMOJIS = ["🌑","🌒","🌓","🌔","🌕","🌖","🌗","🌘"];
+        const MOON_NAMES  = ["New Moon","Waxing Crescent","First Quarter","Waxing Gibbous",
+                             "Full Moon","Waning Gibbous","Last Quarter","Waning Crescent"];
+        function moonPhase(date) {
+            const ref   = new Date("2000-01-06T18:14:00Z");
+            const cycle = 29.53059;
+            const days  = ((date - ref) / 86400000 % cycle + cycle) % cycle;
+            const idx   = Math.round(days / cycle * 8) % 8;
+            return { emoji: MOON_EMOJIS[idx], name: MOON_NAMES[idx] };
+        }
+
+        // ── Streak + day path helper ─────────────────────────────────────────
+        function buildDayPath(dt) {
+            const dy = dt.getFullYear(), dm = dt.getMonth(), dd = dt.getDate();
+            const isSun = dt.getDay() === 0;
+            return pattern
+                .replace(/#year#/g,      dy)
+                .replace(/#month#/g,     String(dm + 1).padStart(2, '0'))
+                .replace(/#monthname#/g, months[dm])
+                .replace(/#day#/g,       String(dd).padStart(2, '0'))
+                .replace(/#weekday#/g,   days[isSun ? 6 : dt.getDay() - 1])
+                .replace(/#wildcard#/g,  '');
+        }
+
+        function computeStreak(pageNames) {
+            const now = new Date();
+            const todayBp = buildDayPath(now);
+            const startDelta = pageNames.some(n => n.startsWith(todayBp)) ? 0 : 1;
+            let streak = 0;
+            for (let delta = startDelta; delta <= 365; delta++) {
+                const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - delta);
+                if (pageNames.some(n => n.startsWith(buildDayPath(dt)))) streak++;
+                else break;
+            }
+            return streak;
+        }
+
+        // ── Footer ────────────────────────────────────────────────────────────
+        function updateFooter() {
+            const footerEl = document.getElementById("jc-footer");
+            if (!footerEl) return;
+            if (!showFooter) { footerEl.style.display = 'none'; return; }
+            footerEl.style.display = '';
+
+            const row = document.getElementById("jc-footer-row");
+            if (!row) return;
+
+            const y         = vDate.getFullYear(), m = vDate.getMonth();
+            const pageNames = Object.keys(existing);
+            const patPrefix = pattern.split('#')[0];
+            const now       = new Date();
+
+            let monthEntries = 0, totalEntries = 0;
+            if (footerMonthCount || footerTotalCount) {
+                const daysInMonth = new Date(y, m + 1, 0).getDate();
+                for (let d = 1; d <= daysInMonth; d++) {
+                    if (pageNames.some(n => n.startsWith(buildDayPath(new Date(y, m, d))))) monthEntries++;
+                }
+                if (footerTotalCount)
+                    totalEntries = pageNames.filter(n => n.startsWith(patPrefix)).length;
+            }
+
+            let lastLabel = null;
+            if (footerLastEntry) {
+                for (let delta = 0; delta <= 365; delta++) {
+                    const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - delta);
+                    if (pageNames.some(n => n.startsWith(buildDayPath(dt)))) {
+                        lastLabel = delta === 0 ? 'today' : delta === 1 ? 'yesterday' : delta + 'd ago';
+                        break;
+                    }
+                }
+                if (lastLabel === null) lastLabel = 'never';
+            }
+
+            const parts = [];
+
+            if (footerStreak) {
+                const s = computeStreak(pageNames);
+                let cls = 'jc-streak-badge streak-cold', icon = '—', tip = 'No streak — write today to start one!';
+                if      (s >= 30) { cls = 'jc-streak-badge streak-epic'; icon = '🔥🔥🔥'; tip = `${s}-day streak — legendary!`; }
+                else if (s >= 14) { cls = 'jc-streak-badge streak-hot';  icon = '🔥🔥';   tip = `${s}-day streak — on fire!`; }
+                else if (s >= 1)  { cls = 'jc-streak-badge streak-warm'; icon = '🔥';     tip = `${s}-day streak — keep going!`; }
+                parts.push(`<span class="${cls}" title="${tip}">${s > 0 ? icon + ' ' + s : icon}</span>`);
+            }
+            if (footerMoonPhase) {
+                const moon = moonPhase(now);
+                parts.push(`<span title="${moon.name}">${moon.emoji} ${moon.name}</span>`);
+            }
+            if (footerMonthCount || footerTotalCount) {
+                let countStr = '📓 ';
+                if (footerMonthCount && footerTotalCount) countStr += `${monthEntries} / ${totalEntries}`;
+                else if (footerMonthCount)                countStr += `${monthEntries} this month`;
+                else                                      countStr += `${totalEntries} total`;
+                parts.push(`<span>${countStr}</span>`);
+            }
+            if (footerLastEntry) parts.push(`<span>last: ${lastLabel}</span>`);
+
+            row.innerHTML = parts.join('');
+        }
+
 
         // ── Week number calculation ───────────────────────────────────────────
         // Returns { week, weekYear } according to the chosen system.
@@ -577,7 +1307,9 @@ function toggleFloatingJournalCalendar()
             // Its offsetLeft is therefore the true left edge of day-column 0.
             const colStart = col0Cell.offsetLeft;
             const rowStart = col0Cell.offsetTop;
-            const gap      = 2;
+            const gap = (calSize === 'sm') ? 1.4
+                      : (calSize === 'lg') ? 2.4
+                      : 2.0;
 
             const xl = c => colStart + c * (cellW + gap);
             const xr = c => colStart + c * (cellW + gap) + cellW;
@@ -625,10 +1357,12 @@ function toggleFloatingJournalCalendar()
             svg.id = "jc-contour-svg";
             svg.setAttribute("width",  gridW);
             svg.setAttribute("height", svgH);
-            svg.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:1";
+            // Start invisible; fade in after paint so it never flashes during flip-back
+            svg.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:1;opacity:0;transition:opacity 0.35s ease;";
 
             const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            pathEl.setAttribute("d",               roundedPath(pts, 5));
+            const radius = (calSize === 'sm') ? 3.5 : 5;
+            pathEl.setAttribute("d", roundedPath(pts, radius));
             pathEl.setAttribute("fill",            "none");
             pathEl.setAttribute("stroke",          "var(--jc-outline-color)");
             pathEl.setAttribute("stroke-width",    "1.5");
@@ -636,6 +1370,12 @@ function toggleFloatingJournalCalendar()
             pathEl.setAttribute("opacity",         "0.75");
             svg.appendChild(pathEl);
             grid.appendChild(svg);
+
+            // Trigger fade-in on the next two animation frames to ensure the element
+            // is fully painted before the transition starts
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                svg.style.opacity = '1';
+            }));
         }
         // ─────────────────────────────────────────────────────────────────────
 
@@ -643,8 +1383,9 @@ function toggleFloatingJournalCalendar()
             const y   = vDate.getFullYear(), m = vDate.getMonth();
             const now = new Date();
 
-            // Adjust widget width for week number column
-            root.style.width = showWeekNumbers ? "330px" : "300px";
+            // Adjust widget width for current size and week number column
+            const sizeW = { sm: [258, 258], md: [310, 330], lg: [388, 413] }[calSize] || [310, 330];
+            root.style.width = (showWeekNumbers ? sizeW[1] : sizeW[0]) + 'px';
 
             const colTemplate = showWeekNumbers ? "1.8em repeat(7, 1fr)" : "repeat(7, 1fr)";
 
@@ -754,24 +1495,30 @@ function toggleFloatingJournalCalendar()
 
                     const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
                     if (matchCount > 0) {
-                        const dotsContainer = document.createElement("div");
-                        dotsContainer.className = "jc-dots-container";
-                        const numReds   = Math.floor(matchCount / 4);
-                        const remainder = matchCount % 4;
-                        for (let r = 0; r < numReds; r++) {
-                            const dot = document.createElement("div");
-                            dot.className = "jc-dot red";
-                            dotsContainer.appendChild(dot);
+                        if (useHeatmap) {
+                            el.classList.add('jc-heatmap');
+                            const opacity = Math.min(0.13 + (matchCount - 1) * 0.1, 0.6);
+                            el.style.setProperty('--jc-heat-opacity', opacity);
+                        } else {
+                            const dotsContainer = document.createElement("div");
+                            dotsContainer.className = "jc-dots-container";
+                            const numReds   = Math.floor(matchCount / 4);
+                            const remainder = matchCount % 4;
+                            for (let r = 0; r < numReds; r++) {
+                                const dot = document.createElement("div");
+                                dot.className = "jc-dot red";
+                                dotsContainer.appendChild(dot);
+                            }
+                            if (remainder > 0) {
+                                const dot = document.createElement("div");
+                                let colorClass = "green";
+                                if (remainder === 2) colorClass = "yellow";
+                                if (remainder === 3) colorClass = "orange";
+                                dot.className = "jc-dot " + colorClass;
+                                dotsContainer.appendChild(dot);
+                            }
+                            el.appendChild(dotsContainer);
                         }
-                        if (remainder > 0) {
-                            const dot = document.createElement("div");
-                            let colorClass = "green";
-                            if (remainder === 2) colorClass = "yellow";
-                            if (remainder === 3) colorClass = "orange";
-                            dot.className = "jc-dot " + colorClass;
-                            dotsContainer.appendChild(dot);
-                        }
-                        el.appendChild(dotsContainer);
                     }
 
                     el.innerHTML += `<span>${dayNum}</span>`;
@@ -789,6 +1536,7 @@ function toggleFloatingJournalCalendar()
 
             // Draw month contour. Uses offsetLeft/offsetTop (layout, transform-safe).
             drawContour(offset, lastDay);
+            updateFooter();
         }
 
         window.addEventListener("sb-journal-update", (e) => {
@@ -797,6 +1545,9 @@ function toggleFloatingJournalCalendar()
 
         window.addEventListener("resize", clamp);
 
+        document.getElementById("jc-gear-btn").onclick      = () => flipCard(true);
+        document.getElementById("jc-settings-apply").onclick = () => applySettings();
+        document.getElementById("jc-settings-close").onclick = () => flipCard(false);
         document.getElementById("jc-prev").onclick = () => { vDate.setDate(1); vDate.setMonth(vDate.getMonth() - 1); render(); };
         document.getElementById("jc-next").onclick = () => { vDate.setDate(1); vDate.setMonth(vDate.getMonth() + 1); render(); };
         document.getElementById("jc-today").onclick = () => {
@@ -810,13 +1561,18 @@ function toggleFloatingJournalCalendar()
             root.classList.add("jc-animate-out");
             setTimeout(() => root.remove(), 300);
         };
+        document.getElementById("jc-locked-toggle").onclick = () => {
+            showLocked = !showLocked;
+            updateLockedVisibility();
+        };
 
         const card = document.getElementById("jc-draggable");
         card.onpointerdown = (e) => {
             if (
                 e.target.closest("button, select, input, textarea") ||
                 e.target.closest(".jc-day:not(.empty):not(.faded)") ||
-                e.target.closest(".jc-week-num")
+                e.target.closest(".jc-week-num") ||
+                e.target.closest(".jc-face-back")
             ) return;
 
             document.body.classList.add("sb-dragging-active");
@@ -844,10 +1600,40 @@ function toggleFloatingJournalCalendar()
             window.addEventListener("pointerup", up, { once: true });
         };
 
+        // ── Settings header drag ──────────────────────────────────────────────
+        const settingsHeader = document.getElementById("jc-settings-header");
+        settingsHeader.onpointerdown = (e) => {
+            if (e.target.closest("button")) return;
+            document.body.classList.add("sb-dragging-active");
+            settingsHeader.style.cursor = "grabbing";
+            let sX = e.clientX - root.offsetLeft, sY = e.clientY - root.offsetTop;
+            const move = (mv) => {
+                const w = root.offsetWidth, h = root.offsetHeight;
+                const nL = Math.max(0, Math.min(mv.clientX - sX, window.innerWidth  - w));
+                const nT = Math.max(TOP_OFFSET, Math.min(mv.clientY - sY, window.innerHeight - h));
+                root.style.left  = nL + "px";
+                root.style.top   = nT + "px";
+                root.style.right = "auto";
+            };
+            const up = () => {
+                document.body.classList.remove("sb-dragging-active");
+                settingsHeader.style.cursor = "";
+                window.removeEventListener("pointermove", move);
+                window.dispatchEvent(new CustomEvent("sb-journal-event", {
+                    detail: { action: "save_pos", top: root.style.top, left: root.style.left, session }
+                }));
+            };
+            window.addEventListener("pointermove", move);
+            window.addEventListener("pointerup", up, { once: true });
+        };
+
         render();
+        // FIX 2: Wait until after the open animation (400ms) before clamping,
+        // so offsetWidth/offsetHeight reflect the fully-scaled final size.
         setTimeout(() => {
             if (root.style.left !== "auto") root.style.right = "auto";
-        }, 100);
+            clamp(); // bring back into view if saved position is off-screen
+        }, 450);
     })();
     ]]
     container.appendChild(scriptEl)
