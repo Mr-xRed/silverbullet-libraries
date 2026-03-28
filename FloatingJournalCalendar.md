@@ -168,7 +168,7 @@ html[data-theme="dark"] #sb-journal-root {
     --jc-hover-background: oklch(0.65 0 0 / 0.5);
     --jc-text-color: var(--root-color);
     --jc-accent-color: var(--ui-accent-color);
-    --jc-outline-color: white;
+    --jc-outline-color: dark-gray;
 }
 
 html[data-theme="light"] #sb-journal-root {
@@ -900,7 +900,7 @@ function toggleFloatingJournalCalendar()
         let vDate = new Date();
 
         // Track modifier keys for cursor feedback and click behaviour.
-        // NOTE: We do NOT use isShiftDown for drag — Shift+Click is unreliable on Mac/Safari.
+        // NOTE: We do NOT use isShiftDown for drag — Shift+Drag&Drop is unreliable on Mac/Safari.
         //       Shift is handled via Shift+Click instead (see el.onclick below).
         window.addEventListener("keydown", (e) => {
             if (e.ctrlKey || e.metaKey) root.classList.add("ctrl-active");
