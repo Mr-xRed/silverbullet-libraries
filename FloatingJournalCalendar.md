@@ -61,7 +61,22 @@ config.set("FloatingJournalCalendar", {
   footerTotalCount = true,    -- total entry count across all time
   footerLastEntry = true,     -- how many days since the last entry
   footerStreak = true,        -- 🔥 consecutive-day journaling streak
-  shiftDatePattern = '#year#-#month#-#day#'  -- plain-text date for Shift+Click
+  shiftDatePattern = '#year#-#month#-#day#',  -- plain-text date for Shift+Click
+  -- Optional: Custom colors (hex format recommended)
+  -- colors = {
+  --   accentColor = "#6366f1",        -- Links, today highlight, toggle switches
+  --   background = "#1f2937",         -- Calendar card background
+  --   borderColor = "#4b5563",        -- Borders
+  --   elementsBackground = "#374151", -- Day cells and buttons
+  --   hoverBackground = "#4b5563",    -- Hover states
+  --   textColor = "#e5e7eb",          -- Main text
+  --   outlineColor = "#ffffff",       -- Month contour line
+  --   sundayColor = "#f87171",        -- Sunday text color
+  --   dotGreen = "#22c55e",           -- Entry dot: 1 entry
+  --   dotYellow = "#eab308",          -- Entry dot: 2 entries
+  --   dotOrange = "#f97316",          -- Entry dot: 3 entries
+  --   dotRed = "#ef4444"              -- Entry dot: 4+ entries
+  -- }
 })    
 ```
 
@@ -185,6 +200,11 @@ html[data-theme="dark"] #sb-journal-root {
     --jc-text-color: var(--root-color);
     --jc-accent-color: var(--ui-accent-color);
     --jc-outline-color: white;
+    --jc-sunday-color: oklch(0.6 0.2 30);
+    --jc-dot-green: oklch(0.6 0.18 145);
+    --jc-dot-yellow: oklch(0.95 0.18 95);
+    --jc-dot-orange: oklch(0.8 0.20 55);
+    --jc-dot-red: oklch(0.6 0.2 10);
 }
 
 html[data-theme="light"] #sb-journal-root {
@@ -195,6 +215,11 @@ html[data-theme="light"] #sb-journal-root {
     --jc-text-color: var(--root-color);
     --jc-accent-color: var(--ui-accent-color);
     --jc-outline-color: black;
+    --jc-sunday-color: oklch(0.6 0.2 30);
+    --jc-dot-green: oklch(0.6 0.18 145);
+    --jc-dot-yellow: oklch(0.8 0.18 95);
+    --jc-dot-orange: oklch(0.75 0.20 55);
+    --jc-dot-red: oklch(0.6 0.2 10);
 }
 
 /* ── Card flip ────────────────────────────────────────────────────────── */
@@ -206,6 +231,7 @@ html[data-theme="light"] #sb-journal-root {
 
 .jc-flip-inner {
     transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d; /* Safari still needs the prefix */
     transition: transform 0.52s cubic-bezier(0.4, 0, 0.2, 1),
                 height   0.52s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
@@ -227,12 +253,19 @@ html[data-theme="light"] #sb-journal-root {
     flex-direction: column;
 }
 
-.jc-face-front { cursor: grab; }
+/* Safari fix: translateZ(1px) forces each face onto its own GPU compositor
+   layer before the flip begins. Without it, Safari creates the layers
+   mid-animation (because height also animates on the same element),
+   briefly rendering both faces and showing the front mirrored. */
+.jc-face-front {
+    cursor: grab;
+    transform: translateZ(1px);
+}
 
 .jc-face-back {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    transform: rotateY(180deg);
+    transform: rotateY(180deg) translateZ(1px);
     cursor: default;
     overflow: hidden;
     /* FIX 5: Back face is non-interactive when not visible */
@@ -366,7 +399,7 @@ html[data-theme="light"] #sb-journal-root {
 }
 
 .jc-lbl.sun {
-    color: oklch(0.65 0.18 30);
+    color: var(--jc-sunday-color);
     opacity: 1;
 }
 
@@ -436,7 +469,7 @@ html[data-theme="light"] #sb-journal-root {
 }
 
 .jc-day.sun {
-    color: oklch(0.6 0.2 30);
+    color: var(--jc-sunday-color);
     font-weight: bold;
 }
 
@@ -466,10 +499,10 @@ html[data-theme="light"] #sb-journal-root {
     box-shadow: 1px 1px 2px oklch(0 0 0 / 0.5);
 }
 
-.jc-dot.green  { background: oklch(0.6 0.18 145); }
-.jc-dot.yellow { background: oklch(0.95 0.18 95); }
-.jc-dot.orange { background: oklch(0.8 0.20 55); }
-.jc-dot.red    { background: oklch(0.6 0.2 10); }
+.jc-dot.green  { background: var(--jc-dot-green); }
+.jc-dot.yellow { background: var(--jc-dot-yellow); }
+.jc-dot.orange { background: var(--jc-dot-orange); }
+.jc-dot.red    { background: var(--jc-dot-red); }
 
 .jc-day.sun .jc-dot.red {
     box-shadow: 0 0 0 1px white;
@@ -675,7 +708,24 @@ config.define("FloatingJournalCalendar", {
     footerStreak           = schema.boolean(),
     useHeatmap             = schema.boolean(),
     showContour            = schema.boolean(),
-    shiftDatePattern       = schema.string()
+    shiftDatePattern       = schema.string(),
+    colors                 = {
+      type = "object",
+      properties = {
+        accentColor        = schema.string(),
+        background         = schema.string(),
+        borderColor        = schema.string(),
+        elementsBackground = schema.string(),
+        hoverBackground    = schema.string(),
+        textColor          = schema.string(),
+        outlineColor       = schema.string(),
+        sundayColor        = schema.string(),
+        dotGreen           = schema.string(),
+        dotYellow          = schema.string(),
+        dotOrange          = schema.string(),
+        dotRed             = schema.string()
+      }
+    }
   }
 })
 
@@ -724,6 +774,7 @@ function toggleFloatingJournalCalendar()
     local show_contour         = cfg.showContour
     if show_contour == nil then show_contour = true end
     local shift_date_pattern   = cfg.shiftDatePattern or '#year#-#month#-#day#'
+    local colors               = cfg.colors or {}
 
     -- FIX 1: Use the correct JS-side keys "months" and "days" (not "monthNames"/"dayNames")
     -- so that LUA_OVERRIDES matches what buildSettingsBody() checks.
@@ -745,6 +796,7 @@ function toggleFloatingJournalCalendar()
     mark("useHeatmap",        cfg.useHeatmap)
     mark("showContour",       cfg.showContour)
     mark("shiftDatePattern",  cfg.shiftDatePattern)
+    mark("colors",            cfg.colors)
     local lua_overrides_json = "{" .. table.concat(lua_override_parts, ",") .. "}"
 
     local all_pages = space.listPages()
@@ -876,6 +928,14 @@ function toggleFloatingJournalCalendar()
         let   pattern          = "]]..path_pattern..[[";
         let   shiftDatePattern = "]]..shift_date_pattern..[[";
         let   calSize          = 'md';
+        let   colors           = ]]..(function()
+            if not colors or next(colors) == nil then return "{}" end
+            local parts = {}
+            for k, v in pairs(colors) do
+                table.insert(parts, '"' .. k .. '":"' .. tostring(v):gsub('"', '\\"') .. '"')
+            end
+            return "{" .. table.concat(parts, ",") .. "}"
+        end)()..[[;
         const root             = document.getElementById("sb-journal-root");
 
         const LUA_OVERRIDES = ]]..lua_overrides_json..[[;
@@ -903,8 +963,148 @@ function toggleFloatingJournalCalendar()
                 a('shiftDatePattern',v => shiftDatePattern= v);
                 // calSize is a pure client setting, never locked by Lua
                 a('calSize',         v => calSize         = v);
+                // Load colors from localStorage, respecting Lua overrides
+                a('colors',          v => { if (!LUA_OVERRIDES['colors']) colors = { ...colors, ...v }; });
             } catch(e) {}
         })();
+
+        // ── Color Utilities ────────────────────────────────────────────────────
+        // Convert oklch to rgb for color picker display
+        // Accurate conversion: oklch → lab → xyz(D65) → linear srgb → gamma srgb
+        function oklchToRgb(L, C, h, alpha = 1) {
+            // Normalize inputs
+            L = Math.max(0, Math.min(1, L));
+            C = Math.max(0, C);
+            h = ((h % 360) + 360) % 360;
+
+            // oklch → lab (Oklab)
+            const hRad = h * Math.PI / 180;
+            const a = C * Math.cos(hRad);
+            const b = C * Math.sin(hRad);
+
+            // lab → xyz (D65) using proper Oklab inversion
+            // Oklab is defined as a linear transform of XYZ (with cube root)
+            // l_ = (L + 0.3963377774 * a + 0.2158037573 * b) ^ 3
+            // m_ = (L - 0.1055613458 * a - 0.0638541728 * b) ^ 3
+            // s_ = (L - 0.0894841775 * a - 1.2914855480 * b) ^ 3
+            // Then XYZ = M^-1 * [l_, m_, s_]
+
+            const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+            const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+            const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+
+            const l3 = l_ * l_ * l_;
+            const m3 = m_ * m_ * m_;
+            const s3 = s_ * s_ * s_;
+
+            // Inverse of the Oklab matrix (converts LMS cubic back to XYZ)
+            // This is the correct inverse transformation
+            const x =  1.227013851 * l3 - 0.557799289 * m3 + 0.281256152 * s3;
+            const y = -0.040580178 * l3 + 1.112256371 * m3 - 0.0716762 * s3;
+            const z = -0.076381285 * l3 - 0.421481978 * m3 + 1.586635227 * s3;
+
+            // xyz → linear srgb (using proper D65 matrix)
+            const rLin =  3.240969941904522 * x - 1.537383177570093 * y - 0.498610760293056 * z;
+            const gLin = -0.969243636280880 * x + 1.875967501507721 * y + 0.041555057408176 * z;
+            const bLin =  0.055630079696993 * x - 0.203976958888976 * y + 1.056971514242878 * z;
+
+            // linear srgb → gamma srgb
+            function gamma(c) {
+                const absC = Math.abs(c);
+                const signC = Math.sign(c);
+                if (absC <= 0.0031308) {
+                    return signC * 12.92 * absC;
+                }
+                return signC * (1.055 * Math.pow(absC, 1/2.4) - 0.055);
+            }
+
+            let r = gamma(rLin);
+            let g = gamma(gLin);
+            let b_ = gamma(bLin);
+
+            return {
+                r: Math.round(Math.max(0, Math.min(255, r * 255))),
+                g: Math.round(Math.max(0, Math.min(255, g * 255))),
+                b: Math.round(Math.max(0, Math.min(255, b_ * 255))),
+                a: alpha
+            };
+        }
+
+        // Parse oklch() or oklch(from ...) CSS values
+        function parseOklch(cssValue) {
+            // Handle oklch(l c h / alpha) or oklch(l c h)
+            const match = cssValue.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)/);
+            if (match) {
+                return oklchToRgb(
+                    parseFloat(match[1]),
+                    parseFloat(match[2]),
+                    parseFloat(match[3]),
+                    match[4] ? parseFloat(match[4]) : 1
+                );
+            }
+            // Handle oklch(from var(...) l c h / alpha)
+            const fromMatch = cssValue.match(/oklch\(\s*from\s+[^)]+\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\s*\)/);
+            if (fromMatch) {
+                return oklchToRgb(
+                    parseFloat(fromMatch[1]),
+                    parseFloat(fromMatch[2]),
+                    parseFloat(fromMatch[3]),
+                    fromMatch[4] ? parseFloat(fromMatch[4]) : 1
+                );
+            }
+            return null;
+        }
+
+        // Convert any CSS color to hex for color picker
+        function colorToHex(cssValue) {
+            if (!cssValue) return null;
+            // Try parsing oklch first
+            const rgb = parseOklch(cssValue);
+            if (rgb) {
+                return '#' + [rgb.r, rgb.g, rgb.b].map(x => x.toString(16).padStart(2, '0')).join('');
+            }
+            // If already hex, return as-is
+            if (cssValue.startsWith('#')) return cssValue.slice(0, 7);
+            // For CSS variables or other values, try to use root's computed style
+            // without creating new DOM elements (to avoid layout thrashing)
+            try {
+                const computed = getComputedStyle(root).getPropertyValue(cssValue.replace('var(', '').replace(')', '')).trim();
+                if (computed && computed.startsWith('#')) return computed.slice(0, 7);
+                // Try parsing as oklch if computed is oklch
+                const computedRgb = parseOklch(computed);
+                if (computedRgb) {
+                    return '#' + [computedRgb.r, computedRgb.g, computedRgb.b].map(x => x.toString(16).padStart(2, '0')).join('');
+                }
+            } catch(e) {}
+            return null;
+        }
+
+        // Apply custom colors to the root element
+        function applyCustomColors() {
+            if (!colors) return;
+            const colorMap = {
+                accentColor: '--jc-accent-color',
+                background: '--jc-background',
+                borderColor: '--jc-border-color',
+                elementsBackground: '--jc-elements-background',
+                hoverBackground: '--jc-hover-background',
+                textColor: '--jc-text-color',
+                outlineColor: '--jc-outline-color',
+                sundayColor: '--jc-sunday-color',
+                dotGreen: '--jc-dot-green',
+                dotYellow: '--jc-dot-yellow',
+                dotOrange: '--jc-dot-orange',
+                dotRed: '--jc-dot-red'
+            };
+            Object.entries(colors).forEach(([key, val]) => {
+                if (colorMap[key] && val) {
+                    root.style.setProperty(colorMap[key], val);
+                }
+            });
+        }
+
+        // Apply colors on init
+        applyCustomColors();
 
         // Apply initial size class
         (function() {
@@ -958,7 +1158,7 @@ function toggleFloatingJournalCalendar()
                     months, days, weekStartsSunday, showWeekNumbers, weekNumSystem,
                     weeklyPattern, pattern, shiftDatePattern, showFooter, footerMoonPhase,
                     footerMonthCount, footerTotalCount, footerLastEntry, footerStreak,
-                    useHeatmap, showContour, calSize
+                    useHeatmap, showContour, calSize, colors: { ...(colors || {}) }
                 };
                 buildSettingsBody();
 
@@ -1016,10 +1216,17 @@ function toggleFloatingJournalCalendar()
             showContour     = draft.showContour;
             shiftDatePattern= draft.shiftDatePattern;
             calSize         = draft.calSize;
+            colors          = draft.colors || {};
             // Persist only non-lua-locked keys (calSize is never locked)
             const toSave = {};
             Object.keys(draft).forEach(k => { if (!LUA_OVERRIDES[k]) toSave[k] = draft[k]; });
+            // Handle nested colors - respect Lua override on the entire colors object
+            if (!LUA_OVERRIDES.colors) {
+                toSave.colors = draft.colors || {};
+            }
             saveSettings(toSave);
+            // Apply custom colors
+            applyCustomColors();
             flipCard(false);
             // Delay render until after the flip animation completes (520ms + buffer)
             // so the SVG contour doesn't appear through the flip transition
@@ -1152,11 +1359,164 @@ function toggleFloatingJournalCalendar()
                 body.appendChild(el);
             }
 
+            // Get default colors - avoid getComputedStyle to prevent layout thrashing during flip
+            function getDefaultColor(key) {
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                // Return hardcoded hex defaults to avoid expensive style calculations
+                const defaults = {
+                    accentColor: isDark ? '#6366f1' : '#4f46e5',
+                    background: isDark ? '#1f2937' : '#ffffff',
+                    borderColor: isDark ? '#6b7280' : '#d1d5db',
+                    elementsBackground: isDark ? '#374151' : '#f3f4f6',
+                    hoverBackground: isDark ? '#4b5563' : '#e5e7eb',
+                    textColor: isDark ? '#e5e7eb' : '#111827',
+                    outlineColor: isDark ? '#ffffff' : '#000000',
+                    sundayColor: '#dc2626',
+                    dotGreen: '#16a34a',
+                    dotYellow: isDark ? '#facc15' : '#ca8a04',
+                    dotOrange: isDark ? '#fb923c' : '#ea580c',
+                    dotRed: '#dc2626'
+                };
+                return defaults[key] || '#6366f1';
+            }
+
+            function makeColorPicker(key, label, hint) {
+                const locked = !!(LUA_OVERRIDES.colors && LUA_OVERRIDES.colors[key]);
+                const row = document.createElement('div');
+                row.className = 'jc-settings-row' + (locked ? ' jc-locked' : '');
+
+                // Get current value (draft > colors > default)
+                const currentVal = draft.colors?.[key] || colors?.[key];
+                const defaultHex = colorToHex(getDefaultColor(key));
+                const hexValue = currentVal ? colorToHex(currentVal) : defaultHex;
+
+                row.innerHTML = `
+                  <label class="jc-settings-label" title="${hint || ''}">
+                    ${label}
+                    ${locked ? '<span class="jc-lua-badge" title="Locked — set via Lua config">lua</span>' : ''}
+                  </label>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <input type="color" class="jc-settings-color" value="${hexValue || '#6366f1'}" ${locked ? 'disabled' : ''}
+                           style="width:44px;height:24px;padding:0;border:1px solid var(--jc-border-color);border-radius:4px;cursor:pointer;background:none">
+                    <button class="jc-reset-color" title="Reset to default" ${locked ? 'disabled' : ''}
+                            style="font-size:0.7em;padding:2px 6px;border:1px solid var(--jc-border-color);border-radius:4px;background:var(--jc-elements-background);color:var(--jc-text-color);cursor:pointer;opacity:${currentVal ? '1' : '0.4'}">↺</button>
+                  </div>`;
+
+                if (!locked) {
+                    const colorInput = row.querySelector('input[type="color"]');
+                    const resetBtn = row.querySelector('.jc-reset-color');
+
+                    // Update draft when color changes
+                    colorInput.oninput = (e) => {
+                        draft.colors = draft.colors || {};
+                        draft.colors[key] = e.target.value;
+                        resetBtn.style.opacity = '1';
+                        // Preview immediately
+                        const colorMap = {
+                            accentColor: '--jc-accent-color',
+                            background: '--jc-background',
+                            borderColor: '--jc-border-color',
+                            elementsBackground: '--jc-elements-background',
+                            hoverBackground: '--jc-hover-background',
+                            textColor: '--jc-text-color',
+                            outlineColor: '--jc-outline-color',
+                            sundayColor: '--jc-sunday-color',
+                            dotGreen: '--jc-dot-green',
+                            dotYellow: '--jc-dot-yellow',
+                            dotOrange: '--jc-dot-orange',
+                            dotRed: '--jc-dot-red'
+                        };
+                        if (colorMap[key]) {
+                            root.style.setProperty(colorMap[key], e.target.value);
+                        }
+                    };
+
+                    // Reset to default
+                    resetBtn.onclick = () => {
+                        draft.colors = draft.colors || {};
+                        delete draft.colors[key];
+                        const defaultVal = getDefaultColor(key);
+                        colorInput.value = colorToHex(defaultVal) || '#6366f1';
+                        resetBtn.style.opacity = '0.4';
+                        // Remove inline style to revert to CSS default
+                        const colorMap = {
+                            accentColor: '--jc-accent-color',
+                            background: '--jc-background',
+                            borderColor: '--jc-border-color',
+                            elementsBackground: '--jc-elements-background',
+                            hoverBackground: '--jc-hover-background',
+                            textColor: '--jc-text-color',
+                            outlineColor: '--jc-outline-color',
+                            sundayColor: '--jc-sunday-color',
+                            dotGreen: '--jc-dot-green',
+                            dotYellow: '--jc-dot-yellow',
+                            dotOrange: '--jc-dot-orange',
+                            dotRed: '--jc-dot-red'
+                        };
+                        if (colorMap[key]) {
+                            root.style.removeProperty(colorMap[key]);
+                        }
+                    };
+                }
+                body.appendChild(row);
+            }
+
+            function makeResetColorsButton() {
+                const locked = !!LUA_OVERRIDES.colors;
+                const row = document.createElement('div');
+                row.className = 'jc-settings-row' + (locked ? ' jc-locked' : '');
+                row.style.marginTop = '8px';
+
+                const hasCustomColors = colors && Object.keys(colors).length > 0;
+
+                row.innerHTML = `
+                  <div></div>
+                  <button class="jc-reset-all-colors" ${locked ? 'disabled' : ''}
+                          style="font-size:0.75em;padding:4px 10px;border:1px solid var(--jc-border-color);border-radius:5px;background:var(--jc-elements-background);color:var(--jc-text-color);cursor:pointer;opacity:${hasCustomColors && !locked ? '1' : '0.4'}">
+                    Reset all colors
+                  </button>`;
+
+                if (!locked) {
+                    const btn = row.querySelector('.jc-reset-all-colors');
+                    if (hasCustomColors) {
+                        btn.onclick = () => {
+                            draft.colors = {};
+                            colors = {}; // Also clear live colors so pickers show defaults
+                            // Rebuild to reset all color pickers
+                            buildSettingsBody();
+                            // Clear all custom color styles
+                            const colorProps = ['--jc-accent-color', '--jc-background', '--jc-border-color',
+                                              '--jc-elements-background', '--jc-hover-background', '--jc-text-color', '--jc-outline-color',
+                                              '--jc-sunday-color', '--jc-dot-green', '--jc-dot-yellow', '--jc-dot-orange', '--jc-dot-red'];
+                            colorProps.forEach(prop => root.style.removeProperty(prop));
+                        };
+                    }
+                }
+                body.appendChild(row);
+            }
+
             section('Appearance');
             makeSelect('calSize', 'Calendar size',
                 [ ['sm','Small'], ['md','Medium'], ['lg','Large'] ]);
             makeToggle('showContour', 'Month outline border', 'Show the SVG outline around the current month');
             makeToggle('useHeatmap',  'Heatmap mode',         'Shade cells by activity instead of dots');
+
+            // ── Colors Section ────────────────────────────────────────────────────
+            section('Colors');
+            makeColorPicker('accentColor', 'Accent color', 'Links, today highlight, toggle switches');
+            makeColorPicker('textColor', 'Text color', 'Main text color');
+            makeColorPicker('background', 'Background', 'Calendar card background');
+            makeColorPicker('borderColor', 'Border color', 'Borders and outlines');
+            makeColorPicker('elementsBackground', 'Elements background', 'Day cells and buttons');
+            makeColorPicker('hoverBackground', 'Hover background', 'Day/button hover state');
+            makeColorPicker('outlineColor', 'Month outline', 'SVG contour line color');
+            makeColorPicker('sundayColor', 'Sunday text', 'Sunday column header and day numbers');
+            section('Entry Dot Colors');
+            makeColorPicker('dotGreen', 'Dot green', '1 entry indicator');
+            makeColorPicker('dotYellow', 'Dot yellow', '2 entries indicator');
+            makeColorPicker('dotOrange', 'Dot orange', '3 entries indicator');
+            makeColorPicker('dotRed', 'Dot red', '4+ entries indicator');
+            makeResetColorsButton();
 
             section('Layout');
             makeToggle('showWeekNumbers',  'Show week numbers', '');
