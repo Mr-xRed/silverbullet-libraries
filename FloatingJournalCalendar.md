@@ -254,9 +254,9 @@ html[data-theme="light"] #sb-journal-root {
 }
 
 /* Safari fix: translateZ(1px) forces each face onto its own GPU compositor
-   layer before the flip begins. Without it, Safari creates the layers
-   mid-animation (because height also animates on the same element),
-   briefly rendering both faces and showing the front mirrored. */
+   layer before the flip begins. Without it Safari creates layers mid-animation
+   (because height also transitions on the same element), briefly rendering both
+   faces and showing the front mirrored through the back. */
 .jc-face-front {
     cursor: grab;
     transform: translateZ(1px);
@@ -1165,12 +1165,10 @@ function toggleFloatingJournalCalendar()
                 const calH = front.offsetHeight;
                 inner.style.height = calH + 'px';
 
-                // Briefly measure back face natural height
-                back.style.visibility = 'hidden';
-                back.style.minHeight  = '0';
+                // Measure back face natural height directly — back has position:absolute
+                // top:0;bottom:0 so visibility/minHeight tricks were no-ops and caused
+                // a GPU compositor flash on the front face in preserve-3d context.
                 const rawSettingsH = back.scrollHeight;
-                back.style.minHeight  = '';
-                back.style.visibility = '';
 
                 // Cap settings height to available viewport height
                 const maxAvailH = window.innerHeight - TOP_OFFSET - 20;
@@ -1225,17 +1223,19 @@ function toggleFloatingJournalCalendar()
                 toSave.colors = draft.colors || {};
             }
             saveSettings(toSave);
-            // Apply custom colors
-            applyCustomColors();
             flipCard(false);
-            // Delay render until after the flip animation completes (520ms + buffer)
-            // so the SVG contour doesn't appear through the flip transition
+            // Delay render AND color application until after the flip animation completes
+            // (520ms transition + 50ms buffer). Firing at 50ms caused the calendar side
+            // to blink because DOM mutations landed mid-animation.
+            // Colors are already live-previewed via color-picker oninput, so deferring
+            // applyCustomColors() here is safe.
             setTimeout(() => {
                 root.classList.remove('jc-size-sm', 'jc-size-lg');
                 if (calSize === 'sm') root.classList.add('jc-size-sm');
                 else if (calSize === 'lg') root.classList.add('jc-size-lg');
+                applyCustomColors();
                 render();
-            }, 50);
+            }, 570);
         }
 
         // ── Update locked field visibility ────────────────────────────────────
@@ -1495,6 +1495,149 @@ function toggleFloatingJournalCalendar()
                 body.appendChild(row);
             }
 
+            // ── Theme import / export ─────────────────────────────────────────────
+            // Export: serialize draft.colors → JSON → clipboard (+ "Copied!" flash).
+            // Import: toggle an inline paste area so clipboard-API permission is never
+            //         needed (Safari blocks it in many contexts). User pastes the JSON,
+            //         hits Apply, colors are validated and live-previewed.
+            function makeColorThemeBar() {
+                const locked = !!LUA_OVERRIDES.colors;
+
+                const VALID_KEYS = ['accentColor','background','borderColor','elementsBackground',
+                    'hoverBackground','textColor','outlineColor','sundayColor',
+                    'dotGreen','dotYellow','dotOrange','dotRed'];
+
+                const colorMap = {
+                    accentColor:'--jc-accent-color', background:'--jc-background',
+                    borderColor:'--jc-border-color', elementsBackground:'--jc-elements-background',
+                    hoverBackground:'--jc-hover-background', textColor:'--jc-text-color',
+                    outlineColor:'--jc-outline-color', sundayColor:'--jc-sunday-color',
+                    dotGreen:'--jc-dot-green', dotYellow:'--jc-dot-yellow',
+                    dotOrange:'--jc-dot-orange', dotRed:'--jc-dot-red'
+                };
+
+                const btnStyle = `font-size:0.75em;padding:4px 10px;border:1px solid var(--jc-border-color);
+                    border-radius:5px;background:var(--jc-elements-background);color:var(--jc-text-color);
+                    cursor:pointer;display:inline-flex;align-items:center;gap:4px;`;
+
+                // ── Export / Import toggle row ────────────────────────────────────
+                const exportRow = document.createElement('div');
+                exportRow.className = 'jc-settings-row';
+                exportRow.style.cssText = 'margin-top:4px;gap:6px;justify-content:flex-end;flex-wrap:wrap;';
+                exportRow.innerHTML = `
+                  <span style="font-size:0.72em;opacity:0.5;flex:1;align-self:center;">Theme</span>
+                  <button class="jc-theme-export" title="Copy theme JSON to clipboard" style="${btnStyle}">
+                    📋 Copy theme
+                  </button>
+                  <button class="jc-theme-import-toggle" title="Paste a theme JSON" style="${btnStyle}${locked?';opacity:0.4;cursor:not-allowed;':''}">
+                    📥 Paste theme
+                  </button>`;
+                body.appendChild(exportRow);
+
+                // ── Import paste area (hidden until Paste theme is clicked) ───────
+                const importWrap = document.createElement('div');
+                // Set layout properties via cssText, then set display separately.
+                // Bundling display:none into cssText alongside flex-direction can be
+                // misparsed by Safari/WebKit, leaving the area always visible on open.
+                importWrap.style.cssText = 'flex-direction:column;gap:5px;padding:4px 0 6px;';
+                importWrap.style.display = 'none';
+                importWrap.innerHTML = `
+                  <textarea class="jc-theme-paste-area jc-settings-input"
+                    rows="3" spellcheck="false" autocomplete="off"
+                    placeholder='{"accentColor":"#6366f1","background":"#1f2937", …}'
+                    style="resize:vertical;min-height:52px;font-size:0.78em;line-height:1.4;font-family:monospace;width:100%;box-sizing:border-box;"></textarea>
+                  <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
+                    <span class="jc-theme-import-msg" style="font-size:0.72em;flex:1;"></span>
+                    <button class="jc-theme-import-apply" style="${btnStyle}">Apply</button>
+                    <button class="jc-theme-import-cancel" style="${btnStyle}">Cancel</button>
+                  </div>`;
+                body.appendChild(importWrap);
+
+                // ── Export logic ─────────────────────────────────────────────────
+                const exportBtn = exportRow.querySelector('.jc-theme-export');
+                exportBtn.onclick = () => {
+                    const snapshot = {};
+                    VALID_KEYS.forEach(k => {
+                        const live = draft.colors?.[k] || colors?.[k];
+                        if (live) {
+                            snapshot[k] = live;
+                        } else {
+                            const computed = getComputedStyle(root).getPropertyValue(colorMap[k]).trim();
+                            if (computed) snapshot[k] = computed;
+                        }
+                    });
+                    const json = JSON.stringify(snapshot, null, 2);
+                    try {
+                        navigator.clipboard.writeText(json).then(() => {
+                            exportBtn.textContent = '✓ Copied!';
+                            setTimeout(() => { exportBtn.innerHTML = '📋 Copy theme'; }, 1800);
+                        });
+                    } catch(e) {
+                        // Clipboard blocked — show JSON inline so user can copy manually
+                        importWrap.style.display = 'flex';
+                        const ta = importWrap.querySelector('.jc-theme-paste-area');
+                        ta.value = json;
+                        ta.select();
+                        importWrap.querySelector('.jc-theme-import-msg').textContent = 'Clipboard blocked — select all & copy manually.';
+                    }
+                };
+
+                // ── Paste theme toggle ────────────────────────────────────────────
+                const toggleBtn = exportRow.querySelector('.jc-theme-import-toggle');
+                if (!locked) {
+                    toggleBtn.onclick = () => {
+                        const isHidden = importWrap.style.display === 'none';
+                        importWrap.style.display = isHidden ? 'flex' : 'none';
+                        if (isHidden) {
+                            importWrap.querySelector('.jc-theme-paste-area').focus();
+                            importWrap.querySelector('.jc-theme-import-msg').textContent = '';
+                        }
+                    };
+                }
+
+                // ── Import apply / cancel ─────────────────────────────────────────
+                const applyImportBtn = importWrap.querySelector('.jc-theme-import-apply');
+                const msgEl          = importWrap.querySelector('.jc-theme-import-msg');
+                const cancelBtn      = importWrap.querySelector('.jc-theme-import-cancel');
+                const pasteArea      = importWrap.querySelector('.jc-theme-paste-area');
+
+                pasteArea.addEventListener('keydown', e => e.stopPropagation());
+                pasteArea.addEventListener('keyup',   e => e.stopPropagation());
+
+                cancelBtn.onclick = () => {
+                    importWrap.style.display = 'none';
+                    pasteArea.value = '';
+                    msgEl.textContent = '';
+                };
+
+                applyImportBtn.onclick = () => {
+                    let parsed;
+                    try {
+                        parsed = JSON.parse(pasteArea.value.trim());
+                    } catch(e) {
+                        msgEl.style.color = 'oklch(0.6 0.2 30)';
+                        msgEl.textContent = '✕ Invalid JSON';
+                        return;
+                    }
+                    const accepted = {}, rejected = [];
+                    Object.entries(parsed).forEach(([k, v]) => {
+                        if (VALID_KEYS.includes(k) && typeof v === 'string') accepted[k] = v;
+                        else rejected.push(k);
+                    });
+                    if (Object.keys(accepted).length === 0) {
+                        msgEl.style.color = 'oklch(0.6 0.2 30)';
+                        msgEl.textContent = '✕ No valid color keys found';
+                        return;
+                    }
+                    draft.colors = { ...(draft.colors || {}), ...accepted };
+                    Object.entries(accepted).forEach(([k, v]) => {
+                        if (colorMap[k]) root.style.setProperty(colorMap[k], v);
+                    });
+                    // Rebuild pickers so they reflect the imported values
+                    buildSettingsBody();
+                };
+            }
+
             section('Appearance');
             makeSelect('calSize', 'Calendar size',
                 [ ['sm','Small'], ['md','Medium'], ['lg','Large'] ]);
@@ -1517,6 +1660,7 @@ function toggleFloatingJournalCalendar()
             makeColorPicker('dotOrange', 'Dot orange', '3 entries indicator');
             makeColorPicker('dotRed', 'Dot red', '4+ entries indicator');
             makeResetColorsButton();
+            makeColorThemeBar();
 
             section('Layout');
             makeToggle('showWeekNumbers',  'Show week numbers', '');
