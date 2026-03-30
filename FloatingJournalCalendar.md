@@ -2224,7 +2224,7 @@ function toggleFloatingJournalCalendar()
         }
 
         window.addEventListener("sb-journal-update", (e) => {
-            if (e.detail && e.detail.existing) { existing = e.detail.existing; }
+            if (e.detail && e.detail.existing) { existing = e.detail.existing;  render()  }
             // no render() call — dots will update on next natural render (month nav, today btn, etc.)
         });
 
@@ -2339,6 +2339,7 @@ function refreshCalendarDots()
 end
 
 event.listen { name = "editor:pageLoaded", run = function() refreshCalendarDots() end }
+--event.listen { name = "file:changed", run = function() refreshCalendarDots() end }
 
 command.define {
     name = "Journal: Floating Calendar",
