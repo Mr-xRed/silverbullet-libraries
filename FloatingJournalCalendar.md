@@ -663,6 +663,9 @@ html[data-theme="dark"] .jc-toggle-slider::before { background: oklch(0.65 0 0);
 }
 .jc-toggle input:disabled + .jc-toggle-slider { opacity: 0.3; cursor: not-allowed; }
 
+.jc-theme-paste-area{
+ margint-top:30px; 
+}
 /* Select and text input in settings */
 .jc-settings-select,
 .jc-settings-input {
@@ -1260,8 +1263,10 @@ function toggleFloatingJournalCalendar()
                 } else if (el.classList.contains('jc-locked')) {
                     el.style.display = showLocked ? 'flex' : 'none';
                 } else {
-                    el.style.display = '';
+                    if (el.style.display !== 'none') el.style.display = '';
                     sectionHasUnlocked = true;
+                    //el.style.display = '';
+                    //sectionHasUnlocked = true;
                 }
             });
             // Resolve the final section
@@ -1539,7 +1544,9 @@ function toggleFloatingJournalCalendar()
                 // Set layout properties via cssText, then set display separately.
                 // Bundling display:none into cssText alongside flex-direction can be
                 // misparsed by Safari/WebKit, leaving the area always visible on open.
-                importWrap.style.cssText = 'flex-direction:column;gap:5px;padding:4px 0 6px;';
+                //importWrap.style.cssText = 'flex-direction:column;gap:5px;padding:4px 0 6px;';
+                //importWrap.style.display = 'none';
+                importWrap.style.cssText = 'gap:5px;padding:10px 0 6px;';
                 importWrap.style.display = 'none';
                 importWrap.innerHTML = `
                   <textarea class="jc-theme-paste-area jc-settings-input"
@@ -1574,7 +1581,8 @@ function toggleFloatingJournalCalendar()
                         });
                     } catch(e) {
                         // Clipboard blocked — show JSON inline so user can copy manually
-                        importWrap.style.display = 'flex';
+                        //importWrap.style.display = 'flex';
+                        importWrap.style.display = 'block';
                         const ta = importWrap.querySelector('.jc-theme-paste-area');
                         ta.value = json;
                         ta.select();
@@ -1587,7 +1595,8 @@ function toggleFloatingJournalCalendar()
                 if (!locked) {
                     toggleBtn.onclick = () => {
                         const isHidden = importWrap.style.display === 'none';
-                        importWrap.style.display = isHidden ? 'flex' : 'none';
+                        //importWrap.style.display = isHidden ? 'flex' : 'none';
+                        importWrap.style.display = isHidden ? 'block' : 'none';
                         if (isHidden) {
                             importWrap.querySelector('.jc-theme-paste-area').focus();
                             importWrap.querySelector('.jc-theme-import-msg').textContent = '';
@@ -2149,7 +2158,8 @@ function toggleFloatingJournalCalendar()
                         el.classList.add("today");
 
                     const basePath = formatDatePattern(dateObj, pattern);
-
+                    el.dataset.path = basePath;  // ← ADD THIS
+  
                     const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
                     if (matchCount > 0) {
                         if (useHeatmap) {
@@ -2224,8 +2234,50 @@ function toggleFloatingJournalCalendar()
         }
 
         window.addEventListener("sb-journal-update", (e) => {
-            if (e.detail && e.detail.existing) { existing = e.detail.existing;  render()  }
-            // no render() call — dots will update on next natural render (month nav, today btn, etc.)
+            if (!e.detail || !e.detail.existing) return;
+            existing = e.detail.existing;
+            const pageNames = Object.keys(existing);
+        
+            document.querySelectorAll(".jc-day[data-path]").forEach(el => {
+                const basePath   = el.dataset.path;
+                const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
+        
+                // Clear old dot state
+                const oldDots = el.querySelector(".jc-dots-container");
+                if (oldDots) oldDots.remove();
+                el.classList.remove("jc-heatmap");
+                el.style.removeProperty("--jc-heat-opacity");
+        
+                if (matchCount > 0) {
+                    if (useHeatmap) {
+                        el.classList.add("jc-heatmap");
+                        const opacity = Math.min(0.13 + (matchCount - 1) * 0.1, 0.6);
+                        el.style.setProperty("--jc-heat-opacity", opacity);
+                    } else {
+                        const dotsContainer = document.createElement("div");
+                        dotsContainer.className = "jc-dots-container";
+                        const numReds   = Math.floor(matchCount / 4);
+                        const remainder = matchCount % 4;
+                        for (let r = 0; r < numReds; r++) {
+                            const dot = document.createElement("div");
+                            dot.className = "jc-dot red";
+                            dotsContainer.appendChild(dot);
+                        }
+                        if (remainder > 0) {
+                            const dot = document.createElement("div");
+                            let colorClass = "green";
+                            if (remainder === 2) colorClass = "yellow";
+                            if (remainder === 3) colorClass = "orange";
+                            dot.className = "jc-dot " + colorClass;
+                            dotsContainer.appendChild(dot);
+                        }
+                        // Insert before the day number span
+                        const span = el.querySelector("span");
+                        el.insertBefore(dotsContainer, span);
+                    }
+                }
+            });
+            updateFooter();
         });
 
         window.addEventListener("resize", clamp);
@@ -2339,7 +2391,7 @@ function refreshCalendarDots()
 end
 
 event.listen { name = "editor:pageLoaded", run = function() refreshCalendarDots() end }
---event.listen { name = "file:changed", run = function() refreshCalendarDots() end }
+--event.listen { name = "file:changed", run = function(e) if not e.oldHash then refreshCalendarDots() end end }
 
 command.define {
     name = "Journal: Floating Calendar",
