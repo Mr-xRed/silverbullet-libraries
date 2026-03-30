@@ -9,7 +9,7 @@ pageDecoration.prefix: "🛠️ "
 A calendar date picker invoked with `/datepicker`. Inserts the selected date as a `[[WikiLink]]` at the cursor.
 
 
-![DatePicker](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DatePicker.png)
+![DatePicker|1000](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DatePicker.png)
 
 ## Features
 
@@ -37,7 +37,7 @@ A calendar date picker invoked with `/datepicker`. Inserts the selected date as 
 |`Enter`                |Confirm and insert the focused date               |
 |`Escape`               |Close picker *(or cancel settings without saving)*|
 
-Keyboard navigation activates on the first arrow-key press.  
+Keyboard navigation is active from the moment the picker opens — today's date is pre-focused.  
 The focused day is highlighted with a coloured outline.
 
 -----
@@ -49,7 +49,7 @@ Click the **⚙** gear button (bottom-right of the calendar) to flip the card to
 |Control                |Description                                                                                  |
 |-----------------------|---------------------------------------------------------------------------------------------|
 |**Date Format** input  |Free-text field; use any combination of literal characters and placeholders                  |
-|**↺ Reset** button     |Resets the format field to the default (`[[%YYYY%-%MM%-%DD%]]`)                                  |
+|**↺ Reset** button     |Resets the format field to the _default_ `[[%YYYY%-%MM%-%DD%]]`                                  |
 |**Placeholder list**   |Click any token to insert it at the current cursor position in the format field              |
 |**Live preview**       |Shows how today’s date looks with the current format string                                  |
 |**Month names** input  |Comma-separated list of 12 full month names (January → December)                             |
@@ -95,9 +95,7 @@ All placeholders use the pattern `%TOKEN%`.
 |`%A%`      |AM / PM                         |`PM`   |
 |`%a%`      |am / pm                         |`pm`   |
 
-
-> **Ordinal usage:** `%D%%Ord%` → `5th`  or  `%DD%%Ord%` → `05th`  
-> **Order matters for overlapping tokens.** Longer tokens are resolved first (`%MMMM%` before `%MM%`, `%YYYY%` before `%YY%`).
+**Ordinal usage:** `%D%%Ord%` → `5th`  or  `%DD%%Ord%` → `05th`  
 
 -----
 
@@ -254,6 +252,9 @@ function openDatePicker()
     background: rgba(43,127,255,0.18);
   }
   .dp-cell.focused.sunday { color: #ff6060; }
+  .dp-cell.today.focused {
+    background: var(--ui-accent-color, #2b7fff); color: #fff !important;
+  }
   .dp-cell.focused:hover, .dp-cell.focused:focus {
     background: var(--ui-accent-color, #2b7fff); color: #fff !important;
   }
@@ -496,7 +497,7 @@ function openDatePicker()
   let viewDate   = new Date();
   const today    = new Date();
   let focusDate  = new Date();
-  let kbMode     = false;
+  let kbMode     = true;
   let isFlipped  = false;
   let currentFmt = localStorage.getItem("sb-dp-format") || DEFAULT_FMT;
 
@@ -726,7 +727,7 @@ function openDatePicker()
   document.getElementById("dp-today").addEventListener("click", e => {
     e.stopPropagation();
     viewDate  = new Date(today.getFullYear(), today.getMonth(), 1);
-    focusDate = new Date(); kbMode = false; render();
+    focusDate = new Date(); kbMode = true; render();
   });
   document.getElementById("dp-gear").addEventListener("click", e => {
     e.stopPropagation(); flipToSettings();
