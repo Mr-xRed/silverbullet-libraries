@@ -1224,11 +1224,10 @@ function toggleFloatingJournalCalendar()
             }
             saveSettings(toSave);
             flipCard(false);
-            // Delay render AND color application until after the flip animation completes
-            // (520ms transition + 50ms buffer). Firing at 50ms caused the calendar side
-            // to blink because DOM mutations landed mid-animation.
-            // Colors are already live-previewed via color-picker oninput, so deferring
-            // applyCustomColors() here is safe.
+            // A short delay lets the flip-back animation start before the DOM is mutated.
+            // Colors are already live-previewed via color-picker oninput.
+            // The contour SVG was removed before the flip (FIX 4), so drawContour will
+            // do a clean first-draw with its fade-in once render() runs.
             setTimeout(() => {
                 root.classList.remove('jc-size-sm', 'jc-size-lg');
                 if (calSize === 'sm') root.classList.add('jc-size-sm');
@@ -1946,9 +1945,11 @@ function toggleFloatingJournalCalendar()
         function drawContour(startCol, totalDays) {
             const grid = document.getElementById("jc-days");
             if (!grid) return;
-            const old = document.getElementById("jc-contour-svg");
-            if (old) old.remove();
-            if (totalDays === 0) return;
+            if (totalDays === 0) {
+                const old = document.getElementById("jc-contour-svg");
+                if (old) old.remove();
+                return;
+            }
 
             // We need two different cells:
             //   col0Cell  — the very first .jc-day in the grid (always in column 0,
@@ -2014,8 +2015,27 @@ function toggleFloatingJournalCalendar()
                 ];
             }
 
+            const radius = (calSize === 'sm') ? 3.5 : 5;
+            const newD  = roundedPath(pts, radius);
             const gridW = grid.offsetWidth;
             const svgH  = yb(endRow) + 8;
+
+            // If the SVG already exists, update it in-place — no remove/recreate,
+            // no opacity flash. This prevents the blink on dot-refresh after navigation.
+            const existingSvg = document.getElementById("jc-contour-svg");
+            if (existingSvg) {
+                existingSvg.setAttribute("width",  gridW);
+                existingSvg.setAttribute("height", svgH);
+                const existingPath = existingSvg.querySelector("path");
+                if (existingPath) {
+                    existingPath.setAttribute("d", newD);
+                    return;
+                }
+                // Fallback: path element missing, remove and fall through to recreate
+                existingSvg.remove();
+            }
+
+            // First draw (or after explicit removal during flip): create with fade-in
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.id = "jc-contour-svg";
             svg.setAttribute("width",  gridW);
@@ -2024,8 +2044,7 @@ function toggleFloatingJournalCalendar()
             svg.style.cssText = "position:absolute;top:0;left:0;pointer-events:none;overflow:visible;z-index:1;opacity:0;transition:opacity 0.35s ease;";
 
             const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            const radius = (calSize === 'sm') ? 3.5 : 5;
-            pathEl.setAttribute("d", roundedPath(pts, radius));
+            pathEl.setAttribute("d", newD);
             pathEl.setAttribute("fill",            "none");
             pathEl.setAttribute("stroke",          "var(--jc-outline-color)");
             pathEl.setAttribute("stroke-width",    "1.5");
