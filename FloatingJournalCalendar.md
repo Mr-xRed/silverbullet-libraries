@@ -2224,7 +2224,8 @@ function toggleFloatingJournalCalendar()
         }
 
         window.addEventListener("sb-journal-update", (e) => {
-            if (e.detail && e.detail.existing) { existing = e.detail.existing; render(); }
+            if (e.detail && e.detail.existing) { existing = e.detail.existing; }
+            // no render() call — dots will update on next natural render (month nav, today btn, etc.)
         });
 
         window.addEventListener("resize", clamp);
