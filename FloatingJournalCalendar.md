@@ -1735,9 +1735,10 @@ function toggleFloatingJournalCalendar()
         function pad2(n) { return String(n).padStart(2, "0"); }
 
         function formatDatePattern(dateObj, pat) {
-            const isSun  = weekStartsSunday;
             const rawDay = dateObj.getDay();                          // 0=Sun … 6=Sat
-            const dIdx   = isSun ? rawDay : (rawDay === 0 ? 6 : rawDay - 1);
+            // days[] is always Mon-first: [Mon,Tue,Wed,Thu,Fri,Sat,Sun]
+            // weekStartsSunday only affects column display order, not name lookup.
+            const dIdx   = rawDay === 0 ? 6 : rawDay - 1;
             const dName  = days[dIdx] || WEEKDAY_FULL[rawDay].slice(0, 3);
 
             const Y   = dateObj.getFullYear();
