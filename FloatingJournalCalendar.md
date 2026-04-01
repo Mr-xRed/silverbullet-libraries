@@ -759,6 +759,7 @@ html[data-theme="dark"] .jc-toggle-slider::before { background: oklch(0.65 0 0);
 }
 .jc-drawer-body.open {
     min-height: 200px;
+    height: 220px;
     max-height: 600px;
     border: 1px solid var(--jc-border-color);
     border-top: none;
@@ -767,8 +768,8 @@ html[data-theme="dark"] .jc-toggle-slider::before { background: oklch(0.65 0 0);
 }
 
 .jc-drawer-scroll {
-    height: 100%;
-    overflow-y: auto;
+    height: calc(100% - 6px);
+    overflow-y: scroll;
     overflow-x: hidden;
     padding: 0.6em 0.85em 0.85em;
     font-size: 0.9em;
