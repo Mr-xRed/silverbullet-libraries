@@ -3,6 +3,7 @@ name: "Library/Mr-xRed/FloatingJournalCalendar"
 tags: meta/library
 pageDecoration.prefix: "🗓️ "
 ---
+
 # Floating Journal Calendar & Page Navigation
 
 The **Floating Journal Calendar** is a lightweight, interactive navigation tool for SilverBullet. It provides a sleek, floating interface that allows users to quickly browse their journal entries. By scanning existing pages against a customizable date pattern, it visually identifies days with active entries, enabling seamless one-click navigation through personal history.
@@ -18,6 +19,7 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 - **Drag&Drop**: Drag the day to add the Journal WikiLink to the page
 - **Shift+Click**: Hold `Shift` and click a day to insert a formatted plain-text date string at the cursor — format is fully customizable via `shiftDatePattern`
 - **Cmd/Ctrl+Shift+Click**: Hold `Cmd/Ctrl+Shift` and click a day to insert a WikiLink with the formatted date as alias — e.g. `[[Journal/2026/03/2026-03-28|March 28th, 2026]]`
+- **Alt/Option+Click**: Hold `Alt/Option` and click a day to open a **Quick Preview** drawer showing the journal entry inline
 - **Smart Date Logic:** Highlights "Today"
 
 ### **✨ Enhanced User Interface**
@@ -28,6 +30,7 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 - **Quick Jump:** Includes a "Today & Refresh" button `↺` to instantly return to the current month and year from anywhere in the calendar and refresh the dot's
 - **Overflow Days:** First and last days of adjacent months shown subtly in partial weeks.
 - **Week Numbers:** Optional week number column — click a week number to open your weekly note.
+- **Quick Preview Drawer:** A sliding drawer below the calendar that shows a rendered preview of any journal entry on Alt/Option+Click.
 - Added `Cmd/Ctrl + Click` to convert the selected text to a piped WikiLink
   e.g: `[[Journal/2024/05/2024-05-20_Mon|Selected Text]]`
 - Added `Shift + Click` to insert a plain-text formatted date string at the cursor position
@@ -62,6 +65,7 @@ config.set("FloatingJournalCalendar", {
   footerLastEntry = true,     -- how many days since the last entry
   footerStreak = true,        -- 🔥 consecutive-day journaling streak
   shiftDatePattern = '#year#-#month#-#day#',  -- plain-text date for Shift+Click
+  quickPreviewOnHover = false,  -- hover a day 400ms to preview; move to drawer to scroll
   -- Optional: Custom colors (hex format recommended)
   -- colors = {
   --   accentColor = "#6366f1",        -- Links, today highlight, toggle switches
@@ -85,9 +89,9 @@ config.set("FloatingJournalCalendar", {
 > 
 > **Week numbering systems:**
 > 
->   - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
->   - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
->   - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
+> - `"iso"` — ISO 8601: week starts Monday, Week 1 = first week containing a Thursday. Week-year may differ from calendar year for days near Jan 1.
+> - `"us"` — North American: week starts Sunday, Week 1 = week containing Jan 1. Week-year always equals calendar year.
+> - `"simple"` — Plain count: Week 1 = Jan 1–7, Week 2 = Jan 8–14, etc. Week-year always equals calendar year.
 
 ## Shift+Click — Date Pattern Variables
 
@@ -95,63 +99,64 @@ All three pattern strings — `journalPathPattern`, `weeklyNotesPathPattern`, an
 
 ### Interaction Overview
 
-| Modifier | Action | Result |
-|---|---|---|
-| *(none)* | Click | Navigate to journal page |
-| `Drag` | Drag to editor | Insert `[[WikiLink]]` |
-| `Cmd/Ctrl` | Click | Insert `[[WikiLink]]` (or `[[WikiLink|Selection]]` if text selected) |
-| `Shift` | Click | Insert plain-text date from `shiftDatePattern` |
-| `Cmd/Ctrl + Shift` | Click | Insert `[[WikiLink\|Formatted Date]]` alias |
+|Modifier          |Action        |Result                                        |
+|------------------|--------------|----------------------------------------------|
+|*(none)*          |Click         |Navigate to journal page                      |
+|`Drag`            |Drag to editor|Insert `[[WikiLink]]`                         |
+|`Cmd/Ctrl`        |Click         |Insert `[[WikiLink]]` (or `[[WikiLink         |
+|`Shift`           |Click         |Insert plain-text date from `shiftDatePattern`|
+|`Cmd/Ctrl + Shift`|Click         |Insert `[[WikiLink|Formatted Date]]` alias    |
+|`Alt/Option`      |Click         |Open Quick Preview drawer for that date       |
 
 ### Date Pattern Placeholders
 
-| Placeholder | Description | Example |
-|---|---|---|
-| `#year#` | 4-digit year | `2026` |
-| `#YY#` | 2-digit year | `26` |
-| `#month#` | 2-digit month | `03` |
-| `#M#` | Month without leading zero | `3` |
-| `#day#` | 2-digit day | `08` |
-| `#D#` | Day without leading zero | `8` |
-| `#monthname#` | Full month name (localized) | `March` |
-| `#monthshort#` | Short month name (first 3 chars) | `Mar` |
-| `#weekday#` | Short weekday (localized) | `Sat` |
-| `#weekdayfull#` | Full weekday name (English) | `Saturday` |
-| `#ordinal#` | Day ordinal suffix | `st` · `nd` · `rd` · `th` |
-| `#HH#` | Hours (24 h, 2-digit) | `14` |
-| `#hh#` | Hours (12 h, 2-digit) | `02` |
-| `#mm#` | Minutes (2-digit) | `38` |
-| `#ss#` | Seconds (2-digit) | `07` |
-| `#weeknum#` | Week number (2-digit, zero-padded) | `03` |
-| `#weeknumraw#` | Week number (no padding) | `3` |
-| `#weekyear#` | Week-year (ISO/US/simple aware) | `2026` |
-| `#wildcard#` | Empty string (path prefix matching) | `` |
+|Placeholder    |Description                        |Example                  |
+|---------------|-----------------------------------|-------------------------|
+|`#year#`       |4-digit year                       |`2026`                   |
+|`#YY#`         |2-digit year                       |`26`                     |
+|`#month#`      |2-digit month                      |`03`                     |
+|`#M#`          |Month without leading zero         |`3`                      |
+|`#day#`        |2-digit day                        |`08`                     |
+|`#D#`          |Day without leading zero           |`8`                      |
+|`#monthname#`  |Full month name (localized)        |`March`                  |
+|`#monthshort#` |Short month name (first 3 chars)   |`Mar`                    |
+|`#weekday#`    |Short weekday (localized)          |`Sat`                    |
+|`#weekdayfull#`|Full weekday name (English)        |`Saturday`               |
+|`#ordinal#`    |Day ordinal suffix                 |`st` · `nd` · `rd` · `th`|
+|`#HH#`         |Hours (24 h, 2-digit)              |`14`                     |
+|`#hh#`         |Hours (12 h, 2-digit)              |`02`                     |
+|`#mm#`         |Minutes (2-digit)                  |`38`                     |
+|`#ss#`         |Seconds (2-digit)                  |`07`                     |
+|`#weeknum#`    |Week number (2-digit, zero-padded) |`03`                     |
+|`#weeknumraw#` |Week number (no padding)           |`3`                      |
+|`#weekyear#`   |Week-year (ISO/US/simple aware)    |`2026`                   |
+|`#wildcard#`   |Empty string (path prefix matching)|``                       |
 
 ### Shift+Click — `shiftDatePattern` Examples
 
-| Pattern | Result |
-|---|---|
-| `#year#-#month#-#day#` | `2026-03-28` |
-| `#monthname# #D##ordinal#` | `March 28th` |
-| `#weekdayfull# (#monthname# #D##ordinal#, #year#)` | `Saturday (March 28th, 2026)` |
-| `#year#-#month#-#day# #HH#:#mm#:#ss#` | `2026-03-28 14:38:07` |
-| `#D#. #monthname# #year#` | `28. March 2026` |
-| `#weekday#, #D#/#month#/#YY#` | `Sat, 28/03/26` |
+|Pattern                                           |Result                       |
+|--------------------------------------------------|-----------------------------|
+|`#year#-#month#-#day#`                            |`2026-03-28`                 |
+|`#monthname# #D##ordinal#`                        |`March 28th`                 |
+|`#weekdayfull# (#monthname# #D##ordinal#, #year#)`|`Saturday (March 28th, 2026)`|
+|`#year#-#month#-#day# #HH#:#mm#:#ss#`             |`2026-03-28 14:38:07`        |
+|`#D#. #monthname# #year#`                         |`28. March 2026`             |
+|`#weekday#, #D#/#month#/#YY#`                     |`Sat, 28/03/26`              |
 
 ### Journal Path — `journalPathPattern` Examples
 
-| Pattern | Result |
-|---|---|
-| `Journal/#year#/#month#/#year#-#month#-#day#_#weekday#` | `Journal/2026/03/2026-03-28_Sat` |
-| `Journal/#year#/#monthname#/#D##ordinal#` | `Journal/2026/March/28th` |
-| `Diary/#year#-W#weeknum#/#weekday#` | `Diary/2026-W13/Sat` |
+|Pattern                                                |Result                          |
+|-------------------------------------------------------|--------------------------------|
+|`Journal/#year#/#month#/#year#-#month#-#day#_#weekday#`|`Journal/2026/03/2026-03-28_Sat`|
+|`Journal/#year#/#monthname#/#D##ordinal#`              |`Journal/2026/March/28th`       |
+|`Diary/#year#-W#weeknum#/#weekday#`                    |`Diary/2026-W13/Sat`            |
 
 ### Weekly Notes — `weeklyNotesPathPattern` Examples
 
-| Pattern | Result |
-|---|---|
-| `Journal/Weekly/#weekyear#-W#weeknum#` | `Journal/Weekly/2026-W13` |
-| `Journal/Weekly/#year#/#monthname# W#weeknumraw#` | `Journal/Weekly/2026/March W3` |
+|Pattern                                          |Result                        |
+|-------------------------------------------------|------------------------------|
+|`Journal/Weekly/#weekyear#-W#weeknum#`           |`Journal/Weekly/2026-W13`     |
+|`Journal/Weekly/#year#/#monthname# W#weeknumraw#`|`Journal/Weekly/2026/March W3`|
 
 ## Floating Journal Calendar Intergation
 
@@ -168,6 +173,8 @@ body.sb-dragging-active { user-select: none !important; -webkit-user-select: non
     touch-action: none;
     transform-origin: 92% 8%;
     will-change: transform, opacity;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ── Size variants ─────────────────────────────────────────────────────── */
@@ -689,6 +696,114 @@ html[data-theme="dark"] .jc-toggle-slider::before { background: oklch(0.65 0 0);
 }
 .jc-settings-input:disabled,
 .jc-settings-select:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+/* ── Quick Preview Drawer ─────────────────────────────────────────────── */
+.jc-preview-wrap {
+    margin-top: 5px;
+    background: var(--jc-background);
+    box-shadow: 0px 0px 12px 0 oklch(0 0 0 / 0.4);
+    z-index: 1;
+    border-radius: 8px;
+}
+
+/* ── Closed: zero height, zero border — completely invisible ──────────── */
+.jc-drawer-handle {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    box-sizing: border-box;
+    height: 0;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    border: none;
+    padding: 0;
+    transition: height 0.36s cubic-bezier(0.4, 0, 0.2, 1),
+                padding 0.2s ease,
+                background 0.2s ease;
+}
+
+/* ── Open: solid title header, click anywhere to close ───────────────── */
+.jc-drawer-handle.open {
+    height: 26px;
+    padding: 0 0.6em;
+    background: var(--jc-background);
+    border: 1px solid var(--jc-border-color);
+   /* border-bottom: none; */
+
+   /* box-shadow: 0px 2px 8px 0 oklch(0 0 0 / 0.35);*/
+}
+.jc-drawer-handle.open:hover { background: var(--jc-hover-background); }
+
+.jc-drawer-title {
+    font-size: 0.68em;
+    font-weight: 600;
+    color: var(--jc-text-color);
+    opacity: 0.75;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.jc-drawer-body {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--jc-background);
+    border: none;
+    border-radius: 0 0 8px 8px;
+}
+.jc-drawer-body.open {
+    max-height: 260px;
+    border: 1px solid var(--jc-border-color);
+    border-top: none;
+  /*  box-shadow: 0px 4px 12px 0 oklch(0 0 0 / 0.4); */
+}
+
+.jc-drawer-scroll {
+    height: 260px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0.6em 0.85em 0.85em;
+    font-size: 0.7em;
+    line-height: 1.6;
+    color: var(--jc-text-color);
+    pointer-events: none;
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.5 0 0 / 0.28) transparent;
+    box-sizing: border-box;
+}
+.jc-drawer-body.open .jc-drawer-scroll { pointer-events: auto; }
+.jc-drawer-scroll::-webkit-scrollbar { width: 4px; }
+.jc-drawer-scroll::-webkit-scrollbar-thumb { background: oklch(0.5 0 0 / 0.28); border-radius: 2px; }
+
+/* Preview content styles */
+.jc-preview-empty, .jc-preview-loading {
+    text-align: center;
+    opacity: 0.42;
+    font-style: italic;
+    margin-top: 2em;
+}
+.jc-preview-content h1 { font-size: 1.12em; font-weight: 700; margin: 0.5em 0 0.2em; }
+.jc-preview-content h2 { font-size: 1.02em; font-weight: 700; margin: 0.4em 0 0.15em; }
+.jc-preview-content h3 { font-size: 0.95em; font-weight: 600; margin: 0.35em 0 0.12em; }
+.jc-preview-content p  { margin: 0.22em 0; }
+.jc-preview-content hr { border: none; border-top: 1px solid var(--jc-border-color); margin: 0.45em 0; opacity: 0.4; }
+.jc-preview-content code { background: var(--jc-elements-background); border-radius: 3px; padding: 0 3px; font-family: monospace; font-size: 0.94em; }
+.jc-preview-content pre  { background: var(--jc-elements-background); border-radius: 5px; padding: 0.35em 0.55em; overflow-x: auto; margin: 0.3em 0; }
+.jc-preview-content pre code { background: none; padding: 0; }
+.jc-wikilink { color: var(--jc-accent-color); }
+.jc-tag { color: var(--jc-accent-color); opacity: 0.75; }
+.jc-li { margin: 0.12em 0; padding-left: 0.4em; }
+.jc-task { display: flex; gap: 0.4em; align-items: baseline; margin: 0.15em 0; }
+.jc-task.done { opacity: 0.52; text-decoration: line-through; }
+.jc-task-icon { flex-shrink: 0; color: var(--jc-accent-color); }
+.jc-bq { border-left: 2px solid var(--jc-border-color); padding-left: 0.6em; margin: 0.22em 0; opacity: 0.72; font-style: italic; }
+.jc-br { height: 0.32em; }
 ```
 
 ```space-lua
@@ -712,6 +827,7 @@ config.define("FloatingJournalCalendar", {
     useHeatmap             = schema.boolean(),
     showContour            = schema.boolean(),
     shiftDatePattern       = schema.string(),
+    quickPreviewOnHover    = schema.boolean(),
     colors                 = {
       type = "object",
       properties = {
@@ -738,6 +854,18 @@ local function quote_list(t)
         quoted[i] = '"' .. v .. '"'
     end
     return "[" .. table.concat(quoted, ", ") .. "]"
+end
+
+-- JSON-escape a Lua string for embedding in a JSON string value
+local function json_escape(s)
+    s = s:gsub('\\', '\\\\')
+    s = s:gsub('"', '\\"')
+    s = s:gsub('\n', '\\n')
+    s = s:gsub('\r', '\\r')
+    s = s:gsub('\t', '\\t')
+    s = s:gsub('\f', '\\f')
+    s = s:gsub('\b', '\\b')
+    return s
 end
 
 function toggleFloatingJournalCalendar()
@@ -778,6 +906,8 @@ function toggleFloatingJournalCalendar()
     if show_contour == nil then show_contour = true end
     local shift_date_pattern   = cfg.shiftDatePattern or '#year#-#month#-#day#'
     local colors               = cfg.colors or {}
+    local quick_preview_hover  = cfg.quickPreviewOnHover
+    if quick_preview_hover == nil then quick_preview_hover = false end
 
     -- FIX 1: Use the correct JS-side keys "months" and "days" (not "monthNames"/"dayNames")
     -- so that LUA_OVERRIDES matches what buildSettingsBody() checks.
@@ -800,6 +930,7 @@ function toggleFloatingJournalCalendar()
     mark("showContour",       cfg.showContour)
     mark("shiftDatePattern",  cfg.shiftDatePattern)
     mark("colors",            cfg.colors)
+    mark("quickPreviewOnHover", cfg.quickPreviewOnHover)
     local lua_overrides_json = "{" .. table.concat(lua_override_parts, ",") .. "}"
 
     local all_pages = space.listPages()
@@ -854,6 +985,25 @@ function toggleFloatingJournalCalendar()
             elseif e.detail.action == "save_pos" then
                 clientStore.set("jc_pos_top",  e.detail.top)
                 clientStore.set("jc_pos_left", e.detail.left)
+            elseif e.detail.action == "preview" then
+                -- Find the page matching the path prefix and read its content
+                local path = e.detail.path
+                local content = ""
+                local found_name = path
+                local current_pages = space.listPages()
+                for _, p in ipairs(current_pages) do
+                    if p.name:find(path, 1, true) == 1 then
+                        found_name = p.name
+                        local ok, text = pcall(space.readPage, p.name)
+                        if ok and text then content = text end
+                        break
+                    end
+                end
+                -- Use the last segment of the page name as title
+                local title = found_name:match("[^/]+$") or found_name
+                -- Build JSON safely with escaped strings
+                local ev_json = '{"content":"' .. json_escape(content) .. '","title":"' .. json_escape(title) .. '"}'
+                js.window.dispatchEvent(js.window.eval([[ (s) => new CustomEvent("sb-journal-preview-content", { detail: JSON.parse(s) }) ]])(ev_json))
             end
         end
     end)
@@ -905,6 +1055,16 @@ function toggleFloatingJournalCalendar()
             </div>
         </div>
     </div>
+    <div class="jc-preview-wrap" id="jc-preview-wrap">
+        <div class="jc-drawer-handle" id="jc-drawer-handle">
+            <span class="jc-drawer-title" id="jc-drawer-title"></span>
+        </div>
+        <div class="jc-drawer-body" id="jc-drawer-body">
+            <div class="jc-drawer-scroll" id="jc-drawer-scroll">
+                <div class="jc-preview-empty">Alt + Click a date to preview</div>
+            </div>
+        </div>
+    </div>
     ]]
 
     js.window.document.body.appendChild(container)
@@ -930,6 +1090,7 @@ function toggleFloatingJournalCalendar()
         let   existing         = ]]..existing_pages_json..[[;
         let   pattern          = "]]..path_pattern..[[";
         let   shiftDatePattern = "]]..shift_date_pattern..[[";
+        let   quickPreviewOnHover = ]]..tostring(quick_preview_hover)..[[;
         let   calSize          = 'md';
         let   colors           = ]]..(function()
             if not colors or next(colors) == nil then return "{}" end
@@ -964,6 +1125,7 @@ function toggleFloatingJournalCalendar()
                 a('useHeatmap',      v => useHeatmap      = v);
                 a('showContour',     v => showContour     = v);
                 a('shiftDatePattern',v => shiftDatePattern= v);
+                a('quickPreviewOnHover', v => quickPreviewOnHover = v);
                 // calSize is a pure client setting, never locked by Lua
                 a('calSize',         v => calSize         = v);
                 // Load colors from localStorage, respecting Lua overrides
@@ -1020,15 +1182,10 @@ function toggleFloatingJournalCalendar()
                 }
                 return signC * (1.055 * Math.pow(absC, 1/2.4) - 0.055);
             }
-
-            let r = gamma(rLin);
-            let g = gamma(gLin);
-            let b_ = gamma(bLin);
-
             return {
-                r: Math.round(Math.max(0, Math.min(255, r * 255))),
-                g: Math.round(Math.max(0, Math.min(255, g * 255))),
-                b: Math.round(Math.max(0, Math.min(255, b_ * 255))),
+                r: Math.round(Math.max(0, Math.min(255, gamma(rLin) * 255))),
+                g: Math.round(Math.max(0, Math.min(255, gamma(gLin) * 255))),
+                b: Math.round(Math.max(0, Math.min(255, gamma(bLin) * 255))),
                 a: alpha
             };
         }
@@ -1131,6 +1288,12 @@ function toggleFloatingJournalCalendar()
         // Track modifier keys for cursor feedback and click behaviour.
         // NOTE: We do NOT use isShiftDown for drag — Shift+Drag is unreliable on Mac/Safari.
         //       Shift is handled via Shift+Click instead (see el.onclick below).
+        // ── Drawer / Quick Preview state ──────────────────────────────────────
+        let drawerOpen  = false;
+        let overDrawer  = false;   // true while mouse is inside the drawer scroll area
+        let _hoverTimer = null;
+
+        // Track Ctrl/Shift for cursor feedback (Alt removed — no longer used for hover)
         window.addEventListener("keydown", (e) => {
             if (e.ctrlKey || e.metaKey) root.classList.add("ctrl-active");
             if (e.shiftKey)             root.classList.add("shift-active");
@@ -1139,6 +1302,171 @@ function toggleFloatingJournalCalendar()
             if (!e.ctrlKey && !e.metaKey) root.classList.remove("ctrl-active");
             if (!e.shiftKey)              root.classList.remove("shift-active");
         });
+
+        // ── Drawer helpers ────────────────────────────────────────────────────
+        function openDrawer(title) {
+            drawerOpen = true;
+            const handle  = document.getElementById('jc-drawer-handle');
+            const body    = document.getElementById('jc-drawer-body');
+            const titleEl = document.getElementById('jc-drawer-title');
+            if (handle)  handle.classList.add('open');
+            if (body)    body.classList.add('open');
+            if (titleEl && title) titleEl.textContent = title;
+        }
+
+        function closeDrawer() {
+            if (!drawerOpen) return;
+            drawerOpen = false;
+            const handle  = document.getElementById('jc-drawer-handle');
+            const body    = document.getElementById('jc-drawer-body');
+            const titleEl = document.getElementById('jc-drawer-title');
+            if (handle)  handle.classList.remove('open');
+            if (body)    body.classList.remove('open');
+            if (titleEl) titleEl.textContent = '';
+        }
+
+        // Note: drawer only opens via Alt+Click on a day cell; the handle is close-only
+
+        // ── Markdown preview renderer ─────────────────────────────────────────
+        function escHtml(s) {
+            return String(s)
+                .replace(/&/g,'&amp;')
+                .replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;');
+        }
+
+        function processInline(text) {
+            return escHtml(text)
+                // WikiLinks with alias
+                .replace(/\[\[([^\]|]+)\|([^\]].."]]"..[[+)\]\]/g, '<span class="jc-wikilink">$2</span>')
+                // Plain WikiLinks
+                .replace(/\[\[([^\]].."]]"..[[+)\]\]/g, '<span class="jc-wikilink">$1</span>')
+                // Bold + italic
+                .replace(/\*{3}(.+?)\*{3}/g, '<strong><em>$1</em></strong>')
+                // Bold
+                .replace(/\*{2}(.+?)\*{2}/g, '<strong>$1</strong>')
+                // Italic
+                .replace(/\*(.+?)\*/g, '<em>$1</em>')
+                // Inline code
+                .replace(/`(.+?)`/g, '<code>$1</code>')
+                // Tags #word
+                .replace(/#(\w+)/g, '<span class="jc-tag">#$1</span>');
+        }
+
+        function renderMarkdown(md) {
+            if (!md) return '<div class="jc-preview-empty">Empty page</div>';
+            // Strip YAML frontmatter
+            md = md.replace(/^---[\s\S]*?---\n?/, '').trim();
+            if (!md) return '<div class="jc-preview-empty">Empty page</div>';
+
+            const lines = md.split('\n');
+            let html = '';
+            let inCode = false;
+            let codeBuf = '';
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+
+                // Fenced code block
+                if (line.startsWith('```')) {
+                    if (inCode) {
+                        html += '<pre><code>' + codeBuf + '</code></pre>';
+                        codeBuf = ''; inCode = false;
+                    } else { inCode = true; }
+                    continue;
+                }
+                if (inCode) { codeBuf += escHtml(line) + '\n'; continue; }
+
+                // Headings
+                const hm = line.match(/^(#{1,3})\s+(.+)/);
+                if (hm) { const lv = hm[1].length; html += '<h' + lv + '>' + processInline(hm[2]) + '</h' + lv + '>'; continue; }
+
+                // HR
+                if (/^(-{3,}|\*{3,})$/.test(line.trim())) { html += '<hr>'; continue; }
+
+                // Task list
+                const tm = line.match(/^[\s]*[-*]\s+\[([ xX])\]\s+(.*)/);
+                if (tm) {
+                    const done = tm[1].toLowerCase() === 'x';
+                    html += '<div class="jc-task' + (done ? ' done' : '') + '"><span class="jc-task-icon">' + (done ? '✓' : '○') + '</span>' + processInline(tm[2]) + '</div>';
+                    continue;
+                }
+
+                // Unordered list
+                const lm = line.match(/^[\s]*[-*]\s+(.*)/);
+                if (lm) { html += '<div class="jc-li">• ' + processInline(lm[1]) + '</div>'; continue; }
+
+                // Ordered list
+                const nm = line.match(/^[\s]*(\d+)\.\s+(.*)/);
+                if (nm) { html += '<div class="jc-li">' + nm[1] + '. ' + processInline(nm[2]) + '</div>'; continue; }
+
+                // Blockquote
+                if (line.startsWith('> ')) { html += '<div class="jc-bq">' + processInline(line.slice(2)) + '</div>'; continue; }
+
+                // Blank line
+                if (line.trim() === '') { html += '<div class="jc-br"></div>'; continue; }
+
+                // Paragraph
+                html += '<p>' + processInline(line) + '</p>';
+            }
+
+            const titleHtml = '';
+            return titleHtml + '<div class="jc-preview-content">' + html + '</div>';
+        }
+
+        // ── Show preview for a date path (Alt+Click) ─────────────────────────
+        function showPreview(path) {
+            // Use last path segment as provisional title while loading
+            const provisional = path.split('/').pop() || path;
+            openDrawer(provisional);
+            const scroll = document.getElementById('jc-drawer-scroll');
+            if (scroll) scroll.innerHTML = '<div class="jc-preview-loading">⏳ Loading…</div>';
+            window.dispatchEvent(new CustomEvent("sb-journal-event", {
+                detail: { action: "preview", path, session }
+            }));
+        }
+
+        // ── Debounced hover preview (400ms delay, no key needed) ─────────────
+        // overDrawer flag prevents new previews from firing while the
+        // user's mouse is inside the drawer scroll area (so they can scroll).
+        function hoverPreview(path) {
+            if (overDrawer) return;
+            clearTimeout(_hoverTimer);
+            _hoverTimer = setTimeout(() => {
+                if (overDrawer) return;
+                const provisional = path.split('/').pop() || path;
+                openDrawer(provisional);
+                window.dispatchEvent(new CustomEvent("sb-journal-event", {
+                    detail: { action: "preview", path, session }
+                }));
+            }, 300);
+        }
+
+        // ── Receive preview content from Lua ──────────────────────────────────
+        window.addEventListener("sb-journal-preview-content", (e) => {
+            const scroll  = document.getElementById('jc-drawer-scroll');
+            const titleEl = document.getElementById('jc-drawer-title');
+            if (!scroll) return;
+            const { content, title } = e.detail;
+            // Update the header title with the real page name
+            if (titleEl && title) titleEl.textContent = title;
+            if (!content) {
+                scroll.innerHTML = '<div class="jc-preview-empty">No entry found for this date</div>';
+                return;
+            }
+            scroll.innerHTML = renderMarkdown(content);
+        });
+
+        // Prevent wheel events from escaping the drawer (so scrolling works)
+        // Also track overDrawer so hover on day cells is suppressed while scrolling
+        (function() {
+            const sc = document.getElementById('jc-drawer-scroll');
+            if (sc) {
+                sc.addEventListener('wheel',      e => e.stopPropagation(), { passive: true });
+                sc.addEventListener('mouseenter', () => { overDrawer = true;  clearTimeout(_hoverTimer); });
+                sc.addEventListener('mouseleave', () => { overDrawer = false; });
+            }
+        })();
 
         // ── Settings (flip card) ──────────────────────────────────────────────
         let settingsOpen = false;
@@ -1153,6 +1481,9 @@ function toggleFloatingJournalCalendar()
             const gear  = document.getElementById('jc-gear-btn');
 
             if (open) {
+                // Always close the preview drawer when opening settings
+                closeDrawer();
+
                 // FIX 4: Remove contour SVG before flipping — it bleeds through on mobile
                 const existingSvg = document.getElementById("jc-contour-svg");
                 if (existingSvg) existingSvg.remove();
@@ -1161,7 +1492,8 @@ function toggleFloatingJournalCalendar()
                     months, days, weekStartsSunday, showWeekNumbers, weekNumSystem,
                     weeklyPattern, pattern, shiftDatePattern, showFooter, footerMoonPhase,
                     footerMonthCount, footerTotalCount, footerLastEntry, footerStreak,
-                    useHeatmap, showContour, calSize, colors: { ...(colors || {}) }
+                    useHeatmap, showContour, calSize, quickPreviewOnHover,
+                    colors: { ...(colors || {}) }
                 };
                 buildSettingsBody();
 
@@ -1194,7 +1526,15 @@ function toggleFloatingJournalCalendar()
                 inner.classList.remove('flipped');
                 inner.style.height = calH + 'px';
                 gear.classList.remove('active');
-                setTimeout(() => { if (!settingsOpen) inner.style.height = ''; }, 560);
+                setTimeout(() => {
+                    if (!settingsOpen) inner.style.height = '';
+                    // Restore hover-mode placeholder after flip-back animation
+                    if (quickPreviewOnHover && !drawerOpen) {
+                        openDrawer('');
+                        const sc = document.getElementById('jc-drawer-scroll');
+                        if (sc) sc.innerHTML = '<div class="jc-preview-empty">Hover a day to preview</div>';
+                    }
+                }, 560);
             }
         }
 
@@ -1218,13 +1558,13 @@ function toggleFloatingJournalCalendar()
             shiftDatePattern= draft.shiftDatePattern;
             calSize         = draft.calSize;
             colors          = draft.colors || {};
-            // Persist only non-lua-locked keys (calSize is never locked)
+            const prevHover = quickPreviewOnHover;
+            quickPreviewOnHover = draft.quickPreviewOnHover;
+             // Persist only non-lua-locked keys (calSize is never locked)
             const toSave = {};
             Object.keys(draft).forEach(k => { if (!LUA_OVERRIDES[k]) toSave[k] = draft[k]; });
-            // Handle nested colors - respect Lua override on the entire colors object
-            if (!LUA_OVERRIDES.colors) {
-                toSave.colors = draft.colors || {};
-            }
+             // Handle nested colors - respect Lua override on the entire colors object
+            if (!LUA_OVERRIDES.colors) toSave.colors = draft.colors || {};
             saveSettings(toSave);
             flipCard(false);
             // Delay render AND color application until after the flip animation completes
@@ -1237,6 +1577,8 @@ function toggleFloatingJournalCalendar()
                 if (calSize === 'sm') root.classList.add('jc-size-sm');
                 else if (calSize === 'lg') root.classList.add('jc-size-lg');
                 applyCustomColors();
+                // If hover mode was just turned off, close the drawer
+                if (prevHover && !quickPreviewOnHover) closeDrawer();
                 render();
             }, 50);
         }
@@ -1265,8 +1607,6 @@ function toggleFloatingJournalCalendar()
                 } else {
                     if (el.style.display !== 'none') el.style.display = '';
                     sectionHasUnlocked = true;
-                    //el.style.display = '';
-                    //sectionHasUnlocked = true;
                 }
             });
             // Resolve the final section
@@ -1303,9 +1643,7 @@ function toggleFloatingJournalCalendar()
                     <input type="checkbox" ${draft[key] ? 'checked' : ''} ${locked ? 'disabled' : ''}>
                     <span class="jc-toggle-slider"></span>
                   </label>`;
-                if (!locked) {
-                    row.querySelector('input').onchange = e => { draft[key] = e.target.checked; };
-                }
+                if (!locked) row.querySelector('input').onchange = e => { draft[key] = e.target.checked; };
                 body.appendChild(row);
             }
 
@@ -1321,9 +1659,7 @@ function toggleFloatingJournalCalendar()
                     ${locked ? '<span class="jc-lua-badge" title="Locked — set via Lua config">lua</span>' : ''}
                   </label>
                   <select class="jc-settings-select" ${locked ? 'disabled' : ''}>${optHtml}</select>`;
-                if (!locked) {
-                    row.querySelector('select').onchange = e => { draft[key] = e.target.value; };
-                }
+                if (!locked) row.querySelector('select').onchange = e => { draft[key] = e.target.value; };
                 body.appendChild(row);
             }
 
@@ -1406,61 +1742,29 @@ function toggleFloatingJournalCalendar()
                     <button class="jc-reset-color" title="Reset to default" ${locked ? 'disabled' : ''}
                             style="font-size:0.7em;padding:2px 6px;border:1px solid var(--jc-border-color);border-radius:4px;background:var(--jc-elements-background);color:var(--jc-text-color);cursor:pointer;opacity:${currentVal ? '1' : '0.4'}">↺</button>
                   </div>`;
-
                 if (!locked) {
                     const colorInput = row.querySelector('input[type="color"]');
                     const resetBtn = row.querySelector('.jc-reset-color');
-
-                    // Update draft when color changes
+                    const colorMap = {
+                        accentColor:'--jc-accent-color', background:'--jc-background',
+                        borderColor:'--jc-border-color', elementsBackground:'--jc-elements-background',
+                        hoverBackground:'--jc-hover-background', textColor:'--jc-text-color',
+                        outlineColor:'--jc-outline-color', sundayColor:'--jc-sunday-color',
+                        dotGreen:'--jc-dot-green', dotYellow:'--jc-dot-yellow',
+                        dotOrange:'--jc-dot-orange', dotRed:'--jc-dot-red'
+                    };
                     colorInput.oninput = (e) => {
                         draft.colors = draft.colors || {};
                         draft.colors[key] = e.target.value;
                         resetBtn.style.opacity = '1';
-                        // Preview immediately
-                        const colorMap = {
-                            accentColor: '--jc-accent-color',
-                            background: '--jc-background',
-                            borderColor: '--jc-border-color',
-                            elementsBackground: '--jc-elements-background',
-                            hoverBackground: '--jc-hover-background',
-                            textColor: '--jc-text-color',
-                            outlineColor: '--jc-outline-color',
-                            sundayColor: '--jc-sunday-color',
-                            dotGreen: '--jc-dot-green',
-                            dotYellow: '--jc-dot-yellow',
-                            dotOrange: '--jc-dot-orange',
-                            dotRed: '--jc-dot-red'
-                        };
-                        if (colorMap[key]) {
-                            root.style.setProperty(colorMap[key], e.target.value);
-                        }
+                        if (colorMap[key]) root.style.setProperty(colorMap[key], e.target.value);
                     };
-
-                    // Reset to default
                     resetBtn.onclick = () => {
                         draft.colors = draft.colors || {};
                         delete draft.colors[key];
-                        const defaultVal = getDefaultColor(key);
-                        colorInput.value = colorToHex(defaultVal) || '#6366f1';
+                        colorInput.value = colorToHex(getDefaultColor(key)) || '#6366f1';
                         resetBtn.style.opacity = '0.4';
-                        // Remove inline style to revert to CSS default
-                        const colorMap = {
-                            accentColor: '--jc-accent-color',
-                            background: '--jc-background',
-                            borderColor: '--jc-border-color',
-                            elementsBackground: '--jc-elements-background',
-                            hoverBackground: '--jc-hover-background',
-                            textColor: '--jc-text-color',
-                            outlineColor: '--jc-outline-color',
-                            sundayColor: '--jc-sunday-color',
-                            dotGreen: '--jc-dot-green',
-                            dotYellow: '--jc-dot-yellow',
-                            dotOrange: '--jc-dot-orange',
-                            dotRed: '--jc-dot-red'
-                        };
-                        if (colorMap[key]) {
-                            root.style.removeProperty(colorMap[key]);
-                        }
+                        if (colorMap[key]) root.style.removeProperty(colorMap[key]);
                     };
                 }
                 body.appendChild(row);
@@ -1486,14 +1790,13 @@ function toggleFloatingJournalCalendar()
                     if (hasCustomColors) {
                         btn.onclick = () => {
                             draft.colors = {};
-                            colors = {}; // Also clear live colors so pickers show defaults
-                            // Rebuild to reset all color pickers
+                            colors = {};
                             buildSettingsBody();
-                            // Clear all custom color styles
-                            const colorProps = ['--jc-accent-color', '--jc-background', '--jc-border-color',
-                                              '--jc-elements-background', '--jc-hover-background', '--jc-text-color', '--jc-outline-color',
-                                              '--jc-sunday-color', '--jc-dot-green', '--jc-dot-yellow', '--jc-dot-orange', '--jc-dot-red'];
-                            colorProps.forEach(prop => root.style.removeProperty(prop));
+                            ['--jc-accent-color','--jc-background','--jc-border-color',
+                             '--jc-elements-background','--jc-hover-background','--jc-text-color',
+                             '--jc-outline-color','--jc-sunday-color','--jc-dot-green',
+                             '--jc-dot-yellow','--jc-dot-orange','--jc-dot-red']
+                            .forEach(prop => root.style.removeProperty(prop));
                         };
                     }
                 }
@@ -1520,37 +1823,21 @@ function toggleFloatingJournalCalendar()
                     dotGreen:'--jc-dot-green', dotYellow:'--jc-dot-yellow',
                     dotOrange:'--jc-dot-orange', dotRed:'--jc-dot-red'
                 };
-
-                const btnStyle = `font-size:0.75em;padding:4px 10px;border:1px solid var(--jc-border-color);
-                    border-radius:5px;background:var(--jc-elements-background);color:var(--jc-text-color);
-                    cursor:pointer;display:inline-flex;align-items:center;gap:4px;`;
-
-                // ── Export / Import toggle row ────────────────────────────────────
+                const btnStyle = `font-size:0.75em;padding:4px 10px;border:1px solid var(--jc-border-color);border-radius:5px;background:var(--jc-elements-background);color:var(--jc-text-color);cursor:pointer;display:inline-flex;align-items:center;gap:4px;`;
                 const exportRow = document.createElement('div');
                 exportRow.className = 'jc-settings-row';
                 exportRow.style.cssText = 'margin-top:4px;gap:6px;justify-content:flex-end;flex-wrap:wrap;';
                 exportRow.innerHTML = `
                   <span style="font-size:0.72em;opacity:0.5;flex:1;align-self:center;">Theme</span>
-                  <button class="jc-theme-export" title="Copy theme JSON to clipboard" style="${btnStyle}">
-                    📋 Copy theme
-                  </button>
-                  <button class="jc-theme-import-toggle" title="Paste a theme JSON" style="${btnStyle}${locked?';opacity:0.4;cursor:not-allowed;':''}">
-                    📥 Paste theme
-                  </button>`;
+                  <button class="jc-theme-export" title="Copy theme JSON to clipboard" style="${btnStyle}">📋 Copy theme</button>
+                  <button class="jc-theme-import-toggle" title="Paste a theme JSON" style="${btnStyle}${locked?';opacity:0.4;cursor:not-allowed;':''}">📥 Paste theme</button>`;
                 body.appendChild(exportRow);
 
-                // ── Import paste area (hidden until Paste theme is clicked) ───────
                 const importWrap = document.createElement('div');
-                // Set layout properties via cssText, then set display separately.
-                // Bundling display:none into cssText alongside flex-direction can be
-                // misparsed by Safari/WebKit, leaving the area always visible on open.
-                //importWrap.style.cssText = 'flex-direction:column;gap:5px;padding:4px 0 6px;';
-                //importWrap.style.display = 'none';
                 importWrap.style.cssText = 'gap:5px;padding:10px 0 6px;';
                 importWrap.style.display = 'none';
                 importWrap.innerHTML = `
-                  <textarea class="jc-theme-paste-area jc-settings-input"
-                    rows="3" spellcheck="false" autocomplete="off"
+                  <textarea class="jc-theme-paste-area jc-settings-input" rows="3" spellcheck="false" autocomplete="off"
                     placeholder='{"accentColor":"#6366f1","background":"#1f2937", …}'
                     style="resize:vertical;min-height:52px;font-size:0.78em;line-height:1.4;font-family:monospace;width:100%;box-sizing:border-box;"></textarea>
                   <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center;">
@@ -1560,15 +1847,13 @@ function toggleFloatingJournalCalendar()
                   </div>`;
                 body.appendChild(importWrap);
 
-                // ── Export logic ─────────────────────────────────────────────────
                 const exportBtn = exportRow.querySelector('.jc-theme-export');
                 exportBtn.onclick = () => {
                     const snapshot = {};
                     VALID_KEYS.forEach(k => {
                         const live = draft.colors?.[k] || colors?.[k];
-                        if (live) {
-                            snapshot[k] = live;
-                        } else {
+                        if (live) { snapshot[k] = live; }
+                        else {
                             const computed = getComputedStyle(root).getPropertyValue(colorMap[k]).trim();
                             if (computed) snapshot[k] = computed;
                         }
@@ -1580,22 +1865,17 @@ function toggleFloatingJournalCalendar()
                             setTimeout(() => { exportBtn.innerHTML = '📋 Copy theme'; }, 1800);
                         });
                     } catch(e) {
-                        // Clipboard blocked — show JSON inline so user can copy manually
-                        //importWrap.style.display = 'flex';
                         importWrap.style.display = 'block';
                         const ta = importWrap.querySelector('.jc-theme-paste-area');
-                        ta.value = json;
-                        ta.select();
+                        ta.value = json; ta.select();
                         importWrap.querySelector('.jc-theme-import-msg').textContent = 'Clipboard blocked — select all & copy manually.';
                     }
                 };
 
-                // ── Paste theme toggle ────────────────────────────────────────────
                 const toggleBtn = exportRow.querySelector('.jc-theme-import-toggle');
                 if (!locked) {
                     toggleBtn.onclick = () => {
                         const isHidden = importWrap.style.display === 'none';
-                        //importWrap.style.display = isHidden ? 'flex' : 'none';
                         importWrap.style.display = isHidden ? 'block' : 'none';
                         if (isHidden) {
                             importWrap.querySelector('.jc-theme-paste-area').focus();
@@ -1604,7 +1884,6 @@ function toggleFloatingJournalCalendar()
                     };
                 }
 
-                // ── Import apply / cancel ─────────────────────────────────────────
                 const applyImportBtn = importWrap.querySelector('.jc-theme-import-apply');
                 const msgEl          = importWrap.querySelector('.jc-theme-import-msg');
                 const cancelBtn      = importWrap.querySelector('.jc-theme-import-cancel');
@@ -1613,20 +1892,12 @@ function toggleFloatingJournalCalendar()
                 pasteArea.addEventListener('keydown', e => e.stopPropagation());
                 pasteArea.addEventListener('keyup',   e => e.stopPropagation());
 
-                cancelBtn.onclick = () => {
-                    importWrap.style.display = 'none';
-                    pasteArea.value = '';
-                    msgEl.textContent = '';
-                };
+                cancelBtn.onclick = () => { importWrap.style.display = 'none'; pasteArea.value = ''; msgEl.textContent = ''; };
 
                 applyImportBtn.onclick = () => {
                     let parsed;
-                    try {
-                        parsed = JSON.parse(pasteArea.value.trim());
-                    } catch(e) {
-                        msgEl.style.color = 'oklch(0.6 0.2 30)';
-                        msgEl.textContent = '✕ Invalid JSON';
-                        return;
+                    try { parsed = JSON.parse(pasteArea.value.trim()); } catch(e) {
+                        msgEl.style.color = 'oklch(0.6 0.2 30)'; msgEl.textContent = '✕ Invalid JSON'; return;
                     }
                     const accepted = {}, rejected = [];
                     Object.entries(parsed).forEach(([k, v]) => {
@@ -1634,56 +1905,50 @@ function toggleFloatingJournalCalendar()
                         else rejected.push(k);
                     });
                     if (Object.keys(accepted).length === 0) {
-                        msgEl.style.color = 'oklch(0.6 0.2 30)';
-                        msgEl.textContent = '✕ No valid color keys found';
-                        return;
+                        msgEl.style.color = 'oklch(0.6 0.2 30)'; msgEl.textContent = '✕ No valid color keys found'; return;
                     }
                     draft.colors = { ...(draft.colors || {}), ...accepted };
-                    Object.entries(accepted).forEach(([k, v]) => {
-                        if (colorMap[k]) root.style.setProperty(colorMap[k], v);
-                    });
-                    // Rebuild pickers so they reflect the imported values
+                    Object.entries(accepted).forEach(([k, v]) => { if (colorMap[k]) root.style.setProperty(colorMap[k], v); });
                     buildSettingsBody();
                 };
             }
 
             section('Appearance');
-            makeSelect('calSize', 'Calendar size',
-                [ ['sm','Small'], ['md','Medium'], ['lg','Large'] ]);
+            makeSelect('calSize', 'Calendar size', [ ['sm','Small'], ['md','Medium'], ['lg','Large'] ]);
             makeToggle('showContour', 'Month outline border', 'Show the SVG outline around the current month');
             makeToggle('useHeatmap',  'Heatmap mode',         'Shade cells by activity instead of dots');
+            makeToggle('quickPreviewOnHover', 'Quick preview on hover', 'Hover a day for 400ms to preview — move mouse to drawer to scroll without jumping');
 
-            // ── Colors Section ────────────────────────────────────────────────────
             section('Colors');
-            makeColorPicker('accentColor', 'Accent color', 'Links, today highlight, toggle switches');
-            makeColorPicker('textColor', 'Text color', 'Main text color');
-            makeColorPicker('background', 'Background', 'Calendar card background');
-            makeColorPicker('borderColor', 'Border color', 'Borders and outlines');
-            makeColorPicker('elementsBackground', 'Elements background', 'Day cells and buttons');
-            makeColorPicker('hoverBackground', 'Hover background', 'Day/button hover state');
-            makeColorPicker('outlineColor', 'Month outline', 'SVG contour line color');
-            makeColorPicker('sundayColor', 'Sunday text', 'Sunday column header and day numbers');
+            makeColorPicker('accentColor',        'Accent color',         'Links, today highlight, toggle switches');
+            makeColorPicker('textColor',           'Text color',           'Main text color');
+            makeColorPicker('background',          'Background',           'Calendar card background');
+            makeColorPicker('borderColor',         'Border color',         'Borders and outlines');
+            makeColorPicker('elementsBackground',  'Elements background',  'Day cells and buttons');
+            makeColorPicker('hoverBackground',     'Hover background',     'Day/button hover state');
+            makeColorPicker('outlineColor',        'Month outline',        'SVG contour line color');
+            makeColorPicker('sundayColor',         'Sunday text',          'Sunday column header and day numbers');
             section('Entry Dot Colors');
-            makeColorPicker('dotGreen', 'Dot green', '1 entry indicator');
+            makeColorPicker('dotGreen',  'Dot green',  '1 entry indicator');
             makeColorPicker('dotYellow', 'Dot yellow', '2 entries indicator');
             makeColorPicker('dotOrange', 'Dot orange', '3 entries indicator');
-            makeColorPicker('dotRed', 'Dot red', '4+ entries indicator');
+            makeColorPicker('dotRed',    'Dot red',    '4+ entries indicator');
             makeResetColorsButton();
             makeColorThemeBar();
 
             section('Layout');
-            makeToggle('showWeekNumbers',  'Show week numbers', '');
+            makeToggle('showWeekNumbers',  'Show week numbers',  '');
             makeToggle('weekStartsSunday', 'Week starts Sunday', '');
             makeSelect('weekNumSystem', 'Week number system',
                 [ ['iso','ISO 8601'],['us','US (Sun-start)'],['simple','Simple'] ]);
 
             section('Footer');
-            makeToggle('showFooter',       'Show footer bar', '');
-            makeToggle('footerStreak',     'Streak counter 🔥', '');
-            makeToggle('footerMoonPhase',  'Moon phase', '');
-            makeToggle('footerMonthCount', 'Month entry count', '');
-            makeToggle('footerTotalCount', 'Total entry count', '');
-            makeToggle('footerLastEntry',  'Last entry', '');
+            makeToggle('showFooter',       'Show footer bar',    '');
+            makeToggle('footerStreak',     'Streak counter 🔥',  '');
+            makeToggle('footerMoonPhase',  'Moon phase',         '');
+            makeToggle('footerMonthCount', 'Month entry count',  '');
+            makeToggle('footerTotalCount', 'Total entry count',  '');
+            makeToggle('footerLastEntry',  'Last entry',         '');
 
             section('Paths');
             makeTextInput('pattern',          'Journal path pattern');
@@ -1698,8 +1963,7 @@ function toggleFloatingJournalCalendar()
             updateLockedVisibility();
         }
 
-        // FIX 2: Use offsetWidth/offsetHeight — these are unaffected by CSS transforms
-        // (getBoundingClientRect returns scaled values during the open animation).
+        // FIX 2: Use offsetWidth/offsetHeight — unaffected by CSS transforms
         function clamp() {
             const w = root.offsetWidth, h = root.offsetHeight;
             let left = root.offsetLeft, top = root.offsetTop;
@@ -1713,29 +1977,6 @@ function toggleFloatingJournalCalendar()
         }
 
         // ── Unified date/path pattern formatter ───────────────────────────────
-        // Single source of truth for ALL pattern strings:
-        //   journalPathPattern, weeklyNotesPathPattern, shiftDatePattern
-        //
-        // Supported variables:
-        //   #year#        4-digit year            2026
-        //   #YY#          2-digit year            26
-        //   #month#       2-digit month           03
-        //   #M#           month, no leading zero  3
-        //   #day#         2-digit day             08
-        //   #D#           day, no leading zero    8
-        //   #monthname#   full month name         March
-        //   #monthshort#  short month name        Mar
-        //   #weekday#     short weekday (locale)  Sat
-        //   #weekdayfull# full weekday (English)  Saturday
-        //   #ordinal#     day ordinal suffix      st / nd / rd / th
-        //   #HH#          hours 24 h              14
-        //   #hh#          hours 12 h              02
-        //   #mm#          minutes                 38
-        //   #ss#          seconds                 07
-        //   #weeknum#     week number, 2-digit    03
-        //   #weeknumraw#  week number, no pad     3
-        //   #weekyear#    ISO/US/simple week-year 2026
-        //   #wildcard#    empty string (path prefix matching)
         const WEEKDAY_FULL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
         function ordinalSuffix(d) {
             if (d >= 11 && d <= 13) return "th";
@@ -1744,23 +1985,17 @@ function toggleFloatingJournalCalendar()
         function pad2(n) { return String(n).padStart(2, "0"); }
 
         function formatDatePattern(dateObj, pat) {
-            const rawDay = dateObj.getDay();                          // 0=Sun … 6=Sat
-            // days[] is always Mon-first: [Mon,Tue,Wed,Thu,Fri,Sat,Sun]
-            // weekStartsSunday only affects column display order, not name lookup.
+            const rawDay = dateObj.getDay();
             const dIdx   = rawDay === 0 ? 6 : rawDay - 1;
             const dName  = days[dIdx] || WEEKDAY_FULL[rawDay].slice(0, 3);
-
             const Y   = dateObj.getFullYear();
-            const Mo  = dateObj.getMonth();        // 0-based
+            const Mo  = dateObj.getMonth();
             const D   = dateObj.getDate();
             const H   = dateObj.getHours();
             const Min = dateObj.getMinutes();
             const S   = dateObj.getSeconds();
             const mName = months[Mo] || dateObj.toLocaleString("en", { month: "long" });
-
-            // Week info — getWeekInfo() is hoisted (function declaration) so safe to call here
             const { week, weekYear } = getWeekInfo(dateObj);
-
             return pat
                 .replace(/#year#/g,        String(Y))
                 .replace(/#YY#/g,          String(Y).slice(-2))
@@ -2193,7 +2428,13 @@ function toggleFloatingJournalCalendar()
                     el.onclick = (e) => {
                         const isCtrl  = e.ctrlKey || e.metaKey;
                         const isShift = e.shiftKey;
+                        const isAlt   = e.altKey;
 
+                        // Alt/Option+Click: open Quick Preview drawer
+                        if (isAlt && !isCtrl && !isShift) {
+                            showPreview(basePath);
+                            return;
+                        }
                         if (isCtrl && isShift) {
                             // Ctrl/Cmd+Shift+Click: insert WikiLink|Formatted Date alias
                             const dateText = formatDatePattern(dateObj, shiftDatePattern);
@@ -2219,6 +2460,14 @@ function toggleFloatingJournalCalendar()
                         e.dataTransfer.setData("text/plain", "[[" + basePath + "]].."]]"..[[");
                         e.dataTransfer.dropEffect = "copy";
                     };
+                    if (quickPreviewOnHover) {
+                        el.addEventListener('mouseenter', () => {
+                            if (!overDrawer) hoverPreview(basePath);
+                        });
+                        el.addEventListener('mouseleave', () => {
+                            clearTimeout(_hoverTimer);
+                        });
+                    }
                     grid.appendChild(el);
                 }
             }
@@ -2231,6 +2480,13 @@ function toggleFloatingJournalCalendar()
                 if (old) old.remove();
             }
             updateFooter();
+
+            // Hover-preview mode: ensure drawer is open with placeholder
+            if (quickPreviewOnHover && !drawerOpen) {
+                openDrawer('');
+                const sc = document.getElementById('jc-drawer-scroll');
+                if (sc) sc.innerHTML = '<div class="jc-preview-empty">Hover a day to preview</div>';
+            }
         }
 
         window.addEventListener("sb-journal-update", (e) => {
@@ -2302,6 +2558,8 @@ function toggleFloatingJournalCalendar()
             showLocked = !showLocked;
             updateLockedVisibility();
         };
+        // Click the open header to close the drawer
+        document.getElementById("jc-drawer-handle").onclick = () => { if (drawerOpen) closeDrawer(); };
 
         const card = document.getElementById("jc-draggable");
         card.onpointerdown = (e) => {
