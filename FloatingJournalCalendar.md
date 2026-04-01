@@ -739,7 +739,7 @@ html[data-theme="dark"] .jc-toggle-slider::before { background: oklch(0.65 0 0);
 .jc-drawer-handle.open:hover { background: var(--jc-hover-background); }
 
 .jc-drawer-title {
-    font-size: 0.68em;
+    font-size: 0.75em;
     font-weight: 600;
     color: var(--jc-text-color);
     opacity: 0.75;
@@ -758,18 +758,20 @@ html[data-theme="dark"] .jc-toggle-slider::before { background: oklch(0.65 0 0);
     border-radius: 0 0 8px 8px;
 }
 .jc-drawer-body.open {
-    max-height: 260px;
+    min-height: 200px;
+    max-height: 600px;
     border: 1px solid var(--jc-border-color);
     border-top: none;
+    resize: vertical;
   /*  box-shadow: 0px 4px 12px 0 oklch(0 0 0 / 0.4); */
 }
 
 .jc-drawer-scroll {
-    height: 260px;
+    height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
     padding: 0.6em 0.85em 0.85em;
-    font-size: 0.7em;
+    font-size: 0.9em;
     line-height: 1.6;
     color: var(--jc-text-color);
     pointer-events: none;
@@ -1349,6 +1351,8 @@ function toggleFloatingJournalCalendar()
                 .replace(/\*(.+?)\*/g, '<em>$1</em>')
                 // Inline code
                 .replace(/`(.+?)`/g, '<code>$1</code>')
+                // Standard markdown images ![alt](url)
+                .replace(/!\[([^\]].."]]"..[[*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:4px;display:block;margin:0.2em 0;" onerror="this.style.display=\'none\'">')
                 // Tags #word
                 .replace(/#(\w+)/g, '<span class="jc-tag">#$1</span>');
         }
@@ -1363,12 +1367,39 @@ function toggleFloatingJournalCalendar()
             let html = '';
             let inCode = false;
             let codeBuf = '';
+            let inTable = false;
+            let tableRows = [];
+            let tableHasHeader = false;
+
+            // Flush accumulated table rows to HTML
+            function flushTable() {
+                if (!tableRows.length) { inTable = false; tableHasHeader = false; return; }
+                let t = '<table style="border-collapse:collapse;width:100%;font-size:0.95em;margin:0.3em 0;">';
+                tableRows.forEach((row, idx) => {
+                    if (idx === 0) t += '<thead><tr>';
+                    else if (idx === 1) t += '<tbody><tr>';
+                    else t += '<tr>';
+                    const tag = idx === 0 ? 'th' : 'td';
+                    row.forEach(cell => {
+                        t += '<' + tag + ' style="border:1px solid var(--jc-border-color);padding:2px 6px;text-align:left;">' + processInline(cell) + '</' + tag + '>';
+                    });
+                    t += '</tr>';
+                    if (idx === 0) t += '</thead>';
+                });
+                if (tableRows.length > 1) t += '</tbody>';
+                t += '</table>';
+                html += t;
+                tableRows = [];
+                inTable = false;
+                tableHasHeader = false;
+            }
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
 
                 // Fenced code block
                 if (line.startsWith('```')) {
+                    if (inTable) flushTable();
                     if (inCode) {
                         html += '<pre><code>' + codeBuf + '</code></pre>';
                         codeBuf = ''; inCode = false;
@@ -1376,6 +1407,25 @@ function toggleFloatingJournalCalendar()
                     continue;
                 }
                 if (inCode) { codeBuf += escHtml(line) + '\n'; continue; }
+
+                // Table rows (lines starting with |)
+                if (line.trim().startsWith('|')) {
+                    // Detect separator rows like |---|---| and skip them (mark header done)
+                    const isSep = line.trim().split('|').slice(1, -1).every(c => /^[\s:\-]+$/.test(c));
+                    if (isSep) { inTable = true; tableHasHeader = true; continue; }
+                    inTable = true;
+                    tableRows.push(line.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim()));
+                    continue;
+                }
+                // End of table: flush before handling the current non-table line
+                if (inTable) flushTable();
+
+                // Image transclusion
+                const imgT = line.match(/!\[\[(.+?)]].."]]"..[[/);
+                if (imgT) {
+                    html += '<div><img src="/.fs/' + escHtml(imgT[1]) + '" alt="' + escHtml(imgT[1].split('/').pop()) + '" style="max-width:100%;border-radius:4px;margin:0.3em 0;display:block;" onerror="this.style.display=\'none\'"></div>';
+                    continue;
+                }
 
                 // Headings
                 const hm = line.match(/^(#{1,3})\s+(.+)/);
@@ -1409,6 +1459,9 @@ function toggleFloatingJournalCalendar()
                 // Paragraph
                 html += '<p>' + processInline(line) + '</p>';
             }
+
+            // Flush any table still open at end of content
+            if (inTable) flushTable();
 
             const titleHtml = '';
             return titleHtml + '<div class="jc-preview-content">' + html + '</div>';
