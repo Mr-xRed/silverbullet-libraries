@@ -793,6 +793,9 @@ html[data-theme="dark"] .jc-toggle-slider::before { background: oklch(0.65 0 0);
 .jc-preview-content h1 { font-size: 1.12em; font-weight: 700; margin: 0.5em 0 0.2em; }
 .jc-preview-content h2 { font-size: 1.02em; font-weight: 700; margin: 0.4em 0 0.15em; }
 .jc-preview-content h3 { font-size: 0.95em; font-weight: 600; margin: 0.35em 0 0.12em; }
+.jc-preview-content h4 { font-size: 0.90em; font-weight: 600; margin: 0.35em 0 0.12em; }
+.jc-preview-content h5 { font-size: 0.87em; font-weight: 600; margin: 0.35em 0 0.12em; }
+.jc-preview-content h6 { font-size: 0.85em; font-weight: 600; margin: 0.35em 0 0.12em; }
 .jc-preview-content p  { margin: 0.22em 0; }
 .jc-preview-content hr { border: none; border-top: 1px solid var(--jc-border-color); margin: 0.45em 0; opacity: 0.4; }
 .jc-preview-content code { background: var(--jc-elements-background); border-radius: 3px; padding: 0 3px; font-family: monospace; font-size: 0.94em; }
@@ -1428,7 +1431,7 @@ function toggleFloatingJournalCalendar()
                 }
 
                 // Headings
-                const hm = line.match(/^(#{1,3})\s+(.+)/);
+                const hm = line.match(/^(#{1,6})\s+(.+)/);
                 if (hm) { const lv = hm[1].length; html += '<h' + lv + '>' + processInline(hm[2]) + '</h' + lv + '>'; continue; }
 
                 // HR
