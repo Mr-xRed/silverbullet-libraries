@@ -81,6 +81,11 @@ description: "OpenWeatherMap Widget and slash commands"
 
 ## Productivity Tools
 ```#meta/library/remote
+name: "📔 Journal Explorer"
+uri: github:Mr-xRed/silverbullet-libraries/JournalExplorer.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/JournalExplorer.md
+description: "A Journal Explorer for your SilverBullet journal entries."
+---
 name: "🗓️ Floating Journal Calendar"
 uri: github:Mr-xRed/silverbullet-libraries/FloatingJournalCalendar.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/FloatingJournalCalendar.md
