@@ -258,7 +258,7 @@ function enableTableSorter()
         const _mdTableEventGuard = (e) => {
             if (e.button !== undefined && e.button !== 0) return;
             const target = e.target;
-            if (!target.closest('.sortable-header') && !target.closest('.filter-container') && !target.closest('.global-reset-btn')) return;
+            if (!target.closest('.sortable-header') && !target.closest('.filter-container') && !target.closest('.global-reset-btn') && !target.closest('.global-copy-btn')) return;
             const widget = target.closest('.sb-table-widget');
             if (!widget) return;
             if (widget.closest('.sb-lua-directive-block')) return;
@@ -603,6 +603,29 @@ function enableTableSorter()
                 // I tweaked this CSS slightly to ensure it doesn't collapse or overlap the header
                 bar.style.cssText = "display: flex; justify-content: flex-end; margin-bottom: 4px; padding: 2px 4px; min-height: 24px;";
 
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'global-copy-btn global-reset-btn';
+                copyBtn.title = 'Copy Table as Markdown';
+                copyBtn.style.fontSize = '14px';
+                copyBtn.textContent = '⿻';
+                const copyHandler = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const headers = Array.from(table.querySelectorAll('thead tr th, thead tr td')).map(h => h.textContent.trim());
+                    const visibleRows = Array.from(table.tBodies[0]?.rows || []).filter(r => r.style.display !== 'none');
+                    const bodyData = visibleRows.map(row => Array.from(row.cells).map(c => c.textContent.trim()));
+                    const sep = headers.map(() => '---');
+                    const md = [headers, sep, ...bodyData].map(r => '| ' + r.join(' | ') + ' |').join('\n');
+                    navigator.clipboard.writeText(md).then(() => {
+                        copyBtn.textContent = '✓';
+                        setTimeout(() => { copyBtn.textContent = '⿻'; }, 1200);
+                    });
+                };
+                copyBtn.onmousedown = copyHandler;
+                copyBtn.ontouchstart = copyHandler;
+                // Fix: prevent mouseup from reaching CodeMirror
+                copyBtn.onmouseup = (e) => { e.preventDefault(); e.stopPropagation(); };
+
                 const btn = document.createElement('button');
                 btn.className = 'global-reset-btn';
                 btn.title = 'Reset Table Filters/Sorting';
@@ -618,6 +641,7 @@ function enableTableSorter()
                 // to activate edit mode when a click is completed inside its DOM
                 btn.onmouseup = (e) => { e.preventDefault(); e.stopPropagation(); };
                 
+                bar.appendChild(copyBtn);
                 bar.appendChild(btn);
 
                 // Mirror the query/widget DOM hierarchy:

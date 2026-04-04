@@ -90,7 +90,7 @@ Licensed under the ISC and MIT licenses.
 > Make sure you copy this as space-style so it won't get overwritten with future updates!
 
 
-```css
+```
 html[data-theme="dark"]{
   /*Main UI Color*/
   --explorer-bg-color: var(--top-background-color);

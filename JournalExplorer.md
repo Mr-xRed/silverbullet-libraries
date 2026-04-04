@@ -6,7 +6,7 @@ pageDecoration.prefix: "📔 "
 
 # 📔 Journal Explorer
 
-A **DayOne-inspired sidebar browser** for your SilverBullet journal. It scans your space for pages matching your journal path pattern, renders them as richly styled tiles (calendar icon + title/snippet + image thumbnail), and supports infinite lazy scrolling, a live sticky date-context header, filtering, sorting, and a full settings panel — all without leaving your workspace.
+A **Journal Explorer** for your SilverBullet journal entries. It scans your space for pages matching your journal path pattern, renders them as richly styled tiles (calendar icon + title/snippet + image thumbnail), and supports infinite lazy scrolling, a live sticky date-context header, filtering, sorting, and a full settings panel — all without leaving your workspace.
 
 ## Main Features
 
