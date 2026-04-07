@@ -185,10 +185,17 @@ html[data-theme="light"] {
 }
 .je-btn:hover { background: var(--je-hover); border-color: var(--je-border); }
 .je-btn-active { background: var(--je-accent) !important; color: var(--je-accent-text) !important; border-color: transparent !important; }
+
 .je-btn svg {
-  width: 15px; height: 15px;
-  stroke: currentColor; stroke-width: 2; fill: none;
-  stroke-linecap: round; stroke-linejoin: round;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 2;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   pointer-events: none;
 }
 
