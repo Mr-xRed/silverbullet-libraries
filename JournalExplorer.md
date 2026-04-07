@@ -31,7 +31,8 @@ A **Journal Explorer** for your SilverBullet journal entries. It scans your spac
 config.set("journalExplorer", {
   position           = "lhs",
   journalPathPattern = "Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#",
-  batchSize          = 20, 
+  batchSize          = 20,
+  panelWidth         = "0.7",
   showThumbnails     = true,
   showSnippets       = true,
   monthNames  = {"January","February","March","April","May","June","July","August","September","October","November","December"},
@@ -485,7 +486,7 @@ local function loadConfig()
     PANEL_ID = c.position           or csPos             or "lhs",
     PATTERN  = c.journalPathPattern or csPat             or "Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#",
     BATCH    = c.batchSize          or tonumber(csBatch) or 20,
-    WIDTH    = c.panelWidth         or 290,
+    WIDTH    = c.panelWidth         or "0.75",
     THUMBS   = thumbs,
     SNIPPETS = snippets,
     MONTHS   = c.monthNames or csArr("monthNames") or defaultMonths,
