@@ -26,15 +26,17 @@ A **Journal Explorer** for your SilverBullet journal entries. It scans your spac
 
 ## Config Example & Defaults
 
+> **warning** Configurations set via the Settings-Panel are stored in the browsers local storage and will not survive a wipe of browser data and will be stored only on device, and not synchronized throughout your devics. So if you want persistent settings which are synchronized on all of your devices, is recommended to store them in a `space-lua` block
+
 ```lua
 -- priority: 1
 config.set("journalExplorer", {
   position           = "lhs",
   journalPathPattern = "Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#",
   batchSize          = 20,
-  panelWidth         = "0.7",
-  showTitle          = true,
+  panelWidth         = "0.75",
   showThumbnails     = true,
+  showTitle          = true,
   showSnippets       = true,
   snippetStartMarker = "## What's been on your mind?",
   monthNames  = {"January","February","March","April","May","June","July","August","September","October","November","December"},
@@ -622,7 +624,7 @@ local function extractInfo(content, startMarker)
 
   local snippet = table.concat(snippetBuf, " ")
   if #snippet > 130 then snippet = snippet:sub(1, 127) .. "…" end
-  imgRef = body:match("!%[%[([^%]|%s]+)")
+  imgRef = body:match("!%[%[([^%]|]+)")
   if not imgRef then imgRef = body:match("!%[[^%]]*%]%(([^%s%)]+)%)") end
   return title, snippet, imgRef
 end
@@ -1705,6 +1707,7 @@ command.define {
 command.define {
   name = "Journal: Toggle Explorer",
   key  = "Ctrl-Alt-j",
+  mac  = "Cmd-Alt-j",
   run  = function()
     if PANEL_VISIBLE then
       editor.hidePanel(CFG.PANEL_ID)
@@ -1717,3 +1720,6 @@ command.define {
 }
 
 ```
+
+## Discussion to this library
+- [SilverBullet Community](https://community.silverbullet.md/t/sleek-interactive-floating-journal-calendar/3680/6?u=mr.red)
