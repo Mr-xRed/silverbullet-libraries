@@ -33,8 +33,10 @@ config.set("journalExplorer", {
   journalPathPattern = "Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#",
   batchSize          = 20,
   panelWidth         = "0.7",
+  showTitle          = true,
   showThumbnails     = true,
   showSnippets       = true,
+  snippetStartMarker = "## What's been on your mind?",
   monthNames  = {"January","February","March","April","May","June","July","August","September","October","November","December"},
   dayNames    = {"Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"},
 })
@@ -427,6 +429,8 @@ config.define("journalExplorer", {
     panelWidth         = schema.number(),
     showThumbnails     = schema.boolean(),
     showSnippets       = schema.boolean(),
+    showTitle          = schema.boolean(),
+    snippetStartMarker = schema.string(),
     monthNames         = { type = "array", items = { type = "string" } },
     dayNames           = { type = "array", items = { type = "string" } },
   }
@@ -450,6 +454,8 @@ local function loadConfig()
   if c.batchSize          ~= nil then locked.batchSize          = true end
   if c.showThumbnails     ~= nil then locked.showThumbnails     = true end
   if c.showSnippets       ~= nil then locked.showSnippets       = true end
+  if c.showTitle          ~= nil then locked.showTitle          = true end
+  if c.snippetStartMarker ~= nil then locked.snippetStartMarker = true end
   if c.monthNames         ~= nil then locked.monthNames         = true end
   if c.dayNames           ~= nil then locked.dayNames           = true end
 
@@ -476,22 +482,29 @@ local function loadConfig()
   end
 
   -- Resolve booleans safely: Lua value if locked, else clientStore, else default.
-  local thumbs, snippets
-  if c.showThumbnails ~= nil then thumbs   = (c.showThumbnails ~= false)
-  else                             thumbs   = csBool("showThumbnails", true) end
-  if c.showSnippets   ~= nil then snippets = (c.showSnippets   ~= false)
-  else                             snippets = csBool("showSnippets",  true) end
+  local thumbs, snippets, showTitle
+  if c.showThumbnails ~= nil then thumbs    = (c.showThumbnails ~= false)
+  else                             thumbs    = csBool("showThumbnails", true) end
+  if c.showSnippets   ~= nil then snippets  = (c.showSnippets   ~= false)
+  else                             snippets  = csBool("showSnippets",  true) end
+  if c.showTitle      ~= nil then showTitle = (c.showTitle      ~= false)
+  else                             showTitle = csBool("showTitle",     true) end
+
+  -- Snippet start marker: string setting, clientStore stores raw string.
+  local csMarker = clientStore.get("journalExplorer.snippetStartMarker")
 
   return {
-    PANEL_ID = c.position           or csPos             or "lhs",
-    PATTERN  = c.journalPathPattern or csPat             or "Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#",
-    BATCH    = c.batchSize          or tonumber(csBatch) or 20,
-    WIDTH    = c.panelWidth         or "0.75",
-    THUMBS   = thumbs,
-    SNIPPETS = snippets,
-    MONTHS   = c.monthNames or csArr("monthNames") or defaultMonths,
-    DAYS     = c.dayNames   or csArr("dayNames")   or defaultDays,
-    LOCKED   = locked,
+    PANEL_ID       = c.position           or csPos             or "lhs",
+    PATTERN        = c.journalPathPattern or csPat             or "Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#",
+    BATCH          = c.batchSize          or tonumber(csBatch) or 20,
+    WIDTH          = c.panelWidth         or "0.75",
+    THUMBS         = thumbs,
+    SNIPPETS       = snippets,
+    SHOW_TITLE     = showTitle,
+    SNIPPET_MARKER = c.snippetStartMarker or csMarker          or "",
+    MONTHS         = c.monthNames or csArr("monthNames") or defaultMonths,
+    DAYS           = c.dayNames   or csArr("dayNames")   or defaultDays,
+    LOCKED         = locked,
   }
 end
 
@@ -561,27 +574,52 @@ end
 local function jbool(v) return (v ~= false) and "true" or "false" end
 
 -- ── Markdown Content Extraction ───────────────────────────────────
-local function extractInfo(content)
+local function extractInfo(content, startMarker)
   if not content then return "", "", nil end
   local body = content
   local _, fmEnd = body:find("^%-%-%-.-%-%-%-[\n\r]*")
   if fmEnd then body = body:sub(fmEnd + 1) end
-  local title, snippetBuf, imgRef, titleDone = "", {}, nil, false
+  local title, snippetBuf, imgRef = "", {}, nil
+
+  -- Extract title from the full body (not affected by startMarker).
   for line in body:gmatch("[^\r\n]+") do
     local t = line:match("^%s*(.-)%s*$")
     if t and #t > 0 then
-      if not titleDone then
-        title = t:match("^#+%s+(.+)$") or t
-        titleDone = true
-      else
-        if not t:match("^#+%s") then
-          local currentLen = 0
-          for _, p in ipairs(snippetBuf) do currentLen = currentLen + #p end
-          if currentLen < 140 then table.insert(snippetBuf, t) end
-        end
+      title = t:match("^#+%s+(.+)$") or t
+      break
+    end
+  end
+
+  -- Determine the region to use for snippet extraction.
+  -- If startMarker is set and found, capture only from after the marker
+  -- so that frontmatter-style functions or preambles are skipped entirely.
+  -- When the marker is not found, fall back to normal behaviour
+  -- (skip the first non-empty line, then collect subsequent non-heading lines).
+  local snippetBody = body
+  local skipTitleInSnippet = true
+  if startMarker and startMarker ~= "" then
+    local markerPos = body:find(startMarker, 1, true)
+    if markerPos then
+      snippetBody = body:sub(markerPos + #startMarker)
+      skipTitleInSnippet = false -- title line is already before the marker
+    end
+  end
+
+  -- Extract snippet lines from snippetBody.
+  local snippetTitleSkipped = not skipTitleInSnippet
+  for line in snippetBody:gmatch("[^\r\n]+") do
+    local t = line:match("^%s*(.-)%s*$")
+    if t and #t > 0 then
+      if not snippetTitleSkipped then
+        snippetTitleSkipped = true -- skip the first non-empty line (= title) in fallback mode
+      elseif not t:match("^#+%s") then
+        local currentLen = 0
+        for _, p in ipairs(snippetBuf) do currentLen = currentLen + #p end
+        if currentLen < 140 then table.insert(snippetBuf, t) end
       end
     end
   end
+
   local snippet = table.concat(snippetBuf, " ")
   if #snippet > 130 then snippet = snippet:sub(1, 127) .. "…" end
   imgRef = body:match("!%[%[([^%]|%s]+)")
@@ -732,7 +770,15 @@ local function buildHtml()
         <div class="je-s-row"><span id="je-s-thumb-lbl">Show Thumbnails</span><input type="checkbox" id="je-s-thumb"></div>
       </div>
       <div class="je-s-group">
+        <div class="je-s-row"><span id="je-s-title-lbl">Show Title</span><input type="checkbox" id="je-s-title"></div>
+      </div>
+      <div class="je-s-group">
         <div class="je-s-row"><span id="je-s-snip-lbl">Show Snippets</span><input type="checkbox" id="je-s-snip"></div>
+      </div>
+      <div class="je-s-group">
+        <label>Snippet Start Marker</label>
+        <input type="text" id="je-s-snippet-marker" placeholder="e.g. ## What's been on your mind?">
+        <div class="je-s-hint">Snippet text is captured only after this marker. Leave empty to use the default behaviour (text after the title).</div>
       </div>
       <hr class="je-s-sep">
       <div class="je-s-group">
@@ -829,6 +875,8 @@ var MONTHS     = JE_CONFIG.monthNames;
 var BATCH_SIZE = JE_CONFIG.batchSize || 20;
 var SHOW_THUMB = JE_CONFIG.showThumbnails !== false;
 var SHOW_SNIP  = JE_CONFIG.showSnippets  !== false;
+var SHOW_TITLE = JE_CONFIG.showTitle     !== false;
+var SNIPPET_START_MARKER = JE_CONFIG.snippetStartMarker || "";
 var LOCKED     = JE_CONFIG.locked || {};
 
 var entries         = JE_ENTRIES.slice();
@@ -856,6 +904,8 @@ try {
     var _ls = JSON.parse(_lsRaw);
     if (!LOCKED.showThumbnails && _ls.showThumbnails !== undefined) SHOW_THUMB = Boolean(_ls.showThumbnails);
     if (!LOCKED.showSnippets   && _ls.showSnippets   !== undefined) SHOW_SNIP  = Boolean(_ls.showSnippets);
+    if (!LOCKED.showTitle      && _ls.showTitle       !== undefined) SHOW_TITLE = Boolean(_ls.showTitle);
+    if (!LOCKED.snippetStartMarker && _ls.snippetStartMarker !== undefined) SNIPPET_START_MARKER = _ls.snippetStartMarker;
     if (!LOCKED.batchSize      && _ls.batchSize)                    BATCH_SIZE = _ls.batchSize;
     if (!LOCKED.monthNames     && _ls.monthNames && _ls.monthNames.length) MONTHS = _ls.monthNames;
   }
@@ -967,13 +1017,39 @@ function parseMarkdown(text) {
   var fmMatch = body.match(/^---[\s\S]*?\n---\n/);
   if (fmMatch) body = body.slice(fmMatch[0].length);
   var lines = body.split("\n");
-  var title = "", snippetParts = [], imgRef = null, titleDone = false;
+  var title = "", snippetParts = [], imgRef = null;
+
+  // Extract title from the full body (not affected by start marker).
   for (var li = 0; li < lines.length; li++) {
     var t = lines[li].trim();
     if (!t) continue;
-    if (!titleDone) { title = t.replace(/^#+\s+/, ""); titleDone = true; }
-    else if (!t.startsWith("#") && snippetParts.join(" ").length < 150) snippetParts.push(t);
+    title = t.replace(/^#+\s+/, "");
+    break;
   }
+
+  // Determine snippet source: after marker if set and found, else full body.
+  // When using the full body we skip the first non-empty line (= title) to
+  // preserve the original behaviour; when a marker is found the title line is
+  // already above the marker so nothing needs to be skipped.
+  var snippetSource = body;
+  var skipTitleInSnippet = true;
+  if (SNIPPET_START_MARKER) {
+    var markerIdx = body.indexOf(SNIPPET_START_MARKER);
+    if (markerIdx !== -1) {
+      snippetSource = body.slice(markerIdx + SNIPPET_START_MARKER.length);
+      skipTitleInSnippet = false;
+    }
+  }
+  var snippetLineArr = snippetSource.split("\n");
+  var snippetTitleSkipped = !skipTitleInSnippet;
+  for (var si = 0; si < snippetLineArr.length; si++) {
+    var st = snippetLineArr[si].trim();
+    if (!st) continue;
+    if (!snippetTitleSkipped) { snippetTitleSkipped = true; continue; }
+    if (st.startsWith("#")) continue;
+    if (snippetParts.join(" ").length < 150) snippetParts.push(st);
+  }
+
   var snippet = snippetParts.join(" ");
   if (snippet.length > 130) snippet = snippet.slice(0, 127) + "\u2026";
   var wOpen = "![[", wClose = "]" + "]";
@@ -999,8 +1075,11 @@ function setOpenTile(path) {
 
 // ── 11. Tile DOM builder ──────────────────────────────────────────
 function buildContentHTML(entry) {
-  var t = '<div class="je-title' + (entry.title !== undefined ? "" : " je-sk") + '">'
-    + (entry.title !== undefined ? esc(entry.title || "(no title)") : "") + "</div>";
+  var t = "";
+  if (SHOW_TITLE) {
+    t = '<div class="je-title' + (entry.title !== undefined ? "" : " je-sk") + '">'
+      + (entry.title !== undefined ? esc(entry.title || "(no title)") : "") + "</div>";
+  }
   var s = "";
   if (SHOW_SNIP) {
     s = '<div class="je-snip' + (entry.title !== undefined ? "" : " je-sk") + '">'
@@ -1296,9 +1375,15 @@ function openSettings() {
   g("je-s-thumb").checked = LOCKED.showThumbnails
     ? (JE_CONFIG.showThumbnails !== false)
     : (soft.showThumbnails !== undefined ? soft.showThumbnails !== false : JE_CONFIG.showThumbnails !== false);
+  g("je-s-title").checked = LOCKED.showTitle
+    ? (JE_CONFIG.showTitle !== false)
+    : (soft.showTitle !== undefined ? soft.showTitle !== false : JE_CONFIG.showTitle !== false);
   g("je-s-snip").checked  = LOCKED.showSnippets
     ? (JE_CONFIG.showSnippets !== false)
     : (soft.showSnippets !== undefined ? soft.showSnippets !== false : JE_CONFIG.showSnippets !== false);
+  g("je-s-snippet-marker").value = LOCKED.snippetStartMarker
+    ? (JE_CONFIG.snippetStartMarker || "")
+    : (soft.snippetStartMarker !== undefined ? soft.snippetStartMarker : (JE_CONFIG.snippetStartMarker || ""));
   g("je-s-months").value  = LOCKED.monthNames
     ? (JE_CONFIG.monthNames || []).join(", ")
     : (soft.monthNames || JE_CONFIG.monthNames || []).join(", ");
@@ -1308,13 +1393,15 @@ function openSettings() {
 
   // Apply locked state for keys controlled by space-lua config
   var lockDefs = [
-    { id: "je-s-pattern", key: "journalPathPattern" },
-    { id: "je-s-pos",     key: "position" },
-    { id: "je-s-batch",   key: "batchSize" },
-    { id: "je-s-months",  key: "monthNames" },
-    { id: "je-s-days",    key: "dayNames" },
-    { id: "je-s-thumb",   key: "showThumbnails", labelId: "je-s-thumb-lbl" },
-    { id: "je-s-snip",    key: "showSnippets",   labelId: "je-s-snip-lbl"  },
+    { id: "je-s-pattern",        key: "journalPathPattern" },
+    { id: "je-s-pos",            key: "position" },
+    { id: "je-s-batch",          key: "batchSize" },
+    { id: "je-s-months",         key: "monthNames" },
+    { id: "je-s-days",           key: "dayNames" },
+    { id: "je-s-thumb",          key: "showThumbnails",     labelId: "je-s-thumb-lbl"  },
+    { id: "je-s-title",          key: "showTitle",          labelId: "je-s-title-lbl"  },
+    { id: "je-s-snip",           key: "showSnippets",       labelId: "je-s-snip-lbl"   },
+    { id: "je-s-snippet-marker", key: "snippetStartMarker" },
   ];
   var hasLocked = false;
   lockDefs.forEach(function(lf) {
@@ -1359,7 +1446,9 @@ function saveSettings() {
   if (!LOCKED.position)           newSettings.position           = g("je-s-pos").value;
   if (!LOCKED.batchSize)          newSettings.batchSize          = parseInt(g("je-s-batch").value, 10) || 20;
   if (!LOCKED.showThumbnails)     newSettings.showThumbnails     = g("je-s-thumb").checked;
+  if (!LOCKED.showTitle)          newSettings.showTitle          = g("je-s-title").checked;
   if (!LOCKED.showSnippets)       newSettings.showSnippets       = g("je-s-snip").checked;
+  if (!LOCKED.snippetStartMarker) newSettings.snippetStartMarker = g("je-s-snippet-marker").value.trim();
   if (!LOCKED.monthNames)         newSettings.monthNames         = splitTrim(g("je-s-months").value);
   if (!LOCKED.dayNames)           newSettings.dayNames           = splitTrim(g("je-s-days").value);
 
@@ -1458,7 +1547,7 @@ local function drawJournalPanel()
   for i = 1, batchEnd do
     local raw = space.readPage(entries[i].path)
     if raw then
-      local title, snippet, imgRef = extractInfo(raw)
+      local title, snippet, imgRef = extractInfo(raw, CFG.SNIPPET_MARKER)
       table.insert(preload, { title = title, snippet = snippet, imgRef = imgRef })
     else
       table.insert(preload, { title = "", snippet = "", imgRef = nil })
@@ -1500,13 +1589,15 @@ local function drawJournalPanel()
   end
 
   local configJson = '{"journalPathPattern":"' .. jesc(CFG.PATTERN) .. '"'
-  configJson = configJson .. ',"position":"'    .. CFG.PANEL_ID .. '"'
-  configJson = configJson .. ',"batchSize":'    .. tostring(CFG.BATCH)
-  configJson = configJson .. ',"showThumbnails":' .. jbool(CFG.THUMBS)
-  configJson = configJson .. ',"showSnippets":'   .. jbool(CFG.SNIPPETS)
-  configJson = configJson .. ',"monthNames":['  .. table.concat(quotedMonths, ",") .. ']'
-  configJson = configJson .. ',"dayNames":['    .. table.concat(quotedDays,   ",") .. ']'
-  configJson = configJson .. ',"locked":{'      .. table.concat(lockedParts,  ",") .. '}}'
+  configJson = configJson .. ',"position":"'          .. CFG.PANEL_ID .. '"'
+  configJson = configJson .. ',"batchSize":'          .. tostring(CFG.BATCH)
+  configJson = configJson .. ',"showThumbnails":'     .. jbool(CFG.THUMBS)
+  configJson = configJson .. ',"showSnippets":'       .. jbool(CFG.SNIPPETS)
+  configJson = configJson .. ',"showTitle":'          .. jbool(CFG.SHOW_TITLE)
+  configJson = configJson .. ',"snippetStartMarker":"' .. jesc(CFG.SNIPPET_MARKER) .. '"'
+  configJson = configJson .. ',"monthNames":['        .. table.concat(quotedMonths, ",") .. ']'
+  configJson = configJson .. ',"dayNames":['          .. table.concat(quotedDays,   ",") .. ']'
+  configJson = configJson .. ',"locked":{'            .. table.concat(lockedParts,  ",") .. '}}'
 
   local scriptParts = {
     "const JE_VERSION = " .. tostring(os.time()) .. ";", -- keep forced refresh
@@ -1579,6 +1670,8 @@ js.window.addEventListener("je-settings-save", function(e)
   if d.batchSize          ~= nil then clientStore.set("journalExplorer.batchSize",      tostring(d.batchSize)) end
   if d.showThumbnails     ~= nil then clientStore.set("journalExplorer.showThumbnails", (d.showThumbnails ~= false) and "true" or "false") end
   if d.showSnippets       ~= nil then clientStore.set("journalExplorer.showSnippets",   (d.showSnippets  ~= false) and "true" or "false") end
+  if d.showTitle          ~= nil then clientStore.set("journalExplorer.showTitle",       (d.showTitle     ~= false) and "true" or "false") end
+  if d.snippetStartMarker ~= nil then clientStore.set("journalExplorer.snippetStartMarker", tostring(d.snippetStartMarker)) end
 
   local months = {}
   if d.monthNames then for _, v in ipairs(d.monthNames) do table.insert(months, tostring(v)) end end
