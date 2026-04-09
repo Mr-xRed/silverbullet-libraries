@@ -47,7 +47,7 @@ html[data-theme="dark"] #sb-fmttb-wrap {
     --fmttb-active-bg:  oklch(1 0 0 / 0.20);
     --fmttb-on-bg:      oklch(0.62 0.14 255 / 0.32);
     --fmttb-on-dot:     oklch(0.75 0.18 255);
-    --fmttb-sep:        oklch(1 0 0 / 0.13);
+    --fmttb-sep:        oklch(1 0 0 / 0.20);
     --fmttb-drop-shadow: drop-shadow(0 8px 20px oklch(0 0 0 / 0.5));
 }
 
@@ -59,7 +59,7 @@ html[data-theme="light"] #sb-fmttb-wrap {
     --fmttb-active-bg:  oklch(0 0 0 / 0.13);
     --fmttb-on-bg:      oklch(0.55 0.12 255 / 0.12);
     --fmttb-on-dot:     oklch(0.45 0.18 255);
-    --fmttb-sep:        oklch(0 0 0 / 0.12);
+    --fmttb-sep:        oklch(0 0 0 / 0.20);
     --fmttb-drop-shadow: drop-shadow(0 4px 12px oklch(0 0 0 / 0.15));
 }
 
@@ -69,9 +69,9 @@ html[data-theme="light"] #sb-fmttb-wrap {
     position: fixed;
     z-index: 10000;
     display: flex;
-    align-items: center;
+    align-items: **center**er**;
     gap: 2px;
-    padding: 5px 5px;
+    padding: 4px;
     border-radius: 8px;
     border: 1px solid var(--fmttb-border);
     background: var(--fmttb-bg);
@@ -177,8 +177,9 @@ html[data-theme="light"] #sb-fmttb-wrap {
 
 .sb-fmttb-sep {
     width: 1px;
-    height: 16px;
+    height: 20px;
     background: var(--fmttb-sep);
+    align-self: center;
     margin: 0 2px;
     flex-shrink: 0;
 }
@@ -1127,4 +1128,6 @@ event.listen { name = "editor:pageLoaded", run = function()
     end
 end }
 ```
-````
+
+## Discussions about this Library
+- [Silverbullet Community](https://community.silverbullet.md/t/formatting-toolbar-for-selections/4010?u=mr.red)
