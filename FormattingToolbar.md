@@ -3,9 +3,10 @@ name: "Library/Mr-xRed/FormattingToolbar"
 tags: meta/library
 pageDecoration.prefix: "✏️ "
 ---
+
 # Formatting Toolbar
 
-This library introduces a context-sensitive formatting toolbar that materialises only when you select text, providing quick access to functions such as Bold, Italic, Strikethrough, Blockquotes, etc. It manages to be quite helpful without cluttering your screen.
+This library introduces a context-sensitive formatting toolbar that materialises only when you select text, providing quick access to functions such as **Bold**, _Italic_, ~~Strikethrough~~, `Blockquotes`, etc. It manages to be quite helpful without cluttering your screen.
 
 ```lua
 config.set("FormattingToolbar", {
@@ -21,7 +22,13 @@ config.set("FormattingToolbar", {
     showQuote = true,
     showBullet = true,
     showNumber = true,
-    showTask = true
+    showTask = true,
+    showH1 = true,
+    showH2 = true,
+    showH3 = true,
+    showH4 = true,
+    showH5 = true,
+    showH6 = true
 })
 ```
 
@@ -33,8 +40,8 @@ config.set("FormattingToolbar", {
 /* -- Theme tokens ------------------------------------------------------- */
 
 html[data-theme="dark"] #sb-fmttb-wrap {
-    --fmttb-bg:         oklch(0.14 0.01 270 / 0.95);
-    --fmttb-border:     oklch(1 0 0 / 0.12);
+    --fmttb-bg:         oklch(0.14 0.01 270);
+    --fmttb-border:     oklch(0.45 0 0);
     --fmttb-text:       oklch(0.88 0 0);
     --fmttb-hover-bg:   oklch(1 0 0 / 0.10);
     --fmttb-active-bg:  oklch(1 0 0 / 0.20);
@@ -45,8 +52,8 @@ html[data-theme="dark"] #sb-fmttb-wrap {
 }
 
 html[data-theme="light"] #sb-fmttb-wrap {
-    --fmttb-bg:         oklch(0.99 0 0 / 0.97);
-    --fmttb-border:     oklch(0 0 0 / 0.12);
+    --fmttb-bg:         oklch(0.99 0 0);
+    --fmttb-border:     oklch(0.8 0 0);
     --fmttb-text:       oklch(0.18 0 0);
     --fmttb-hover-bg:   oklch(0 0 0 / 0.06);
     --fmttb-active-bg:  oklch(0 0 0 / 0.13);
@@ -64,8 +71,8 @@ html[data-theme="light"] #sb-fmttb-wrap {
     display: flex;
     align-items: center;
     gap: 2px;
-    padding: 5px 7px;
-    border-radius: 10px;
+    padding: 5px 5px;
+    border-radius: 8px;
     border: 1px solid var(--fmttb-border);
     background: var(--fmttb-bg);
     backdrop-filter: blur(14px) saturate(1.6);
@@ -94,6 +101,41 @@ html[data-theme="light"] #sb-fmttb-wrap {
         visibility 0s   linear 0s;
 }
 
+/* -- Mobile Overrides --------------------------------------------------- */
+
+#sb-fmttb-wrap.sb-fmttb-mobile {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    padding: 8px 8px !important;
+    overflow-x: auto !important;
+    justify-content: flex-start !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    transform: none !important;
+    touch-action: pan-x;   /* ← add this */
+}
+
+#sb-fmttb-wrap.sb-fmttb-mobile .sb-fmttb-btn {
+    flex-shrink: 0;
+    padding: 8px 8px;
+}
+
+#sb-fmttb-wrap.sb-fmttb-mobile .sb-fmttb-sep {
+    flex-shrink: 0;
+}
+
+#sb-fmttb-wrap.sb-fmttb-mobile::-webkit-scrollbar {
+    display: none;
+}
+
+#sb-fmttb-wrap.sb-fmttb-mobile .sb-fmttb-btn svg {width: 18fmttb-active::afterpx; height:18px;}
+
 /* -- Buttons ------------------------------------------------------------ */
 
 .sb-fmttb-btn {
@@ -102,7 +144,7 @@ html[data-theme="light"] #sb-fmttb-wrap {
     border: none;
     color: var(--fmttb-text);
     cursor: pointer;
-    padding: 6px 8px;
+    padding: 8px 8px;
     border-radius: 6px;
     display: inline-flex;
     align-items: center;
@@ -113,7 +155,7 @@ html[data-theme="light"] #sb-fmttb-wrap {
 
 .sb-fmttb-btn:hover  { background: var(--fmttb-hover-bg); }
 .sb-fmttb-btn:active { background: var(--fmttb-active-bg); transform: scale(0.9); }
-.sb-fmttb-btn svg { display: block; pointer-events: none; }
+.sb-fmttb-btn svg { display: block; pointer-events: none;}
 
 /* -- Active / "formatting is on" state ---------------------------------- */
 
@@ -121,12 +163,10 @@ html[data-theme="light"] #sb-fmttb-wrap {
     background: var(--fmttb-on-bg);
 }
 
-/* Small dot indicator at the bottom of active buttons */
-/
 .sb-fmttb-btn.sb-fmttb-active::after {
     content: '';
     position: absolute;
-    bottom: 1px;
+    bottom: 3px;
     left: 50%;
     translate: -50% 0;
     width: 4px;
@@ -134,7 +174,7 @@ html[data-theme="light"] #sb-fmttb-wrap {
     border-radius: 50%;
     background: var(--fmttb-on-dot);
 }
-*/
+
 .sb-fmttb-sep {
     width: 1px;
     height: 16px;
@@ -149,25 +189,47 @@ html[data-theme="light"] #sb-fmttb-wrap {
     position: absolute;
     width: 0;
     height: 0;
-    border-left: 7px solid transparent;
-    border-right: 7px solid transparent;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
     pointer-events: none;
 }
 
-/* Arrow pointing down (Toolbar is ABOVE text) */
 #sb-fmttb-wrap.sb-arr-down #sb-fmttb-arrow {
     top: 100%;
-    border-top: 7px solid var(--fmttb-bg);
+    border-top: 8px solid var(--fmttb-border);
     border-bottom: none;
-    margin-top: -0.5px;
+    margin-top: 0px;
 }
 
-/* Arrow pointing up (Toolbar is BELOW text) */
 #sb-fmttb-wrap.sb-arr-up #sb-fmttb-arrow {
     bottom: 100%;
+    border-bottom: 8px solid var(--fmttb-border);
+    border-top: none;
+    margin-bottom: 0px;
+}
+
+/* Inner (bg-coloured) triangle — sits on top, leaving 1 px border on the two slanted edges */
+#sb-fmttb-arrow::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+}
+
+#sb-fmttb-wrap.sb-arr-down #sb-fmttb-arrow::after {
+    border-top: 7px solid var(--fmttb-bg);
+    border-bottom: none;
+    top: -8px;
+    left: -7px;
+}
+
+#sb-fmttb-wrap.sb-arr-up #sb-fmttb-arrow::after {
     border-bottom: 7px solid var(--fmttb-bg);
     border-top: none;
-    margin-bottom: -0.5px;
+    top: 1px;
+    left: -7px;
 }
 ```
 
@@ -191,7 +253,13 @@ config.define("FormattingToolbar", {
         showQuote = { type = "boolean" },
         showBullet = { type = "boolean" },
         showNumber = { type = "boolean" },
-        showTask = { type = "boolean" }
+        showTask = { type = "boolean" },
+        showH1 = { type = "boolean" },
+        showH2 = { type = "boolean" },
+        showH3 = { type = "boolean" },
+        showH4 = { type = "boolean" },
+        showH5 = { type = "boolean" },
+        showH6 = { type = "boolean" }
     }
 })
 
@@ -297,22 +365,11 @@ end
 -- ============================================================
 -- Marker scanning — outward (beyond the selection edges)
 -- ============================================================
--- Scans the document text immediately outside [cm_from, cm_to].
--- Returns two lists: markers found to the LEFT and to the RIGHT,
--- in the order they were encountered moving away from the text.
---
--- Note on indexing:
---   cm_from / cm_to  are CodeMirror 0-based positions.
---   In Lua (1-based): selected text = full:sub(cm_from+1, cm_to)
---   Last char before selection (Lua) = full:sub(cm_from, cm_from)
---   First char after  selection (Lua) = full:sub(cm_to+1, cm_to+1)
--- ============================================================
 
 function fmttb_scan_outward(full, cm_from, cm_to)
     local left_markers  = {}
     local right_markers = {}
 
-    -- Scan leftward: start at cm_from (Lua index of char before selection)
     local pos = cm_from
     while pos > 0 do
         local found = false
@@ -331,7 +388,6 @@ function fmttb_scan_outward(full, cm_from, cm_to)
         if not found then break end
     end
 
-    -- Scan rightward: start at cm_to+1 (Lua index of char after selection)
     local pos2    = cm_to + 1
     local doc_len = #full
     while pos2 <= doc_len do
@@ -357,18 +413,12 @@ end
 -- ============================================================
 -- Marker scanning — inward (from the edges of the selected text)
 -- ============================================================
--- Used when the user has selected text that itself begins/ends
--- with marker characters (e.g. the whole "**_~~text~~_**").
--- Returns markers found scanning inward from the left edge and
--- inward from the right edge of `selected_text`.
--- ============================================================
 
 function fmttb_scan_inward(selected_text)
     local left_markers  = {}
     local right_markers = {}
     local text_len = #selected_text
 
-    -- Scan from left edge of selected text inward
     local pos = 1
     while pos <= text_len do
         local found = false
@@ -387,7 +437,6 @@ function fmttb_scan_inward(selected_text)
         if not found then break end
     end
 
-    -- Scan from right edge of selected text inward
     local pos2 = text_len
     while pos2 > 0 do
         local found = false
@@ -412,22 +461,12 @@ end
 -- ============================================================
 -- Active-marker detection
 -- ============================================================
--- Returns a comma-separated string of command names whose markers
--- are currently wrapping the selection, regardless of nesting
--- order and regardless of whether the markers are inside or
--- outside the selection boundaries.
--- ============================================================
 
 function fmttb_detect_active_markers(full, sel)
     local selected_text = full:sub(sel.from + 1, sel.to)
-
-    -- Outward: markers in the document text flanking the selection
     local lo, ro = fmttb_scan_outward(full, sel.from, sel.to)
-
-    -- Inward: markers at the edges of the selected text itself
     local li, ri = fmttb_scan_inward(selected_text)
 
-    -- Helper: is marker m present in list?
     local function has(list, m)
         for _, v in ipairs(list) do
             if v == m then return true end
@@ -438,8 +477,6 @@ function fmttb_detect_active_markers(full, sel)
     local active_cmds = {}
     for _, item in ipairs(FMTTB_MARKER_CMD) do
         local m = item.marker
-        -- Active = appears on the left side AND on the right side
-        -- (from either the outward or the inward scan)
         local left_has  = has(lo, m) or has(li, m)
         local right_has = has(ro, m) or has(ri, m)
         if left_has and right_has then
@@ -453,33 +490,19 @@ end
 -- ============================================================
 -- Smart selection expansion
 -- ============================================================
--- Before invoking a formatting command, we expand the selection
--- outward (skipping over any other nested markers) until we
--- find the target marker on both sides, then extend the
--- selection to include it.
---
--- Example: selecting "text" inside **_~~text~~_**  and clicking
--- Bold expands the selection to **_~~text~~_** so the Bold
--- command can detect "**" at both ends and remove them.
--- ============================================================
 
 function fmttb_expand_for_marker(marker, sel, full)
     local m_len        = #marker
     local selected_text = full:sub(sel.from + 1, sel.to)
 
-    -- If the selection already starts and ends with the target
-    -- marker, no expansion is needed — the command can handle it.
     if #selected_text >= 2 * m_len
         and selected_text:sub(1, m_len)  == marker
         and selected_text:sub(-m_len)    == marker then
         return
     end
 
-    -- Scan leftward from the selection edge, accumulating how
-    -- many characters to include, stopping once the target
-    -- marker is found (or no more markers are seen).
     local left_expand = 0
-    local pos         = sel.from   -- Lua 1-based: last char before selection
+    local pos         = sel.from
     local found_left  = false
     while pos > 0 do
         local found = false
@@ -496,9 +519,8 @@ function fmttb_expand_for_marker(marker, sel, full)
         if found_left or not found then break end
     end
 
-    -- Scan rightward from the selection edge.
     local right_expand = 0
-    local pos2         = sel.to + 1   -- Lua 1-based: first char after selection
+    local pos2         = sel.to + 1
     local doc_len      = #full
     local found_right  = false
     while pos2 <= doc_len do
@@ -516,18 +538,13 @@ function fmttb_expand_for_marker(marker, sel, full)
         if found_right or not found then break end
     end
 
-    -- Only expand if the target marker was found on BOTH sides.
     if found_left and found_right then
         editor.setSelection(sel.from - left_expand, sel.to + right_expand)
     end
 end
 
 -- ============================================================
--- Custom toggle commands (for marker types not handled natively)
--- ============================================================
--- These already receive an expanded selection (if applicable)
--- because fmttb_expand_for_marker is called first in the
--- fmttb-cmd event handler.
+-- Custom toggle commands
 -- ============================================================
 
 function fmttb_toggle_inline(marker)
@@ -743,6 +760,64 @@ command.define {
 }
 
 -- ============================================================
+-- Heading toggle helper and commands (H1–H6)
+-- ============================================================
+
+function fmttb_toggle_heading(level)
+    local ok_sel, raw_sel = pcall(editor.getSelection)
+    local sel = fmttb_normalize_sel(raw_sel)
+    local ok_txt, full = pcall(editor.getText)
+    if not (sel and ok_txt) then return end
+    local lf, lt, block = fmttb_get_line_range(full, sel)
+    if not lf then return end
+
+    -- Build prefix for this heading level, e.g. "## " for level 2
+    local prefix = string.rep("#", level) .. " "
+    -- Detection pattern: exactly N hashes followed by a space
+    -- (^# " won't match "## " because char 2 would be # not space)
+    local detect_pat = "^" .. string.rep("#", level) .. " "
+    -- Strip pattern: any run of hashes + space at line start
+    local strip_pat = "^#+ "
+
+    local lines = fmttb_split_lines(block)
+    local all_are_h = true
+    for _, l in ipairs(lines) do
+        if l ~= "" then
+            if not l:match(detect_pat) then
+                all_are_h = false
+                break
+            end
+        end
+    end
+
+    local nl = {}
+    for _, l in ipairs(lines) do
+        local s = l
+        if all_are_h then
+            s = l:gsub(strip_pat, "")
+        else
+            if l ~= "" then
+                s = l:gsub(strip_pat, "")
+                s = prefix .. s
+            end
+        end
+        table.insert(nl, s)
+    end
+
+    local new_block = table.concat(nl, "\n")
+    editor.replaceRange(lf, lt, new_block)
+    editor.setSelection(lf, lf + fmttb_get_len(new_block))
+end
+
+for _level = 1, 6 do
+    local lvl = _level
+    command.define {
+        name = "Text: Toggle Heading " .. lvl,
+        run  = function() fmttb_toggle_heading(lvl) end
+    }
+end
+
+-- ============================================================
 -- DOM Construction
 -- ============================================================
 
@@ -756,13 +831,19 @@ function buildFormattingToolbar()
         italic  = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="4" x2="10" y2="4"></line><line x1="14" y1="20" x2="5" y2="20"></line><line x1="15" y1="4" x2="9" y2="20"></line></svg>]],
         strike  = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4H9a3 3 0 0 0-2.83 4"></path><path d="M14 12a4 4 0 0 1 0 8H6"></path><line x1="4" y1="12" x2="20" y2="12"></line></svg>]],
         marker  = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3"></path><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"></path></svg>]],
-        super   = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 19 8-8"/><path d="m12 19-8-8"/><path d="M20 12h-4c0-1.5.442-2 1.5-2.5S20 8.334 20 7.002c0-.472-.17-.93-.484-1.29a2.105 2.105 0 0 0-2.617-.436c-.42.239-.738.614-.899 1.06"/></svg>]],
-        sub     = [[<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 5 8 8"/><path d="m12 5-8 8"/><path d="M20 19h-4c0-1.5.44-2 1.5-2.5S20 15.33 20 14c0-.47-.17-.93-.48-1.29a2.11 2.11 0 0 0-2.62-.44c-.42.24-.74.62-.9 1.07"/></svg>]],
+        super   = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 19 8-8"/><path d="m12 19-8-8"/><path d="M20 12h-4c0-1.5.442-2 1.5-2.5S20 8.334 20 7.002c0-.472-.17-.93-.484-1.29a2.105 2.105 0 0 0-2.617-.436c-.42.239-.738.614-.899 1.06"/></svg>]],
+        sub     = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 5 8 8"/><path d="m12 5-8 8"/><path d="M20 19h-4c0-1.5.44-2 1.5-2.5S20 15.33 20 14c0-.47-.17-.93-.48-1.29a2.11 2.11 0 0 0-2.62-.44c-.42.24-.74.62-.9 1.07"/></svg>]],
         code    = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>]],
         quote   = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1 0 2.5 0 5-2 5"></path><path d="M11 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1 0 2.5 0 5-2 5"></path></svg>]],
         bullet  = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>]],
         number  = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><path d="M4 6h1v4"></path><path d="M4 10h2"></path><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path></svg>]],
-        task    = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="m9 11 3 3L22 4"></path></svg>]]
+        task    = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="m9 11 3 3L22 4"></path></svg>]],
+        h1      = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><text x="1" y="18" font-family="sans-serif" font-size="16" font-weight="700">H1</text></svg>]],
+        h2      = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><text x="1" y="18" font-family="sans-serif" font-size="16" font-weight="700">H2</text></svg>]],
+        h3      = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><text x="1" y="18" font-family="sans-serif" font-size="16" font-weight="700">H3</text></svg>]],
+        h4      = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><text x="1" y="18" font-family="sans-serif" font-size="16" font-weight="700">H4</text></svg>]],
+        h5      = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><text x="1" y="18" font-family="sans-serif" font-size="16" font-weight="700">H5</text></svg>]],
+        h6      = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><text x="1" y="18" font-family="sans-serif" font-size="16" font-weight="700">H6</text></svg>]]
     }
 
     local buttons = {
@@ -778,6 +859,13 @@ function buildFormattingToolbar()
         { i=icons.bullet, t="Bullet", c="Text: Toggle Bullet List" },
         { i=icons.number, t="Number", c="Text: Toggle Numbered List" },
         { i=icons.task,   t="Task",   c="Text: Toggle Task" },
+        { divider=true },
+        { i=icons.h1,     t="H1",     c="Text: Toggle Heading 1" },
+        { i=icons.h2,     t="H2",     c="Text: Toggle Heading 2" },
+        { i=icons.h3,     t="H3",     c="Text: Toggle Heading 3" },
+        { i=icons.h4,     t="H4",     c="Text: Toggle Heading 4" },
+        { i=icons.h5,     t="H5",     c="Text: Toggle Heading 5" },
+        { i=icons.h6,     t="H6",     c="Text: Toggle Heading 6" },
     }
 
     local html = ""
@@ -811,6 +899,10 @@ function buildFormattingToolbar()
     scriptEl.innerHTML = [[
 (function () {
     var MARGIN = 12, GAP = 8, TOP_G = 64;
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
+    var positionLocked = false;
+    var lockedLeft = 0; 
 
     function getRect() {
         var nSel = window.getSelection();
@@ -837,8 +929,6 @@ function buildFormattingToolbar()
         var activeStr = tb.getAttribute("data-active") || "";
         tb.querySelectorAll(".sb-fmttb-btn").forEach(function (btn) {
             var cmd = btn.getAttribute("data-cmd");
-            // A command is active when its exact name appears in the
-            // comma-separated data-active attribute.
             var isActive = cmd && activeStr.split(",").indexOf(cmd) !== -1;
             btn.classList.toggle("sb-fmttb-active", isActive);
         });
@@ -847,28 +937,50 @@ function buildFormattingToolbar()
     function update() {
         var tb = document.getElementById("sb-fmttb-wrap");
         var ar = document.getElementById("sb-fmttb-arrow");
-        if (!tb || tb.getAttribute("data-on") !== "1") return;
+        
+        if (!tb || tb.getAttribute("data-on") !== "1") {
+            positionLocked = false;
+            return;
+        }
+
+        updateActiveButtons(tb);
 
         var r = getRect();
         if (!r) return;
 
-        // Reflect active marker state onto button classes
-        updateActiveButtons(tb);
-
         var tw = tb.offsetWidth, th = tb.offsetHeight;
-        var top  = r.top - th - GAP;
-        var left = r.left + r.width / 2 - tw / 2;
+
+        if (isMobile) {
+            var vv = window.visualViewport;
+            var vh = vv ? vv.height : window.innerHeight;
+            var vt = vv ? vv.offsetTop : 0;
+            tb.style.top = Math.round(vt + vh - th) + "px";
+            tb.style.left = "0px";
+            tb.className = "sb-fmttb-mobile sb-fmttb-on";
+            if (ar) ar.style.display = "none";
+            return;
+        }
+
+        // --- VERTICAL CALCULATION (Always active) ---
+        var top = r.top - th - GAP;
         var below = top < (TOP_G + MARGIN);
-
         if (below) top = r.bottom + GAP;
-        left = Math.max(MARGIN, Math.min(left, window.innerWidth - tw - MARGIN));
+        
+        tb.style.top = Math.round(top) + "px";
+        tb.className = below ? "sb-arr-up sb-fmttb-on" : "sb-arr-down sb-fmttb-on";
 
-        tb.style.top  = Math.round(top)  + "px";
-        tb.style.left = Math.round(left) + "px";
-        tb.className  = below ? "sb-arr-up sb-fmttb-on" : "sb-arr-down sb-fmttb-on";
+        // --- HORIZONTAL CALCULATION ---
+        if (!positionLocked) {
+            var left = r.left + r.width / 2 - tw / 2;
+            left = Math.max(MARGIN, Math.min(left, window.innerWidth - tw - MARGIN));
+            tb.style.left = Math.round(left) + "px";
+            lockedLeft = left; 
+        }
 
+        // --- ARROW CALCULATION (Always active) ---
         if (ar) {
-            var ax = Math.round(r.left + r.width / 2 - left - 7);
+            ar.style.display = "block";
+            var ax = Math.round(r.left + r.width / 2 - (lockedLeft || 0) - 7);
             ar.style.left = Math.max(8, Math.min(ax, tw - 22)) + "px";
         }
     }
@@ -877,20 +989,61 @@ function buildFormattingToolbar()
         var tb = document.getElementById("sb-fmttb-wrap");
         if (!tb) return;
         if (tb.getAttribute("data-on") === "1") update();
-        else tb.classList.remove("sb-fmttb-on");
+        else {
+            tb.classList.remove("sb-fmttb-on");
+            positionLocked = false;
+        }
     }, 100);
 
     function poll() { window.dispatchEvent(new CustomEvent("fmttb-poll")); }
-    ["selectionchange", "mouseup", "touchend", "keyup", "scroll"].forEach(function (ev) {
-        (ev === "scroll" ? (document.querySelector(".cm-scroller") || document) : document)
-            .addEventListener(ev, poll, { passive: true });
+    
+    // Interactions that reset the lock
+    ["mousedown", "keydown"].forEach(function(ev) {
+        document.addEventListener(ev, function(e) {
+            if (!e.target.closest("#sb-fmttb-wrap")) positionLocked = false;
+        }, { passive: true });
     });
+
+    // Scrolling also resets the lock to allow full repositioning
+    var scroller = document.querySelector(".cm-scroller") || document;
+    scroller.addEventListener("scroll", function() {
+        positionLocked = false; 
+        poll();
+    }, { passive: true });
+
+    ["selectionchange", "mouseup", "touchend", "keyup"].forEach(function (ev) {
+        document.addEventListener(ev, poll, { passive: true });
+    });
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", update);
+        window.visualViewport.addEventListener("scroll", update);
+    }
+
+    var lastTouchCmdTime = 0, touchStartX = 0, touchStartY = 0;
+
+    document.addEventListener("touchstart", function (e) {
+        var b = e.target.closest("#sb-fmttb-wrap [data-cmd]");
+        if (b) { touchStartX = e.touches[0].clientX; touchStartY = e.touches[0].clientY; }
+    }, { passive: true });
+
+    document.addEventListener("touchend", function (e) {
+        var b = e.target.closest("#sb-fmttb-wrap [data-cmd]");
+        if (!b) return;
+        e.preventDefault(); e.stopPropagation();
+        var dx = e.changedTouches[0].clientX - touchStartX, dy = e.changedTouches[0].clientY - touchStartY;
+        if (Math.sqrt(dx * dx + dy * dy) > 8) return; 
+        lastTouchCmdTime = Date.now();
+        positionLocked = true; // Lock horizontal only
+        window.dispatchEvent(new CustomEvent("fmttb-cmd", { detail: { command: b.getAttribute("data-cmd") } }));
+    }, { passive: false });
 
     document.addEventListener("mousedown", function (e) {
         var b = e.target.closest("#sb-fmttb-wrap [data-cmd]");
         if (!b) return;
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
+        if (Date.now() - lastTouchCmdTime < 500) return;
+        positionLocked = true; // Lock horizontal only
         window.dispatchEvent(new CustomEvent("fmttb-cmd", { detail: { command: b.getAttribute("data-cmd") } }));
     });
 })();
@@ -906,7 +1059,7 @@ function destroyFormattingToolbar()
 end
 
 -- ============================================================
--- Poll handler — show/hide toolbar and update active states
+-- Poll handler
 -- ============================================================
 
 js.window.addEventListener("fmttb-poll", function()
@@ -931,15 +1084,7 @@ js.window.addEventListener("fmttb-poll", function()
 end)
 
 -- ============================================================
--- Command handler — expand selection before invoking command
--- ============================================================
--- For every inline-wrap command (Bold, Italic, Strike, Mark,
--- Superscript, Subscript, Code) we first attempt to expand the
--- current selection outward to include the target marker.
--- This makes "select inner text → click button" correctly
--- toggle off the formatting even for arbitrarily nested markers
--- in any order. Non-inline commands (Quote, Bullet, …) are
--- passed through unchanged.
+-- Command handler
 -- ============================================================
 
 js.window.addEventListener("fmttb-cmd", function(e)
@@ -959,7 +1104,7 @@ js.window.addEventListener("fmttb-cmd", function(e)
 end)
 
 -- ============================================================
--- Toggle command (for the command palette / keyboard shortcut)
+-- Toggle command
 -- ============================================================
 
 command.define {
@@ -982,7 +1127,4 @@ event.listen { name = "editor:pageLoaded", run = function()
     end
 end }
 ```
-
-## Discussions to this library
-
-- [Silverbullet Community](https://community.silverbullet.md/t/formatting-toolbar-for-selections/4010?u=mr.red)
+````
