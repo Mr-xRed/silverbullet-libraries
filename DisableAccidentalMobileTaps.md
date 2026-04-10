@@ -145,7 +145,7 @@ command.define {
 
 -- Auto-init on load is disabled.
 -- You must run the command once to "deploy" the shield.
--- event.listen { name = "editor:pageLoaded", run = function() setupStreamlinedShield() end }
+-- event.listen { name = "editor:pageLoaded", run = function() if editor.isMobile() then setupStreamlinedShield() end end  }
 
 ```
 
