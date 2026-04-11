@@ -973,8 +973,12 @@ function toggleFloatingJournalCalendar()
                 end
                 local matches = {}
                 local current_pages = space.listPages()
+                local sep_prefix = prefix .. "/"
                 for _, p in ipairs(current_pages) do
-                    if p.name:find(prefix, 1, true) == 1 then
+                    if p.name == prefix
+                        or p.name:find(sep_prefix, 1, true) == 1
+                        or (prefix:sub(-1) == "/" and p.name:find(prefix, 1, true) == 1)
+                    then
                         table.insert(matches, { name = p.name, value = p.name })
                     end
                 end
@@ -1003,7 +1007,10 @@ function toggleFloatingJournalCalendar()
                 local found_name = path
                 local current_pages = space.listPages()
                 for _, p in ipairs(current_pages) do
-                    if p.name:find(path, 1, true) == 1 then
+                    if p.name == path
+                        or p.name:find(path .. "/", 1, true) == 1
+                        or (path:sub(-1) == "/" and p.name:find(path, 1, true) == 1)
+                    then
                         found_name = p.name
                         local ok, text = pcall(space.readPage, p.name)
                         if ok and text then content = text end
@@ -2097,14 +2104,24 @@ function toggleFloatingJournalCalendar()
             return formatDatePattern(dt, pattern);
         }
 
+        // Safe prefix matcher: prevents "2026/April/1" from matching "2026/April/10".
+        // If basePath ends with "/" (e.g. when #wildcard# is used at the end of a
+        // path segment), plain startsWith is kept so the wildcard behaviour is
+        // preserved.  Otherwise the page name must either equal basePath exactly or
+        // continue with a "/" (a true sub-path).
+        function pageMatchesBase(name, basePath) {
+            if (basePath.endsWith('/')) return name.startsWith(basePath);
+            return name === basePath || name.startsWith(basePath + '/');
+        }
+
         function computeStreak(pageNames) {
             const now = new Date();
             const todayBp = buildDayPath(now);
-            const startDelta = pageNames.some(n => n.startsWith(todayBp)) ? 0 : 1;
+            const startDelta = pageNames.some(n => pageMatchesBase(n, todayBp)) ? 0 : 1;
             let streak = 0;
             for (let delta = startDelta; delta <= 365; delta++) {
                 const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - delta);
-                if (pageNames.some(n => n.startsWith(buildDayPath(dt)))) streak++;
+                if (pageNames.some(n => pageMatchesBase(n, buildDayPath(dt)))) streak++;
                 else break;
             }
             return streak;
@@ -2129,7 +2146,7 @@ function toggleFloatingJournalCalendar()
             if (footerMonthCount || footerTotalCount) {
                 const daysInMonth = new Date(y, m + 1, 0).getDate();
                 for (let d = 1; d <= daysInMonth; d++) {
-                    if (pageNames.some(n => n.startsWith(buildDayPath(new Date(y, m, d))))) monthEntries++;
+                    if (pageNames.some(n => pageMatchesBase(n, buildDayPath(new Date(y, m, d))))) monthEntries++;
                 }
                 if (footerTotalCount)
                     totalEntries = pageNames.filter(n => n.startsWith(patPrefix)).length;
@@ -2139,7 +2156,7 @@ function toggleFloatingJournalCalendar()
             if (footerLastEntry) {
                 for (let delta = 0; delta <= 365; delta++) {
                     const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - delta);
-                    if (pageNames.some(n => n.startsWith(buildDayPath(dt)))) {
+                    if (pageNames.some(n => pageMatchesBase(n, buildDayPath(dt)))) {
                         lastLabel = delta === 0 ? 'today' : delta === 1 ? 'yesterday' : delta + 'd ago';
                         break;
                     }
@@ -2457,7 +2474,7 @@ function toggleFloatingJournalCalendar()
                     const basePath = formatDatePattern(dateObj, pattern);
                     el.dataset.path = basePath;  // ← ADD THIS
   
-                    const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
+                    const matchCount = pageNames.filter(name => pageMatchesBase(name, basePath)).length;
                     if (matchCount > 0) {
                         if (useHeatmap) {
                             el.classList.add('jc-heatmap');
@@ -2558,7 +2575,7 @@ function toggleFloatingJournalCalendar()
         
             document.querySelectorAll(".jc-day[data-path]").forEach(el => {
                 const basePath   = el.dataset.path;
-                const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
+                const matchCount = pageNames.filter(name => pageMatchesBase(name, basePath)).length;
         
                 // Clear old dot state
                 const oldDots = el.querySelector(".jc-dots-container");
