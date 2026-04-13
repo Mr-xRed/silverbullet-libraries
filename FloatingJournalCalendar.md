@@ -42,7 +42,7 @@ The **Floating Journal Calendar** is a lightweight, interactive navigation tool 
 
 - **Flexible Path Patterns:** Configure your journal file structure and weekly notes path (with [[Library/Mr-xRed/FloatingJournalCalendar#Date Pattern Placeholders|Pattern Placeholders]]).
 - **Week Numbering System:** Choose between `"iso"` (ISO 8601, default), `"us"` (Sunday-start, week 1 = Jan 1), or `"simple"` (plain count from Jan 1).
-- **Localization Support:** Easily change month names and weekday abbreviations. Choose whether to start weeks on Sunday or Monday.
+- **Localization Support:** Easily change month names and weekdays. Choose whether to start weeks on Sunday or Monday.
 
 ## Config Example and default values
 
@@ -141,7 +141,7 @@ All three pattern strings — `journalPathPattern`, `weeklyNotesPathPattern`, an
 |`#weekdayfull# (#monthname# #D##ordinal#, #year#)`|`Saturday (March 28th, 2026)`|
 |`#year#-#month#-#day# #HH#:#mm#:#ss#`             |`2026-03-28 14:38:07`        |
 |`#D#. #monthname# #year#`                         |`28. March 2026`             |
-|`#weekday#, #D#/#month#/#YY#`                     |`Sat, 28/03/26`              |
+|`#weekday#, #day#/#month#/#YY#`                     |`Sat, 28/03/26`              |
 
 ### Journal Path — `journalPathPattern` Examples
 
