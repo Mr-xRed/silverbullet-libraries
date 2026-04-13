@@ -973,18 +973,8 @@ function toggleFloatingJournalCalendar()
                 end
                 local matches = {}
                 local current_pages = space.listPages()
-                local sep_prefix = prefix .. "/"
-                local evt_has_wildcard = e.detail.hasWildcard == true
                 for _, p in ipairs(current_pages) do
-                    local starts = p.name:find(prefix, 1, true) == 1
-                    local next_char = p.name:sub(#prefix + 1, #prefix + 1)
-                    local wildcard_ok = starts and (next_char == "" or not next_char:match("%d"))
-                    local subpath_ok  = p.name:find(sep_prefix, 1, true) == 1
-                    local slash_ok    = prefix:sub(-1) == "/" and starts
-                    if p.name == prefix
-                        or (evt_has_wildcard and wildcard_ok)
-                        or (not evt_has_wildcard and (subpath_ok or slash_ok))
-                    then
+                    if p.name:find(prefix, 1, true) == 1 then
                         table.insert(matches, { name = p.name, value = p.name })
                     end
                 end
@@ -1009,25 +999,22 @@ function toggleFloatingJournalCalendar()
             elseif e.detail.action == "preview" then
                 -- Find the page matching the path prefix and read its content
                 local path = e.detail.path
+                local entry_index = math.floor(e.detail.entryIndex or 0)
                 local content = ""
                 local found_name = path
                 local current_pages = space.listPages()
-                local evt_has_wildcard = e.detail.hasWildcard == true
+                local matches = {}
                 for _, p in ipairs(current_pages) do
-                    local starts = p.name:find(path, 1, true) == 1
-                    local next_char = p.name:sub(#path + 1, #path + 1)
-                    local wildcard_ok = starts and (next_char == "" or not next_char:match("%d"))
-                    local subpath_ok  = p.name:find(path .. "/", 1, true) == 1
-                    local slash_ok    = path:sub(-1) == "/" and starts
-                    if p.name == path
-                        or (evt_has_wildcard and wildcard_ok)
-                        or (not evt_has_wildcard and (subpath_ok or slash_ok))
-                    then
-                        found_name = p.name
-                        local ok, text = pcall(space.readPage, p.name)
-                        if ok and text then content = text end
-                        break
+                    if p.name:find(path, 1, true) == 1 then
+                        table.insert(matches, p.name)
                     end
+                end
+                table.sort(matches)
+                local target = matches[entry_index + 1] or matches[1]
+                if target then
+                    found_name = target
+                    local ok, text = pcall(space.readPage, target)
+                    if ok and text then content = text end
                 end
                 -- Use the last segment of the page name as title
                 local title = found_name:match("[^/]+$") or found_name
@@ -1131,18 +1118,6 @@ function toggleFloatingJournalCalendar()
             return "{" .. table.concat(parts, ",") .. "}"
         end)()..[[;
         const root             = document.getElementById("sb-journal-root");
-
-        // Fallback defaults for every text-input setting.
-        // Used in applySettings() so that clearing a field restores the default
-        // instead of freezing the calendar with an empty value.
-        const DEFAULTS = {
-            pattern:         'Journal/#year#/#month#-#monthname#/#year#-#month#-#day#_#weekday#',
-            weeklyPattern:   'Journal/Weekly/#weekyear#-W#weeknum#',
-            shiftDatePattern:'#year#-#month#-#day#',
-            months:          ['January','February','March','April','May','June',
-                              'July','August','September','October','November','December'],
-            days:            ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-        };
 
         const LUA_OVERRIDES = ]]..lua_overrides_json..[[;
         const LS_KEY = 'jc_settings_v1';
@@ -1515,14 +1490,14 @@ function toggleFloatingJournalCalendar()
             const scroll = document.getElementById('jc-drawer-scroll');
             if (scroll) scroll.innerHTML = '<div class="jc-preview-loading">⏳ Loading…</div>';
             window.dispatchEvent(new CustomEvent("sb-journal-event", {
-                detail: { action: "preview", path, session, hasWildcard: pattern.includes('#wildcard#') }
+                detail: { action: "preview", path, session }
             }));
         }
 
         // ── Debounced hover preview (400ms delay, no key needed) ─────────────
         // overDrawer flag prevents new previews from firing while the
         // user's mouse is inside the drawer scroll area (so they can scroll).
-        function hoverPreview(path) {
+        function hoverPreview(path, entryIndex) {
             if (overDrawer) return;
             clearTimeout(_hoverTimer);
             _hoverTimer = setTimeout(() => {
@@ -1530,7 +1505,7 @@ function toggleFloatingJournalCalendar()
                 const provisional = path.split('/').pop() || path;
                 openDrawer(provisional);
                 window.dispatchEvent(new CustomEvent("sb-journal-event", {
-                    detail: { action: "preview", path, session, hasWildcard: pattern.includes('#wildcard#') }
+                    detail: { action: "preview", path, session, entryIndex: entryIndex || 0 }
                 }));
             }, 300);
         }
@@ -1632,22 +1607,14 @@ function toggleFloatingJournalCalendar()
         }
 
         function applySettings() {
-            // Helper: return value if non-empty, otherwise the DEFAULTS fallback.
-            // For strings: fall back when trimmed value is empty.
-            // For arrays:  fall back when the array is empty after filtering.
-            function withDefault(key, value) {
-                if (Array.isArray(value))  return value.length  ? value  : DEFAULTS[key];
-                if (typeof value === 'string') return value.trim() ? value : DEFAULTS[key];
-                return value;
-            }
             // Copy draft to live vars
-            months          = withDefault('months',          draft.months);
-            days            = withDefault('days',            draft.days);
+            months          = draft.months;
+            days            = draft.days;
             weekStartsSunday= draft.weekStartsSunday;
             showWeekNumbers = draft.showWeekNumbers;
             weekNumSystem   = draft.weekNumSystem;
-            weeklyPattern   = withDefault('weeklyPattern',   draft.weeklyPattern);
-            pattern         = withDefault('pattern',         draft.pattern);
+            weeklyPattern   = draft.weeklyPattern;
+            pattern         = draft.pattern;
             showFooter      = draft.showFooter;
             footerMoonPhase = draft.footerMoonPhase;
             footerMonthCount= draft.footerMonthCount;
@@ -1656,7 +1623,7 @@ function toggleFloatingJournalCalendar()
             footerStreak    = draft.footerStreak;
             useHeatmap      = draft.useHeatmap;
             showContour     = draft.showContour;
-            shiftDatePattern= withDefault('shiftDatePattern', draft.shiftDatePattern);
+            shiftDatePattern= draft.shiftDatePattern;
             calSize         = draft.calSize;
             colors          = draft.colors || {};
             const prevHover = quickPreviewOnHover;
@@ -1785,10 +1752,9 @@ function toggleFloatingJournalCalendar()
                     inp.addEventListener('keyup',   e => e.stopPropagation());
                     inp.oninput = () => {
                         if (Array.isArray(draft[key])) {
-                            const arr = inp.value.split(',').map(s => s.trim()).filter(Boolean);
-                            draft[key] = arr.length ? arr : DEFAULTS[key] || [];
+                            draft[key] = inp.value.split(',').map(s => s.trim()).filter(Boolean);
                         } else {
-                            draft[key] = inp.value.trim() || (DEFAULTS[key] || '');
+                            draft[key] = inp.value;
                         }
                     };
                 }
@@ -2137,73 +2103,14 @@ function toggleFloatingJournalCalendar()
             return formatDatePattern(dt, pattern);
         }
 
-        // Build a RegExp from the journal path pattern so that totalEntries can be
-        // counted by exact structural match rather than a fragile string prefix.
-        // Each placeholder is replaced with an appropriate regex fragment; literal
-        // characters are escaped.  The result is anchored (^…$) so only true journal
-        // pages are counted — no false positives when patPrefix is empty.
-        function buildPatternRegex(pat) {
-            const parts = pat.split(/(#[a-zA-Z]+#)/);
-            const reStr = parts.map(part => {
-                switch (part) {
-                    case '#year#':       return '\\d{4}';
-                    case '#YY#':         return '\\d{2}';
-                    case '#month#':      return '\\d{2}';
-                    case '#M#':          return '\\d{1,2}';
-                    case '#day#':        return '\\d{2}';
-                    case '#D#':          return '\\d{1,2}';
-                    case '#monthname#':  return '[A-Za-z]+';
-                    case '#monthshort#': return '[A-Za-z]+';
-                    case '#weekday#':    return '[A-Za-z]+';
-                    case '#weekdayfull#':return '[A-Za-z]+';
-                    case '#ordinal#':    return '(?:st|nd|rd|th)';
-                    case '#HH#':         return '\\d{2}';
-                    case '#hh#':         return '\\d{2}';
-                    case '#mm#':         return '\\d{2}';
-                    case '#ss#':         return '\\d{2}';
-                    case '#weeknum#':    return '\\d{2}';
-                    case '#weeknumraw#': return '\\d+';
-                    case '#weekyear#':   return '\\d{4}';
-                    case '#wildcard#':   return '.*';
-                    default: return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                }
-            }).join('');
-            return new RegExp('^' + reStr + '$');
-        }
-
-        // Safe prefix matcher that handles three cases:
-        //
-        // 1. basePath ends with "/" — the pattern used #wildcard# at the end of a
-        //    path segment that already had a "/" before it, so plain startsWith is
-        //    correct (e.g. "Journal/2026/04/" should match anything underneath).
-        //
-        // 2. Pattern contains #wildcard# — allow any suffix after basePath, BUT the
-        //    first character of that suffix must NOT be a digit.  Without this guard,
-        //    basePath "2026/April/1" (day 1) would incorrectly match "2026/April/10"
-        //    (day 10) because "10".startsWith("1") is true.
-        //
-        // 3. No wildcard — page name must either equal basePath exactly or continue
-        //    with a "/" (a genuine sub-path), e.g. "2026/April/1/note".
-        function pageMatchesBase(name, basePath) {
-            if (basePath.endsWith('/')) return name.startsWith(basePath);
-            if (name === basePath) return true;
-            if (pattern.includes('#wildcard#')) {
-                // Suffix is allowed, but must not start with a digit — that would
-                // mean we are accidentally extending a bare number (1 → 10, 11 …).
-                const nextChar = name[basePath.length] || '';
-                return name.startsWith(basePath) && !/\d/.test(nextChar);
-            }
-            return name.startsWith(basePath + '/');
-        }
-
         function computeStreak(pageNames) {
             const now = new Date();
             const todayBp = buildDayPath(now);
-            const startDelta = pageNames.some(n => pageMatchesBase(n, todayBp)) ? 0 : 1;
+            const startDelta = pageNames.some(n => n.startsWith(todayBp)) ? 0 : 1;
             let streak = 0;
             for (let delta = startDelta; delta <= 365; delta++) {
                 const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - delta);
-                if (pageNames.some(n => pageMatchesBase(n, buildDayPath(dt)))) streak++;
+                if (pageNames.some(n => n.startsWith(buildDayPath(dt)))) streak++;
                 else break;
             }
             return streak;
@@ -2221,25 +2128,24 @@ function toggleFloatingJournalCalendar()
 
             const y         = vDate.getFullYear(), m = vDate.getMonth();
             const pageNames = Object.keys(existing);
+            const patPrefix = pattern.split('#')[0];
             const now       = new Date();
 
             let monthEntries = 0, totalEntries = 0;
             if (footerMonthCount || footerTotalCount) {
                 const daysInMonth = new Date(y, m + 1, 0).getDate();
                 for (let d = 1; d <= daysInMonth; d++) {
-                    if (pageNames.some(n => pageMatchesBase(n, buildDayPath(new Date(y, m, d))))) monthEntries++;
+                    if (pageNames.some(n => n.startsWith(buildDayPath(new Date(y, m, d))))) monthEntries++;
                 }
-                if (footerTotalCount) {
-                    const patternRegex = buildPatternRegex(pattern);
-                    totalEntries = pageNames.filter(n => patternRegex.test(n)).length;
-                }
+                if (footerTotalCount)
+                    totalEntries = pageNames.filter(n => n.startsWith(patPrefix)).length;
             }
 
             let lastLabel = null;
             if (footerLastEntry) {
                 for (let delta = 0; delta <= 365; delta++) {
                     const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate() - delta);
-                    if (pageNames.some(n => pageMatchesBase(n, buildDayPath(dt)))) {
+                    if (pageNames.some(n => n.startsWith(buildDayPath(dt)))) {
                         lastLabel = delta === 0 ? 'today' : delta === 1 ? 'yesterday' : delta + 'd ago';
                         break;
                     }
@@ -2557,7 +2463,8 @@ function toggleFloatingJournalCalendar()
                     const basePath = formatDatePattern(dateObj, pattern);
                     el.dataset.path = basePath;  // ← ADD THIS
   
-                    const matchCount = pageNames.filter(name => pageMatchesBase(name, basePath)).length;
+                    const dayMatches = pageNames.filter(name => name.startsWith(basePath));
+                    const matchCount = dayMatches.length;
                     if (matchCount > 0) {
                         if (useHeatmap) {
                             el.classList.add('jc-heatmap');
@@ -2615,7 +2522,7 @@ function toggleFloatingJournalCalendar()
                         }
                         // Click / Ctrl+Click / Cmd+Click: navigate or insert WikiLink
                         window.dispatchEvent(new CustomEvent("sb-journal-event", {
-                            detail: { action: "navigate", path: basePath, session, ctrlKey: e.ctrlKey, metaKey: e.metaKey, hasWildcard: pattern.includes('#wildcard#') }
+                            detail: { action: "navigate", path: basePath, session, ctrlKey: e.ctrlKey, metaKey: e.metaKey }
                         }));
                     };
                     el.ondragstart = (e) => {
@@ -2623,10 +2530,26 @@ function toggleFloatingJournalCalendar()
                         e.dataTransfer.dropEffect = "copy";
                     };
                     if (quickPreviewOnHover) {
+                        let _lastZoneIdx = -1;
                         el.addEventListener('mouseenter', () => {
-                            if (!overDrawer) hoverPreview(basePath);
+                            if (overDrawer) return;
+                            _lastZoneIdx = 0;
+                            hoverPreview(basePath, 0);
                         });
+                        if (matchCount > 1) {
+                            el.addEventListener('mousemove', (e) => {
+                                if (overDrawer) return;
+                                const rect = el.getBoundingClientRect();
+                                const relX = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                                const zoneIdx = Math.min(Math.floor(relX * matchCount), matchCount - 1);
+                                if (zoneIdx !== _lastZoneIdx) {
+                                    _lastZoneIdx = zoneIdx;
+                                    hoverPreview(basePath, zoneIdx);
+                                }
+                            });
+                        }
                         el.addEventListener('mouseleave', () => {
+                            _lastZoneIdx = -1;
                             clearTimeout(_hoverTimer);
                         });
                     }
@@ -2658,7 +2581,7 @@ function toggleFloatingJournalCalendar()
         
             document.querySelectorAll(".jc-day[data-path]").forEach(el => {
                 const basePath   = el.dataset.path;
-                const matchCount = pageNames.filter(name => pageMatchesBase(name, basePath)).length;
+                const matchCount = pageNames.filter(name => name.startsWith(basePath)).length;
         
                 // Clear old dot state
                 const oldDots = el.querySelector(".jc-dots-container");
