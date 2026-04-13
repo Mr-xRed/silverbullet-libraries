@@ -168,6 +168,7 @@ function owm_widget()
   end
   local weather = getOWM(location)
   return widget.new {
+--    markdown = "<div class='weatherWidget'>".. weather .."</div>",
     markdown = weather,
     display = block
   }
