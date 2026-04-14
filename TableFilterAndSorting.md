@@ -611,12 +611,53 @@ function enableTableSorter()
                 const copyHandler = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    const headers = Array.from(table.querySelectorAll('thead tr th, thead tr td')).map(h => h.textContent.trim());
+
+                    // --- Clean HTML copy (Word, Google Docs, LibreOffice) ---
+                    // Clone the whole table, strip sort/filter UI, hide filtered-out rows.
+                    const tableClone = table.cloneNode(true);
+                    tableClone.querySelectorAll('.sort-indicator-wrapper, .filter-container').forEach(el => el.remove());
+                    tableClone.querySelectorAll('thead tr th, thead tr td').forEach(cell => {
+                        cell.classList.remove('sortable-header', 'sort-asc', 'sort-desc');
+                    });
+                    // Remove rows that are currently filtered out (match by index)
+                    const originalBodyRows = Array.from(table.tBodies[0]?.rows || []);
+                    Array.from(tableClone.tBodies[0]?.rows || []).forEach((cloneRow, i) => {
+                        if (originalBodyRows[i]?.style.display === 'none') cloneRow.remove();
+                    });
+                    // Strip all anchor tags (<a href="...">) — replace each with a plain
+                    // text node so #tags and wiki-links paste as text, not hyperlinks.
+                    tableClone.querySelectorAll('a').forEach(a => {
+                        a.replaceWith(document.createTextNode(a.textContent));
+                    });
+                    // Add inline borders so they survive the paste into Word/Excel.
+                    // CSS classes are discarded by most apps on paste, but inline styles stick.
+                    tableClone.style.borderCollapse = 'collapse';
+                    tableClone.querySelectorAll('th, td').forEach(cell => {
+                        cell.style.border  = '1px solid #000';
+                        cell.style.padding = '4px 8px';
+                    });
+                    const htmlData = tableClone.outerHTML;
+
+                    // --- TSV plain-text copy (Excel fallback, plain-text editors) ---
+                    // Tab-separated values — Excel recognises these as separate cells.
+                    function cellText(cell) {
+                        const clone = cell.cloneNode(true);
+                        clone.querySelector('.sort-indicator-wrapper')?.remove();
+                        clone.querySelector('.filter-container')?.remove();
+                        return clone.textContent.trim();
+                    }
+                    const headers = Array.from(table.querySelectorAll('thead tr th, thead tr td')).map(cellText);
                     const visibleRows = Array.from(table.tBodies[0]?.rows || []).filter(r => r.style.display !== 'none');
-                    const bodyData = visibleRows.map(row => Array.from(row.cells).map(c => c.textContent.trim()));
-                    const sep = headers.map(() => '---');
-                    const md = [headers, sep, ...bodyData].map(r => '| ' + r.join(' | ') + ' |').join('\n');
-                    navigator.clipboard.writeText(md).then(() => {
+                    const bodyData = visibleRows.map(row => Array.from(row.cells).map(cellText));
+                    const tsv = [headers, ...bodyData].map(r => r.join('\t')).join('\n');
+
+                    // Write both formats at once — the receiving app picks whichever it prefers.
+                    navigator.clipboard.write([
+                        new ClipboardItem({
+                            'text/html':  new Blob([htmlData], { type: 'text/html' }),
+                            'text/plain': new Blob([tsv],     { type: 'text/plain' }),
+                        })
+                    ]).then(() => {
                         copyBtn.textContent = '✓';
                         setTimeout(() => { copyBtn.textContent = '⿻'; }, 1200);
                     });
