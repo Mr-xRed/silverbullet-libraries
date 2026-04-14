@@ -287,6 +287,8 @@ table .sb-hashtag[data-tag-name^="c"],
 }
 
 /* Overall Table Width Controls (via the widget container) */
+#sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="tfit"]) { width: fit-content !important; }
+
 #sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t30p"]) { width: 30% !important; }
 #sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t40p"]) { width: 40% !important; }
 #sb-main .cm-editor .sb-table-widget:has(.sb-hashtag[data-tag-name="t50p"]) { width: 50% !important; }
