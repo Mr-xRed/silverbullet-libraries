@@ -6,7 +6,9 @@ pageDecoration.prefix: "✏️ "
 
 # Formatting Toolbar
 
+
 This library introduces a context-sensitive formatting toolbar that materialises only when you select text, providing quick access to functions such as **Bold**, _Italic_, ~~Strikethrough~~, `Blockquotes`, etc. It manages to be quite helpful without cluttering your screen.
+
 
 ```lua
 config.set("FormattingToolbar", {
@@ -363,6 +365,18 @@ function fmttb_get_len(text)
     return #text
 end
 
+-- Character threshold above which a single-line selection is treated
+-- as a code *block* rather than inline code (≈ 10 average words)
+local FMTTB_CODE_BLOCK_THRESHOLD = 60
+
+-- Returns true when the trimmed text is already a fenced code block,
+-- i.e. it starts with ``` (+ optional lang) and ends with ```.
+function fmttb_is_codeblock(text)
+    local trimmed = text:match("^%s*(.-)%s*$") or ""
+    return trimmed:match("^```[^\n]*\n") ~= nil
+       and trimmed:match("\n```%s*$")    ~= nil
+end
+
 -- ============================================================
 -- Marker scanning — outward (beyond the selection edges)
 -- ============================================================
@@ -485,6 +499,17 @@ function fmttb_detect_active_markers(full, sel)
         end
     end
 
+    -- Also light up the Code button when the selection is a fenced code block
+    if fmttb_is_codeblock(selected_text) then
+        local already = false
+        for _, c in ipairs(active_cmds) do
+            if c == "Text: Toggle Code" then already = true; break end
+        end
+        if not already then
+            table.insert(active_cmds, "Text: Toggle Code")
+        end
+    end
+
     return table.concat(active_cmds, ",")
 end
 
@@ -583,7 +608,41 @@ command.define {
 
 command.define {
     name = "Text: Toggle Code",
-    run = function() fmttb_toggle_inline("`") end
+    run = function()
+        local ok_sel, raw_sel = pcall(editor.getSelection)
+        local sel = fmttb_normalize_sel(raw_sel)
+        local ok_txt, full = pcall(editor.getText)
+        if not (sel and ok_txt) then return end
+
+        local selected_text = full:sub(sel.from + 1, sel.to)
+        local is_multiline  = selected_text:find("\n") ~= nil
+        local is_long       = fmttb_get_len(selected_text) >= FMTTB_CODE_BLOCK_THRESHOLD
+
+        if is_multiline or is_long then
+            -- ── Fenced code-block toggle ───────────────────────────────
+            -- Expand to complete lines so the fences always sit on clean boundaries
+            local lf, lt, block = fmttb_get_line_range(full, sel)
+            if not lf then return end
+
+            if fmttb_is_codeblock(block) then
+                -- Already a block: strip the opening and closing fence lines
+                local inner = block
+                inner = inner:gsub("^%s*```[^\n]*\n", "")
+                inner = inner:gsub("\n```%s*$", "")
+                
+                editor.replaceRange(lf, lt, inner)
+                editor.setSelection(lf, lf + fmttb_get_len(inner))
+            else
+                -- Wrap the full lines in a fenced code block
+                local new_text = "```\n" .. block .. "\n```"
+                editor.replaceRange(lf, lt, new_text)
+                editor.setSelection(lf, lf + fmttb_get_len(new_text))
+            end
+        else
+            -- ── Inline backtick toggle (short / single-line) ───────────
+            fmttb_toggle_inline("`")
+        end
+    end
 }
 
 command.define {
