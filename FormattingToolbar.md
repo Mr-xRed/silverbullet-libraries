@@ -6,9 +6,9 @@ pageDecoration.prefix: "✏️ "
 
 # Formatting Toolbar
 
-
+```
 This library introduces a context-sensitive formatting toolbar that materialises only when you select text, providing quick access to functions such as **Bold**, _Italic_, ~~Strikethrough~~, `Blockquotes`, etc. It manages to be quite helpful without cluttering your screen.
-
+```
 
 ```lua
 config.set("FormattingToolbar", {
@@ -627,9 +627,8 @@ command.define {
             if fmttb_is_codeblock(block) then
                 -- Already a block: strip the opening and closing fence lines
                 local inner = block
-                inner = inner:gsub("^%s*```[^\n]*\n", "")
-                inner = inner:gsub("\n```%s*$", "")
-                
+                    inner = inner:gsub("^%s*```[^\n]*\n", "")
+                    inner = inner:gsub("\n```%s*$",       "")
                 editor.replaceRange(lf, lt, inner)
                 editor.setSelection(lf, lf + fmttb_get_len(inner))
             else
@@ -957,6 +956,17 @@ function buildFormattingToolbar()
     local scriptEl = js.window.document.createElement("script")
     scriptEl.id = "sb-fmttb-script"
     scriptEl.innerHTML = [[
+// Permanent trampolines — installed exactly once per page lifetime.
+// Lua just replaces the _fn slots; no Lua-side addEventListener needed.
+if (!window._sb_fmttb_tram) {
+    window._sb_fmttb_tram = true;
+    window.addEventListener('fmttb-poll', function () {
+        if (typeof window._sb_fmttb_lua_poll === 'function') window._sb_fmttb_lua_poll();
+    });
+    window.addEventListener('fmttb-cmd', function (e) {
+        if (typeof window._sb_fmttb_lua_cmd === 'function') window._sb_fmttb_lua_cmd(e);
+    });
+}
 (function () {
     var MARGIN = 12, GAP = 8, TOP_G = 64;
     var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
@@ -1116,13 +1126,18 @@ function destroyFormattingToolbar()
         local el = js.window.document.getElementById(id)
         if el then el.remove() end
     end
+    -- Clear the Lua slots so the trampolines become no-ops
+    js.window._sb_fmttb_lua_poll = nil
+    js.window._sb_fmttb_lua_cmd  = nil
 end
 
 -- ============================================================
 -- Poll handler
 -- ============================================================
+-- Assigned to a window slot; the JS trampoline calls it.
+-- Re-assigning on System: Reload simply replaces the slot — no stacking.
 
-js.window.addEventListener("fmttb-poll", function()
+js.window._sb_fmttb_lua_poll = function()
     local toolbar = js.window.document.getElementById("sb-fmttb-wrap")
     if not toolbar then return end
 
@@ -1141,13 +1156,13 @@ js.window.addEventListener("fmttb-poll", function()
     else
         toolbar.setAttribute("data-active", "")
     end
-end)
+end
 
 -- ============================================================
 -- Command handler
 -- ============================================================
 
-js.window.addEventListener("fmttb-cmd", function(e)
+js.window._sb_fmttb_lua_cmd = function(e)
     local cmd    = e.detail.command
     local marker = FMTTB_CMD_TO_MARKER[cmd]
 
@@ -1161,7 +1176,7 @@ js.window.addEventListener("fmttb-cmd", function(e)
     end
 
     editor.invokeCommand(cmd)
-end)
+end
 
 -- ============================================================
 -- Toggle command
