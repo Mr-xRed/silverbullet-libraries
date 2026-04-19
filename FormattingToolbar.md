@@ -6,9 +6,7 @@ pageDecoration.prefix: "✏️ "
 
 # Formatting Toolbar
 
-```
 This library introduces a context-sensitive formatting toolbar that materialises only when you select text, providing quick access to functions such as **Bold**, _Italic_, ~~Strikethrough~~, `Blockquotes`, etc. It manages to be quite helpful without cluttering your screen.
-```
 
 ```lua
 config.set("FormattingToolbar", {
@@ -65,6 +63,17 @@ html[data-theme="light"] #sb-fmttb-wrap {
     --fmttb-drop-shadow: drop-shadow(0 4px 12px oklch(0 0 0 / 0.15));
 }
 
+/* -- HyperOS / Android WebView compatibility ---------------------------- */
+/* Suppresses the native Android selection menu (AI Visual Recognition,    */
+/* Secure Keyboard) so CodeMirror's own selection events reach the toolbar. */
+/* Firefox for Android does not need this; it is a no-op on desktop.        */
+
+.cm-editor,
+.cm-content {
+    -webkit-touch-callout: none;  /* disables long-press callout (iOS/Android) */
+    -webkit-user-select:   text;  /* keep text selectable, but via CM, not OS  */
+}
+
 /* -- Toolbar Container -------------------------------------------------- */
 
 #sb-fmttb-wrap {
@@ -82,7 +91,7 @@ html[data-theme="light"] #sb-fmttb-wrap {
     filter: var(--fmttb-drop-shadow);
     user-select: none;
     pointer-events: all;
-    touch-action: none;
+    touch-action: manipulation; /* reduces HyperOS gesture interference */
     opacity: 0;
     transform: translateY(6px) scale(0.96);
     visibility: hidden;
