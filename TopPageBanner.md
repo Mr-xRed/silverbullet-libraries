@@ -41,7 +41,8 @@ function widgets.banner()
     end
 
     return widget.new {
-      markdown = md
+      markdown = md,
+      cssClasses = {"top-banner"}  
     }
   end
   return widget.new {}
@@ -58,14 +59,13 @@ event.listen {
 
 ## Disable Banner border (optional)
 ```space-style
-/* Disable Widget border*/
-
-#sb-main .cm-editor .sb-lua-top-widget.sb-lua-directive-inline .sb-widget-array img{
-  border: none;          /* no border */
- /* border-radius: 15px;  */  /* rounded corners */
+#sb-main .cm-editor .top-banner {
+  border: none;
+  align-self: center;
+  
 }
-#sb-main .cm-editor .sb-lua-top-widget.sb-lua-directive-inline {
-  border: none;          /* no border */
+#sb-main .cm-editor .top-banner img{
+  border-radius: 12px;   /* rounded corners */
 }
 ```
 
