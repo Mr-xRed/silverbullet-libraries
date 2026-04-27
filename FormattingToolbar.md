@@ -112,6 +112,15 @@ html[data-theme="light"] #sb-fmttb-wrap {
         visibility 0s   linear 0s;
 }
 
+/* -- Read-only mode: suppress toolbar via CSS :has() -------------------- */
+/* Overrides .sb-fmttb-on when the CM editor has contenteditable="false"  */
+
+body:has(.cm-content[contenteditable="false"]) #sb-fmttb-wrap {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 /* -- Mobile Overrides --------------------------------------------------- */
 
 #sb-fmttb-wrap.sb-fmttb-mobile {
