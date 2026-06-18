@@ -14,6 +14,48 @@ This CSS snippet is all about **improving focus and usability** when interacti
 
 ```space-style
 
+/* 2.90+ SpaceStyle */
+/* Makes the modal box a little narrower and higher to fit more results*/
+
+.sb-modal-box:not(.svelte-1pjmr73){
+  top:50vh;
+  transform: translateY(calc(-50% - 55px));
+  border-radius: 15px !important;
+  max-width: calc(100vw - 20px);
+}
+
+.sb-modal-box .sb-result-list { max-height: 60vh; }
+
+.sb-modal-box .sb-option, .sb-modal-box .sb-selected-option .sb-name {
+    padding: 12px;
+    overflow: hidden;
+}
+
+.sb-modal-box::backdrop {
+    backdrop-filter: blur(14px);
+}
+
+.sb-modal-backdrop {
+    backdrop-filter: blur(14px);
+    /*    z-index: 1005;*/
+}
+
+@media only screen and (max-width: 600px) {
+    .sb-modal {
+        inset: 8px !important;
+        top: 70px !important;
+    }
+}
+
+.sb-modal-box[open], .sb-modal { position: fixed; z-index: 209; }
+
+```
+
+
+```
+
+/* Pre 2.9x SpaceStyle */
+
 /* Makes the modal box a little narrower and higher to fit more results*/
 .sb-modal-box {
     top:50vh;
