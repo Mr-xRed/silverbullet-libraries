@@ -10,7 +10,7 @@ files:
 pageDecoration.prefix: "🗂️ "
 ---
 
-# 🗂️ Document Explorer (Ver. 1.1.0)
+# 🗂️ Document Explorer (Ver. 1.1.1)
 
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DocumentExplorer_Screenshot.png)
 
@@ -982,12 +982,11 @@ window.addEventListener('keydown', function(e) {
         if (e.key === "Enter") {
             // Trigger the click immediately
             target.click();
-            
-            // Clean up state in the background so it doesn't block the UI thread
-            setTimeout(() => {
-                focusedIndex = -1;
-                target.classList.remove("is-focused");
-            }, 0);
+
+            // NOTE: We deliberately do NOT reset focusedIndex here.
+            // Opening a file does not redraw the panel, so keeping focusedIndex
+            // pointed at this tile means the next arrow press continues from
+            // the file that was just opened, instead of jumping back to the top.
             return;
         }
         
@@ -995,12 +994,38 @@ window.addEventListener('keydown', function(e) {
         if (e.key === "Backspace") {
             const upBtn = document.querySelector(".folderup-tile");
             if (upBtn) {
+                // Going up a folder triggers "DocumentExplorer: Open Folder", which calls
+                // drawPanel() and rebuilds the whole panel/script - focusedIndex will be
+                // freshly re-initialized to -1 by that reload, so it's safe (and correct)
+                // to reset it here too, to top-start the new folder's listing.
                 focusedIndex = -1;
                 upBtn.click();
             }
         }
     }
 });
+
+// ---------------- Sync focus with mouse selection ----------------
+// Whenever a tile is clicked with the mouse (selecting/opening it, or just
+// selecting it via Ctrl/Cmd-click for batch mode), keep focusedIndex pointed
+// at that tile so the next arrow-key press continues navigation from there
+// instead of resetting to the top of the list.
+document.addEventListener('click', function(e) {
+    const tile = e.target.closest('.grid-tile');
+    if (!tile || tile.classList.contains('folderup-tile')) return;
+
+    // Recompute against the same "currently visible" tile set the keyboard
+    // handler uses, so indices stay consistent between mouse and keyboard.
+    const visibleTiles = Array.from(document.querySelectorAll(".grid-tile")).filter(t => {
+        return window.getComputedStyle(t).display !== 'none';
+    });
+    const idx = visibleTiles.indexOf(tile);
+    if (idx === -1) return;
+
+    focusedIndex = idx;
+    document.querySelectorAll(".is-focused").forEach(el => el.classList.remove("is-focused"));
+    tile.classList.add("is-focused");
+}, true); // capture phase so this runs even though the tile's own inline onclick navigates away
 
 // ---------------- Batch Selection ----------------
 let selectedPaths = new Set();
