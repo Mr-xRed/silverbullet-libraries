@@ -36,7 +36,7 @@ ${KanbanBoard(
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
       [status: "⏳"][priority: "5"] [taskID: "T-04-26"] 
 - [ ] New task with at tag at the end #TestTag [status: "👀"] [priority: "4"][taskID:"T-05-26"]   
-- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "done"] [kanbanHide: "true"] [completed: "2026-02-18 21:20"]
+- [x] Hidden task to demonstrate the Hide/Show button [priority: "5"]   [status: "✅"] [kanbanHide: "true"] [completed: "2026-02-18 21:20"]
 
 
 ## How it Works
@@ -246,7 +246,7 @@ config.set("kanban", { completedAttribute = false })
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  /*gap: 4px;*/
   font-size: 0.85em;
   opacity: 0.8;
 }
@@ -1213,7 +1213,15 @@ function KanbanBoard(taskQuery, options)
         end
     end
 
-    local boardId = "kanban-" .. tostring(math.random(100000))
+    -- MODIFICATION: boardId must be unique across the whole session, not just within a
+    -- single render. math.random(100000) only had 100k possible values, so navigating /
+    -- re-rendering the same directive repeatedly (which happens a lot in normal use)
+    -- could regenerate an ID that collided with an old, detached, still-hidden board div
+    -- from a previous render. document.getElementById() then returned that stale node
+    -- instead of the current one, the init/reveal script ran against the wrong element,
+    -- and the actual visible board was left stuck at visibility:hidden forever.
+    -- os.time() + a wide random range makes collisions practically impossible.
+    local boardId = "kanban-" .. tostring(os.time()) .. "-" .. tostring(math.random(100000000, 999999999))
 
     -- Build sort options: SortDefault first (if set), then "name", then remaining fields
     local sortFields = {}
@@ -1274,10 +1282,19 @@ function KanbanBoard(taskQuery, options)
     
     local html = '<div id="' .. boardId .. '">'
     html = html .. controlsHtml
-    -- MODIFICATION START: Board starts invisible to prevent flash-of-all-cards before
-    -- updateDisplay() runs in init() and applies the persisted filter. Visibility is
-    -- restored by JS after updateDisplay() completes on first init.
-    html = html .. '<div class="kanban-board" style="visibility:hidden">'
+    -- MODIFICATION START: Only hide the board if there's an active persisted filter that
+    -- needs to be reapplied on init. Previously the board was ALWAYS rendered hidden and
+    -- relied on the injected script to reveal it later — but this directive re-evaluates
+    -- on every live-preview update (e.g. every keystroke while editing Lua source
+    -- elsewhere on this same page), and each re-evaluation replaces the board with a
+    -- fresh hidden copy + a fresh reveal script. If re-renders keep happening faster than
+    -- a given script/observer can finish, the board can be left permanently hidden.
+    -- Since Space Lua runs client-side, we can read js.window._kanbanFilterState directly
+    -- here and skip hiding entirely when there's nothing to reapply — which is the vast
+    -- majority of renders. This removes almost all exposure to that race.
+    local hasActiveFilter = js.window._kanbanFilterState ~= nil and js.window._kanbanFilterState ~= ""
+    local hiddenStyle = hasActiveFilter and ' style="visibility:hidden"' or ''
+    html = html .. '<div class="kanban-board"' .. hiddenStyle .. '>'
     -- MODIFICATION END
     
     for _, status in ipairs(columnOrder) do
@@ -1934,11 +1951,34 @@ function KanbanBoard(taskQuery, options)
             return true;
         };
         
-        let attempts = 0;
-        const timer = setInterval(() => {
-            if (init() || attempts > 10) clearInterval(timer);
-            attempts++;
-        }, 100);
+        // MODIFICATION START: Robust init scheduling.
+        // Previously this used a fixed setInterval(...11 attempts...) which gave up
+        // after ~1.1s. If SB mounted the widget HTML later than that (slow render,
+        // heavy page, many widgets, etc.) init() never ran, updateDisplay() never ran,
+        // and the board's inline style="visibility:hidden" was never flipped back to
+        // visible — leaving the board permanently blank even though its markup was
+        // fully in the DOM.
+        //
+        // Fix: try immediately (fast path), then fall back to watching the DOM for the
+        // board's arrival instead of guessing at a timeout. A final safety-net timeout
+        // guarantees the board is force-revealed even if init() never succeeds, so it
+        // can never stay invisible forever.
+        if (!init()) {
+            const observer = new MutationObserver(() => {
+                if (init()) observer.disconnect();
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            setTimeout(() => {
+                observer.disconnect();
+                const root = document.getElementById(boardId);
+                const board = root && root.querySelector(".kanban-board");
+                if (board && board.style.visibility === "hidden") {
+                    board.style.visibility = "visible";
+                }
+            }, 8000);
+        }
+        // MODIFICATION END
     })();
     ]]
 
