@@ -1280,7 +1280,14 @@ function KanbanBoard(taskQuery, options)
     ]]
     -- MODIFICATION END
     
-    local html = '<div id="' .. boardId .. '">'
+    -- MODIFICATION: board config embedded as data attributes on the root wrapper so a
+    -- single, session-persistent delegated event engine (installed once, see jsCode below)
+    -- can operate on ANY board instance purely from the DOM, without needing "its own"
+    -- per-render script to have successfully run. This is what makes buttons/drag-drop
+    -- keep working even when SilverBullet reuses/replaces this widget's DOM without
+    -- re-invoking this Lua function (e.g. after toggling the raw-source edit view).
+    local columnOrderAttr = columnOrderJson:gsub('"', '&quot;')
+    local html = '<div id="' .. boardId .. '" data-kanban-root="true" data-status-key="' .. statusKey .. '" data-column-order="' .. columnOrderAttr .. '">'
     html = html .. controlsHtml
     -- MODIFICATION START: Only hide the board if there's an active persisted filter that
     -- needs to be reapplied on init. Previously the board was ALWAYS rendered hidden and
@@ -1526,190 +1533,285 @@ function KanbanBoard(taskQuery, options)
     
     local jsCode = [[
     (function() {
+        // ============================================================
+        // MODIFICATION: Rearchitected from a per-render closure to a single,
+        // session-persistent, event-delegation engine.
+        //
+        // Root cause being fixed: SilverBullet can replace/re-insert this
+        // widget's DOM (e.g. toggling the raw source edit view) without
+        // reliably re-invoking this Lua function in lockstep, so a freshly
+        // appended <script> matched to "its own" boardId is not a dependable
+        // way to wire up behavior for whatever board is currently on screen.
+        // That produced two symptoms: the board stuck at visibility:hidden,
+        // and later, board rendered fine but every button dead (the script
+        // that should have wired it up simply never ran for that DOM).
+        //
+        // Fix: attach every interactive listener ONCE EVER, on `document`,
+        // via delegation — resolving which board an event belongs to at
+        // event time via closest('[data-kanban-root]') — plus a single
+        // persistent MutationObserver (also installed once ever) that
+        // initializes any `.kanban-board` it finds, whenever it appears,
+        // for the lifetime of the page. This no longer depends on any
+        // particular script instance succeeding.
+        // ============================================================
+
         const boardId = "]] .. boardId .. [[";
-        const statusKey = "]] .. statusKey .. [[";
-        // MODIFICATION: Column order array for passing done/default status to the task editor
-        const columnOrder = ]] .. columnOrderJson .. [[;
 
-        // ----- Filter / Sort state (mirrored from MediaGallery; pagination removed) -----
-        let sortDirection = "asc";
-        
-        const init = () => {
-            const root = document.getElementById(boardId);
-            if (!root) return false;
+        const eyeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
+        const eyeOffIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
 
+        const getRoot = (el) => (el && el.closest) ? el.closest('[data-kanban-root]') : null;
+
+        const updateDisplay = (root) => {
             const board = root.querySelector(".kanban-board");
             const input = root.querySelector(".kanban-search-input");
             const sortSelect = root.querySelector(".kanban-sort-select");
-            const sortBtns = root.querySelectorAll(".kanban-sort-btn");
-            // MODIFICATION START: Reset filter button reference
-            const resetBtn = root.querySelector(".kanban-reset-filter-btn");
-            const toggleHiddenBtn = root.querySelector(".kanban-toggle-hidden-btn");
-            // MODIFICATION END
+            if (!board || !input || !sortSelect) return;
 
-            if (!board || !input) return false;
+            const showHidden = board.classList.contains("show-hidden");
+            const rawQuery = input.value.toLowerCase().trim();
+            const keywords = rawQuery.split(/\s+/).filter(k => k.length > 0);
+            const sortField = sortSelect.value;
+            const sortDirection = root.dataset.sortDirection || "asc";
 
-            // MODIFICATION START: Restore persisted filter value from window-level state so the
-            // filter survives widget refreshes triggered by drag-and-drop or task saves.
-            // window._kanbanFilterState holds the last value typed by the user and is cleared
-            // only when the reset button is pressed or the page is reloaded.
+            const allWrappers = Array.from(board.querySelectorAll(".kanban-card-wrapper"));
+
+            const filtered = allWrappers.filter(wrapper => {
+                const card = wrapper.querySelector(".kanban-card");
+                if (!card) return false;
+                if (!showHidden && card.dataset.kanbanHidden === "true") return false;
+                const data = card.getAttribute("data-filter") || "";
+                return keywords.every(word => data.includes(word));
+            });
+
+            const columns = Array.from(board.querySelectorAll(".kanban-column"));
+            columns.forEach(col => {
+                const cardsContainer = col.querySelector(".kanban-cards");
+                if (!cardsContainer) return;
+
+                const colWrappers = filtered.filter(w => cardsContainer.contains(w));
+                const allColWrappers = Array.from(cardsContainer.querySelectorAll(".kanban-card-wrapper"));
+
+                allColWrappers.forEach(w => { w.style.display = "none"; });
+
+                colWrappers.sort((a, b) => {
+                    const cardA = a.querySelector(".kanban-card");
+                    const cardB = b.querySelector(".kanban-card");
+                    if (!cardA || !cardB) return 0;
+
+                    let valA = cardA.getAttribute("data-sort-" + sortField) || "";
+                    let valB = cardB.getAttribute("data-sort-" + sortField) || "";
+
+                    const numA = parseFloat(valA.replace(/[^0-9.]/g, ''));
+                    const numB = parseFloat(valB.replace(/[^0-9.]/g, ''));
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return sortDirection === "asc" ? numA - numB : numB - numA;
+                    }
+
+                    return sortDirection === "asc"
+                        ? valA.localeCompare(valB)
+                        : valB.localeCompare(valA);
+                });
+
+                colWrappers.forEach((w, idx) => {
+                    w.style.display = "";
+                    w.style.order = idx;
+                });
+
+                const countEl = col.querySelector(".kanban-col-count");
+                if (countEl) countEl.textContent = colWrappers.length;
+            });
+        };
+
+        const syncCheckedTasks = (root) => {
+            const board = root.querySelector(".kanban-board");
+            let columnOrder = [];
+            try { columnOrder = JSON.parse(root.dataset.columnOrder || "[]"); } catch(err) {}
+            if (!board || columnOrder.length === 0) return;
+            const statusKey = root.dataset.statusKey;
+            const doneStatus = columnOrder[columnOrder.length - 1];
+            const defaultStatus = columnOrder[0];
+            const doneColumn = board.querySelector('.kanban-column[data-status="' + doneStatus + '"]');
+            const defaultColumn = board.querySelector('.kanban-column[data-status="' + defaultStatus + '"]');
+            if (!doneColumn || !defaultColumn) return;
+            const doneCardsContainer = doneColumn.querySelector('.kanban-cards');
+            const defaultCardsContainer = defaultColumn.querySelector('.kanban-cards');
+            if (!doneCardsContainer || !defaultCardsContainer) return;
+
+            const allCards = Array.from(board.querySelectorAll('.kanban-card'));
+            allCards.forEach(card => {
+                const column = card.closest('.kanban-column');
+                if (!column) return;
+                const currentStatus = column.dataset.status;
+
+                try {
+                    const taskData = JSON.parse(card.dataset.taskJson);
+                    const isChecked = (taskData.state === 'x' || taskData.state === 'X');
+                    const range = taskData.range;
+
+                    if (isChecked && currentStatus !== doneStatus) {
+                        doneCardsContainer.appendChild(card.closest('.kanban-card-wrapper'));
+                        if (taskData.page && taskData.pos != null && range) {
+                            window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
+                                detail: { action: "move", page: taskData.page, pos: taskData.pos, range: range, statusKey: statusKey, newStatus: doneStatus, toggleState: "checked" }
+                            }));
+                        }
+                    } else if (!isChecked && currentStatus === doneStatus) {
+                        defaultCardsContainer.appendChild(card.closest('.kanban-card-wrapper'));
+                        if (taskData.page && taskData.pos != null && range) {
+                            window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
+                                detail: { action: "move", page: taskData.page, pos: taskData.pos, range: range, statusKey: statusKey, newStatus: defaultStatus, toggleState: "unchecked" }
+                            }));
+                        }
+                    }
+                } catch(err) { console.error("syncCheckedTasks error", err); }
+            });
+        };
+
+        const initBoard = (board) => {
+            if (!board || board.dataset.kanbanInit === "1") return;
+            const root = getRoot(board);
+            if (!root) return;
+            const input = root.querySelector(".kanban-search-input");
+            if (!input) return; // not fully mounted yet; the persistent observer will retry
+
+            board.dataset.kanbanInit = "1";
+
             if (window._kanbanFilterState) {
                 input.value = window._kanbanFilterState;
             }
-            // MODIFICATION END
 
-            // ----- Filter + Sort logic (same as MediaGallery updateDisplay; pagination removed) -----
-            const updateDisplay = () => {
-                const showHidden = board.classList.contains("show-hidden");
-                const rawQuery = input.value.toLowerCase().trim();
-                const keywords = rawQuery.split(/\s+/).filter(k => k.length > 0);
-                const sortField = sortSelect.value;
+            syncCheckedTasks(root);
+            updateDisplay(root);
+            board.style.visibility = "visible";
+        };
 
-                // Collect all cards across all columns
-                const allWrappers = Array.from(board.querySelectorAll(".kanban-card-wrapper"));
+        if (!window.kanbanEngineInstalled) {
+            window.kanbanEngineInstalled = true;
 
-                // Filter
-                const filtered = allWrappers.filter(wrapper => {
-                    const card = wrapper.querySelector(".kanban-card");
-                    if (!card) return false;
-                    
-                    if (!showHidden && card.dataset.kanbanHidden === "true") {
-                        return false;
-                    }
-
-                    const data = card.getAttribute("data-filter") || "";
-                    return keywords.every(word => data.includes(word));
-                });
-
-                // Sort within each column independently
-                const columns = Array.from(board.querySelectorAll(".kanban-column"));
-                columns.forEach(col => {
-                    const cardsContainer = col.querySelector(".kanban-cards");
-                    if (!cardsContainer) return;
-
-                    // Get filtered wrappers that belong to this column
-                    const colWrappers = filtered.filter(w => cardsContainer.contains(w));
-                    const allColWrappers = Array.from(cardsContainer.querySelectorAll(".kanban-card-wrapper"));
-
-                    // Hide all first
-                    allColWrappers.forEach(w => { w.style.display = "none"; });
-
-                    // Sort the filtered subset
-                    colWrappers.sort((a, b) => {
-                        const cardA = a.querySelector(".kanban-card");
-                        const cardB = b.querySelector(".kanban-card");
-                        if (!cardA || !cardB) return 0;
-
-                        let valA = cardA.getAttribute("data-sort-" + sortField) || "";
-                        let valB = cardB.getAttribute("data-sort-" + sortField) || "";
-
-                        // Attempt numeric conversion for numeric-looking fields
-                        const numA = parseFloat(valA.replace(/[^0-9.]/g, ''));
-                        const numB = parseFloat(valB.replace(/[^0-9.]/g, ''));
-                        if (!isNaN(numA) && !isNaN(numB)) {
-                            return sortDirection === "asc" ? numA - numB : numB - numA;
-                        }
-
-                        return sortDirection === "asc"
-                            ? valA.localeCompare(valB)
-                            : valB.localeCompare(valA);
-                    });
-
-                    // Show all filtered+sorted cards (no pagination)
-                    colWrappers.forEach((w, idx) => {
-                        w.style.display = "";
-                        w.style.order = idx;
-                    });
-
-                    // MODIFICATION START: Live-update the column card count to reflect
-                    // how many cards are currently visible after filtering.
-                    const countEl = col.querySelector(".kanban-col-count");
-                    if (countEl) countEl.textContent = colWrappers.length;
-                    // MODIFICATION END
-                });
-            };
-
-            // ----- Event listeners for controls (same pattern as MediaGallery) -----
-            input.addEventListener("input", () => {
-                // MODIFICATION START: Persist filter value so it survives widget refreshes
-                window._kanbanFilterState = input.value;
-                // MODIFICATION END
-                updateDisplay();
-            });
-
-            sortSelect.addEventListener("change", () => {
-                updateDisplay();
-            });
-
-            sortBtns.forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    sortBtns.forEach(b => b.classList.remove("active"));
-                    btn.classList.add("active");
-                    sortDirection = btn.getAttribute("data-dir");
-                    updateDisplay();
-                });
-            });
-
-            // MODIFICATION START: Reset filter button — clears persisted state and re-renders
-            if (resetBtn) {
-                resetBtn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    input.value = "";
-                    window._kanbanFilterState = "";
-                    updateDisplay();
-                });
-            }
-            if (toggleHiddenBtn) {
-                const eyeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>`;
-                const eyeOffIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off-icon lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>`;
-                toggleHiddenBtn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    board.classList.toggle("show-hidden");
-                    if (board.classList.contains("show-hidden")) {
-                        toggleHiddenBtn.innerHTML = eyeOffIcon;
-                        toggleHiddenBtn.title = "Hide hidden cards";
-                    } else {
-                        toggleHiddenBtn.innerHTML = eyeIcon;
-                        toggleHiddenBtn.title = "Show hidden cards";
-                    }
-                    updateDisplay();
-                });
-            }
-            // MODIFICATION END
-
-            // ----- Drag-and-drop logic -----
             let draggedCard = null;
             let sourceColumn = null;
+            let isDragging = false;
+            let dragTimer = null;
+            let touchStartX, touchStartY;
 
-            board.addEventListener('click', (e) => {
-                const editBtn = e.target.closest('.kanban-card-edit');
+            const dispatchMove = (root, card, column) => {
+                const statusKey = root.dataset.statusKey;
+                const newStatus = column.dataset.status;
+                const page = card.dataset.taskPage;
+                const pos = parseInt(card.dataset.taskPos, 10);
+                let range = null;
+                try { range = JSON.parse(card.dataset.taskJson).range; } catch(err) {}
+                const allColumns = Array.from(root.querySelectorAll('.kanban-column'));
+                const isLastColumn = allColumns.indexOf(column) === allColumns.length - 1;
+                const toggleState = isLastColumn ? "checked" : "unchecked";
+
+                if (sourceColumn && sourceColumn !== column) {
+                    const sourceCount = sourceColumn.querySelector('.kanban-col-count');
+                    const sourceVisible = Array.from(sourceColumn.querySelectorAll('.kanban-card-wrapper')).filter(w => w.style.display !== 'none').length;
+                    if (sourceCount) sourceCount.textContent = sourceVisible;
+                }
+                const destCount = column.querySelector('.kanban-col-count');
+                const destVisible = Array.from(column.querySelectorAll('.kanban-card-wrapper')).filter(w => w.style.display !== 'none').length;
+                if (destCount) destCount.textContent = destVisible;
+
+                if (page && !isNaN(pos) && newStatus && range) {
+                    window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
+                        detail: { action: "move", page: page, pos: pos, range: range, statusKey: statusKey, newStatus: newStatus, toggleState: toggleState }
+                    }));
+                }
+            };
+
+            document.addEventListener("input", (e) => {
+                if (!e.target.classList || !e.target.classList.contains("kanban-search-input")) return;
+                const root = getRoot(e.target);
+                if (!root) return;
+                window._kanbanFilterState = e.target.value;
+                updateDisplay(root);
+            });
+
+            document.addEventListener("change", (e) => {
+                if (!e.target.classList || !e.target.classList.contains("kanban-sort-select")) return;
+                const root = getRoot(e.target);
+                if (root) updateDisplay(root);
+            });
+
+            document.addEventListener("click", (e) => {
+                const root = getRoot(e.target);
+                if (!root) return;
+
+                const sortBtn = e.target.closest(".kanban-sort-btn");
+                if (sortBtn) {
+                    e.preventDefault();
+                    root.querySelectorAll(".kanban-sort-btn").forEach(b => b.classList.remove("active"));
+                    sortBtn.classList.add("active");
+                    root.dataset.sortDirection = sortBtn.getAttribute("data-dir");
+                    updateDisplay(root);
+                    return;
+                }
+
+                // MODIFICATION: the eye button intentionally carries BOTH
+                // .kanban-toggle-hidden-btn and .kanban-reset-filter-btn (the original
+                // code had two separate listeners on this same element, so a click always
+                // did both things: toggled hidden-card visibility AND cleared the filter).
+                // Check the more specific toggle-hidden case first and replicate both
+                // effects there, so the plain reset-only branch below doesn't shadow it.
+                const toggleHiddenBtn = e.target.closest(".kanban-toggle-hidden-btn");
+                if (toggleHiddenBtn) {
+                    e.preventDefault();
+                    const board = root.querySelector(".kanban-board");
+                    if (board) {
+                        board.classList.toggle("show-hidden");
+                        if (board.classList.contains("show-hidden")) {
+                            toggleHiddenBtn.innerHTML = eyeOffIcon;
+                            toggleHiddenBtn.title = "Hide hidden cards";
+                        } else {
+                            toggleHiddenBtn.innerHTML = eyeIcon;
+                            toggleHiddenBtn.title = "Show hidden cards";
+                        }
+                    }
+                    const toggleInput = root.querySelector(".kanban-search-input");
+                    if (toggleInput) toggleInput.value = "";
+                    window._kanbanFilterState = "";
+                    updateDisplay(root);
+                    return;
+                }
+
+                const resetBtn = e.target.closest(".kanban-reset-filter-btn");
+                if (resetBtn) {
+                    e.preventDefault();
+                    const input = root.querySelector(".kanban-search-input");
+                    if (input) input.value = "";
+                    window._kanbanFilterState = "";
+                    updateDisplay(root);
+                    return;
+                }
+                // MODIFICATION END
+
+                const editBtn = e.target.closest(".kanban-card-edit");
                 if (editBtn) {
                     e.stopPropagation();
-                    const card = editBtn.closest('.kanban-card');
+                    const card = editBtn.closest(".kanban-card");
+                    let columnOrder = [];
+                    try { columnOrder = JSON.parse(root.dataset.columnOrder || "[]"); } catch(err) {}
                     try {
                         const taskData = JSON.parse(card.dataset.taskJson);
-                        // MODIFICATION START: Pass kanban config so the editor can sync
-                        // the status attribute with the Completed checkbox (Bug 1 & 2 fix).
-                        taskData._kanbanStatusKey  = statusKey;
-                        taskData._kanbanDoneStatus    = columnOrder.length > 0 ? columnOrder[columnOrder.length - 1] : "";
+                        taskData._kanbanStatusKey = root.dataset.statusKey;
+                        taskData._kanbanDoneStatus = columnOrder.length > 0 ? columnOrder[columnOrder.length - 1] : "";
                         taskData._kanbanDefaultStatus = columnOrder.length > 0 ? columnOrder[0] : "";
-                        // MODIFICATION END
                         window.dispatchEvent(new CustomEvent("sb-kanban-edit-task", { detail: taskData }));
                     } catch(err) { console.error("Failed to parse task data", err); }
                 }
             });
 
-            // --- Mouse drag events ---
-            board.addEventListener('dragstart', (e) => {
-                if (e.target.classList.contains('kanban-card')) {
-                    draggedCard = e.target;
-                    sourceColumn = e.target.closest('.kanban-column');
-                    setTimeout(() => { e.target.style.opacity = '0.5'; }, 0);
-                }
+            document.addEventListener("dragstart", (e) => {
+                if (!e.target.classList || !e.target.classList.contains('kanban-card')) return;
+                draggedCard = e.target;
+                sourceColumn = e.target.closest('.kanban-column');
+                setTimeout(() => { e.target.style.opacity = '0.5'; }, 0);
             });
 
-            board.addEventListener('dragend', (e) => {
+            document.addEventListener("dragend", (e) => {
                 if (draggedCard) {
                     draggedCard.style.opacity = '';
                     draggedCard = null;
@@ -1717,99 +1819,47 @@ function KanbanBoard(taskQuery, options)
                 }
             });
 
-            board.addEventListener('dragover', (e) => {
-                e.preventDefault();
+            document.addEventListener("dragover", (e) => {
+                if (getRoot(e.target)) e.preventDefault();
             });
 
-            board.addEventListener('drop', (e) => {
+            document.addEventListener("drop", (e) => {
+                const root = getRoot(e.target);
+                if (!root || !draggedCard) return;
                 e.preventDefault();
-                if (draggedCard) {
-                    const column = e.target.closest('.kanban-column');
-                    if (column) {
-                        const newStatus = column.dataset.status;
-                        const page = draggedCard.dataset.taskPage;
-                        const pos = parseInt(draggedCard.dataset.taskPos, 10);
-                        
-                        // Parse range from the stored JSON to ensure accuracy
-                        let range = null;
-                        try {
-                            const data = JSON.parse(draggedCard.dataset.taskJson);
-                            range = data.range;
-                        } catch(err) { console.log("No range found"); }
-
-                        const allColumns = Array.from(board.querySelectorAll('.kanban-column'));
-                        const isLastColumn = allColumns.indexOf(column) === allColumns.length - 1;
-                        const toggleState = isLastColumn ? "checked" : "unchecked";
-
-                        // Append the entire wrapper, not just the card
-                        column.querySelector('.kanban-cards').appendChild(draggedCard.closest('.kanban-card-wrapper'));
-
-                        // Update counts by actually counting visible cards in both columns
-                        if (sourceColumn && sourceColumn !== column) {
-                            const sourceCount = sourceColumn.querySelector('.kanban-col-count');
-                            const sourceVisible = Array.from(sourceColumn.querySelectorAll('.kanban-card-wrapper'))
-                                .filter(w => w.style.display !== 'none').length;
-                            if (sourceCount) sourceCount.textContent = sourceVisible;
-                        }
-                        const destCount = column.querySelector('.kanban-col-count');
-                        const destVisible = Array.from(column.querySelectorAll('.kanban-card-wrapper'))
-                            .filter(w => w.style.display !== 'none').length;
-                        if (destCount) destCount.textContent = destVisible;
-  
-                        if (page && !isNaN(pos) && newStatus && range) {
-                            window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
-                                detail: {
-                                    action: "move",
-                                    page: page,
-                                    pos: pos,
-                                    range: range, // Sending AST Range to Lua
-                                    statusKey: statusKey,
-                                    newStatus: newStatus,
-                                    toggleState: toggleState
-                                }
-                            }));
-                        }
-                    }
-                }
+                const column = e.target.closest('.kanban-column');
+                if (!column) return;
+                column.querySelector('.kanban-cards').appendChild(draggedCard.closest('.kanban-card-wrapper'));
+                dispatchMove(root, draggedCard, column);
             });
 
-            // MODIFICATION START: Add Touch support for drag and drop on mobile with delay
-            let isDragging = false;
-            let dragTimer = null;
-            let touchStartX, touchStartY;
-
-            board.addEventListener('touchstart', e => {
+            document.addEventListener("touchstart", (e) => {
                 const card = e.target.closest('.kanban-card');
                 if (card && e.touches.length === 1) {
                     const touch = e.touches[0];
                     touchStartX = touch.clientX;
                     touchStartY = touch.clientY;
-
                     dragTimer = setTimeout(() => {
                         isDragging = true;
                         draggedCard = card;
                         sourceColumn = card.closest('.kanban-column');
                         draggedCard.style.opacity = '0.5';
-                    }, 500); // 200ms delay
+                    }, 500);
                 }
             }, { passive: true });
-            
-            board.addEventListener('touchmove', e => {
+
+            document.addEventListener("touchmove", (e) => {
                 if (dragTimer) {
                     const touch = e.touches[0];
                     const deltaX = Math.abs(touch.clientX - touchStartX);
                     const deltaY = Math.abs(touch.clientY - touchStartY);
-
                     if (deltaX > 10 || deltaY > 10) {
                         clearTimeout(dragTimer);
                         dragTimer = null;
                     }
                 }
-
                 if (!isDragging || !draggedCard) return;
-                
                 e.preventDefault();
-
                 const touch = e.touches[0];
                 const elementOver = document.elementFromPoint(touch.clientX, touch.clientY);
                 const columnOver = elementOver ? elementOver.closest('.kanban-column') : null;
@@ -1818,167 +1868,38 @@ function KanbanBoard(taskQuery, options)
                     cardsContainer.appendChild(draggedCard.closest('.kanban-card-wrapper'));
                 }
             }, { passive: false });
-            
-            board.addEventListener('touchend', e => {
+
+            document.addEventListener("touchend", (e) => {
                 if (dragTimer) {
                     clearTimeout(dragTimer);
                     dragTimer = null;
                 }
-                
                 if (!isDragging || !draggedCard) return;
-
                 isDragging = false;
                 draggedCard.style.opacity = '';
-
+                const root = getRoot(draggedCard);
                 const column = draggedCard.closest('.kanban-column');
-                if (column) {
-                    const newStatus = column.dataset.status;
-                    const page = draggedCard.dataset.taskPage;
-                    const pos = parseInt(draggedCard.dataset.taskPos, 10);
-                    
-                    let range = null;
-                    try {
-                        const data = JSON.parse(draggedCard.dataset.taskJson);
-                        range = data.range;
-                    } catch(err) { console.log("No range found"); }
-
-                    const allColumns = Array.from(board.querySelectorAll('.kanban-column'));
-                    const isLastColumn = allColumns.indexOf(column) === allColumns.length - 1;
-                    const toggleState = isLastColumn ? "checked" : "unchecked";
-
-                    // Update counts by actually counting visible cards in both columns
-                    if (sourceColumn && sourceColumn !== column) {
-                        const sourceCount = sourceColumn.querySelector('.kanban-col-count');
-                        const sourceVisible = Array.from(sourceColumn.querySelectorAll('.kanban-card-wrapper'))
-                            .filter(w => w.style.display !== 'none').length;
-                        if (sourceCount) sourceCount.textContent = sourceVisible;
-                    }
-                    const destCount = column.querySelector('.kanban-col-count');
-                    const destVisible = Array.from(column.querySelectorAll('.kanban-card-wrapper'))
-                        .filter(w => w.style.display !== 'none').length;
-                    if (destCount) destCount.textContent = destVisible;
-                    
-                    if (page && !isNaN(pos) && newStatus && range) {
-                        window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
-                            detail: {
-                                action: "move",
-                                page: page,
-                                pos: pos,
-                                range: range,
-                                statusKey: statusKey,
-                                newStatus: newStatus,
-                                toggleState: toggleState
-                            }
-                        }));
-                    }
-                }
+                if (root && column) dispatchMove(root, draggedCard, column);
                 draggedCard = null;
                 sourceColumn = null;
             });
-            // MODIFICATION END
 
-            // MODIFICATION START: On load, sync cards whose markdown checkbox state does not
-            // match the column they are currently rendered in. Two directions are handled:
-            // Direction 1: task is [x] in markdown but not in the done column → move it there.
-            // Direction 2: task is [ ] in markdown but sitting in the done column → move it back to the first column.
-            const syncCheckedTasks = () => {
-                if (columnOrder.length === 0) return;
-                const doneStatus    = columnOrder[columnOrder.length - 1];
-                const defaultStatus = columnOrder[0];
-                const doneColumn    = board.querySelector('.kanban-column[data-status="' + doneStatus + '"]');
-                const defaultColumn = board.querySelector('.kanban-column[data-status="' + defaultStatus + '"]');
-                if (!doneColumn || !defaultColumn) return;
-                const doneCardsContainer    = doneColumn.querySelector('.kanban-cards');
-                const defaultCardsContainer = defaultColumn.querySelector('.kanban-cards');
-                if (!doneCardsContainer || !defaultCardsContainer) return;
-
-                const allCards = Array.from(board.querySelectorAll('.kanban-card'));
-                allCards.forEach(card => {
-                    const column = card.closest('.kanban-column');
-                    if (!column) return;
-                    const currentStatus = column.dataset.status;
-
-                    try {
-                        const taskData = JSON.parse(card.dataset.taskJson);
-                        const isChecked = (taskData.state === 'x' || taskData.state === 'X');
-                        const range = taskData.range;
-
-                        if (isChecked && currentStatus !== doneStatus) {
-                            // Task is checked [x] in markdown but not in the done column → move it there
-                            doneCardsContainer.appendChild(card.closest('.kanban-card-wrapper'));
-                            if (taskData.page && taskData.pos != null && range) {
-                                window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
-                                    detail: {
-                                        action: "move",
-                                        page: taskData.page,
-                                        pos: taskData.pos,
-                                        range: range,
-                                        statusKey: statusKey,
-                                        newStatus: doneStatus,
-                                        toggleState: "checked"
-                                    }
-                                }));
-                            }
-                        } else if (!isChecked && currentStatus === doneStatus) {
-                            // Task is unchecked [ ] in markdown but still in the done column → move it back to default
-                            defaultCardsContainer.appendChild(card.closest('.kanban-card-wrapper'));
-                            if (taskData.page && taskData.pos != null && range) {
-                                window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
-                                    detail: {
-                                        action: "move",
-                                        page: taskData.page,
-                                        pos: taskData.pos,
-                                        range: range,
-                                        statusKey: statusKey,
-                                        newStatus: defaultStatus,
-                                        toggleState: "unchecked"
-                                    }
-                                }));
-                            }
-                        }
-                    } catch(err) { console.error("syncCheckedTasks error", err); }
-                });
-            };
-            syncCheckedTasks();
-            // MODIFICATION END
-
-            // Initial render
-            updateDisplay();
-            // MODIFICATION START: Reveal the board only after updateDisplay() has applied the
-            // filter, so cards never flash visible before being hidden by the filter logic.
-            board.style.visibility = "visible";
-            // MODIFICATION END
-            return true;
-        };
-        
-        // MODIFICATION START: Robust init scheduling.
-        // Previously this used a fixed setInterval(...11 attempts...) which gave up
-        // after ~1.1s. If SB mounted the widget HTML later than that (slow render,
-        // heavy page, many widgets, etc.) init() never ran, updateDisplay() never ran,
-        // and the board's inline style="visibility:hidden" was never flipped back to
-        // visible — leaving the board permanently blank even though its markup was
-        // fully in the DOM.
-        //
-        // Fix: try immediately (fast path), then fall back to watching the DOM for the
-        // board's arrival instead of guessing at a timeout. A final safety-net timeout
-        // guarantees the board is force-revealed even if init() never succeeds, so it
-        // can never stay invisible forever.
-        if (!init()) {
+            // Persistent, session-wide watcher: initializes ANY kanban board that appears
+            // in the DOM, whenever it appears, for as long as the page is open. This is
+            // what makes the board keep working even when SilverBullet swaps this widget's
+            // DOM without re-invoking this Lua function.
             const observer = new MutationObserver(() => {
-                if (init()) observer.disconnect();
+                document.querySelectorAll(".kanban-board:not([data-kanban-init='1'])").forEach(initBoard);
             });
             observer.observe(document.body, { childList: true, subtree: true });
-
-            setTimeout(() => {
-                observer.disconnect();
-                const root = document.getElementById(boardId);
-                const board = root && root.querySelector(".kanban-board");
-                if (board && board.style.visibility === "hidden") {
-                    board.style.visibility = "visible";
-                }
-            }, 8000);
         }
-        // MODIFICATION END
+
+        // Fast path: try to initialize this specific render's board immediately. If the
+        // DOM isn't mounted yet, the persistent observer installed above will catch it
+        // whenever it does appear — no fixed timeout to run out of, and no dependence on
+        // this exact script instance being the one that succeeds.
+        const root = document.getElementById(boardId);
+        if (root) initBoard(root.querySelector(".kanban-board"));
     })();
     ]]
 
