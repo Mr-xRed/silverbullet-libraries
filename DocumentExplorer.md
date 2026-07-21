@@ -1,13 +1,13 @@
 ---
-
-name: "Library/Mr-xRed/DocumentExplorer" tags: meta/library files:
-
-*   AdvancedPanelControl.md
-*   UnifiedAdvancedPanelControl.js
-*   docex\_styles.css
-*   lucide-icons.svg
-*   hybrid-cursor.svg pageDecoration.prefix: "🗂️ "
-
+name: "Library/Mr-xRed/DocumentExplorer"
+tags: meta/library
+files:
+- AdvancedPanelControl.md
+- UnifiedAdvancedPanelControl.js
+- docex_styles.css
+- lucide-icons.svg
+- hybrid-cursor.svg
+pageDecoration.prefix: "🗂️ "
 ---
 
 # 🗂️ Document Explorer (Ver. 1.1.1)
