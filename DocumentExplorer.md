@@ -320,7 +320,7 @@ local function fileTile(icon, name, target, ext, viewMode)
       end
   else
       if category == "img" then
-          finalIcon = "<img src='" .. urlPrefix .. "/.fs" .. target .. "' loading='lazy' class='tile-thumb' />"
+          finalIcon = "<img src='" .. urlPrefix .. ".fs" .. target .. "' loading='lazy' class='tile-thumb' />"
       end
   end
 
