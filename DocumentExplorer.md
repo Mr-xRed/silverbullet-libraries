@@ -10,56 +10,58 @@ files:
 pageDecoration.prefix: "🗂️ "
 ---
 
-# 🗂️ Document Explorer (Ver. 1.1.1)
+# 🗂️ Document Explorer (Ver. 1.1.2)
 
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DocumentExplorer_Screenshot.png)
 
 ## Features
-
 • Dynamic View Modes:
-
-*   \==Grid== Large thumbnails (with image previews) for a visual gallery experience.
-*   \==List==: Compact, vertical view for high-density file management.
-*   \==Tree==: Hierarchical navigation with folder nesting and expansion logic.
-*   Easily switch between ==Window== or ==SidePanel== • Real-Time ==Filtering== by filename or extension • ==Drag&Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds. • Context Menu: ==Right-click== for quick File/Folder renaming and deletion. • ==Batch Selection==: Hold `Ctrl` (or `Cmd` on Mac) and click to select multiple files, then right-click for batch Rename or Delete. • ==Responsive design==: Adjustable panel width using your mouse.
-
-*   With instructions for a Color Theme
+  * ==Grid== Large thumbnails (with image previews) for a visual gallery experience.
+  * ==List==: Compact, vertical view for high-density file management.
+  * ==Tree==: Hierarchical navigation with folder nesting and expansion logic.
+* Easily switch between ==Window== or ==SidePanel== 
+• Real-Time ==Filtering== by filename or extension
+• ==Drag&Drop==: Seamlessly drag files from the explorer directly into your pages to insert links or image embeds.
+• Context Menu: ==Right-click== for quick File/Folder renaming and deletion.
+• ==Batch Selection==: Hold `Ctrl` (or `Cmd` on Mac) and click to select multiple files, then right-click for batch Rename or Delete.
+• ==Responsive design==: Adjustable panel width using your mouse.
+- With instructions for a Color Theme
 
 ## ⚠️ Know Limitations and Warnings
+- The Built-In Rename function in Silverbullet has couple of limitation affecting the Backlinks, when renaming multiple files at once:
+    - ❗️⚠️ You need to confirm the files one by one when `Cut & Pasting` or when batch `Rename` multiple files, because DocumentExplorer uses the built-in `Rename` function from Silverbullet, which will also update the backlinks inside the pages. 
+    - ❗️⚠️ When renaming a folder with multiple files in it, the Backlinks are not correctly updated
+    - recommandation: instead of Renaming the folder, use batch-cut/paste on the files
+    - ❗️⚠️ [Silverbullet - BUG when renaming files with a "(" in its name the backlinks will malform](https://github.com/silverbulletmd/silverbullet/issues/1850)
 
-*   The Built-In Rename function in Silverbullet has couple of limitation affecting the Backlinks, when renaming multiple files at once:
-    *   ❗️⚠️ You need to confirm the files one by one when `Cut & Pasting` or when batch `Rename` multiple files, because DocumentExplorer uses the built-in `Rename` function from Silverbullet, which will also update the backlinks inside the pages.
-        
-    *   ❗️⚠️ When renaming a folder with multiple files in it, the Backlinks are not correctly updated
-        
-    *   recommandation: instead of Renaming the folder, use batch-cut/paste on the files
-        
-    *   ❗️⚠️ [Silverbullet - BUG when renaming files with a "(" in its name the backlinks will malform](https://github.com/silverbulletmd/silverbullet/issues/1850)
-        
-
+  
 ## Currently supported extension:
+* Pages: .md
+* Images: .png, .jpg, .jpeg, .webp, .gif, .svg
+* Documents: .pdf, .excalidraw, .drawio (if Plugs installed)
+* Every other extension is rendered as `❔` and opened as raw file if browser supports it
 
-*   Pages: .md
-*   Images: .png, .jpg, .jpeg, .webp, .gif, .svg
-*   Documents: .pdf, .excalidraw, .drawio (if Plugs installed)
-*   Every other extension is rendered as `❔` and opened as raw file if browser supports it
 
-> **tip** ShortCut Key `Ctrl-Alt-e` - Toggle Document Explorer
+> **tip** ShortCut Key
+> `Ctrl-Alt-e` - Toggle Document Explorer
 
 ## Configuration Options and Defaults:
+* **`position`**           - Where the panel is docked ("lhs"|"rhs" - left/right hand side) (default: lhs)
+* **`homeDirName`**        - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
+* **`goToCurrentDir`**     - Start navigation in the Directory of the currently opened page (default: true)
+* **`tileSize`**           - Grid Tile size, recommended between 60px-120px (default: "80px") 
+* **`listHeight`**         - List & Tree Row height, recommended between 18px-36px (default: "24px") 
+* **`enableContextMenu`**  - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
+* **`negativeFilter`**     - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none )
+* **`treeFolderFirst`**    - sort order in treeview: folders then files (default: false)
+* **`recoverAfterRefresh`** - Recover after Page refresh - Reopen DocEx when you Refresh the page (default: true) 
 
-*   **`position`** - Where the panel is docked ("lhs"|"rhs" - left/right hand side) (default: lhs)
-*   **`homeDirName`** - Name how your Home Directory appears in the Breadcrumbs (default: "🏠 Home")
-*   **`goToCurrentDir`** - Start navigation in the Directory of the currently opened page (default: true)
-*   **`tileSize`** - Grid Tile size, recommended between 60px-120px (default: "80px")
-*   **`listHeight`** - List & Tree Row height, recommended between 18px-36px (default: "24px")
-*   **`enableContextMenu`** - Enable/Disable the Right-Click for Files & Folders: Rename & Delete (default: true)
-*   **`negativeFilter`** - Negative Filter to hide certain elements in Explorer (by path, extensions or wildcard) (default: none )
-*   **`treeFolderFirst`** - sort order in treeview: folders then files (default: false)
-*   **`recoverAfterRefresh`** - Recover after Page refresh - Reopen DocEx when you Refresh the page (default: true)
-*   **`urlPrefix`** - Set this if your Silverbullet is installed with an [`SB_URL_PREFIX`](https://silverbullet.md/Install/Configuration) (e.g. `/notes`). Leave empty otherwise. (default: "")
 
-> **note** Note Copy this into a `space-lua` block in your config page to change the default values.
+> **note** Note
+> Copy this into a `space-lua` block in your config page to change the default values.
+>
+> Note: if your Silverbullet instance is served behind a URL prefix (see [`SB_URL_PREFIX`](https://silverbullet.md/Install/Configuration)), this is detected automatically via `system.getURLPrefix()` — no configuration needed.
+
 
 ```lua
 config.set("explorer", {
@@ -71,8 +73,7 @@ config.set("explorer", {
   listHeight = "24px",
   negativeFilter = {"Library/Std","*.js", "*test*"},
   treeFolderFirst = false,
-  recoverAfterRefresh = true,
-  urlPrefix = ""
+  recoverAfterRefresh = true
 })
 ```
 
@@ -87,7 +88,9 @@ Licensed under the ISC and MIT licenses.
 
 ## Space-Style Color Theming Example
 
-> **tip** Tip Make sure you copy this as space-style so it won't get overwritten with future updates!
+> **tip** Tip
+> Make sure you copy this as space-style so it won't get overwritten with future updates!
+
 
 ```
 html[data-theme="dark"]{
@@ -132,7 +135,6 @@ html[data-theme="light"]{
 ```
 
 ## For the Window
-
 ```space-style
 :root{
   --header-height: 20px;                         /* Header height, drag-area */
@@ -144,7 +146,6 @@ html[data-theme="light"]{
 ```
 
 ## Integration:
-
 ```space-lua
 -- priority: -1
 -- ------------- Config Init -------------
@@ -160,47 +161,36 @@ config.define("explorer", {
     goToCurrentDir = schema.boolean(),
     enableContextMenu = schema.boolean(),
     negativeFilter = { type = "array", items = { type = "string" } },
-    recoverAfterRefresh = schema.boolean(),
-    urlPrefix = schema.string()
+    recoverAfterRefresh = schema.boolean()
   }
 })
 
 -- ------------- URL Prefix (for SB_URL_PREFIX installs) -------------
--- If your Silverbullet instance is served behind a URL prefix
--- (see https://silverbullet.md/Install/Configuration), set this to
--- that same prefix, e.g. urlPrefix = "/notes". Leave empty/unset otherwise.
-local urlPrefix = (config.get("explorer") or {}).urlPrefix or ""
-if urlPrefix ~= "" then
-  -- ensure a single leading slash, no trailing slash (no pattern matching used)
-  if urlPrefix:sub(1, 1) ~= "/" then
-    urlPrefix = "/" .. urlPrefix
-  end
-  while urlPrefix:sub(-1) == "/" do
-    urlPrefix = urlPrefix:sub(1, -2)
-  end
-end
+-- Auto-detected from system.getURLPrefix() (see
+-- https://silverbullet.md/Install/Configuration).
+local urlPrefix = system.getURLPrefix()
 
 local ICONS = {
-grid  = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-grid"></use></svg>',
-list  = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-list"></use></svg>',
-tree  = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-tree"></use></svg>',
-folder = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folder"></use></svg>',
-folderUp = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderOpened"></use></svg>',
-folderCollapse = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderCollapse"></use></svg>',
-folderExpand = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderExpand"></use></svg>',
-refresh = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-refresh"></use></svg>',
-fileMD = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileMD"></use></svg>',
-filePDF = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-filePDF"></use></svg>',
-fileEX = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileEX"></use></svg>',
-fileDIO = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileDIO"></use></svg>',
-file = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-file"></use></svg>',
-fileIMG = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileIMG"></use></svg>',
-home = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-home"></use></svg>',
-close = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-close"></use></svg>',
-filterOff = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-filterOff"></use></svg>',
-filterOn = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-filterOn"></use></svg>',
-window = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-window"></use></svg>',
-newPage = '<svg class="icon-svg"><use href="' .. urlPrefix .. '/.fs/Library/Mr-xRed/lucide-icons.svg#icon-newPage"></use></svg>',
+grid  = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-grid"></use></svg>',
+list  = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-list"></use></svg>',
+tree  = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-tree"></use></svg>',
+folder = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-folder"></use></svg>',
+folderUp = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderOpened"></use></svg>',
+folderCollapse = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderCollapse"></use></svg>',
+folderExpand = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-folderExpand"></use></svg>',
+refresh = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-refresh"></use></svg>',
+fileMD = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileMD"></use></svg>',
+filePDF = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-filePDF"></use></svg>',
+fileEX = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileEX"></use></svg>',
+fileDIO = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileDIO"></use></svg>',
+file = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-file"></use></svg>',
+fileIMG = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-fileIMG"></use></svg>',
+home = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-home"></use></svg>',
+close = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-close"></use></svg>',
+filterOff = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-filterOff"></use></svg>',
+filterOn = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-filterOn"></use></svg>',
+window = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-window"></use></svg>',
+newPage = '<svg class="icon-svg"><use href="' .. urlPrefix .. '.fs/Library/Mr-xRed/lucide-icons.svg#icon-newPage"></use></svg>',
 
 }
 
@@ -239,7 +229,7 @@ local function restoreExplorerOpenStateOnPageLoad()
     if lastMode == "window" then
       if not cachedFiles then cachedFiles = space.listFiles() end
       drawPanel()
-      js.import(urlPrefix .. "/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableWindow(selector)
+      js.import(urlPrefix .. ".fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableWindow(selector)
     else
       if not cachedFiles then cachedFiles = space.listFiles() end
       drawPanel()
@@ -751,7 +741,9 @@ end
       table.insert(h, [[</div>
                  </div>  
                   <div class="action-buttons" style="display: flex; gap: 4px;">
-
+<!--              <div class="explorer-action-btn" title="Switch to Window/Sidepanel" onclick="syscall('editor.invokeCommand', 'DocumentExplorer: Toggle Window Mode')">]])
+      table.insert(h, ICONS.window)
+      table.insert(h, [[</div> -->
                   <div class="explorer-close-btn" title="Close Explorer" onclick="syscall('editor.invokeCommand', 'Navigate: Document Explorer')">]])
       table.insert(h, ICONS.close)
       table.insert(h, [[</div>
@@ -893,7 +885,7 @@ end
           for _, f in ipairs(images) do table.insert(h, fileTile(ICONS.fileIMG, f, "/"..folderPrefix..f, "img", viewMode)) end
           for _, f in ipairs(unknowns) do 
               local extension = f:match("%.([^.]+)$") or "?"
-              table.insert(h, fileTile(ICONS.file, f, "/.fs/"..folderPrefix..f, extension, viewMode)) 
+              table.insert(h, fileTile(ICONS.file, f, ".fs/"..folderPrefix..f, extension, viewMode)) 
           end
       end
     
@@ -1214,7 +1206,7 @@ if (contextMenuEnabled) {
         else targetPath = tile.getAttribute('title') || "";
     }
 
-    // FIXED: Handle both .fs/ and /.fs/ prefixes
+    // FIXED: Handle both .fs/ and .fs/ prefixes
     let internalPath = targetPath.replace(/^[\/]?\.fs\//, "").replace(/^\//, "");
     if (isFolder) internalPath = internalPath.replace(/\/$/, "");
 
@@ -1293,7 +1285,7 @@ if (contextMenuEnabled) {
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show("${internalPath}", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show("${internalPath}", "${fileName}")`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1305,7 +1297,7 @@ if (contextMenuEnabled) {
             // Suppress the explorer spawn on new window
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked("${internalPath}", "rhs", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked("${internalPath}", "rhs", "${fileName}")`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1317,7 +1309,7 @@ if (contextMenuEnabled) {
             // Suppress the explorer spawn on new window
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked("${internalPath}", "lhs", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked("${internalPath}", "lhs", "${fileName}")`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1814,7 +1806,7 @@ window.clearFilter = function(event) {
     }
 
     const mainCss  = ensureElement("silverbullet-main-css", "link", { rel: "stylesheet", href: "/.client/main.css"});
-    const explorerCss = ensureElement("explorer-style-css", "link", { rel: "stylesheet", href: "]] .. urlPrefix .. [[/.fs/Library/Mr-xRed/docex_styles.css" });
+    const explorerCss = ensureElement("explorer-style-css", "link", { rel: "stylesheet", href: "]] .. urlPrefix .. [[.fs/Library/Mr-xRed/docex_styles.css" });
     
     if (!document.getElementById("explorer-custom-styles-once")) {
         const parentStyles = parent.document.getElementById("custom-styles")?.innerHTML || "";
@@ -1957,7 +1949,7 @@ command.define {
 --    else
 --      clientStore.set("explorer.currentDisplayMode", "window")
 --      drawPanel()
---      js.import(urlPrefix .. "/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableWindow(selector)
+--      js.import(urlPrefix .. ".fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableWindow(selector)
 --    end
 --    clientStore.set("explorer.open", "true")
 --  end
@@ -1973,11 +1965,10 @@ command.define {
         drawPanel()
       end
       clientStore.set("explorer.open", "true")
-        js.import(urlPrefix .. "/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableWindow(selector)
+        js.import(urlPrefix .. ".fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").enableWindow(selector)
   end
 }
 ```
 
 ## Discussions to this library
-
-*   [SilverBullet Community](https://community.silverbullet.md/t/document-explorer-image-gallery-for-silverbullet/3647?u=mr.red)
+* [SilverBullet Community](https://community.silverbullet.md/t/document-explorer-image-gallery-for-silverbullet/3647?u=mr.red)

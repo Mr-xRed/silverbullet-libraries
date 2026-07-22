@@ -669,9 +669,11 @@ function initPanelControls()
   local savedRHS = clientStore.get("rhsPanelWidth") or "300"
   local savedBHS = clientStore.get("bottomPanelHeight") or "200"
 
+  -- SB_URL_PREFIX Retrieval
+  local urlPrefix = system.getURLPrefix()
 
--- Pass configuration and saved values to the module's initPanelControls function.
-  local jsModule = js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js")
+  -- Pass configuration and saved values to the module's initPanelControls function.
+  local jsModule = js.import(urlPrefix .. ".fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js")
   if jsModule and jsModule.initPanelControls then
     jsModule.initPanelControls({
       panelMode = panelMode,
