@@ -871,8 +871,8 @@ end
                   local pagePath = "/" .. folderPrefix .. f
                   local hClass = "grid-tile folder-tile hybrid-tile"
                   if isFiltered(folderPath) then hClass = hClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "'>")
-                  table.insert(h, "<div class='hybrid-folder-zone' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+                  table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+                  table.insert(h, "<div class='hybrid-folder-zone'>")
                   table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
                   table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
                   table.insert(h, "</div>")
@@ -933,7 +933,99 @@ function scheduleAutoLoad(target) {
     }, 200);
 }
 
-window.addEventListener('keydown', function(e) {
+// Shared tile-visibility check: a tile only counts as navigable if it isn't
+// hidden by the search filter, and none of its ancestor <details> (tree
+// folders) are currently collapsed. We check the <details> "open" attribute
+// directly rather than a generic style-visibility API, since that's the
+// actual mechanism this codebase uses to collapse folders, and it's reliable
+// no matter how the stylesheet visually implements the collapse.
+//
+// IMPORTANT: a folder's own <summary> tile must stay navigable even while
+// that folder is collapsed (that's the row you actually see/select to expand
+// it) - only its *contents* become hidden. So a closed <details> only counts
+// against a tile if the tile isn't that details' own direct <summary> child.
+function isTileNavigable(t) {
+    if (window.getComputedStyle(t).display === 'none') return false;
+    let child = t;
+    let el = t.parentElement;
+    while (el) {
+        if (el.tagName === 'DETAILS' && !el.hasAttribute('open')) {
+            const isOwnSummary = child.tagName === 'SUMMARY' && child.parentElement === el;
+            if (!isOwnSummary) return false;
+        }
+        child = el;
+        el = el.parentElement;
+    }
+    return true;
+}
+
+// Walks up from a tile to find its "own" tree-folder <details> element.
+// For a folder's <summary> tile, that's the <details> it's a direct child
+// of (its own wrapper). For a file tile, that's its immediate containing
+// folder. Implemented as a plain manual walk (rather than .closest() with a
+// compound selector) to avoid any doubt about selector support/behavior.
+function treeOwnDetails(tile) {
+    let el = tile.parentElement;
+    while (el) {
+        if (el.tagName === 'DETAILS' && el.classList.contains('tree-folder')) return el;
+        el = el.parentElement;
+    }
+    return null;
+}
+
+// Given a <details class="tree-folder">, returns its <summary> tile (its
+// direct child), or null. Manual child-scan instead of a :scope selector.
+function treeSummaryOf(detailsEl) {
+    if (!detailsEl) return null;
+    for (const child of detailsEl.children) {
+        if (child.tagName === 'SUMMARY') return child;
+    }
+    return null;
+}
+
+// Manually scrolls the tile into view within its actual scroll container.
+// We don't rely on native element.scrollIntoView() here, since its
+// "nearest scrollable ancestor" auto-detection can behave unreliably
+// depending on how overflow is set up in this panel's CSS/iframe. #explorerGrid
+// is checked first since that's this panel's file-list container; if that
+// somehow isn't the actual scroll box, we search upward for one dynamically,
+// and fall back to the native method only as a last resort.
+function scrollTileIntoView(tile) {
+    if (!tile) return;
+    let container = document.getElementById("explorerGrid");
+    if (!container || container.scrollHeight <= container.clientHeight) {
+        container = null;
+        let node = tile.parentElement;
+        while (node) {
+            const cs = window.getComputedStyle(node);
+            if ((cs.overflowY === 'auto' || cs.overflowY === 'scroll') && node.scrollHeight > node.clientHeight) {
+                container = node;
+                break;
+            }
+            node = node.parentElement;
+        }
+    }
+    if (!container) {
+        tile.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "auto" });
+        return;
+    }
+    const cRect = container.getBoundingClientRect();
+    const tRect = tile.getBoundingClientRect();
+    if (tRect.top < cRect.top) container.scrollTop -= (cRect.top - tRect.top);
+    else if (tRect.bottom > cRect.bottom) container.scrollTop += (tRect.bottom - cRect.bottom);
+    if (tRect.left < cRect.left) container.scrollLeft -= (cRect.left - tRect.left);
+    else if (tRect.right > cRect.right) container.scrollLeft += (tRect.right - cRect.right);
+}
+
+// Guard against accumulating a new listener every time the panel redraws
+// (e.g. opening/exiting a folder calls drawPanel(), which re-runs this whole
+// script). Without this, listeners stack up and every keypress fires all of
+// them at once, each moving focus independently - producing exactly the
+// "jumps to a random tile, worse each time" symptom.
+if (window.explorerKeydownHandler) {
+    window.removeEventListener('keydown', window.explorerKeydownHandler);
+}
+window.explorerKeydownHandler = function(e) {
     const menu = document.getElementById('explorer-context-menu');
     
     // 1. ESCAPE: High Priority Close
@@ -973,9 +1065,7 @@ window.addEventListener('keydown', function(e) {
     if (document.activeElement.id === "tileSearch" && e.key !== "ArrowDown") return;
 
     // 4. GET VISIBLE TILES (Cached for this specific keypress)
-    const tiles = Array.from(document.querySelectorAll(".grid-tile")).filter(t => {
-        return window.getComputedStyle(t).display !== 'none';
-    });
+    const tiles = Array.from(document.querySelectorAll(".grid-tile")).filter(isTileNavigable);
 
     if (tiles.length === 0) return;
 
@@ -983,6 +1073,7 @@ window.addEventListener('keydown', function(e) {
     const grid = document.getElementById("explorerGrid");
     const firstTile = grid.querySelector(".grid-tile");
     let cols = 1;
+    const isTreeMode = !!document.querySelector(".mode-tree");
     if (document.querySelector(".mode-grid") && firstTile) {
         const tileWidth = firstTile.offsetWidth;
         const gridWidth = grid.clientWidth;
@@ -998,6 +1089,40 @@ window.addEventListener('keydown', function(e) {
         if (document.activeElement.id === "tileSearch" && e.key === "ArrowDown") {
             document.activeElement.blur();
             focusedIndex = 0;
+        } else if (isTreeMode && e.key === "ArrowRight" && focusedIndex !== -1 && tiles[focusedIndex]) {
+            // TREE VIEW ONLY: Right expands a collapsed folder (staying on it),
+            // or moves to the next visible tile for an already-open folder / a file.
+            const current = tiles[focusedIndex];
+            if (current.classList.contains("folder-tile")) {
+                const ownDetails = treeOwnDetails(current);
+                if (ownDetails && !ownDetails.hasAttribute("open")) {
+                    ownDetails.setAttribute("open", "true");
+                } else {
+                    focusedIndex = Math.min(focusedIndex + 1, tiles.length - 1);
+                }
+            } else {
+                focusedIndex = Math.min(focusedIndex + 1, tiles.length - 1);
+            }
+        } else if (isTreeMode && e.key === "ArrowLeft" && focusedIndex !== -1 && tiles[focusedIndex]) {
+            // TREE VIEW ONLY: Left collapses an open folder (staying on it), or
+            // jumps focus up to the parent folder for a collapsed folder / a file.
+            const current = tiles[focusedIndex];
+            const isFolderTile = current.classList.contains("folder-tile");
+            const ownDetails = treeOwnDetails(current);
+
+            if (isFolderTile && ownDetails && ownDetails.hasAttribute("open")) {
+                ownDetails.removeAttribute("open");
+            } else {
+                // For a folder tile, ownDetails is its own <details> wrapper, so
+                // look one level further up for the parent. For a file tile,
+                // ownDetails already IS its immediate containing folder.
+                const parentDetails = isFolderTile
+                    ? (ownDetails && ownDetails.parentElement ? treeOwnDetails(ownDetails.parentElement) : null)
+                    : ownDetails;
+                const parentSummary = treeSummaryOf(parentDetails);
+                const parentIdx = parentSummary ? tiles.indexOf(parentSummary) : -1;
+                if (parentIdx !== -1) focusedIndex = parentIdx;
+            }
         } else {
             if (e.key === "ArrowRight") focusedIndex = Math.min(focusedIndex + 1, tiles.length - 1);
             else if (e.key === "ArrowLeft") focusedIndex = Math.max(focusedIndex - 1, 0);
@@ -1013,7 +1138,7 @@ window.addEventListener('keydown', function(e) {
         // Visual Update
         document.querySelectorAll(".is-focused").forEach(el => el.classList.remove("is-focused"));
         target.classList.add("is-focused");
-//        target.scrollIntoView({ block: "nearest", behavior: "auto" }); // "auto" is faster than "smooth"
+        scrollTileIntoView(target);
 
         // AUTO-LOAD: on pure arrow-key movement (not Enter/Backspace), schedule
         // an automatic open of the newly-focused tile after a short debounce,
@@ -1051,22 +1176,37 @@ window.addEventListener('keydown', function(e) {
             }
         }
     }
-});
+};
+window.addEventListener('keydown', window.explorerKeydownHandler);
 
 // ---------------- Sync focus with mouse selection ----------------
 // Whenever a tile is clicked with the mouse (selecting/opening it, or just
 // selecting it via Ctrl/Cmd-click for batch mode), keep focusedIndex pointed
 // at that tile so the next arrow-key press continues navigation from there
 // instead of resetting to the top of the list.
-document.addEventListener('click', function(e) {
+if (window.explorerFocusClickHandler) {
+    document.removeEventListener('click', window.explorerFocusClickHandler, true);
+}
+window.explorerFocusClickHandler = function(e) {
     const tile = e.target.closest('.grid-tile');
-    if (!tile || tile.classList.contains('folderup-tile')) return;
+    if (!tile) return;
+
+    if (tile.classList.contains('folderup-tile')) {
+        // Going up (via ".." click, Backspace, or Enter-on-".." - they all
+        // dispatch a real/synthetic click here first) - remember the folder
+        // we're leaving, so once the parent folder's panel loads, the cursor
+        // can land back on it instead of resetting to the top of the list.
+        const grid = document.getElementById('explorerGrid');
+        const leavingPath = grid ? (grid.dataset.currentPath || '').replace(/\/$/, '') : '';
+        if (leavingPath) {
+            syscall('clientStore.set', 'explorer.cameFromChild', leavingPath);
+        }
+        return;
+    }
 
     // Recompute against the same "currently visible" tile set the keyboard
     // handler uses, so indices stay consistent between mouse and keyboard.
-    const visibleTiles = Array.from(document.querySelectorAll(".grid-tile")).filter(t => {
-        return window.getComputedStyle(t).display !== 'none';
-    });
+    const visibleTiles = Array.from(document.querySelectorAll(".grid-tile")).filter(isTileNavigable);
     const idx = visibleTiles.indexOf(tile);
     if (idx === -1) return;
 
@@ -1074,7 +1214,20 @@ document.addEventListener('click', function(e) {
     focusedIndex = idx;
     document.querySelectorAll(".is-focused").forEach(el => el.classList.remove("is-focused"));
     tile.classList.add("is-focused");
-}, true); // capture phase so this runs even though the tile's own inline onclick navigates away
+
+    // INSTANT ACTIVE-PAGE HIGHLIGHT: don't wait for the 1x/interval watchdog
+    // to notice the page changed (that round-trips through editor:pageLoaded
+    // -> clientStore -> polling, which is where the lag comes from). We
+    // already know which openable tile was just clicked, so highlight it
+    // immediately. refreshActiveHighlight() still runs afterward via the
+    // watchdog and remains the source of truth - this is just an optimistic
+    // guess that gets confirmed (or corrected) a moment later.
+    if (!tile.classList.contains('folder-tile')) {
+        document.querySelectorAll('.is-active-page').forEach(el => el.classList.remove('is-active-page'));
+        tile.classList.add('is-active-page');
+    }
+};
+document.addEventListener('click', window.explorerFocusClickHandler, true); // capture phase so this runs even though the tile's own inline onclick navigates away
 
 // ---------------- Batch Selection ----------------
 let selectedPaths = new Set();
@@ -1090,6 +1243,31 @@ function getFullTilePath(tile) {
     // For file tiles, the title attribute holds the full path (without leading slash)
     return (tile.getAttribute('title') || '').replace(/^\//, '');
 }
+
+// ---------------- Restore cursor when navigating up a folder ----------------
+// If we just came from a child folder (see explorerFocusClickHandler's
+// folderup-tile branch above), land the keyboard cursor back on that folder
+// in this newly-loaded parent listing, rather than defaulting to the top -
+// closer to how a normal desktop file explorer behaves.
+(async function restoreCameFromFocus() {
+    try {
+        const cameFromPath = await syscall('clientStore.get', 'explorer.cameFromChild');
+        if (!cameFromPath) return;
+        // Consume it immediately so a later, unrelated panel load never reuses it.
+        await syscall('clientStore.set', 'explorer.cameFromChild', '');
+
+        const navigable = Array.from(document.querySelectorAll('.grid-tile')).filter(isTileNavigable);
+        const match = navigable.find(t => !t.classList.contains('folderup-tile') && getFullTilePath(t) === cameFromPath);
+        if (match) {
+            focusedIndex = navigable.indexOf(match);
+            document.querySelectorAll('.is-focused').forEach(el => el.classList.remove('is-focused'));
+            match.classList.add('is-focused');
+            scrollTileIntoView(match);
+        }
+    } catch (err) {
+        // Best-effort only - fall back to no initial focus if anything goes wrong.
+    }
+})();
 
 function toggleTileSelection(tile) {
     if (!tile || tile.classList.contains('folderup-tile')) return;
@@ -1111,7 +1289,10 @@ function clearSelection() {
 }
 
 // Capture-phase click handler: intercept Ctrl/Cmd+Click for batch selection
-document.addEventListener('click', function(e) {
+if (window.explorerBatchSelectClickHandler) {
+    document.removeEventListener('click', window.explorerBatchSelectClickHandler, true);
+}
+window.explorerBatchSelectClickHandler = function(e) {
     if (e.ctrlKey || e.metaKey) {
         const tile = e.target.closest('.grid-tile');
         if (!tile || tile.classList.contains('folderup-tile')) return;
@@ -1126,7 +1307,8 @@ document.addEventListener('click', function(e) {
             clearSelection();
         }
     }
-}, true); // capture phase ensures we run before inline onclick handlers
+};
+document.addEventListener('click', window.explorerBatchSelectClickHandler, true); // capture phase ensures we run before inline onclick handlers
 
 // ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
@@ -1494,7 +1676,8 @@ let touchStartPos = { x: 0, y: 0 };
 const LONG_PRESS_DURATION = 600; // 1 second
 const MOVE_THRESHOLD = 30; // Pixels to allow before canceling
 
-window.addEventListener('touchstart', function(e) {
+if (window.explorerTouchStartHandler) window.removeEventListener('touchstart', window.explorerTouchStartHandler);
+window.explorerTouchStartHandler = function(e) {
     const tile = e.target.closest('.grid-tile, .tree-folder');
     if (!tile || tile.innerText.includes("..")) return;
 
@@ -1518,9 +1701,11 @@ window.addEventListener('touchstart', function(e) {
         
         tile.dispatchEvent(fakeEvent);
     }, LONG_PRESS_DURATION);
-}, { passive: true });
+};
+window.addEventListener('touchstart', window.explorerTouchStartHandler, { passive: true });
 
-window.addEventListener('touchmove', function(e) {
+if (window.explorerTouchMoveHandler) window.removeEventListener('touchmove', window.explorerTouchMoveHandler);
+window.explorerTouchMoveHandler = function(e) {
     if (!touchTimer) return;
 
     // Calculate how far the finger moved
@@ -1532,17 +1717,22 @@ window.addEventListener('touchmove', function(e) {
         clearTimeout(touchTimer);
         touchTimer = null;
     }
-}, { passive: true });
+};
+window.addEventListener('touchmove', window.explorerTouchMoveHandler, { passive: true });
 
-window.addEventListener('touchend', function() {
+if (window.explorerTouchEndHandler) window.removeEventListener('touchend', window.explorerTouchEndHandler);
+window.explorerTouchEndHandler = function() {
     clearTimeout(touchTimer);
     touchTimer = null;
-});
+};
+window.addEventListener('touchend', window.explorerTouchEndHandler);
 
-window.addEventListener('touchcancel', function() {
+if (window.explorerTouchCancelHandler) window.removeEventListener('touchcancel', window.explorerTouchCancelHandler);
+window.explorerTouchCancelHandler = function() {
     clearTimeout(touchTimer);
     touchTimer = null;
-});
+};
+window.addEventListener('touchcancel', window.explorerTouchCancelHandler);
 
 
 
@@ -1733,8 +1923,13 @@ setTimeout(() => {
 
 // Clear any existing watchdog to prevent memory leaks on panel redraw
 if (window.highlightWatchdog) clearInterval(window.highlightWatchdog);
-// 500ms is responsive enough for humans but very light on the CPU
-window.highlightWatchdog = setInterval(watchdog, 1000);
+// The underlying clientStore.get syscall is extremely fast and a no-op
+// when the token hasn't changed, so polling this often is still very
+// light on the CPU. This is mainly a fast-reconciling safety net now -
+// tile clicks/Enter/auto-load already highlight instantly on their own
+// (see the click handler above) - this catches page changes that don't
+// go through an explorer tile, e.g. wiki-links or browser back/forward.
+window.highlightWatchdog = setInterval(watchdog, 250);
   
 // ---------------- Filter Logic with Debounce ----------------
 let cachedTiles = [];
