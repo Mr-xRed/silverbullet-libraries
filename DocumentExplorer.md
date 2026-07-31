@@ -660,6 +660,7 @@ end
       
       -- Logic Toggle check
       local filterEnabled = clientStore.get("explorer.disableFilter") ~= "true"
+      local autoLoadEnabled = clientStore.get("explorer.autoLoad") == "true"
     
       local folderPrefix = clientStore.get(PATH_KEY) or ""
       if viewMode == "tree" then 
@@ -733,6 +734,12 @@ end
                               class="explorer-action-btn]] .. activeClass .. [[" id="filter-btn" 
                               onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleFilter')">]])
       table.insert(h, (filterDisabled and ICONS.filterOn or ICONS.filterOff))
+      local autoLoadActiveClass = autoLoadEnabled and " active" or ""
+      table.insert(h, [[</div>
+                        <div title="Auto-Load Images/PDFs on Arrow Navigation" 
+                              class="explorer-action-btn]] .. autoLoadActiveClass .. [[" id="autoload-btn" 
+                              onclick="syscall('editor.invokeCommand','DocumentExplorer: ToggleAutoLoad')">]])
+      table.insert(h, ICONS.fileIMG)
       table.insert(h, [[</div>
                         <div title="New Page" 
                               class="explorer-action-btn" 
@@ -903,6 +910,29 @@ local script = [[
 // ---------------- Keyboard Navigation ----------------
 let focusedIndex = -1;
 
+// Auto-Load: when enabled, arrow-key navigation opens the focused tile
+// automatically (after a short debounce) without needing to press Enter.
+// Restricted to images and PDFs only - folders, .md pages, excalidraw,
+// drawio, and "unknown" file types are never auto-loaded.
+const autoLoadEnabled = ]] .. tostring(autoLoadEnabled) .. [[;
+const AUTO_LOAD_ALLOWED_CLASSES = ["image-tile", "pdf-tile"];
+let autoLoadTimer = null;
+
+function scheduleAutoLoad(target) {
+    if (autoLoadTimer) clearTimeout(autoLoadTimer);
+    if (!target) return;
+    if (!AUTO_LOAD_ALLOWED_CLASSES.some(c => target.classList.contains(c))) return;
+
+    autoLoadTimer = setTimeout(() => {
+        autoLoadTimer = null;
+        // Guard against the tile having been removed/replaced (e.g. panel redrawn)
+        // or focus having moved on to a different tile since this was scheduled.
+        if (target.isConnected && target.classList.contains("is-focused")) {
+            target.click();
+        }
+    }, 200);
+}
+
 window.addEventListener('keydown', function(e) {
     const menu = document.getElementById('explorer-context-menu');
     
@@ -985,8 +1015,17 @@ window.addEventListener('keydown', function(e) {
         target.classList.add("is-focused");
 //        target.scrollIntoView({ block: "nearest", behavior: "auto" }); // "auto" is faster than "smooth"
 
+        // AUTO-LOAD: on pure arrow-key movement (not Enter/Backspace), schedule
+        // an automatic open of the newly-focused tile after a short debounce,
+        // so quickly arrowing past several files doesn't open every one of them.
+        if (autoLoadEnabled && e.key !== "Enter" && e.key !== "Backspace") {
+            scheduleAutoLoad(target);
+        }
+
         // SPEEDY ENTER LOGIC
         if (e.key === "Enter") {
+            // Cancel any pending auto-load so it doesn't re-fire a click later.
+            if (autoLoadTimer) { clearTimeout(autoLoadTimer); autoLoadTimer = null; }
             // Trigger the click immediately
             target.click();
 
@@ -999,6 +1038,8 @@ window.addEventListener('keydown', function(e) {
         
         // BACKSPACE: Go Up
         if (e.key === "Backspace") {
+            // Cancel any pending auto-load - we're leaving this folder entirely.
+            if (autoLoadTimer) { clearTimeout(autoLoadTimer); autoLoadTimer = null; }
             const upBtn = document.querySelector(".folderup-tile");
             if (upBtn) {
                 // Going up a folder triggers "DocumentExplorer: Open Folder", which calls
@@ -1029,6 +1070,7 @@ document.addEventListener('click', function(e) {
     const idx = visibleTiles.indexOf(tile);
     if (idx === -1) return;
 
+    if (autoLoadTimer) { clearTimeout(autoLoadTimer); autoLoadTimer = null; }
     focusedIndex = idx;
     document.querySelectorAll(".is-focused").forEach(el => el.classList.remove("is-focused"));
     tile.classList.add("is-focused");
@@ -1805,7 +1847,7 @@ window.clearFilter = function(event) {
         return el;
     }
 
-    const mainCss  = ensureElement("silverbullet-main-css", "link", { rel: "stylesheet", href: "/.client/main.css"});
+    const mainCss  = ensureElement("silverbullet-main-css", "link", { rel: "stylesheet", href: "]] .. urlPrefix .. [[.client/main.css"});
     const explorerCss = ensureElement("explorer-style-css", "link", { rel: "stylesheet", href: "]] .. urlPrefix .. [[.fs/Library/Mr-xRed/docex_styles.css" });
     
     if (!document.getElementById("explorer-custom-styles-once")) {
@@ -1887,6 +1929,20 @@ command.define {
     end
     drawPanel()
   end 
+}
+
+command.define {
+  name = "DocumentExplorer: ToggleAutoLoad",
+  hide = true,
+  run = function()
+    local current = clientStore.get("explorer.autoLoad")
+    if current == "true" then
+      clientStore.set("explorer.autoLoad", "false")
+    else
+      clientStore.set("explorer.autoLoad", "true")
+    end
+    drawPanel()
+  end
 }
 
 command.define {
