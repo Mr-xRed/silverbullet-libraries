@@ -10,7 +10,7 @@ files:
 pageDecoration.prefix: "🗂️ "
 ---
 
-# 🗂️ Document Explorer (Ver. 1.1.2)
+# 🗂️ Document Explorer (Ver. 1.2.0)
 
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DocumentExplorer_Screenshot.png)
 
@@ -32,7 +32,6 @@ pageDecoration.prefix: "🗂️ "
     - ❗️⚠️ You need to confirm the files one by one when `Cut & Pasting` or when batch `Rename` multiple files, because DocumentExplorer uses the built-in `Rename` function from Silverbullet, which will also update the backlinks inside the pages. 
     - ❗️⚠️ When renaming a folder with multiple files in it, the Backlinks are not correctly updated
     - recommandation: instead of Renaming the folder, use batch-cut/paste on the files
-    - ❗️⚠️ [Silverbullet - BUG when renaming files with a "(" in its name the backlinks will malform](https://github.com/silverbulletmd/silverbullet/issues/1850)
 
   
 ## Currently supported extension:
@@ -1071,7 +1070,12 @@ window.explorerKeydownHandler = function(e) {
 
     // 5. GRID CALCULATIONS
     const grid = document.getElementById("explorerGrid");
-    const firstTile = grid.querySelector(".grid-tile");
+    // Use the first *visible* tile (tiles[0]), not just the first .grid-tile
+    // in DOM order - if the negative filter is hiding tiles, the literal
+    // first one in the DOM can easily be a hidden (display:none) one, whose
+    // offsetWidth is always 0. That silently produced a huge, bogus column
+    // count, making Up/Down jump around erratically in grid view specifically.
+    const firstTile = tiles[0];
     let cols = 1;
     const isTreeMode = !!document.querySelector(".mode-tree");
     if (document.querySelector(".mode-grid") && firstTile) {
