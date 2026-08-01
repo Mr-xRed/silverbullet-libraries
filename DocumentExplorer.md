@@ -305,7 +305,7 @@ local function fileTile(icon, name, target, ext, viewMode)
   if category ~= "md" and category ~= "pdf" and category ~= "drawio" and category ~= "excalidraw" and category ~= "img" then
       onClickAction = "window.open('" .. urlPrefix .. target .. "', '_blank')"
   else
-      onClickAction = "syscall('editor.navigate','" .. target .. "',false,false)"
+      onClickAction = "explorerOpenPage('" .. target .. "', event)"
   end
 
   local finalIcon = icon
@@ -464,7 +464,7 @@ local function renderTree(files, prefix)
             
             if isHybrid then
                 local pagePath = "/" .. node._path:gsub("%.md$","")
-                table.insert(buffer, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); event.preventDefault(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+                table.insert(buffer, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); event.preventDefault(); explorerOpenPage('" .. pagePath .. "', event)\">MD</div>")
             end
             
             table.insert(buffer, "</summary><div class='tree-content'>")
@@ -873,7 +873,7 @@ end
                   table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
                   table.insert(h, "<div class='hybrid-folder-zone'>")
                   table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
-                  table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+                  table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); explorerOpenPage('" .. pagePath .. "', event)\">MD</div>")
                   table.insert(h, "</div>")
               else
                   local fClass = "grid-tile folder-tile"
@@ -1313,6 +1313,30 @@ window.explorerBatchSelectClickHandler = function(e) {
     }
 };
 document.addEventListener('click', window.explorerBatchSelectClickHandler, true); // capture phase ensures we run before inline onclick handlers
+
+// ---------------- Opening a page ----------------
+// Every tile that opens a page goes through here.
+//
+// The panel lives in an iframe, so clicking a tile leaves the keyboard focus inside
+// that iframe. The page itself opened just fine, but the cursor never arrived in the
+// editor, and the next keystroke was still being handled by the panel: the arrow keys
+// moved the tile selection, and "/" jumped into the tile search instead of typing into
+// the note. The only way out was to click into the text with the mouse. editor.navigate
+// does not move the focus on its own, so we hand it over explicitly afterwards.
+//
+// Only a real mouse click hands the focus over, which is what event.isTrusted tells us.
+// Pressing Enter and the auto-load timer both open a page through a synthetic
+// target.click(), and in both of those cases the user is still working in the panel with
+// the keyboard - pulling the focus into the editor there would break arrow navigation,
+// the very thing the "we deliberately do NOT reset focusedIndex" note in the Enter
+// handler exists to protect.
+window.explorerOpenPage = async function(path, event) {
+    const fromMouseClick = !!(event && event.isTrusted);
+    await syscall('editor.navigate', path, false, false);
+    if (fromMouseClick) {
+        await syscall('editor.focus');
+    }
+};
 
 // ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
