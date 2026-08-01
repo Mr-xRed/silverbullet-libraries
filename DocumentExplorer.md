@@ -302,10 +302,16 @@ local function fileTile(icon, name, target, ext, viewMode)
   
   local encodedDrag = encoding.base64Encode(dragData)
 
+  -- The path goes into the onclick base64-encoded, the same way the drag payload above
+  -- already does. Page names may contain double quotes, and those would end the
+  -- double-quoted onclick attribute early and leave broken JavaScript behind - see the
+  -- note on explorerDecodePath in the panel script for why escaping them is not an option.
+  local encodedTarget = encoding.base64Encode(target)
+
   if category ~= "md" and category ~= "pdf" and category ~= "drawio" and category ~= "excalidraw" and category ~= "img" then
-      onClickAction = "window.open('" .. urlPrefix .. target .. "', '_blank')"
+      onClickAction = "window.open('" .. urlPrefix .. "' + explorerDecodePath('" .. encodedTarget .. "'), '_blank')"
   else
-      onClickAction = "syscall('editor.navigate','" .. target .. "',false,false)"
+      onClickAction = "syscall('editor.navigate', explorerDecodePath('" .. encodedTarget .. "'), false, false)"
   end
 
   local finalIcon = icon
@@ -464,7 +470,8 @@ local function renderTree(files, prefix)
             
             if isHybrid then
                 local pagePath = "/" .. node._path:gsub("%.md$","")
-                table.insert(buffer, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); event.preventDefault(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+                local encodedPage = encoding.base64Encode(pagePath)
+                table.insert(buffer, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); event.preventDefault(); syscall('editor.navigate', explorerDecodePath('" .. encodedPage .. "'), false, false)\">MD</div>")
             end
             
             table.insert(buffer, "</summary><div class='tree-content'>")
@@ -873,7 +880,7 @@ end
                   table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
                   table.insert(h, "<div class='hybrid-folder-zone'>")
                   table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
-                  table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+                  table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate', explorerDecodePath('" .. encoding.base64Encode(pagePath) .. "'), false, false)\">MD</div>")
                   table.insert(h, "</div>")
               else
                   local fClass = "grid-tile folder-tile"
@@ -1314,6 +1321,31 @@ window.explorerBatchSelectClickHandler = function(e) {
 };
 document.addEventListener('click', window.explorerBatchSelectClickHandler, true); // capture phase ensures we run before inline onclick handlers
 
+// ---------------- Page paths ----------------
+// Tiles hand their path over base64-encoded, and this turns it back into text. It is the
+// same decode handleDragStart already does below, kept as its own function so both can
+// use it.
+//
+// The reason for encoding at all: a tile's onclick is a double-quoted HTML attribute, and
+// page names are allowed to contain double quotes. A page called  Invoice "paid"  used to
+// close the attribute early, which left a broken fragment of JavaScript behind - so the
+// tile simply did nothing when clicked, with no error to explain why.
+//
+// Escaping the quotes instead is not an option here. In space-lua the pattern matcher
+// compares characters by their low byte, so a one-byte pattern also matches any character
+// that happens to share it: a gsub for '"' also hits Cyrillic Т, one for '>' hits о, and
+// one for '/' hits Я. Escaping a Russian page name that way quietly destroys the letters
+// in it. Base64 output is only A-Z, a-z, 0-9, + and /, so it needs no escaping in either
+// the attribute or the JavaScript string, whatever the page is called.
+window.explorerDecodePath = function(encoded) {
+    const binaryString = atob(encoded);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+};
+
 // ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
     // 1. Decode Base64 to a binary string
@@ -1396,7 +1428,7 @@ if (contextMenuEnabled) {
                     const fileName = srcPath.split('/').pop();
                     const destPath = (destFolder.replace(/\/$/, '') ? destFolder.replace(/\/$/, '') + '/' : '') + fileName;
                     if (srcPath === destPath) { skipped++; continue; }
-                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists("${destPath}")`);
+                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists(${JSON.stringify(destPath)})`);
                     if (existsResult === 'true') { skipped++; continue; }
                     await syscall('system.invokeFunction', 'index.renamePrefixCommand', { oldPrefix: srcPath, newPrefix: destPath });
                     moved++;
@@ -1513,7 +1545,7 @@ if (contextMenuEnabled) {
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show("${internalPath}", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(${JSON.stringify(internalPath)}, ${JSON.stringify(fileName)})`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1525,7 +1557,7 @@ if (contextMenuEnabled) {
             // Suppress the explorer spawn on new window
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked("${internalPath}", "rhs", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked(${JSON.stringify(internalPath)}, "rhs", ${JSON.stringify(fileName)})`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1537,7 +1569,7 @@ if (contextMenuEnabled) {
             // Suppress the explorer spawn on new window
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked("${internalPath}", "lhs", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked(${JSON.stringify(internalPath)}, "lhs", ${JSON.stringify(fileName)})`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1600,7 +1632,7 @@ if (contextMenuEnabled) {
                     }
 
                     // Skip if destination already exists (ask Lua, returns "true"/"false" string)
-                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists("${destPath}")`);
+                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists(${JSON.stringify(destPath)})`);
                     if (existsResult === 'true') {
                         skipped++;
                         continue;
@@ -1667,7 +1699,7 @@ if (contextMenuEnabled) {
                 clearSelection();
             } else {
                 // Single delete (original logic)
-                await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+                await syscall("lua.evalExpression", `deleteFileWithConfirm(${JSON.stringify(internalPath)})`);
             }
         };
     }
