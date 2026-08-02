@@ -1793,9 +1793,17 @@ window.toggleTreeExpansion = function() {
 
 
 function saveTreeState() {
-  const openFolders = Array.from(document.querySelectorAll('.tree-folder[open]'))
-    .map(details => details.querySelector('summary').getAttribute('data-path')); 
-  localStorage.setItem('explorer_open_folders', JSON.stringify(openFolders));
+  // Coalesced, because "expand all" fires one toggle event per folder and each one used
+  // to serialize the whole open-folder list and hand it to localStorage - a synchronous
+  // write per folder, on the main thread, while the tree is still opening. Only the state
+  // after the last toggle is worth writing, and the list is read from the DOM when the
+  // timer fires, so a redraw in between cannot make it write anything stale.
+  clearTimeout(window.explorerTreeSaveTimer);
+  window.explorerTreeSaveTimer = setTimeout(() => {
+    const openFolders = Array.from(document.querySelectorAll('.tree-folder[open]'))
+      .map(details => details.querySelector('summary').getAttribute('data-path')); 
+    localStorage.setItem('explorer_open_folders', JSON.stringify(openFolders));
+  }, 100);
 }
 
 function initTreePersistence() {
