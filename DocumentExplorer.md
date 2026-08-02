@@ -422,10 +422,19 @@ end
 -- before a reload, and notice a file list that no longer matches the space.
 event.listen { name = "editor:pageLoaded", run = function()
     triggerHighlightUpdate()
-    restoreExplorerOpenStateOnPageLoad() 
-    -- Last: restore may have just drawn the panel with a freshly listed space, in which
-    -- case this finds the page present and does nothing.
-    refreshIfFileListStale()
+    -- Whether the panel was already open decides who is allowed to draw below.
+    local wasVisible = PANEL_VISIBLE
+    restoreExplorerOpenStateOnPageLoad()
+    -- Only check for staleness when the panel was already open. If restore has just
+    -- reopened it, it drew a moment ago, and a second drawPanel() in the same tick would
+    -- land inside the 100ms window in which the panel-mode MutationObserver is set up:
+    -- the old observer is disconnected on entry to the panel script, but the new one is
+    -- created by a setTimeout, so two draws that close together leave the first observer
+    -- connected with nothing left pointing at it. A list that stays stale until the next
+    -- page load is the cheaper price.
+    if wasVisible then
+        refreshIfFileListStale()
+    end
 end }
 event.listen { name = "editor:documentLoaded", run = function()
     triggerHighlightUpdate()
