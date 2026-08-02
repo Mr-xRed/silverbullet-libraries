@@ -1966,7 +1966,11 @@ if (window.highlightWatchdog) clearInterval(window.highlightWatchdog);
 // tile clicks/Enter/auto-load already highlight instantly on their own
 // (see the click handler above) - this catches page changes that don't
 // go through an explorer tile, e.g. wiki-links or browser back/forward.
-window.highlightWatchdog = setInterval(watchdog, 250);
+// Skipped while the tab is hidden: each tick is a syscall round-trip out to the host
+// document, and a tab nobody is looking at has nothing to re-highlight. Four of those a
+// second, in every background tab with a space open, for as long as the browser is up.
+// The first tick after the tab comes back reconciles whatever changed meanwhile.
+window.highlightWatchdog = setInterval(() => { if (!document.hidden) watchdog(); }, 250);
   
 // ---------------- Filter Logic with Debounce ----------------
 let cachedTiles = [];
