@@ -1889,10 +1889,21 @@ async function watchdog() {
 })();
 
 // 2. Add MutationObserver to track panel/window state
-if (window.explorerModeWatcher) {
-    window.explorerModeWatcher.disconnect();
-}
+//
+// The previous observer is disconnected inside the timeout, next to where its replacement
+// is created, and not on entry to this script. The panel is not reloaded when it is
+// redrawn - the host replaces the body and runs this script again in the same document -
+// so two redraws less than 100ms apart both reach this point before either timeout has
+// fired. Disconnecting up here would then hit an observer that does not exist yet on the
+// first pass and, on the second, overwrite window.explorerModeWatcher with a fresh
+// observer while the one made 0ms earlier is still attached to the panel element with
+// nothing left pointing at it. It would go on firing a clientStore round-trip for every
+// class change on that element for the rest of the session, and only F5 would clear it.
 setTimeout(() => {
+  if (window.explorerModeWatcher) {
+      window.explorerModeWatcher.disconnect();
+      window.explorerModeWatcher = null;
+  }
   const panelSelector = '.sb-panel.]] .. PANEL_ID .. [[';
   const panelElement = parent.document.querySelector(panelSelector);
   if (panelElement) {
