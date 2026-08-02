@@ -235,13 +235,14 @@ local function restoreExplorerOpenStateOnPageLoad()
     end
   end
 end
--- ---------- Escaping values that go into HTML attributes ----------
+-- ---------- Escaping values that go into the panel's HTML ----------
 -- Page and folder names are allowed to contain quotes, and every one of them ends up
--- inside an attribute somewhere: title, data-path, the onclick payload. A single quote in
--- a name closed the attribute early and left the rest of the tag as garbage, which is why
--- a folder called  Q1 'draft'  had a broken tile - and unlike the file paths handled
--- elsewhere in this file, an attribute cannot simply be base64: title is what the user
--- reads on hover.
+-- inside the panel's markup somewhere: title, data-path, the onclick payload, and the
+-- visible label of the tile. A single quote in a name closed the attribute early and left
+-- the rest of the tag as garbage, which is why a folder called  Q1 'draft'  had a broken
+-- tile; a name containing < swallowed the label after it. Base64 is not an option for
+-- these, unlike the file paths handled elsewhere in this file: title is what the user
+-- reads on hover and the label is what they read on the tile.
 --
 -- The usual gsub is not available here. This runtime's pattern matcher compares
 -- characters by their low byte (toBytes does charCodeAt(i) & 0xff), so a one-byte pattern
@@ -253,7 +254,7 @@ end
 -- them, cost one native search each and are returned untouched. Only the rare name that
 -- actually needs escaping walks characters, and comparing a character for equality is
 -- exact, unlike matching it as a pattern.
-local function explorerEscapeAttr(text)
+local function explorerEscapeHtml(text)
   if not text or text == "" then return text end
   if not (string.find(text, "'", 1, true) or string.find(text, '"', 1, true)
           or string.find(text, "<", 1, true) or string.find(text, "&", 1, true)) then
@@ -368,8 +369,8 @@ local function fileTile(icon, name, target, ext, viewMode)
 
   return "<div class='" .. tileClass .. "' " ..
     "draggable='true' ondragstart='handleDragStart(event, \"" .. encodedDrag .. "\")' " ..
-    "data-ext='" .. originalExt:upper() .. "' title='" .. explorerEscapeAttr(target:gsub("^/", "")) .. "' onclick=\"" .. onClickAction .. "\">" ..
-    "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
+    "data-ext='" .. explorerEscapeHtml(originalExt:upper()) .. "' title='" .. explorerEscapeHtml(target:gsub("^/", "")) .. "' onclick=\"" .. onClickAction .. "\">" ..
+    "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. explorerEscapeHtml(name) .. "</div></div>"
 end
 
 -- ---------- Refresh Logic ----------
@@ -501,9 +502,9 @@ local function renderTree(files, prefix)
             local fClass = "grid-tile folder-tile"
             if isHybrid then fClass = fClass .. " hybrid-tile" end
 
-            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..explorerEscapeAttr(fullPath).."' title='"..explorerEscapeAttr(name).."'>")
+            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..explorerEscapeHtml(fullPath).."' title='"..explorerEscapeHtml(name).."'>")
             table.insert(buffer, "<div class='hybrid-folder-zone'>")
-            table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></div>")
+            table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..explorerEscapeHtml(name).."</div></div>")
             
             if isHybrid then
                 local pagePath = "/" .. node._path:gsub("%.md$","")
@@ -715,11 +716,11 @@ end
     
       if not cachedFiles then cachedFiles = space.listFiles() end
       
-      local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
+      local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..explorerEscapeHtml(homeDirName).."</a>"}
       local pathAccum = ""
       for part in folderPrefix:gmatch("([^/]+)/") do
         pathAccum = pathAccum .. part .. "/"
-        table.insert(crumbs, "<a onclick=\"explorerOpenFolder('"..encoding.base64Encode(pathAccum).."')\">" .. explorerEscapeAttr(part) .. "</a>")
+        table.insert(crumbs, "<a onclick=\"explorerOpenFolder('"..encoding.base64Encode(pathAccum).."')\">" .. explorerEscapeHtml(part) .. "</a>")
       end
       local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
     
@@ -891,7 +892,7 @@ end
     
           if folderPrefix ~= "" then
             local parent = folderPrefix:gsub("[^/]+/$", "")
-            table.insert(h, "<div class='grid-tile folderup-tile' data-path='"..explorerEscapeAttr(parent).."' onclick=\"explorerOpenFolder('"..encoding.base64Encode(parent).."')\">")
+            table.insert(h, "<div class='grid-tile folderup-tile' data-path='"..explorerEscapeHtml(parent).."' onclick=\"explorerOpenFolder('"..encoding.base64Encode(parent).."')\">")
             table.insert(h, "<div class='icon'>"..ICONS.folderUp.."</div><div class='grid-title'>..</div></div>")
           end
     
@@ -914,16 +915,16 @@ end
                   local pagePath = "/" .. folderPrefix .. f
                   local hClass = "grid-tile folder-tile hybrid-tile"
                   if isFiltered(folderPath) then hClass = hClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. hClass .. "' title='" .. explorerEscapeAttr(f) .. "' data-path='" .. explorerEscapeAttr(folderPath) .. "' onclick=\"explorerOpenFolder('"..encoding.base64Encode(folderPath).."')\">")
+                  table.insert(h, "<div class='" .. hClass .. "' title='" .. explorerEscapeHtml(f) .. "' data-path='" .. explorerEscapeHtml(folderPath) .. "' onclick=\"explorerOpenFolder('"..encoding.base64Encode(folderPath).."')\">")
                   table.insert(h, "<div class='hybrid-folder-zone'>")
-                  table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
+                  table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..explorerEscapeHtml(f).."</div></div>")
                   table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate', explorerDecodePath('" .. encoding.base64Encode(pagePath) .. "'), false, false)\">MD</div>")
                   table.insert(h, "</div>")
               else
                   local fClass = "grid-tile folder-tile"
                   if isFiltered(folderPath) then fClass = fClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. fClass .. "' title='" .. explorerEscapeAttr(f) .. "' data-path='" .. explorerEscapeAttr(folderPath) .. "' onclick=\"explorerOpenFolder('"..encoding.base64Encode(folderPath).."')\">")
-                  table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
+                  table.insert(h, "<div class='" .. fClass .. "' title='" .. explorerEscapeHtml(f) .. "' data-path='" .. explorerEscapeHtml(folderPath) .. "' onclick=\"explorerOpenFolder('"..encoding.base64Encode(folderPath).."')\">")
+                  table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..explorerEscapeHtml(f).."</div></div>")
               end
           end
     
