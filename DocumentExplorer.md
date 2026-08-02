@@ -1330,11 +1330,53 @@ document.addEventListener('click', window.explorerBatchSelectClickHandler, true)
 // the keyboard - pulling the focus into the editor there would break arrow navigation,
 // the very thing the "we deliberately do NOT reset focusedIndex" note in the Enter
 // handler exists to protect.
+//
+// editor.focus is a request rather than a guarantee, so the result is verified instead
+// of assumed. client.focus() on the host side returns without doing anything while any
+// modal is open (command palette, page navigator, filter box, prompt, confirm), and it
+// reports no error when it does - so the syscall can succeed while the focus never
+// moves, leaving the panel swallowing keystrokes exactly as before. When that happens
+// and nothing else has a claim on the focus, hand it to the editor content directly.
+function explorerEnsureEditorFocused() {
+    try {
+        // Typing in the tile filter is a deliberate claim on the panel, never override it.
+        if (document.activeElement && document.activeElement.id === "tileSearch") return;
+
+        const host = parent.document;
+        const active = host.activeElement;
+        // Focus already left this panel - either the editor took it or the user moved it
+        // somewhere else on purpose. Guessing again would be worse than doing nothing.
+        if (!active || active.tagName !== "IFRAME" || active.contentWindow !== window) return;
+        // A modal is open, so the host declined deliberately. Pulling the focus out of the
+        // dialog the user is answering would be a worse bug than the one fixed here.
+        if (host.querySelector(".sb-modal-backdrop, .sb-modal-box")) return;
+
+        const content = host.querySelector("#sb-editor .cm-content");
+        if (content) content.focus({ preventScroll: true });
+    } catch (e) {
+        console.error("DocumentExplorer: focus check failed", e);
+    }
+}
+
 window.explorerOpenPage = async function(path, event) {
     const fromMouseClick = !!(event && event.isTrusted);
-    await syscall('editor.navigate', path, false, false);
+    try {
+        await syscall('editor.navigate', path, false, false);
+    } catch (e) {
+        // A tile can outlive the file it points at - renaming a page from the path field
+        // in the top bar is how a note gets moved, and the panel's file list is only
+        // rebuilt on refresh. The click still happened inside the iframe either way, so
+        // skipping the hand-off here left the keyboard trapped in the panel for the rest
+        // of the session, which is the very failure this function exists to prevent.
+        console.error("DocumentExplorer: navigation failed", e);
+    }
     if (fromMouseClick) {
-        await syscall('editor.focus');
+        try {
+            await syscall('editor.focus');
+            explorerEnsureEditorFocused();
+        } catch (e) {
+            console.error("DocumentExplorer: focus hand-off failed", e);
+        }
     }
 };
 
