@@ -235,6 +235,43 @@ local function restoreExplorerOpenStateOnPageLoad()
     end
   end
 end
+-- ---------- Escaping values that go into HTML attributes ----------
+-- Page and folder names are allowed to contain quotes, and every one of them ends up
+-- inside an attribute somewhere: title, data-path, the onclick payload. A single quote in
+-- a name closed the attribute early and left the rest of the tag as garbage, which is why
+-- a folder called  Q1 'draft'  had a broken tile - and unlike the file paths handled
+-- elsewhere in this file, an attribute cannot simply be base64: title is what the user
+-- reads on hover.
+--
+-- The usual gsub is not available here. This runtime's pattern matcher compares
+-- characters by their low byte (toBytes does charCodeAt(i) & 0xff), so a one-byte pattern
+-- also matches every character sharing that byte: '"' matches Cyrillic Т, '<' matches м,
+-- '&' matches Ц, "'" matches Ч. Escaping a Russian name with gsub destroys letters in it.
+--
+-- string.find with the plain flag is safe, because it goes to a straight indexOf on the
+-- string instead of the byte matcher - so names without quotes, which is nearly all of
+-- them, cost one native search each and are returned untouched. Only the rare name that
+-- actually needs escaping walks characters, and comparing a character for equality is
+-- exact, unlike matching it as a pattern.
+local function explorerEscapeAttr(text)
+  if not text or text == "" then return text end
+  if not (string.find(text, "'", 1, true) or string.find(text, '"', 1, true)
+          or string.find(text, "<", 1, true) or string.find(text, "&", 1, true)) then
+    return text
+  end
+  local out = {}
+  for i = 1, #text do
+    local c = string.sub(text, i, i)
+    if c == "&" then out[#out + 1] = "&amp;"
+    elseif c == '"' then out[#out + 1] = "&quot;"
+    elseif c == "'" then out[#out + 1] = "&#39;"
+    elseif c == "<" then out[#out + 1] = "&lt;"
+    elseif c == ">" then out[#out + 1] = "&gt;"
+    else out[#out + 1] = c end
+  end
+  return table.concat(out)
+end
+
 -- ---------- Helper to check negative filters ----------
 local function isFiltered(path)
   local lowPath = path:lower()
@@ -331,7 +368,7 @@ local function fileTile(icon, name, target, ext, viewMode)
 
   return "<div class='" .. tileClass .. "' " ..
     "draggable='true' ondragstart='handleDragStart(event, \"" .. encodedDrag .. "\")' " ..
-    "data-ext='" .. originalExt:upper() .. "' title='" .. target:gsub("^/", "") .. "' onclick=\"" .. onClickAction .. "\">" ..
+    "data-ext='" .. originalExt:upper() .. "' title='" .. explorerEscapeAttr(target:gsub("^/", "")) .. "' onclick=\"" .. onClickAction .. "\">" ..
     "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
 
@@ -464,7 +501,7 @@ local function renderTree(files, prefix)
             local fClass = "grid-tile folder-tile"
             if isHybrid then fClass = fClass .. " hybrid-tile" end
 
-            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..fullPath.."' title='"..name.."'>")
+            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..explorerEscapeAttr(fullPath).."' title='"..explorerEscapeAttr(name).."'>")
             table.insert(buffer, "<div class='hybrid-folder-zone'>")
             table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></div>")
             
@@ -682,7 +719,7 @@ end
       local pathAccum = ""
       for part in folderPrefix:gmatch("([^/]+)/") do
         pathAccum = pathAccum .. part .. "/"
-        table.insert(crumbs, "<a onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..pathAccum.."'} )\">" .. part .. "</a>")
+        table.insert(crumbs, "<a onclick=\"explorerOpenFolder('"..encoding.base64Encode(pathAccum).."')\">" .. explorerEscapeAttr(part) .. "</a>")
       end
       local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
     
@@ -854,7 +891,7 @@ end
     
           if folderPrefix ~= "" then
             local parent = folderPrefix:gsub("[^/]+/$", "")
-            table.insert(h, "<div class='grid-tile folderup-tile' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..parent.."'} )\">")
+            table.insert(h, "<div class='grid-tile folderup-tile' data-path='"..explorerEscapeAttr(parent).."' onclick=\"explorerOpenFolder('"..encoding.base64Encode(parent).."')\">")
             table.insert(h, "<div class='icon'>"..ICONS.folderUp.."</div><div class='grid-title'>..</div></div>")
           end
     
@@ -877,7 +914,7 @@ end
                   local pagePath = "/" .. folderPrefix .. f
                   local hClass = "grid-tile folder-tile hybrid-tile"
                   if isFiltered(folderPath) then hClass = hClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+                  table.insert(h, "<div class='" .. hClass .. "' title='" .. explorerEscapeAttr(f) .. "' data-path='" .. explorerEscapeAttr(folderPath) .. "' onclick=\"explorerOpenFolder('"..encoding.base64Encode(folderPath).."')\">")
                   table.insert(h, "<div class='hybrid-folder-zone'>")
                   table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
                   table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate', explorerDecodePath('" .. encoding.base64Encode(pagePath) .. "'), false, false)\">MD</div>")
@@ -885,7 +922,7 @@ end
               else
                   local fClass = "grid-tile folder-tile"
                   if isFiltered(folderPath) then fClass = fClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. fClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+                  table.insert(h, "<div class='" .. fClass .. "' title='" .. explorerEscapeAttr(f) .. "' data-path='" .. explorerEscapeAttr(folderPath) .. "' onclick=\"explorerOpenFolder('"..encoding.base64Encode(folderPath).."')\">")
                   table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
               end
           end
@@ -1245,11 +1282,13 @@ let selectedPaths = new Set();
 
 // Extract the full path from a tile element (handles both file tiles and folder tiles)
 function getFullTilePath(tile) {
-    // For folder tiles, the onclick contains path:{...}
-    const onclick = tile.getAttribute('onclick') || '';
-    const folderMatch = onclick.match(/path\s*:\s*['"]([^'"]+)['"]/);
-    if (folderMatch) {
-        return folderMatch[1].replace(/\/$/, '');
+    // Folder tiles, the up-one-level tile and tree summaries all carry data-path. It used
+    // to be dug out of the onclick attribute with a regex, which is why folder paths could
+    // not be encoded the way file paths are - the regex would have read back base64.
+    // closest() covers both the tile itself and a tree summary wrapped inside it.
+    const holder = tile.closest('[data-path]');
+    if (holder) {
+        return (holder.getAttribute('data-path') || '').replace(/\/$/, '');
     }
     // For file tiles, the title attribute holds the full path (without leading slash)
     return (tile.getAttribute('title') || '').replace(/^\//, '');
@@ -1344,6 +1383,17 @@ window.explorerDecodePath = function(encoded) {
         bytes[i] = binaryString.charCodeAt(i);
     }
     return new TextDecoder().decode(bytes);
+};
+
+// Folder tiles and breadcrumbs go through here. Their path used to be interpolated raw
+// into the onclick as syscall(..., {path:'<folder>'}), which is a JavaScript string
+// inside a double-quoted HTML attribute: a folder called  Q1 'draft'  ended the string,
+// and one called  status "paid"  ended the attribute. Base64 has neither problem, and it
+// keeps folders consistent with the file tiles above.
+window.explorerOpenFolder = function(encodedPath) {
+    return syscall('editor.invokeCommand', 'DocumentExplorer: Open Folder', {
+        path: window.explorerDecodePath(encodedPath),
+    });
 };
 
 // ---------------- Drag & Drop Logic ----------------
@@ -1454,16 +1504,13 @@ if (contextMenuEnabled) {
 
     // --- Path Extraction ---
     let targetPath = "";
-    // Priority 1: data-path (used in Tree View summary)
-    const summary = tile.querySelector('summary') || (tile.tagName === 'SUMMARY' ? tile : null);
-    if (summary && summary.getAttribute('data-path')) {
-        targetPath = summary.getAttribute('data-path');
+    // Priority 1: data-path - on the tile itself for folders, on the summary in Tree View
+    const holder = tile.querySelector('[data-path]') || tile.closest('[data-path]');
+    if (holder && holder.getAttribute('data-path')) {
+        targetPath = holder.getAttribute('data-path');
     } else {
-        // Priority 2: Standard attributes
-        const onClickAttr = tile.getAttribute('onclick') || "";
-        const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-        if (multiArgMatch) targetPath = multiArgMatch[1];
-        else targetPath = tile.getAttribute('title') || "";
+        // Priority 2: the tooltip, which is the full path for file tiles
+        targetPath = tile.getAttribute('title') || "";
     }
 
     // FIXED: Handle both .fs/ and .fs/ prefixes
@@ -1851,12 +1898,9 @@ async function refreshActiveHighlight() {
       if (dp) tileFullPath = dp.toLowerCase();
     }
 
-    // 2) If still empty or ambiguous, try to extract path from onclick (used for folder tiles)
-    if (!tileFullPath || tileFullPath === "") {
-      const onclickAttr = tile.getAttribute('onclick') || (tile.querySelector && tile.querySelector('[onclick]') && tile.querySelector('[onclick]').getAttribute('onclick')) || "";
-      const m = onclickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-      if (m && m[1]) tileFullPath = m[1].toLowerCase();
-    }
+    // Folder tiles used to be read back out of their onclick attribute here. They carry
+    // data-path now, which step 1 above already picks up through closest(), and the regex
+    // could not survive folder paths being encoded anyway.
 
     // 3) If the tileFullPath looks like a simple name (no slash), try to resolve it relative to the current explorer path
     // This helps grid folder tiles which use title-only names
