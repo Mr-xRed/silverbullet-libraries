@@ -943,6 +943,36 @@ function scheduleAutoLoad(target) {
 // that folder is collapsed (that's the row you actually see/select to expand
 // it) - only its *contents* become hidden. So a closed <details> only counts
 // against a tile if the tile isn't that details' own direct <summary> child.
+// "The tiles the user can actually reach" is needed on every arrow key, on every click
+// and by the auto-load timer, and each of those used to rebuild it from scratch. That
+// means isTileNavigable over every tile in the panel, and its first line calls
+// getComputedStyle, which forces a style resolution. A fully expanded tree is around 800
+// tiles, so holding an arrow key down asked the browser for 800 forced style resolutions
+// per repeat - which is the lag when moving through a large space.
+//
+// The answer only changes when tiles are hidden or revealed: the filter, a folder opening
+// or closing, and a resize (media queries decide some of the display values). Nothing else
+// touches it, and a redraw rebuilds the panel script anyway, so the cache starts empty
+// there by construction.
+let navigableTilesCache = null;
+function invalidateNavigableTiles() { navigableTilesCache = null; }
+function getNavigableTiles() {
+    if (!navigableTilesCache) {
+        navigableTilesCache = Array.from(document.querySelectorAll(".grid-tile")).filter(isTileNavigable);
+    }
+    return navigableTilesCache;
+}
+
+// Media queries decide some of the display values, so a resize can change the answer
+// without any tile being touched. Registered the same way as the other panel-wide
+// listeners: named on window and removed before being added again, because a redraw runs
+// this script afresh against a document that was never reloaded.
+if (window.explorerResizeHandler) {
+    window.removeEventListener('resize', window.explorerResizeHandler);
+}
+window.explorerResizeHandler = invalidateNavigableTiles;
+window.addEventListener('resize', window.explorerResizeHandler);
+
 function isTileNavigable(t) {
     if (window.getComputedStyle(t).display === 'none') return false;
     let child = t;
@@ -1064,7 +1094,7 @@ window.explorerKeydownHandler = function(e) {
     if (document.activeElement.id === "tileSearch" && e.key !== "ArrowDown") return;
 
     // 4. GET VISIBLE TILES (Cached for this specific keypress)
-    const tiles = Array.from(document.querySelectorAll(".grid-tile")).filter(isTileNavigable);
+    const tiles = getNavigableTiles();
 
     if (tiles.length === 0) return;
 
@@ -1210,7 +1240,7 @@ window.explorerFocusClickHandler = function(e) {
 
     // Recompute against the same "currently visible" tile set the keyboard
     // handler uses, so indices stay consistent between mouse and keyboard.
-    const visibleTiles = Array.from(document.querySelectorAll(".grid-tile")).filter(isTileNavigable);
+    const visibleTiles = getNavigableTiles();
     const idx = visibleTiles.indexOf(tile);
     if (idx === -1) return;
 
@@ -1260,7 +1290,7 @@ function getFullTilePath(tile) {
         // Consume it immediately so a later, unrelated panel load never reuses it.
         await syscall('clientStore.set', 'explorer.cameFromChild', '');
 
-        const navigable = Array.from(document.querySelectorAll('.grid-tile')).filter(isTileNavigable);
+        const navigable = getNavigableTiles();
         const match = navigable.find(t => !t.classList.contains('folderup-tile') && getFullTilePath(t) === cameFromPath);
         if (match) {
             focusedIndex = navigable.indexOf(match);
@@ -1772,7 +1802,10 @@ function initTreePersistence() {
   const grid = document.getElementById("explorerGrid");
   if (grid) {
     grid.addEventListener('toggle', (e) => {
-      if (e.target.tagName === 'DETAILS') saveTreeState();
+      if (e.target.tagName === 'DETAILS') {
+        invalidateNavigableTiles();
+        saveTreeState();
+      }
     }, true);
   }
 }
@@ -2018,6 +2051,8 @@ window.filterTiles = function() {
             }
         });
 
+        // Every tile's display was just rewritten, so the navigable set is stale.
+        invalidateNavigableTiles();
         focusedIndex = -1;
     }, 300); 
 };
