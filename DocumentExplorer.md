@@ -1327,36 +1327,24 @@ document.addEventListener('click', window.explorerBatchSelectClickHandler, true)
 // Only a real mouse click hands the focus over, which is what event.isTrusted tells us.
 // Pressing Enter and the auto-load timer both open a page through a synthetic
 // target.click(), and in both of those cases the user is still working in the panel with
-// the keyboard - pulling the focus into the editor there would break arrow navigation,
-// the very thing the "we deliberately do NOT reset focusedIndex" note in the Enter
-// handler exists to protect.
+// the keyboard - going after the focus there would fight the arrow navigation, the very
+// thing the "we deliberately do NOT reset focusedIndex" note in the Enter handler exists
+// to protect.
 //
-// editor.focus is a request rather than a guarantee, so the result is verified instead
-// of assumed. client.focus() on the host side returns without doing anything while any
-// modal is open (command palette, page navigator, filter box, prompt, confirm), and it
-// reports no error when it does - so the syscall can succeed while the focus never
-// moves, leaving the panel swallowing keystrokes exactly as before. When that happens
-// and nothing else has a claim on the focus, hand it to the editor content directly.
-function explorerEnsureEditorFocused() {
-    try {
-        // Typing in the tile filter is a deliberate claim on the panel, never override it.
-        if (document.activeElement && document.activeElement.id === "tileSearch") return;
-
-        const host = parent.document;
-        const active = host.activeElement;
-        // Focus already left this panel - either the editor took it or the user moved it
-        // somewhere else on purpose. Guessing again would be worse than doing nothing.
-        if (!active || active.tagName !== "IFRAME" || active.contentWindow !== window) return;
-        // A modal is open, so the host declined deliberately. Pulling the focus out of the
-        // dialog the user is answering would be a worse bug than the one fixed here.
-        if (host.querySelector(".sb-modal-backdrop, .sb-modal-box")) return;
-
-        const content = host.querySelector("#sb-editor .cm-content");
-        if (content) content.focus({ preventScroll: true });
-    } catch (e) {
-        console.error("DocumentExplorer: focus check failed", e);
-    }
-}
+// What that gate buys is narrower than it looks, and worth writing down because the wider
+// claim is tempting: it does not keep the keyboard in the panel. SilverBullet moves the
+// focus into the editor on every navigation by itself (client.navigate ends in
+// client.focus()), synthetic click or not - measured by running an open with the hand-off
+// below removed altogether. What the gate does keep out is the watch window: without it
+// the panel would go on taking the focus back for most of a second after a keyboard open,
+// and every attempt to return to the panel during that second would be undone.
+//
+// How long the hand-off keeps watching after a click, and how often it looks. The window
+// has to outlast the page load that editor.navigate only starts, because the focus can
+// still be taken back while that load finishes; the step is short enough that a keystroke
+// meant for the note is never swallowed by the panel first.
+const EXPLORER_FOCUS_WATCH_MS = 800;
+const EXPLORER_FOCUS_STEP_MS = 50;
 
 window.explorerOpenPage = async function(path, event) {
     const fromMouseClick = !!(event && event.isTrusted);
@@ -1373,12 +1361,134 @@ window.explorerOpenPage = async function(path, event) {
     if (fromMouseClick) {
         try {
             await syscall('editor.focus');
-            explorerEnsureEditorFocused();
         } catch (e) {
             console.error("DocumentExplorer: focus hand-off failed", e);
         }
+        // Outside the try for the same reason the navigation is: a refused syscall is no
+        // reason to leave the keyboard in the panel.
+        explorerHandFocusToEditor();
     }
 };
+
+// A single check, run the moment editor.navigate resolves, reads the focus too early.
+// Two things still land after it, and either one takes the focus back without a word:
+//
+//   - the browser's own focus hand-off for the click. A tile is not a focusable element,
+//     so the focus goes to the nearest thing that is - this iframe - and the browser is
+//     free to apply that after the click handlers have run.
+//   - the page load itself. editor.navigate only starts it; the syscall resolves before
+//     the new page is on screen.
+//
+// The first of those is also what made the single check report success: SilverBullet's
+// path field in the top bar commits on blur, and an unchanged name makes it call
+// client.focus() itself. So clicking a tile with the path selected focused the editor for
+// a moment, the check saw the editor focused and returned happy - and the browser then
+// moved the focus into the panel anyway. Hence: keep watching for a short while, and stop
+// the moment anything makes a deliberate claim.
+function explorerHandFocusToEditor() {
+    explorerStopFocusHandoff();
+
+    // Touching the panel again is the user overruling the hand-off - a click into the
+    // filter box, or the keyboard. Reading the focus is not enough to notice that: in
+    // Firefox the focus a click inside this iframe asks for can still be in flight when
+    // the next check runs, and the hand-off would then talk over it. The click that
+    // started all this is already over by the time we get here, so it cannot cancel itself.
+    window.explorerFocusCancelHandler = function() { explorerStopFocusHandoff(); };
+    window.addEventListener("mousedown", window.explorerFocusCancelHandler, true);
+    window.addEventListener("keydown", window.explorerFocusCancelHandler, true);
+
+    const deadline = Date.now() + EXPLORER_FOCUS_WATCH_MS;
+    const tick = function() {
+        window.explorerFocusTimer = null;
+        if (explorerFocusEditorOnce() === "other" || Date.now() >= deadline) {
+            explorerStopFocusHandoff();
+            return;
+        }
+        window.explorerFocusTimer = setTimeout(tick, EXPLORER_FOCUS_STEP_MS);
+    };
+    tick();
+}
+
+// Ends a hand-off, whether it finished or was overruled: the pending timer and the
+// listeners that watch for the user overruling it. Both are kept on window rather than in
+// this script's scope, because a redraw re-runs the script in the same document, and a
+// timer or a listener only the previous run could reach would go on firing with nothing
+// left pointing at it.
+function explorerStopFocusHandoff() {
+    if (window.explorerFocusTimer) {
+        clearTimeout(window.explorerFocusTimer);
+        window.explorerFocusTimer = null;
+    }
+    if (window.explorerFocusCancelHandler) {
+        window.removeEventListener("mousedown", window.explorerFocusCancelHandler, true);
+        window.removeEventListener("keydown", window.explorerFocusCancelHandler, true);
+        window.explorerFocusCancelHandler = null;
+    }
+}
+
+// editor.focus is a request rather than a guarantee, so the result is verified instead
+// of assumed. client.focus() on the host side returns without doing anything while any
+// modal is open (command palette, page navigator, filter box, prompt, confirm), and it
+// reports no error when it does - so the syscall can succeed while the focus never
+// moves, leaving the panel swallowing keystrokes exactly as before. When that happens
+// and nothing else has a claim on the focus, hand it to the editor content directly.
+//
+// Moves the focus and reports where it ended up - deliberately both, against the usual
+// rule of keeping the two apart. The answer is the outcome of this very attempt, and the
+// caller needs it to decide whether to keep trying; asking separately afterwards would
+// read a focus that the next event may already have moved.
+//   "editor" - the editor holds it
+//   "other"  - something else has a deliberate claim, stop trying
+//   "panel"  - still stuck in this iframe, worth another attempt
+function explorerFocusEditorOnce() {
+    try {
+        // Typing in the tile filter is a deliberate claim on the panel, never override it.
+        const panelActive = document.activeElement;
+        if (panelActive && panelActive.id === "tileSearch") return "other";
+
+        const host = parent.document;
+        // A modal is open, so the host declined deliberately. Pulling the focus out of the
+        // dialog the user is answering would be a worse bug than the one fixed here.
+        if (host.querySelector(".sb-modal-backdrop, .sb-modal-box")) return "other";
+
+        // Nothing to hand the focus to: a document editor is open in place of the page
+        // editor, or the page is still being built. Nothing to retry either.
+        const content = host.querySelector("#sb-editor .cm-content");
+        if (!content) return "other";
+
+        const hostActive = host.activeElement;
+        if (hostActive === content) return "editor";
+
+        const panelHasFocus = !!hostActive && hostActive.tagName === "IFRAME"
+            && hostActive.contentWindow === window;
+        // The focus sits elsewhere in the host on purpose - the path field in the top bar,
+        // an action button, another panel. An idle host reports body, or the document
+        // element when nothing at all is focused, and neither is a claim.
+        const hostHoldsItElsewhere = !panelHasFocus && !!hostActive
+            && hostActive !== host.body && hostActive !== host.documentElement;
+        if (hostHoldsItElsewhere) return "other";
+        // The user has put the focus on something inside the panel itself.
+        if (panelHasFocus && panelActive && panelActive !== document.body) return "other";
+
+        if (panelHasFocus) {
+            // Firefox keeps this iframe as the focused frame however many times the editor
+            // element is asked to take the focus: the request reaches the parent document,
+            // but the focused frame does not change, so activeElement there stays the
+            // <iframe> and every keystroke still goes to the panel. Releasing the frame
+            // first is what actually moves it. In Chromium this costs nothing, because
+            // focus() alone already works there.
+            hostActive.blur();
+        }
+        content.focus({ preventScroll: true });
+        return host.activeElement === content ? "editor" : "panel";
+    } catch (e) {
+        // Stop rather than retry: a check that just threw will throw the same way on every
+        // remaining tick, and all that produces is the same error sixteen times over.
+        console.error("DocumentExplorer: focus check failed", e);
+        return "other";
+    }
+}
+
 
 // ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
