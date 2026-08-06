@@ -9,11 +9,12 @@ files:
 ---
 # PrintPreview Command `Ctrl-Alt-p`
 
-> **warning** Caution
-> WORK IN PROGRESS
-
 > **tip** Hint
 > When Running the command make sure you have **Pop-Up**’s enabled because the PrintPreview will open a new Window/Tab with a `PrintPreview.html`
+
+> **tip** Hint
+> Katex rendering is powered by a local copy of KaTeX js-library referenced from `/Library/mrmugame/Silverbullet-Math/` - make sure that [Silverbullet-Math](https://github.com/mrmugame/silverbullet-math) is installed in your space.
+
 
 ## How does it work?
 * It saves the current editor page and retrieves its Markdown text.
@@ -21,6 +22,7 @@ files:
 * Turns the expanded Markdown into HTML and cleans up repeated `<br>` tags, adjusts image paths, and marks certain tables as widgets.
 * Embeds the HTML into a full HTML page with metadata, CSS and header and footer info for print.
 * Writes the HTML to temp/PrintPreview.html, syncs it, sends notification, and opens it in the browser.
+* If KaTeX rendering is enabled, LaTeX math (`$...$`, `$$...$$`, `\(...\)`, `\[...\]`) found anywhere in the page is rendered client-side using a local copy of KaTeX — no CDN required. This works in **all** print modes (Classic, Data, Code, Custom).
 
 ## Options & Config
 
@@ -34,6 +36,7 @@ config.set("PrintPreview", {
     marginTRBL = "20mm 20mm 20mm 25mm",  --default: "20mm 20mm 20mm 25mm" Top Right Bottom Left
     landscape = true                     --default: false
     accentHue = "260"                    --default: if ommited it will ask you
+    enableKatex = true                   --default: true. Set to false to disable LaTeX/KaTeX rendering
 })  
 ```
 
@@ -41,7 +44,7 @@ config.set("PrintPreview", {
 
 > **tip** Check out [printcss.live/editor](https://printcss.live/editor) if you want to make your own custom Stylesheets
 
-* You can also set a `title` and `author` in the page’s frontmatter to use in the printout header. If you don’t set them, the page name will be used instead:
+* You can also set a `title` and `author` in the page’s frontmatter to use in the printout header. If you don’t set them, the page name will be used instead:
 
 ~~~example
 ---
@@ -49,6 +52,11 @@ title: "A Beatiful Story"
 author: "Mr-xRed"
 ---
 ~~~
+
+## LaTeX / KaTeX support
+* Write math using standard delimiters in your page: `$inline$`, `$$block$$`, `\(inline\)`, or `\[block\]`.
+* Enabled by default for every print mode. Set `enableKatex = false` in `config.set("PrintPreview", {...})` to opt out (e.g. if you don't have the KaTeX library installed, or don't need it for a given space).
+* Escape a literal dollar sign with `\$` if you need one that isn't meant as math.
 
 ## Browser Support for `@page` attributes:
 
@@ -58,7 +66,6 @@ author: "Mr-xRed"
 | @page: size | v15  | v79  | v95  | No  | v15  |
 | @page: page-orientation | v85  | v85  | No  | No  | v71  |
 | @page: @top-center, @bottom-center (used for header & footer)| v131 | No  | No  | No  | No  |
-
 
 ## Implementation
 
@@ -71,9 +78,12 @@ config.define("PrintPreview", {
     pageSize = schema.string(),
     landscape = schema.boolean(),
     marginTRBL = schema.string(),
-    accentHue = schema.string()
+    accentHue = schema.string(),
+    enableKatex = schema.boolean()
   }
 })
+
+local urlPrefix = system.getURLPrefix()
 
 -- Generate TOC ------------------------------------------------------
 local function toc()
@@ -181,11 +191,98 @@ local function selectCustomCSS()
   return result and result.name
 end
 
+--------------------------------------------------------------------
+-- KaTeX injection (shared by ALL modes)
+--------------------------------------------------------------------
+local function katexBlock(enableKatex)
+  if not enableKatex then
+    return ""
+  end
+
+  return [[
+<link rel="stylesheet" href="]]..urlPrefix..[[.fs/Library/mrmugame/Silverbullet-Math/katex.min.css">
+<script type="module">
+import katex from "]]..urlPrefix..[[.fs/Library/mrmugame/Silverbullet-Math/katex.mjs";
+
+document.addEventListener('DOMContentLoaded', () => {
+  const skipTags = new Set(['SCRIPT', 'STYLE', 'PRE', 'CODE', 'TEXTAREA']);
+  const mathRegex = /(?<!\\)\$\$([^\$]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|(?<!\\)\$([^\$\n]+?)\$/g;
+
+  const decodeEntities = (str) => {
+    const t = document.createElement('textarea');
+    t.innerHTML = str;
+    return t.value;
+  };
+
+  function isInSkippedTag(el) {
+    while (el) {
+      if (skipTags.has(el.tagName)) return true;
+      el = el.parentElement;
+    }
+    return false;
+  }
+
+  function renderTextNode(node) {
+    const text = node.nodeValue;
+    if (!/\$|\\\[|\\\(/.test(text)) return;
+
+    mathRegex.lastIndex = 0;
+    let match, lastIndex = 0, found = false;
+    const frag = document.createDocumentFragment();
+
+    while ((match = mathRegex.exec(text)) !== null) {
+      const [full, dbl, bracket, paren, single] = match;
+      const tex = dbl ?? bracket ?? paren ?? single;
+      if (tex === undefined || tex.trim() === '') continue;
+
+      found = true;
+      const display = dbl !== undefined || bracket !== undefined;
+
+      if (match.index > lastIndex) {
+        frag.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+      }
+
+      const span = document.createElement(display ? 'div' : 'span');
+      span.className = display ? 'katex-display-wrap' : 'katex-inline-wrap';
+      try {
+        katex.render(decodeEntities(tex.trim()), span, { displayMode: display, throwOnError: false });
+      } catch (e) {
+        span.textContent = full;
+      }
+      frag.appendChild(span);
+      lastIndex = match.index + full.length;
+    }
+
+    if (!found) return;
+    if (lastIndex < text.length) {
+      frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+    node.parentNode.replaceChild(frag, node);
+  }
+
+  function walk(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        if (isInSkippedTag(node.parentElement)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    const nodes = [];
+    let n;
+    while ((n = walker.nextNode())) nodes.push(n);
+    nodes.forEach(renderTextNode);
+  }
+
+  walk(document.querySelector('.page') || document.body);
+});
+</script>
+  ]]
+end
 
 --------------------------------------------------------------------
 -- Build HTML depending on mode
 --------------------------------------------------------------------
-local function buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue, chroma)
+local function buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue, chroma, enableKatex)
   local extraHead = ""
   local extraBeforeEnd = ""
 
@@ -254,13 +351,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   -- Classic gets nothing extra.
 
+  -- KaTeX gets appended to EVERY mode's head, independent of the mode-specific extras above.
+  extraHead = extraHead .. katexBlock(enableKatex)
+
   return [[
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>]] .. pageName .. [[</title>
-<link rel="stylesheet" href="/.fs/]] .. cssFile .. [[">
+<link rel="stylesheet" href="]]..urlPrefix..[[.fs/]] .. cssFile .. [[">
 <style>
 :root{--hue:]] .. accentHue .. [[;--chroma:]] .. chroma .. [[;}
 @page { size: ]] .. pageSize .. " " .. pageLayout .. [[; margin: ]] .. marginTRBL .. [[; 
@@ -314,6 +414,8 @@ command.define {
     local marginTRBL = PrintPreview.marginTRBL or "20mm 20mm 20mm 25mm"
     local accentHue = tonumber(PrintPreview.accentHue) or tonumber(selectAccentHue()) or 0
     local chroma = (accentHue == 0) and 0 or 1
+    local enableKatex = PrintPreview.enableKatex
+    if enableKatex == nil then enableKatex = true end
 
     local mdContent = editor.getText()
     local fm = (index.extractFrontmatter(mdContent)).frontmatter
@@ -330,7 +432,7 @@ command.define {
     htmlBody =  htmlBody:gsub("<br></br>", "<br>")
     htmlBody =  htmlBody:gsub("<br><br>", "<br>")
     htmlBody =  htmlBody:gsub("(</%w+>)<br>", "%1")
-    htmlBody =  htmlBody:gsub('src=["\']%.fs/', 'src="/.fs/')
+    htmlBody =  htmlBody:gsub('src=["\']%.fs/', 'src="'..urlPrefix..'.fs/')
     htmlBody = htmlBody:gsub(
                   '(<table.-</table>)',
                   function(tbl)
@@ -342,17 +444,26 @@ command.define {
                   end
                 )
 
+    -- KaTeX: block math ($$...$$) can end up fragmented by <br> tags when it spans
+    -- multiple source lines. Strip <br> tags found INSIDE $$...$$ pairs so the
+    -- whole expression stays in a single text node for the client-side renderer.
+    if enableKatex then
+      htmlBody = htmlBody:gsub('(%$%$.-%$%$)', function(m)
+        return (m:gsub('<br%s*/?>%s*', ' '))
+      end)
+    end
+
     --    htmlBody = htmlBody:gsub('(<table)(>.-<td>_isWidget</td>.-</table>)', '<table class="isWidget"%2')
 --      htmlBody = htmlBody:gsub("(<table.-)(<td>_isWidget</td>.-</table>)",'%2')
     
-    local fullHtml = buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue, chroma)
+    local fullHtml = buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue, chroma, enableKatex)
 
     local outputFile = "temp/PrintPreview.html"
     space.writeFile(outputFile, fullHtml)
     sync.performFileSync(outputFile)
 
     editor.flashNotification("HTML exported: " .. outputFile)
-    editor.openUrl("/.fs/" .. outputFile)
+    editor.openUrl(urlPrefix..".fs/" .. outputFile)
 --     js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(outputFile, "PrintPreview")
   end
 }
