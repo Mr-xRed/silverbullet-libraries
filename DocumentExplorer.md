@@ -235,6 +235,44 @@ local function restoreExplorerOpenStateOnPageLoad()
     end
   end
 end
+-- ---------- Escaping values that go into the panel's HTML ----------
+-- Page and folder names are allowed to contain quotes, and every one of them ends up
+-- inside the panel's markup somewhere: title, data-path, the onclick payload, and the
+-- visible label of the tile. A single quote in a name closed the attribute early and left
+-- the rest of the tag as garbage, which is why a folder called  Q1 'draft'  had a broken
+-- tile; a name containing < swallowed the label after it. Base64 is not an option for
+-- these, unlike the file paths handled elsewhere in this file: title is what the user
+-- reads on hover and the label is what they read on the tile.
+--
+-- The usual gsub is not available here. This runtime's pattern matcher compares
+-- characters by their low byte (toBytes does charCodeAt(i) & 0xff), so a one-byte pattern
+-- also matches every character sharing that byte: '"' matches Cyrillic Т, '<' matches м,
+-- '&' matches Ц, "'" matches Ч. Escaping a Russian name with gsub destroys letters in it.
+--
+-- string.find with the plain flag is safe, because it goes to a straight indexOf on the
+-- string instead of the byte matcher - so names without quotes, which is nearly all of
+-- them, cost one native search each and are returned untouched. Only the rare name that
+-- actually needs escaping walks characters, and comparing a character for equality is
+-- exact, unlike matching it as a pattern.
+local function explorerEscapeHtml(text)
+  if not text or text == "" then return text end
+  if not (string.find(text, "'", 1, true) or string.find(text, '"', 1, true)
+          or string.find(text, "<", 1, true) or string.find(text, "&", 1, true)) then
+    return text
+  end
+  local out = {}
+  for i = 1, #text do
+    local c = string.sub(text, i, i)
+    if c == "&" then out[#out + 1] = "&amp;"
+    elseif c == '"' then out[#out + 1] = "&quot;"
+    elseif c == "'" then out[#out + 1] = "&#39;"
+    elseif c == "<" then out[#out + 1] = "&lt;"
+    elseif c == ">" then out[#out + 1] = "&gt;"
+    else out[#out + 1] = c end
+  end
+  return table.concat(out)
+end
+
 -- ---------- Helper to check negative filters ----------
 local function isFiltered(path)
   local lowPath = path:lower()
@@ -302,10 +340,16 @@ local function fileTile(icon, name, target, ext, viewMode)
   
   local encodedDrag = encoding.base64Encode(dragData)
 
+  -- The path goes into the onclick base64-encoded, the same way the drag payload above
+  -- already does. Page names may contain double quotes, and those would end the
+  -- double-quoted onclick attribute early and leave broken JavaScript behind - see the
+  -- note on explorerDecodePath in the panel script for why escaping them is not an option.
+  local encodedTarget = encoding.base64Encode(target)
+
   if category ~= "md" and category ~= "pdf" and category ~= "drawio" and category ~= "excalidraw" and category ~= "img" then
-      onClickAction = "window.open('" .. urlPrefix .. target .. "', '_blank')"
+      onClickAction = "window.open('" .. urlPrefix .. "' + explorerDecodePath('" .. encodedTarget .. "'), '_blank')"
   else
-      onClickAction = "syscall('editor.navigate','" .. target .. "',false,false)"
+      onClickAction = "syscall('editor.navigate', explorerDecodePath('" .. encodedTarget .. "'), false, false)"
   end
 
   local finalIcon = icon
@@ -325,8 +369,8 @@ local function fileTile(icon, name, target, ext, viewMode)
 
   return "<div class='" .. tileClass .. "' " ..
     "draggable='true' ondragstart='handleDragStart(event, \"" .. encodedDrag .. "\")' " ..
-    "data-ext='" .. originalExt:upper() .. "' title='" .. target:gsub("^/", "") .. "' onclick=\"" .. onClickAction .. "\">" ..
-    "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
+    "data-ext='" .. explorerEscapeHtml(originalExt:upper()) .. "' title='" .. explorerEscapeHtml(target:gsub("^/", "")) .. "' onclick=\"" .. onClickAction .. "\">" ..
+    "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. explorerEscapeHtml(name) .. "</div></div>"
 end
 
 -- ---------- Refresh Logic ----------
@@ -458,13 +502,14 @@ local function renderTree(files, prefix)
             local fClass = "grid-tile folder-tile"
             if isHybrid then fClass = fClass .. " hybrid-tile" end
 
-            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..fullPath.."' title='"..name.."'>")
+            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..explorerEscapeHtml(fullPath).."' title='"..explorerEscapeHtml(name).."'>")
             table.insert(buffer, "<div class='hybrid-folder-zone'>")
-            table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></div>")
+            table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..explorerEscapeHtml(name).."</div></div>")
             
             if isHybrid then
                 local pagePath = "/" .. node._path:gsub("%.md$","")
-                table.insert(buffer, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); event.preventDefault(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+                local encodedPage = encoding.base64Encode(pagePath)
+                table.insert(buffer, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); event.preventDefault(); syscall('editor.navigate', explorerDecodePath('" .. encodedPage .. "'), false, false)\">MD</div>")
             end
             
             table.insert(buffer, "</summary><div class='tree-content'>")
@@ -671,11 +716,11 @@ end
     
       if not cachedFiles then cachedFiles = space.listFiles() end
       
-      local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..homeDirName.."</a>"}
+      local crumbs = {"<a title=\"Go Home\" onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:''})\">"..explorerEscapeHtml(homeDirName).."</a>"}
       local pathAccum = ""
       for part in folderPrefix:gmatch("([^/]+)/") do
         pathAccum = pathAccum .. part .. "/"
-        table.insert(crumbs, "<a onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..pathAccum.."'} )\">" .. part .. "</a>")
+        table.insert(crumbs, "<a onclick=\"explorerOpenFolder('"..encoding.base64Encode(pathAccum).."')\">" .. explorerEscapeHtml(part) .. "</a>")
       end
       local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
     
@@ -847,7 +892,7 @@ end
     
           if folderPrefix ~= "" then
             local parent = folderPrefix:gsub("[^/]+/$", "")
-            table.insert(h, "<div class='grid-tile folderup-tile' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..parent.."'} )\">")
+            table.insert(h, "<div class='grid-tile folderup-tile' data-path='"..explorerEscapeHtml(parent).."' onclick=\"explorerOpenFolder('"..encoding.base64Encode(parent).."')\">")
             table.insert(h, "<div class='icon'>"..ICONS.folderUp.."</div><div class='grid-title'>..</div></div>")
           end
     
@@ -870,16 +915,16 @@ end
                   local pagePath = "/" .. folderPrefix .. f
                   local hClass = "grid-tile folder-tile hybrid-tile"
                   if isFiltered(folderPath) then hClass = hClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+                  table.insert(h, "<div class='" .. hClass .. "' title='" .. explorerEscapeHtml(f) .. "' data-path='" .. explorerEscapeHtml(folderPath) .. "' onclick=\"explorerOpenFolder('"..encoding.base64Encode(folderPath).."')\">")
                   table.insert(h, "<div class='hybrid-folder-zone'>")
-                  table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
-                  table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+                  table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..explorerEscapeHtml(f).."</div></div>")
+                  table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate', explorerDecodePath('" .. encoding.base64Encode(pagePath) .. "'), false, false)\">MD</div>")
                   table.insert(h, "</div>")
               else
                   local fClass = "grid-tile folder-tile"
                   if isFiltered(folderPath) then fClass = fClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. fClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
-                  table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
+                  table.insert(h, "<div class='" .. fClass .. "' title='" .. explorerEscapeHtml(f) .. "' data-path='" .. explorerEscapeHtml(folderPath) .. "' onclick=\"explorerOpenFolder('"..encoding.base64Encode(folderPath).."')\">")
+                  table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..explorerEscapeHtml(f).."</div></div>")
               end
           end
     
@@ -1238,11 +1283,13 @@ let selectedPaths = new Set();
 
 // Extract the full path from a tile element (handles both file tiles and folder tiles)
 function getFullTilePath(tile) {
-    // For folder tiles, the onclick contains path:{...}
-    const onclick = tile.getAttribute('onclick') || '';
-    const folderMatch = onclick.match(/path\s*:\s*['"]([^'"]+)['"]/);
-    if (folderMatch) {
-        return folderMatch[1].replace(/\/$/, '');
+    // Folder tiles, the up-one-level tile and tree summaries all carry data-path. It used
+    // to be dug out of the onclick attribute with a regex, which is why folder paths could
+    // not be encoded the way file paths are - the regex would have read back base64.
+    // closest() covers both the tile itself and a tree summary wrapped inside it.
+    const holder = tile.closest('[data-path]');
+    if (holder) {
+        return (holder.getAttribute('data-path') || '').replace(/\/$/, '');
     }
     // For file tiles, the title attribute holds the full path (without leading slash)
     return (tile.getAttribute('title') || '').replace(/^\//, '');
@@ -1313,6 +1360,42 @@ window.explorerBatchSelectClickHandler = function(e) {
     }
 };
 document.addEventListener('click', window.explorerBatchSelectClickHandler, true); // capture phase ensures we run before inline onclick handlers
+
+// ---------------- Page paths ----------------
+// Tiles hand their path over base64-encoded, and this turns it back into text. It is the
+// same decode handleDragStart already does below, kept as its own function so both can
+// use it.
+//
+// The reason for encoding at all: a tile's onclick is a double-quoted HTML attribute, and
+// page names are allowed to contain double quotes. A page called  Invoice "paid"  used to
+// close the attribute early, which left a broken fragment of JavaScript behind - so the
+// tile simply did nothing when clicked, with no error to explain why.
+//
+// Escaping the quotes instead is not an option here. In space-lua the pattern matcher
+// compares characters by their low byte, so a one-byte pattern also matches any character
+// that happens to share it: a gsub for '"' also hits Cyrillic Т, one for '>' hits о, and
+// one for '/' hits Я. Escaping a Russian page name that way quietly destroys the letters
+// in it. Base64 output is only A-Z, a-z, 0-9, + and /, so it needs no escaping in either
+// the attribute or the JavaScript string, whatever the page is called.
+window.explorerDecodePath = function(encoded) {
+    const binaryString = atob(encoded);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+};
+
+// Folder tiles and breadcrumbs go through here. Their path used to be interpolated raw
+// into the onclick as syscall(..., {path:'<folder>'}), which is a JavaScript string
+// inside a double-quoted HTML attribute: a folder called  Q1 'draft'  ended the string,
+// and one called  status "paid"  ended the attribute. Base64 has neither problem, and it
+// keeps folders consistent with the file tiles above.
+window.explorerOpenFolder = function(encodedPath) {
+    return syscall('editor.invokeCommand', 'DocumentExplorer: Open Folder', {
+        path: window.explorerDecodePath(encodedPath),
+    });
+};
 
 // ---------------- Drag & Drop Logic ----------------
 window.handleDragStart = function(event, encodedData) {
@@ -1396,7 +1479,7 @@ if (contextMenuEnabled) {
                     const fileName = srcPath.split('/').pop();
                     const destPath = (destFolder.replace(/\/$/, '') ? destFolder.replace(/\/$/, '') + '/' : '') + fileName;
                     if (srcPath === destPath) { skipped++; continue; }
-                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists("${destPath}")`);
+                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists(${JSON.stringify(destPath)})`);
                     if (existsResult === 'true') { skipped++; continue; }
                     await syscall('system.invokeFunction', 'index.renamePrefixCommand', { oldPrefix: srcPath, newPrefix: destPath });
                     moved++;
@@ -1422,16 +1505,13 @@ if (contextMenuEnabled) {
 
     // --- Path Extraction ---
     let targetPath = "";
-    // Priority 1: data-path (used in Tree View summary)
-    const summary = tile.querySelector('summary') || (tile.tagName === 'SUMMARY' ? tile : null);
-    if (summary && summary.getAttribute('data-path')) {
-        targetPath = summary.getAttribute('data-path');
+    // Priority 1: data-path - on the tile itself for folders, on the summary in Tree View
+    const holder = tile.querySelector('[data-path]') || tile.closest('[data-path]');
+    if (holder && holder.getAttribute('data-path')) {
+        targetPath = holder.getAttribute('data-path');
     } else {
-        // Priority 2: Standard attributes
-        const onClickAttr = tile.getAttribute('onclick') || "";
-        const multiArgMatch = onClickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-        if (multiArgMatch) targetPath = multiArgMatch[1];
-        else targetPath = tile.getAttribute('title') || "";
+        // Priority 2: the tooltip, which is the full path for file tiles
+        targetPath = tile.getAttribute('title') || "";
     }
 
     // FIXED: Handle both .fs/ and .fs/ prefixes
@@ -1513,7 +1593,7 @@ if (contextMenuEnabled) {
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show("${internalPath}", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(${JSON.stringify(internalPath)}, ${JSON.stringify(fileName)})`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1525,7 +1605,7 @@ if (contextMenuEnabled) {
             // Suppress the explorer spawn on new window
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked("${internalPath}", "rhs", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked(${JSON.stringify(internalPath)}, "rhs", ${JSON.stringify(fileName)})`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1537,7 +1617,7 @@ if (contextMenuEnabled) {
             // Suppress the explorer spawn on new window
             await syscall('clientStore.set', 'explorer.suppressOnce', 'true');
             const fileName = internalPath.split('/').pop();
-            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked("${internalPath}", "lhs", "${fileName}")`;
+            const luaCmd = `js.import("]] .. urlPrefix .. [[.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").showDocked(${JSON.stringify(internalPath)}, "lhs", ${JSON.stringify(fileName)})`;
             await syscall('lua.evalExpression', luaCmd);
         };
     }
@@ -1600,7 +1680,7 @@ if (contextMenuEnabled) {
                     }
 
                     // Skip if destination already exists (ask Lua, returns "true"/"false" string)
-                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists("${destPath}")`);
+                    const existsResult = await syscall('lua.evalExpression', `explorerDestExists(${JSON.stringify(destPath)})`);
                     if (existsResult === 'true') {
                         skipped++;
                         continue;
@@ -1667,7 +1747,7 @@ if (contextMenuEnabled) {
                 clearSelection();
             } else {
                 // Single delete (original logic)
-                await syscall("lua.evalExpression", `deleteFileWithConfirm("${internalPath}")`);
+                await syscall("lua.evalExpression", `deleteFileWithConfirm(${JSON.stringify(internalPath)})`);
             }
         };
     }
@@ -1819,12 +1899,9 @@ async function refreshActiveHighlight() {
       if (dp) tileFullPath = dp.toLowerCase();
     }
 
-    // 2) If still empty or ambiguous, try to extract path from onclick (used for folder tiles)
-    if (!tileFullPath || tileFullPath === "") {
-      const onclickAttr = tile.getAttribute('onclick') || (tile.querySelector && tile.querySelector('[onclick]') && tile.querySelector('[onclick]').getAttribute('onclick')) || "";
-      const m = onclickAttr.match(/path\s*:\s*['"]([^'"]+)['"]/);
-      if (m && m[1]) tileFullPath = m[1].toLowerCase();
-    }
+    // Folder tiles used to be read back out of their onclick attribute here. They carry
+    // data-path now, which step 1 above already picks up through closest(), and the regex
+    // could not survive folder paths being encoded anyway.
 
     // 3) If the tileFullPath looks like a simple name (no slash), try to resolve it relative to the current explorer path
     // This helps grid folder tiles which use title-only names
