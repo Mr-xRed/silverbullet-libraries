@@ -28,7 +28,18 @@ config.set("FormattingToolbar", {
     showH3 = true,
     showH4 = true,
     showH5 = true,
-    showH6 = true
+    showH6 = true,
+  -- example to add a formatting button for copyable library
+    customButtons = {
+        {
+            name  = "Text: Copy Block",   -- unique, becomes the command name
+            key   = "Copy",               -- tooltip text (optional, defaults to name)
+            start = "[copy]",             -- starting marker delimiter
+            stop  = "[/copy]",            -- "end" is a Lua reserved word, hence "stop"
+            icon  = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>]],
+            show  = true                  -- optional, defaults to true
+        },
+    }
 })
 ```
 
@@ -280,7 +291,8 @@ config.define("FormattingToolbar", {
         showH3 = { type = "boolean" },
         showH4 = { type = "boolean" },
         showH5 = { type = "boolean" },
-        showH6 = { type = "boolean" }
+        showH6 = { type = "boolean" },
+        customButtons = { type = "array" }
     }
 })
 
@@ -614,6 +626,69 @@ function fmttb_toggle_inline(marker)
     end
 end
 
+-- ============================================================
+-- Generic wrap/unwrap toggle (supports asymmetric delimiters,
+-- e.g. start="[copy]" end="[/copy]"). fmttb_toggle_inline (below)
+-- is just this called with startM == endM.
+-- ============================================================
+
+function fmttb_toggle_wrap(startM, endM)
+    local ok_sel, raw_sel = pcall(editor.getSelection)
+    local sel = fmttb_normalize_sel(raw_sel)
+    local ok_txt, full = pcall(editor.getText)
+    if not (sel and ok_txt) then return end
+
+    local selected_text = full:sub(sel.from + 1, sel.to)
+    local sM, eM = #startM, #endM
+
+    -- Case 1: the wrapper is INSIDE the selection, e.g. selection is "[copy]text[/copy]"
+    if #selected_text >= sM + eM
+        and selected_text:sub(1, sM)  == startM
+        and selected_text:sub(-eM)    == endM then
+        local inner = selected_text:sub(sM + 1, -eM - 1)
+        editor.replaceRange(sel.from, sel.to, inner)
+        editor.setSelection(sel.from, sel.from + fmttb_get_len(inner))
+        return
+    end
+
+    -- Case 2: the wrapper sits immediately OUTSIDE the selection
+    -- (selection is just "text", cursor already between the delimiters)
+    local before = sel.from - sM >= 0 and full:sub(sel.from - sM + 1, sel.from) or ""
+    local after  = full:sub(sel.to + 1, sel.to + eM)
+    if before == startM and after == endM then
+        local new_from = sel.from - sM
+        local new_to   = sel.to + eM
+        editor.replaceRange(new_from, new_to, selected_text)
+        editor.setSelection(new_from, new_from + fmttb_get_len(selected_text))
+        return
+    end
+
+    -- Case 3: not wrapped yet — wrap it
+    local new_text = startM .. selected_text .. endM
+    editor.replaceRange(sel.from, sel.to, new_text)
+    editor.setSelection(sel.from, sel.from + fmttb_get_len(new_text))
+end
+
+-- Same active-state logic as fmttb_toggle_wrap, but read-only (for button highlighting)
+function fmttb_detect_custom_active(full, sel, startM, endM)
+    local selected_text = full:sub(sel.from + 1, sel.to)
+    local sM, eM = #startM, #endM
+
+    if #selected_text >= sM + eM
+        and selected_text:sub(1, sM) == startM
+        and selected_text:sub(-eM)   == endM then
+        return true
+    end
+
+    local before = sel.from - sM >= 0 and full:sub(sel.from - sM + 1, sel.from) or ""
+    local after  = full:sub(sel.to + 1, sel.to + eM)
+    if before == startM and after == endM then
+        return true
+    end
+
+    return false
+end
+
 command.define {
     name = "Text: Toggle Superscript",
     run = function() fmttb_toggle_inline("^") end
@@ -895,6 +970,37 @@ for _level = 1, 6 do
 end
 
 -- ============================================================
+-- Custom (config-defined) commands
+-- ============================================================
+-- Add new toolbar buttons purely via config.set, no code changes:
+--
+-- config.set("FormattingToolbar", {
+--     customButtons = {
+--         {
+--             name = "Text: Copy Block",      -- must be unique, becomes the command name
+--             key  = "Copy",                  -- tooltip text (optional, defaults to name)
+--             start = "[copy]",
+--             stop  = "[/copy]",               -- ("end" is a reserved word in Lua, so use "stop")
+--             icon = [[<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>]],
+--             show = true                     -- optional, defaults to true
+--         }
+--     }
+-- })
+--
+-- Symmetric delimiters work too: just set start and stop to the same string.
+
+local _fmttb_boot_cfg = config.get("FormattingToolbar") or {}
+if _fmttb_boot_cfg.customButtons then
+    for _, item in ipairs(_fmttb_boot_cfg.customButtons) do
+        local startM, endM = item.start, item.stop
+        command.define {
+            name = item.name,
+            run  = function() fmttb_toggle_wrap(startM, endM) end
+        }
+    end
+end
+
+-- ============================================================
 -- DOM Construction
 -- ============================================================
 
@@ -944,6 +1050,15 @@ function buildFormattingToolbar()
         { i=icons.h5,     t="H5",     c="Text: Toggle Heading 5" },
         { i=icons.h6,     t="H6",     c="Text: Toggle Heading 6" },
     }
+
+    if cfg.customButtons and #cfg.customButtons > 0 then
+        table.insert(buttons, { divider = true })
+        for _, item in ipairs(cfg.customButtons) do
+            if item.show ~= false then
+                table.insert(buttons, { i = item.icon, t = item.key or item.name, c = item.name })
+            end
+        end
+    end
 
     local html = ""
     local last_was_divider = true
@@ -1169,6 +1284,16 @@ js.window._sb_fmttb_lua_poll = function()
         local ok_txt, full = pcall(editor.getText)
         if ok_txt then
             local active = fmttb_detect_active_markers(full, sel)
+
+            local cfg = config.get("FormattingToolbar") or {}
+            if cfg.customButtons then
+                for _, item in ipairs(cfg.customButtons) do
+                    if fmttb_detect_custom_active(full, sel, item.start, item.stop) then
+                        active = (active == "" and item.name) or (active .. "," .. item.name)
+                    end
+                end
+            end
+
             toolbar.setAttribute("data-active", active)
         end
     else
