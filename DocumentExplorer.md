@@ -259,14 +259,16 @@ local function isFiltered(path)
   return false
 end
 
--- ---------- Helper to build file tiles ----------
+-- ---------- Helper to safely embed a path/name inside a single-quoted JS
+-- string that itself lives inside a double-quoted HTML attribute ----------
 local function jsAttrEscape(str)
-  str = str:gsub("\\", "\\\\")   -- backslash first
-  str = str:gsub("'", "\\'")     -- escape single quotes for the JS string
+  str = str:gsub("\\", "\\\\")   -- escape backslashes first
+  str = str:gsub("'", "\\'")     -- escape single quotes for the JS string literal
   str = str:gsub('"', "&quot;")  -- escape double quotes for the HTML attribute
   return str
 end
 
+-- ---------- Helper to build file tiles ----------
 local function fileTile(icon, name, target, ext, viewMode)
   local isThisFileFiltered = isFiltered(target)
   local tileClass = "grid-tile"
@@ -310,9 +312,9 @@ local function fileTile(icon, name, target, ext, viewMode)
   local encodedDrag = encoding.base64Encode(dragData)
 
   if category ~= "md" and category ~= "pdf" and category ~= "drawio" and category ~= "excalidraw" and category ~= "img" then
-    onClickAction = "window.open('" .. urlPrefix .. jsAttrEscape(target) .. "', '_blank')"
+      onClickAction = "window.open('" .. urlPrefix .. jsAttrEscape(target) .. "', '_blank')"
   else
-    onClickAction = "syscall('editor.navigate','" .. jsAttrEscape(target) .. "',false,false)"
+      onClickAction = "syscall('editor.navigate','" .. jsAttrEscape(target) .. "',false,false)"
   end
 
   local finalIcon = icon
@@ -465,13 +467,13 @@ local function renderTree(files, prefix)
             local fClass = "grid-tile folder-tile"
             if isHybrid then fClass = fClass .. " hybrid-tile" end
 
-            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..fullPath.."' title='"..name.."'>")
+            table.insert(buffer, "<details class='tree-folder" .. filteredClass .. "'><summary class='" .. fClass .. "' data-path='"..jsAttrEscape(fullPath).."' title='"..jsAttrEscape(name).."'>")
             table.insert(buffer, "<div class='hybrid-folder-zone'>")
             table.insert(buffer, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..name.."</div></div>")
             
             if isHybrid then
                 local pagePath = "/" .. node._path:gsub("%.md$","")
-                table.insert(buffer, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); event.preventDefault(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+                table.insert(buffer, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); event.preventDefault(); syscall('editor.navigate','" .. jsAttrEscape(pagePath) .. "',false,false)\">MD</div>")
             end
             
             table.insert(buffer, "</summary><div class='tree-content'>")
@@ -682,7 +684,7 @@ end
       local pathAccum = ""
       for part in folderPrefix:gmatch("([^/]+)/") do
         pathAccum = pathAccum .. part .. "/"
-        table.insert(crumbs, "<a onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..pathAccum.."'} )\">" .. part .. "</a>")
+        table.insert(crumbs, "<a onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..jsAttrEscape(pathAccum).."'} )\">" .. part .. "</a>")
       end
       local breadcrumbHtml = "<div class='explorer-breadcrumbs'>" .. table.concat(crumbs, " <span class='sep'>/</span> ") .. "</div>"
     
@@ -854,7 +856,7 @@ end
     
           if folderPrefix ~= "" then
             local parent = folderPrefix:gsub("[^/]+/$", "")
-            table.insert(h, "<div class='grid-tile folderup-tile' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..parent.."'} )\">")
+            table.insert(h, "<div class='grid-tile folderup-tile' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..jsAttrEscape(parent).."'} )\">")
             table.insert(h, "<div class='icon'>"..ICONS.folderUp.."</div><div class='grid-title'>..</div></div>")
           end
     
@@ -877,15 +879,15 @@ end
                   local pagePath = "/" .. folderPrefix .. f
                   local hClass = "grid-tile folder-tile hybrid-tile"
                   if isFiltered(folderPath) then hClass = hClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. hClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+                  table.insert(h, "<div class='" .. hClass .. "' title='" .. jsAttrEscape(f) .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..jsAttrEscape(folderPath).."'} )\">")
                   table.insert(h, "<div class='hybrid-folder-zone'>")
                   table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
-                  table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate','" .. pagePath .. "',false,false)\">MD</div>")
+                  table.insert(h, "<div class='hybrid-md-badge' onclick=\"event.stopPropagation(); syscall('editor.navigate','" .. jsAttrEscape(pagePath) .. "',false,false)\">MD</div>")
                   table.insert(h, "</div>")
               else
                   local fClass = "grid-tile folder-tile"
                   if isFiltered(folderPath) then fClass = fClass .. " filtered-item" end
-                  table.insert(h, "<div class='" .. fClass .. "' title='" .. f .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..folderPath.."'} )\">")
+                  table.insert(h, "<div class='" .. fClass .. "' title='" .. jsAttrEscape(f) .. "' onclick=\"syscall('editor.invokeCommand','DocumentExplorer: Open Folder',{path:'"..jsAttrEscape(folderPath).."'} )\">")
                   table.insert(h, "<div class='icon'>"..ICONS.folder.."</div><div class='grid-title'>"..f.."</div></div>")
               end
           end
