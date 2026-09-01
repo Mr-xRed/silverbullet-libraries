@@ -10,7 +10,7 @@ files:
 pageDecoration.prefix: "🗂️ "
 ---
 
-# 🗂️ Document Explorer (Ver. 1.2.0)
+# 🗂️ Document Explorer (Ver. 1.2.1)
 
 ![DocumentExplorer_Screenshot](https://raw.githubusercontent.com/Mr-xRed/silverbullet-libraries/refs/heads/main/screenshots/DocumentExplorer_Screenshot.png)
 
@@ -260,6 +260,13 @@ local function isFiltered(path)
 end
 
 -- ---------- Helper to build file tiles ----------
+local function jsAttrEscape(str)
+  str = str:gsub("\\", "\\\\")   -- backslash first
+  str = str:gsub("'", "\\'")     -- escape single quotes for the JS string
+  str = str:gsub('"', "&quot;")  -- escape double quotes for the HTML attribute
+  return str
+end
+
 local function fileTile(icon, name, target, ext, viewMode)
   local isThisFileFiltered = isFiltered(target)
   local tileClass = "grid-tile"
@@ -303,9 +310,9 @@ local function fileTile(icon, name, target, ext, viewMode)
   local encodedDrag = encoding.base64Encode(dragData)
 
   if category ~= "md" and category ~= "pdf" and category ~= "drawio" and category ~= "excalidraw" and category ~= "img" then
-      onClickAction = "window.open('" .. urlPrefix .. target .. "', '_blank')"
+    onClickAction = "window.open('" .. urlPrefix .. jsAttrEscape(target) .. "', '_blank')"
   else
-      onClickAction = "syscall('editor.navigate','" .. target .. "',false,false)"
+    onClickAction = "syscall('editor.navigate','" .. jsAttrEscape(target) .. "',false,false)"
   end
 
   local finalIcon = icon
@@ -325,7 +332,7 @@ local function fileTile(icon, name, target, ext, viewMode)
 
   return "<div class='" .. tileClass .. "' " ..
     "draggable='true' ondragstart='handleDragStart(event, \"" .. encodedDrag .. "\")' " ..
-    "data-ext='" .. originalExt:upper() .. "' title='" .. target:gsub("^/", "") .. "' onclick=\"" .. onClickAction .. "\">" ..
+    "data-ext='" .. originalExt:upper() .. "' title='" .. jsAttrEscape(target:gsub("^/", "")) .. "' onclick=\"" .. onClickAction .. "\">" ..
     "<div class='icon'>" .. finalIcon .. "</div><div class='grid-title'>" .. name .. "</div></div>"
 end
 
