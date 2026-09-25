@@ -458,7 +458,7 @@ command.define {
     
     local fullHtml = buildHtml(mode, cssFile, pageName, pageAuthor, htmlBody, pageSize, pageLayout, marginTRBL, accentHue, chroma, enableKatex)
 
-    local outputFile = "temp/PrintPreview.html"
+    local outputFile = "temp/PrintPreviews.html"
     space.writeFile(outputFile, fullHtml)
     sync.performFileSync(outputFile)
 

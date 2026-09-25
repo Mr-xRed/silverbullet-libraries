@@ -25,6 +25,11 @@ uri: github:Mr-xRed/silverbullet-libraries/TableFilterAndSorting.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TableFilterAndSorting.md
 description: "Adds filter & sorting to SilverBullet tables globally"
 ---
+name: "🧮 MathInTables"
+uri: github:Mr-xRed/silverbullet-libraries/MathInTables.md
+website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/MathInTables.md
+description: "Workaround for Katex rendering in Tables"
+---
 name: "🛠️ Advanced Panel Control and Window Management"
 uri: github:Mr-xRed/silverbullet-libraries/AdvancedPanelControl.md
 website: https://github.com/Mr-xRed/silverbullet-libraries/blob/main/AdvancedPanelControl.md
