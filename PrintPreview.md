@@ -34,8 +34,8 @@ config.set("PrintPreview", {
 --    CSSFile = "path/to/your_custom.css", --default is included with the library
     pageSize = "A4",                     --default: "A4"
     marginTRBL = "20mm 20mm 20mm 25mm",  --default: "20mm 20mm 20mm 25mm" Top Right Bottom Left
-    landscape = true                     --default: false
-    accentHue = "260"                    --default: if ommited it will ask you
+    landscape = true,                     --default: false
+    accentHue = "260",                    --default: if ommited it will ask you
     enableKatex = true                   --default: true. Set to false to disable LaTeX/KaTeX rendering
 })  
 ```
