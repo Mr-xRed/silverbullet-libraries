@@ -379,6 +379,48 @@ document.addEventListener('DOMContentLoaded', () => {
 end
 
 --------------------------------------------------------------------
+-- Protect math spans ($...$, $$...$$, \(...\), \[...\]) from being
+-- mangled by Markdown's own inline parsing before it ever reaches the
+-- parser. Underscore pairs get read as emphasis and stripped, and
+-- "\\" gets collapsed to "\" by Markdown's escape handling, both of
+-- which silently corrupt LaTeX (e.g. matrices, subscripts). We swap
+-- each math span for an inert placeholder, run Markdown as normal,
+-- then splice the literal (HTML-escaped) source back in afterwards
+-- so the client-side KaTeX script in katexBlock() sees exactly what
+-- the user typed.
+--------------------------------------------------------------------
+local function htmlEscape(s)
+  s = s:gsub("&", "&amp;")
+  s = s:gsub("<", "&lt;")
+  s = s:gsub(">", "&gt;")
+  return s
+end
+
+local function protectMath(text)
+  local store, n = {}, 0
+  local function stash(whole)
+    n = n + 1
+    local key = "\1MATH" .. n .. "\1"
+    store[key] = whole
+    return key
+  end
+  -- Order matters: widest/most specific delimiters first.
+  text = text:gsub("%$%$(.-)%$%$", function(i) return stash("$$" .. i .. "$$") end)
+  text = text:gsub("\\%[(.-)\\%]", function(i) return stash("\\[" .. i .. "\\]") end)
+  text = text:gsub("\\%((.-)\\%)", function(i) return stash("\\(" .. i .. "\\)") end)
+  text = text:gsub("%$([^%$\n]-)%$", function(i) return stash("$" .. i .. "$") end)
+  return text, store
+end
+
+local function restoreMath(html, store)
+  for key, original in pairs(store) do
+    local safe = htmlEscape(original):gsub("%%", "%%%%")
+    html = html:gsub(key, safe)
+  end
+  return html
+end
+
+--------------------------------------------------------------------
 -- Main command
 --------------------------------------------------------------------
 command.define {
@@ -423,9 +465,19 @@ command.define {
     local pageAuthor = fm.author and (" - " .. fm.author) or ""
     local tocMD = fm.toc and toc() or ""
 
-    local mdTree = markdown.expandMarkdown(markdown.parseMarkdown(mdContent))
+    local mathStore = {}
+    local textToParse = mdContent
+    if enableKatex then
+      textToParse, mathStore = protectMath(mdContent)
+    end
+
+    local mdTree = markdown.expandMarkdown(markdown.parseMarkdown(textToParse))
     local expanded = markdown.renderParseTree(mdTree)
     local htmlBody = markdown.markdownToHtml(tocMD) .. markdown.markdownToHtml(expanded)
+
+    if enableKatex then
+      htmlBody = restoreMath(htmlBody, mathStore)
+    end
     htmlBody = htmlBody:gsub('(<pre%s+)data%-lang="mermaid"([^>]*)', '%1data-lang="mermaid" class="mermaid"%2')
     htmlBody = htmlBody:gsub('<span class="p">(.-)</span>', '<p>%1</p>')
     htmlBody = htmlBody:gsub('<br%s*/?>%s*(<pre class="mermaid">)', '%1')
@@ -462,7 +514,7 @@ command.define {
     space.writeFile(outputFile, fullHtml)
     sync.performFileSync(outputFile)
 
-    editor.flashNotification("HTML exported: " .. outputFile)
+    editor.flashNotification("HTML exported as: " .. outputFile)
     editor.openUrl(urlPrefix..".fs/" .. outputFile)
 --     js.import("/.fs/Library/Mr-xRed/UnifiedAdvancedPanelControl.js").show(outputFile, "PrintPreview")
   end

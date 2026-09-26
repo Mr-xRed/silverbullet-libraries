@@ -27,11 +27,6 @@ This library works around that by watching the DOM for rendered `<table>` elemen
 
 The script below imports KaTeX from `.fs/Library/mrmugame/Silverbullet-Math/katex.mjs`, guessed from the `silverbullet-math` plugin's own source. **Your actual path may differ** depending on how you installed that library. To confirm:
 
-1. Open your browser's DevTools → Network tab.
-2. Trigger a normal `$formula$` render anywhere outside a table (edit and exit a line containing one).
-3. Find the `katex.mjs` request and copy its exact request URL.
-4. Paste that URL into the `katexPath` variable in the `space-lua` block below, replacing the guessed one.
-
 ## Math In Tables
 
 ```space-lua
