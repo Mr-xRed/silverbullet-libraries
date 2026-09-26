@@ -1148,6 +1148,6 @@ command.define { name = "Table: Disable Multiline", run = function() disableMult
 
 ```
 
-## Discussion / Credit
+## Discussion
 - This is a modernized remake of the original library — same underlying approach (space-lua + space-style injected client-side JS), rebuilt UI/UX and extra features as described above.
-- Original library & community thread: [Silverbullet Community](https://community.silverbullet.md/t/todo-task-manager-global-interactive-table-sorter-filtering/3767?u=mr.red)
+- Community thread: [Silverbullet Community](https://community.silverbullet.md/t/todo-task-manager-global-interactive-table-sorter-filtering/3767?u=mr.red)
