@@ -235,6 +235,69 @@ local function restoreExplorerOpenStateOnPageLoad()
     end
   end
 end
+-- ---------- Keep the cached file list honest ----------
+-- cachedFiles is rebuilt only by the refresh button, so anything that changes the space
+-- from outside the panel leaves it stale. Renaming a page is the common case, and the
+-- path field in the top bar makes it a routine one: editing the path there is how a note
+-- gets moved between folders. The tiles then still point at the old path, and
+-- SilverBullet answers a click on a path that no longer exists by silently creating an
+-- empty page there - so a stale panel quietly manufactures a blank duplicate of the note
+-- that was just moved.
+--
+-- The page that just loaded is the cheapest witness available: if the editor is showing
+-- a file the cached list does not contain, the list is out of date. No syscall beyond
+-- the one we already need, and no polling.
+local function isPathInCachedFiles(path)
+  if not cachedFiles or not path or path == "" then return false end
+  -- No patterns anywhere near a path: this matcher truncates characters to bytes, so a
+  -- "^/" gsub also strips a leading Cyrillic Я (U+042F & 0xff == 0x2F). Plain equality
+  -- and string.sub are index-based and safe.
+  local bare = path
+  if string.sub(bare, 1, 1) == "/" then bare = string.sub(bare, 2) end
+  for _, f in ipairs(cachedFiles) do
+    if f.name == bare then return true end
+  end
+  return false
+end
+
+-- Remembers the last path that was still absent after a full relist, so that opening a
+-- page which genuinely does not exist yet (a new note, a broken link) costs one relist
+-- rather than one per visit. Cleared as soon as that path is written to disk, otherwise
+-- the note the user has just started writing would stay invisible in the panel until the
+-- next manual refresh.
+local knownMissingPath = nil
+
+local function refreshIfFileListStale()
+  if not PANEL_VISIBLE then return end
+  -- Nothing cached yet means the next drawPanel() lists the space anyway.
+  if not cachedFiles then return end
+
+  local current = editor.getCurrentPath()
+  if not current or current == "" then return end
+  if current == knownMissingPath then return end
+  -- Deliberately does not clear knownMissingPath: the marker belongs to a different
+  -- path, and dropping it here would relist and redraw the panel again on every return
+  -- to a page that simply does not exist.
+  if isPathInCachedFiles(current) then return end
+
+  cachedFiles = space.listFiles()
+  -- Still absent after the relist: an unsaved new page rather than a stale list.
+  knownMissingPath = (not isPathInCachedFiles(current)) and current or nil
+  drawPanel()
+  triggerHighlightUpdate()
+end
+
+-- A save is the moment a page that did not exist starts existing. Only the path we
+-- deliberately gave up on is interesting here: every other save is an edit to a file the
+-- list already contains, and relisting the space on each of those would redraw the panel
+-- while the user is typing.
+local function refreshIfMissingPathAppeared()
+  if not knownMissingPath then return end
+  if editor.getCurrentPath() ~= knownMissingPath then return end
+  knownMissingPath = nil
+  refreshIfFileListStale()
+end
+
 -- ---------- Helper to check negative filters ----------
 local function isFiltered(path)
   local lowPath = path:lower()
@@ -364,12 +427,32 @@ function refreshExplorerButton()
 end
 
 -- ---------- Event Listeners ----------
--- Add restoreExplorerOpenStateOnPageLoad to the pageLoaded event
+-- On every page load: move the active-page highlight, reopen the panel if it was open
+-- before a reload, and notice a file list that no longer matches the space.
 event.listen { name = "editor:pageLoaded", run = function()
     triggerHighlightUpdate()
-    restoreExplorerOpenStateOnPageLoad() 
+    -- Whether the panel was already open decides who is allowed to draw below.
+    local wasVisible = PANEL_VISIBLE
+    restoreExplorerOpenStateOnPageLoad()
+    -- Only check for staleness when the panel was already open. If restore has just
+    -- reopened it, it drew a moment ago, and a second drawPanel() in the same tick would
+    -- land inside the 100ms window in which the panel-mode MutationObserver is set up:
+    -- the old observer is disconnected on entry to the panel script, but the new one is
+    -- created by a setTimeout, so two draws that close together leave the first observer
+    -- connected with nothing left pointing at it. A list that stays stale until the next
+    -- page load is the cheaper price.
+    if wasVisible then
+        refreshIfFileListStale()
+    end
 end }
-event.listen { name = "editor:documentLoaded", run = triggerHighlightUpdate }
+event.listen { name = "editor:documentLoaded", run = function()
+    triggerHighlightUpdate()
+    -- Documents are moved by the same rename command as pages, so their tiles go stale
+    -- the same way.
+    refreshIfFileListStale()
+end }
+event.listen { name = "editor:pageSaved", run = refreshIfMissingPathAppeared }
+event.listen { name = "editor:documentSaved", run = refreshIfMissingPathAppeared }
 
 -- ---------- Panel Width Persistence ----------
 event.listen {
