@@ -15,6 +15,11 @@ Adds the command `Export: Download Space as Zip` to the command palette.
 - Loads JSZip from esm.sh when run, so it needs internet access.
 - Uses no compression (`STORE`) for speed. Change to `DEFLATE` for smaller files.
 
+## Credits and third-party licenses
+This repository includes a copy of [JSZip](https://github.com/Stuk/jszip) v3.10.1 (`jszip.min.js`), which is used to create the zip file. JSZip is dual-licensed under the MIT License or GPLv3, and is used here under the MIT License. It is copyright of its authors and is included unmodified, with its original license header intact.
+JSZip's distributed build also bundles other open-source components; their notices are preserved in the file header
+
+
 ```space-lua
 command.define {
   name = "Export: Download Space as ZIP",
