@@ -6,16 +6,14 @@ pageDecoration.prefix: "🛠️ "
 
 # Table Converter
 
-Converts the **selected text** (CSV, TSV, semicolon/pipe separated, JSON or JSON Lines) into a Markdown table. The separator is detected automatically. No external libraries are used.
+Converts the **selected text** (CSV, TSV, semicolon/pipe separated, JSON) into a Markdown table. The separator is detected automatically. No external libraries are used.
 
 ## Usage
 
 1.  Select the text on a page.
-2.  Run the command (`Cmd/Ctrl-/`):
+2.  Run the command:
     *   **Table: Convert Selection to Markdown Table**: the first row is used as the header.
     *   **Table: Convert Selection to Markdown Table (No Header)**: generates `Col 1`, `Col 2`, ... headers.
-
-From your own Lua code you can call `tableconv.toMarkdown(text, opts)`, which returns `markdown` or `nil, errorMessage`. Options: `delimiter` (force a separator), `noHeader` (boolean), `format` (`"json"` or `"delimited"`).
 
 ## Supported input
 
