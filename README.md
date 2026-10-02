@@ -1,13 +1,14 @@
 # This is a collection of awesome SilverBullet libraries
 
 
-
 ## Available libraries
 
 ### Tools
 * [**🗂️ Document Explorer for SilverBullet**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/DocumentExplorer.md) - Document Explorer for SilverBullet with Grid|List|Tree-View and some other handy features
 * [**✅ TaskManager**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TaskManager.md) - TaskManager
 * [**🛠️ TableFilterAndSorting**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TableFilterAndSorting.md) - Adds filter & sorting to SilverBullet tables globally
+- 🔁 [**TableConverter**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/TableConverter.md): Converts the selected text (CSV, TSV, JSON) into a Markdown table
+- 📥 [**ExportSpaceAsZIP**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/ExportSpaceAsZIP.md): Adds a command to download the whole space (pages and attachments) as a zip file.
 * [**🛠️ Advanced Panel Control and Window Management**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/AdvancedPanelControl.md) - Advanced Controls for your Side Panels (LHS, RHS, BHS)
 * [**⏲️ Pomodoro Clock**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PomodoroClock.md) - Floating Pomodoro: The productivity tool you didn’t ask for, but are getting anyway
 * [**🖨️ PrintPreview**](https://github.com/Mr-xRed/silverbullet-libraries/blob/main/PrintPreview.md) - Adds PrintPreview with custom HTML/CSS styling for SilverBullet
