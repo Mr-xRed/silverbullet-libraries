@@ -53,7 +53,9 @@ config.set("multilineTables", { enabled = true })
 }
 #sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar:hover { opacity: 1; }
 #sb-main .cm-editor .sb-table-widget { overflow: visible !important; position: relative !important; }
+#sb-main .cm-editor .sb-lua-wrapper:has(table) {overflow-x:visible !important;}
 #sb-main .cm-editor .sb-table-widget .content { overflow: auto; }
+
 
 /*---------- Design Tokens ----------*/
 body {
