@@ -4,7 +4,7 @@ tags: meta/library
 pageDecoration.prefix: "🛠️ "
 ---
 
-# Silverbullet Table Sorting and Filtering (Ver. 2.0)
+# Silverbullet Table Sorting and Filtering (Ver. 2.1)
 
 - This library adds sorting, filtering, searching, CSV export, and rich-copy support to every Silverbullet table in your Space.
 - This is a UI/UX-focused remake of the original library. Same core idea (client-side sort + filter for SB tables), rebuilt with a modern toolbar, multi-column sort, a searchable filter dropdown with value counts, a global per-table search box, and CSV export.
@@ -49,7 +49,7 @@ config.set("multilineTables", { enabled = true })
 
 /*---------- System Style Overrides ----------*/
 #sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar {
-  top: -40px; padding: 0; border-radius: 1em; opacity: 0.4; transition: opacity 0.25s ease;
+  top: -40px; padding: 0; border-radius: 1em; opacity: 0.4; transition: opacity 0.25s ease;display: flex !important;
 }
 #sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar:hover { opacity: 1; }
 #sb-main .cm-editor .sb-table-widget { overflow: visible !important; position: relative !important; }
@@ -247,7 +247,7 @@ body {
     transition: width var(--tfs-fast), opacity var(--tfs-fast), padding var(--tfs-fast), margin-right var(--tfs-fast);
     font-size: 12px; outline: none; flex: 0 0 auto;
 }
-.tfs-search-input.open { width: 130px; opacity: 1; padding: 5px 10px; margin-inline: 4px; pointer-events: auto; border-color: var(--tfs-border); background: oklch(from var(--root-background-color, #fff) l c h / .95); }
+.tfs-search-input.open { width: 50px; opacity: 1; padding: 5px 10px; margin-inline: 4px; pointer-events: auto; border-color: var(--tfs-border); background: oklch(from var(--root-background-color, #fff) l c h / .95); }
 
 ```
 
@@ -301,16 +301,45 @@ function enableTableSorter()
         }
 
         const style = document.createElement('style');
-        style.innerHTML = ``;
+        // FOUC fix: the injected elements (SVGs, filter menus, toolbar) are created
+        // synchronously when the script runs, which on page load can happen BEFORE the
+        // space-style block above has been applied. Until then they render unstyled
+        // (oversized SVGs, the dropdown menu fully visible inside the header cell, etc.).
+        // So the layout-critical rules live here too, in a <style> that exists the
+        // moment the first element is injected. Cosmetic polish stays in space-style.
+        style.innerHTML = `
+        body { --tfs-accent: var(--ui-accent-color, #6366f1); --tfs-border: var(--sb-border-color, rgba(128,128,128,0.25)); }
+        .sortable-header { cursor: pointer !important; position: relative !important; white-space: nowrap; padding-left: 32px !important; padding-right: 30px !important; isolation: isolate; }
+        .sort-indicator-wrapper { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .sort-indicator-wrapper svg { width: 15px; height: 15px; opacity: .3; stroke: currentColor; }
+        .sort-asc .sort-indicator-wrapper svg { opacity: 1; color: var(--tfs-accent); transform: rotate(180deg); }
+        .sort-desc .sort-indicator-wrapper svg { opacity: 1; color: var(--tfs-accent); }
+        .sort-priority-badge { position: absolute; top: -6px; right: -8px; background: var(--tfs-accent); color: #fff; font-size: 9px; font-weight: 700; line-height: 1; width: 13px; height: 13px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .filter-container { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; z-index: 10; cursor: pointer; border-radius: 6px; }
+        .filter-container svg { width: 15px; height: 15px; opacity: .35; stroke: currentColor; }
+        .filter-container.active svg { opacity: 1; color: var(--tfs-accent); }
+        .filter-container .filter-count { position: absolute; top: -3px; right: -3px; background: var(--tfs-accent); color: #fff; font-size: 9px; font-weight: 700; min-width: 13px; height: 13px; border-radius: 1em; display: none; align-items: center; justify-content: center; padding: 0 2px; }
+        .filter-container.active .filter-count { display: flex; }
+        .custom-dropdown-menu { position: fixed; left: 0; top: 0; z-index: 9999; width: 240px; max-height: 340px; overflow: hidden; display: none; flex-direction: column; font-size: 13px; }
+        .custom-dropdown-menu.show { display: flex; }
+        .dropdown-item .chk svg { width: 10px; height: 10px; stroke: #fff; stroke-width: 3; opacity: 0; }
+        .dropdown-item[data-selected="true"] .chk svg { opacity: 1; }
+        .button-bar { position: absolute !important; top: -40px !important; right: 0 !important; left: auto !important; bottom: auto !important; display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: max-content !important; height: auto !important; overflow: visible !important; z-index: 20; }
+        .button-bar button { display: flex !important; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .button-bar button svg { width: 13px; height: 13px; flex: 0 0 auto; }
+        .tfs-search-wrap { display: flex !important; flex: 0 0 auto; align-items: center; }
+        .tfs-search-input { width: 0; opacity: 0; pointer-events: none; border: 1px solid transparent; background: transparent; color: inherit; flex: 0 0 auto; }
+        .tfs-search-input.open { width: 50px; opacity: 1; padding: 5px 10px; margin-inline: 4px; pointer-events: auto; border-color: var(--tfs-border); }
+        `;
         document.head.appendChild(style);
 
-        const FUNNEL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16l-6.5 7.5v6L10 20v-8.5z"/></svg>';
-        const CHEVRON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
-        const SEARCH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
-        const CSV_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>';
-        const COPY_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="15" height="15" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></svg>';
-        const CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-        const RESET_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H3"/><path d="M7 12H3"/><path d="M7 19H3"/><path d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"/><path d="M11 10v4h4"/></svg>';
+        const FUNNEL_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16l-6.5 7.5v6L10 20v-8.5z"/></svg>';
+        const CHEVRON_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+        const SEARCH_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
+        const CSV_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>';
+        const COPY_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="15" height="15" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></svg>';
+        const CHECK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+        const RESET_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 5H3"/><path d="M7 12H3"/><path d="M7 19H3"/><path d="M12 18a5 5 0 0 0 9-3 4.5 4.5 0 0 0-4.5-4.5c-1.33 0-2.54.54-3.41 1.41L11 14"/><path d="M11 10v4h4"/></svg>';
 
         // Fix: flag to tell the document click handler to skip one closing cycle
         // when a filter menu was just opened via mousedown (desktop: mousedown fires
@@ -375,8 +404,21 @@ function enableTableSorter()
             return key;
         }
 
+        // Header cells contain our injected UI (sort chevron, filter button with its
+        // dropdown menu full of values/counts/buttons). Their textContent therefore
+        // includes all of that text, so read the cell from a clone with the injected
+        // elements stripped. Body cells never contain injected UI and take the fast path.
+        const INJECTED_SEL = '.sort-indicator-wrapper, .filter-container, .custom-dropdown-menu, .tfs-injected';
         function cellValue(cell) {
-            return cell ? (cell.getAttribute('data-fulltexttext') || cell.textContent.trim()) : "";
+            if (!cell) return "";
+            const attr = cell.getAttribute('data-fulltexttext');
+            if (attr) return attr;
+            if (cell.querySelector(INJECTED_SEL)) {
+                const clone = cell.cloneNode(true);
+                clone.querySelectorAll(INJECTED_SEL).forEach(el => el.remove());
+                return clone.textContent.trim();
+            }
+            return cell.textContent.trim();
         }
 
         function compareValues(aT, bT) {
