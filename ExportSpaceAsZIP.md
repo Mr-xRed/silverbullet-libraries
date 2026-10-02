@@ -27,7 +27,7 @@ command.define {
     local ok, err = pcall(function()
       editor.flashNotification("Export started: loading zip library...")
       local urlPrefix = system.getURLPrefix()
-      -- replace the three js.import lines with:
+
       local src = js.window.fetch(urlPrefix .. ".fs/Library/Mr-xRed/jszip.min.js")
       js.window.eval(src.text())
       local JSZip = js.window.JSZip
