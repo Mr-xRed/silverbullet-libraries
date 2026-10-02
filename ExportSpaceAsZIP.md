@@ -12,7 +12,7 @@ pageDecoration.prefix: "🛠️ "
 Adds the command `Export: Download Space as Zip` to the command palette.
 
 - Read-only: it doesn’t modifies or deletes anything in your space.
-- Loads JSZip from esm.sh when run, so it needs internet access.
+- Included JSZip (v3.10.1 (`jszip.min.js`)), so it doesn’t need internet access.
 - Uses no compression (`STORE`) for speed. Change to `DEFLATE` for smaller files.
 
 ## Credits and third-party licenses
