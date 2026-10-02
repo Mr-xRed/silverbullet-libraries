@@ -3,8 +3,6 @@ name: "Library/Mr-xRed/TableFilterAndSorting"
 tags: meta/library
 pageDecoration.prefix: "🛠️ "
 share.uri: "github:Mr-xRed/silverbullet-libraries/TableFilterAndSorting.md"
-share.hash: "96020602"
-share.mode: pull
 ---
 
 # Silverbullet Table Sorting and Filtering (Ver. 2.1)
