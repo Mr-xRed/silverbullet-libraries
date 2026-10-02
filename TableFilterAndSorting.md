@@ -2,6 +2,9 @@
 name: "Library/Mr-xRed/TableFilterAndSorting"
 tags: meta/library
 pageDecoration.prefix: "🛠️ "
+share.uri: "github:Mr-xRed/silverbullet-libraries/TableFilterAndSorting.md"
+share.hash: "96020602"
+share.mode: pull
 ---
 
 # Silverbullet Table Sorting and Filtering (Ver. 2.1)
@@ -52,10 +55,13 @@ config.set("multilineTables", { enabled = true })
   top: -40px; padding: 0; border-radius: 1em; opacity: 0.4; transition: opacity 0.25s ease;display: flex !important;
 }
 #sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar:hover { opacity: 1; }
-#sb-main .cm-editor .sb-table-widget { overflow: visible !important; position: relative !important; }
-#sb-main .cm-editor .sb-lua-wrapper:has(table) {overflow-x:visible !important;}
+#sb-main .cm-editor .sb-lua-wrapper {overflow-x:visible !important;}
+#sb-main .cm-editor .sb-table-widget:has(.sortable-header) { overflow: visible !important; position: relative !important; }
 #sb-main .cm-editor .sb-table-widget .content { overflow: auto; }
 
+@media (hover: none) and (pointer: coarse) {
+#sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar {display: flex !important;}
+}
 
 /*---------- Design Tokens ----------*/
 body {
@@ -194,9 +200,8 @@ body {
 .apply-btn:hover { filter: brightness(1.08); }
 
 /*---------- Toolbar (button bar) ----------*/
-.button-bar {
+#sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar {
     position: absolute !important;
-    top: -40px !important;
     right: 0 !important;
     left: auto !important;
     bottom: auto !important;
