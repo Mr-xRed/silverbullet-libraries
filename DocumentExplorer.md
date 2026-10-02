@@ -235,6 +235,69 @@ local function restoreExplorerOpenStateOnPageLoad()
     end
   end
 end
+-- ---------- Keep the cached file list honest ----------
+-- cachedFiles is rebuilt only by the refresh button, so anything that changes the space
+-- from outside the panel leaves it stale. Renaming a page is the common case, and the
+-- path field in the top bar makes it a routine one: editing the path there is how a note
+-- gets moved between folders. The tiles then still point at the old path, and
+-- SilverBullet answers a click on a path that no longer exists by silently creating an
+-- empty page there - so a stale panel quietly manufactures a blank duplicate of the note
+-- that was just moved.
+--
+-- The page that just loaded is the cheapest witness available: if the editor is showing
+-- a file the cached list does not contain, the list is out of date. No syscall beyond
+-- the one we already need, and no polling.
+local function isPathInCachedFiles(path)
+  if not cachedFiles or not path or path == "" then return false end
+  -- No patterns anywhere near a path: this matcher truncates characters to bytes, so a
+  -- "^/" gsub also strips a leading Cyrillic Я (U+042F & 0xff == 0x2F). Plain equality
+  -- and string.sub are index-based and safe.
+  local bare = path
+  if string.sub(bare, 1, 1) == "/" then bare = string.sub(bare, 2) end
+  for _, f in ipairs(cachedFiles) do
+    if f.name == bare then return true end
+  end
+  return false
+end
+
+-- Remembers the last path that was still absent after a full relist, so that opening a
+-- page which genuinely does not exist yet (a new note, a broken link) costs one relist
+-- rather than one per visit. Cleared as soon as that path is written to disk, otherwise
+-- the note the user has just started writing would stay invisible in the panel until the
+-- next manual refresh.
+local knownMissingPath = nil
+
+local function refreshIfFileListStale()
+  if not PANEL_VISIBLE then return end
+  -- Nothing cached yet means the next drawPanel() lists the space anyway.
+  if not cachedFiles then return end
+
+  local current = editor.getCurrentPath()
+  if not current or current == "" then return end
+  if current == knownMissingPath then return end
+  -- Deliberately does not clear knownMissingPath: the marker belongs to a different
+  -- path, and dropping it here would relist and redraw the panel again on every return
+  -- to a page that simply does not exist.
+  if isPathInCachedFiles(current) then return end
+
+  cachedFiles = space.listFiles()
+  -- Still absent after the relist: an unsaved new page rather than a stale list.
+  knownMissingPath = (not isPathInCachedFiles(current)) and current or nil
+  drawPanel()
+  triggerHighlightUpdate()
+end
+
+-- A save is the moment a page that did not exist starts existing. Only the path we
+-- deliberately gave up on is interesting here: every other save is an edit to a file the
+-- list already contains, and relisting the space on each of those would redraw the panel
+-- while the user is typing.
+local function refreshIfMissingPathAppeared()
+  if not knownMissingPath then return end
+  if editor.getCurrentPath() ~= knownMissingPath then return end
+  knownMissingPath = nil
+  refreshIfFileListStale()
+end
+
 -- ---------- Helper to check negative filters ----------
 local function isFiltered(path)
   local lowPath = path:lower()
@@ -364,12 +427,32 @@ function refreshExplorerButton()
 end
 
 -- ---------- Event Listeners ----------
--- Add restoreExplorerOpenStateOnPageLoad to the pageLoaded event
+-- On every page load: move the active-page highlight, reopen the panel if it was open
+-- before a reload, and notice a file list that no longer matches the space.
 event.listen { name = "editor:pageLoaded", run = function()
     triggerHighlightUpdate()
-    restoreExplorerOpenStateOnPageLoad() 
+    -- Whether the panel was already open decides who is allowed to draw below.
+    local wasVisible = PANEL_VISIBLE
+    restoreExplorerOpenStateOnPageLoad()
+    -- Only check for staleness when the panel was already open. If restore has just
+    -- reopened it, it drew a moment ago, and a second drawPanel() in the same tick would
+    -- land inside the 100ms window in which the panel-mode MutationObserver is set up:
+    -- the old observer is disconnected on entry to the panel script, but the new one is
+    -- created by a setTimeout, so two draws that close together leave the first observer
+    -- connected with nothing left pointing at it. A list that stays stale until the next
+    -- page load is the cheaper price.
+    if wasVisible then
+        refreshIfFileListStale()
+    end
 end }
-event.listen { name = "editor:documentLoaded", run = triggerHighlightUpdate }
+event.listen { name = "editor:documentLoaded", run = function()
+    triggerHighlightUpdate()
+    -- Documents are moved by the same rename command as pages, so their tiles go stale
+    -- the same way.
+    refreshIfFileListStale()
+end }
+event.listen { name = "editor:pageSaved", run = refreshIfMissingPathAppeared }
+event.listen { name = "editor:documentSaved", run = refreshIfMissingPathAppeared }
 
 -- ---------- Panel Width Persistence ----------
 event.listen {
@@ -952,6 +1035,36 @@ function scheduleAutoLoad(target) {
 // that folder is collapsed (that's the row you actually see/select to expand
 // it) - only its *contents* become hidden. So a closed <details> only counts
 // against a tile if the tile isn't that details' own direct <summary> child.
+// "The tiles the user can actually reach" is needed on every arrow key, on every click
+// and by the auto-load timer, and each of those used to rebuild it from scratch. That
+// means isTileNavigable over every tile in the panel, and its first line calls
+// getComputedStyle, which forces a style resolution. A fully expanded tree is around 800
+// tiles, so holding an arrow key down asked the browser for 800 forced style resolutions
+// per repeat - which is the lag when moving through a large space.
+//
+// The answer only changes when tiles are hidden or revealed: the filter, a folder opening
+// or closing, and a resize (media queries decide some of the display values). Nothing else
+// touches it, and a redraw rebuilds the panel script anyway, so the cache starts empty
+// there by construction.
+let navigableTilesCache = null;
+function invalidateNavigableTiles() { navigableTilesCache = null; }
+function getNavigableTiles() {
+    if (!navigableTilesCache) {
+        navigableTilesCache = Array.from(document.querySelectorAll(".grid-tile")).filter(isTileNavigable);
+    }
+    return navigableTilesCache;
+}
+
+// Media queries decide some of the display values, so a resize can change the answer
+// without any tile being touched. Registered the same way as the other panel-wide
+// listeners: named on window and removed before being added again, because a redraw runs
+// this script afresh against a document that was never reloaded.
+if (window.explorerResizeHandler) {
+    window.removeEventListener('resize', window.explorerResizeHandler);
+}
+window.explorerResizeHandler = invalidateNavigableTiles;
+window.addEventListener('resize', window.explorerResizeHandler);
+
 function isTileNavigable(t) {
     if (window.getComputedStyle(t).display === 'none') return false;
     let child = t;
@@ -1073,7 +1186,7 @@ window.explorerKeydownHandler = function(e) {
     if (document.activeElement.id === "tileSearch" && e.key !== "ArrowDown") return;
 
     // 4. GET VISIBLE TILES (Cached for this specific keypress)
-    const tiles = Array.from(document.querySelectorAll(".grid-tile")).filter(isTileNavigable);
+    const tiles = getNavigableTiles();
 
     if (tiles.length === 0) return;
 
@@ -1219,7 +1332,7 @@ window.explorerFocusClickHandler = function(e) {
 
     // Recompute against the same "currently visible" tile set the keyboard
     // handler uses, so indices stay consistent between mouse and keyboard.
-    const visibleTiles = Array.from(document.querySelectorAll(".grid-tile")).filter(isTileNavigable);
+    const visibleTiles = getNavigableTiles();
     const idx = visibleTiles.indexOf(tile);
     if (idx === -1) return;
 
@@ -1269,7 +1382,7 @@ function getFullTilePath(tile) {
         // Consume it immediately so a later, unrelated panel load never reuses it.
         await syscall('clientStore.set', 'explorer.cameFromChild', '');
 
-        const navigable = Array.from(document.querySelectorAll('.grid-tile')).filter(isTileNavigable);
+        const navigable = getNavigableTiles();
         const match = navigable.find(t => !t.classList.contains('folderup-tile') && getFullTilePath(t) === cameFromPath);
         if (match) {
             focusedIndex = navigable.indexOf(match);
@@ -1772,16 +1885,27 @@ window.toggleTreeExpansion = function() {
 
 
 function saveTreeState() {
-  const openFolders = Array.from(document.querySelectorAll('.tree-folder[open]'))
-    .map(details => details.querySelector('summary').getAttribute('data-path')); 
-  localStorage.setItem('explorer_open_folders', JSON.stringify(openFolders));
+  // Coalesced, because "expand all" fires one toggle event per folder and each one used
+  // to serialize the whole open-folder list and hand it to localStorage - a synchronous
+  // write per folder, on the main thread, while the tree is still opening. Only the state
+  // after the last toggle is worth writing, and the list is read from the DOM when the
+  // timer fires, so a redraw in between cannot make it write anything stale.
+  clearTimeout(window.explorerTreeSaveTimer);
+  window.explorerTreeSaveTimer = setTimeout(() => {
+    const openFolders = Array.from(document.querySelectorAll('.tree-folder[open]'))
+      .map(details => details.querySelector('summary').getAttribute('data-path')); 
+    localStorage.setItem('explorer_open_folders', JSON.stringify(openFolders));
+  }, 100);
 }
 
 function initTreePersistence() {
   const grid = document.getElementById("explorerGrid");
   if (grid) {
     grid.addEventListener('toggle', (e) => {
-      if (e.target.tagName === 'DETAILS') saveTreeState();
+      if (e.target.tagName === 'DETAILS') {
+        invalidateNavigableTiles();
+        saveTreeState();
+      }
     }, true);
   }
 }
@@ -1898,10 +2022,21 @@ async function watchdog() {
 })();
 
 // 2. Add MutationObserver to track panel/window state
-if (window.explorerModeWatcher) {
-    window.explorerModeWatcher.disconnect();
-}
+//
+// The previous observer is disconnected inside the timeout, next to where its replacement
+// is created, and not on entry to this script. The panel is not reloaded when it is
+// redrawn - the host replaces the body and runs this script again in the same document -
+// so two redraws less than 100ms apart both reach this point before either timeout has
+// fired. Disconnecting up here would then hit an observer that does not exist yet on the
+// first pass and, on the second, overwrite window.explorerModeWatcher with a fresh
+// observer while the one made 0ms earlier is still attached to the panel element with
+// nothing left pointing at it. It would go on firing a clientStore round-trip for every
+// class change on that element for the rest of the session, and only F5 would clear it.
 setTimeout(() => {
+  if (window.explorerModeWatcher) {
+      window.explorerModeWatcher.disconnect();
+      window.explorerModeWatcher = null;
+  }
   const panelSelector = '.sb-panel.]] .. PANEL_ID .. [[';
   const panelElement = parent.document.querySelector(panelSelector);
   if (panelElement) {
@@ -1942,7 +2077,11 @@ if (window.highlightWatchdog) clearInterval(window.highlightWatchdog);
 // tile clicks/Enter/auto-load already highlight instantly on their own
 // (see the click handler above) - this catches page changes that don't
 // go through an explorer tile, e.g. wiki-links or browser back/forward.
-window.highlightWatchdog = setInterval(watchdog, 250);
+// Skipped while the tab is hidden: each tick is a syscall round-trip out to the host
+// document, and a tab nobody is looking at has nothing to re-highlight. Four of those a
+// second, in every background tab with a space open, for as long as the browser is up.
+// The first tick after the tab comes back reconciles whatever changed meanwhile.
+window.highlightWatchdog = setInterval(() => { if (!document.hidden) watchdog(); }, 250);
   
 // ---------------- Filter Logic with Debounce ----------------
 let cachedTiles = [];
@@ -2027,6 +2166,8 @@ window.filterTiles = function() {
             }
         });
 
+        // Every tile's display was just rewritten, so the navigable set is stale.
+        invalidateNavigableTiles();
         focusedIndex = -1;
     }, 300); 
 };

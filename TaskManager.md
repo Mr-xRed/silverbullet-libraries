@@ -9,7 +9,7 @@ pageDecoration.prefix: "✅ "
 > **note** Shortcut-Key
 > `Alt-Shift-e` - Inline Task Editor - move your cursor to any markdown task and edit the Task in the Modal Window. If there is no task in the line it will transform it into a task.
 
-### Example: **Simple Task Manager** with no extra attributes:
+### Example: **Simple Task Manager** with no extra attributes
 
 ```lua
 -- Default Columns: [] | Task | Page | Completed 
@@ -18,7 +18,7 @@ ${TaskManager(query[[from index.tag "task" order by name limit 5]])}
 
 ${TaskManager(query[[from index.tag "task" order by name limit 5 ]])}
 
-### Example: **Custom Task Manager** with custom attributes:
+### Example: **Custom Task Manager** with custom attributes
 
 ```lua
 -- add your custom task attributes as following: {{"Header", "attribute", "format"},{...}}
@@ -41,6 +41,7 @@ ${TaskManager(query[[from index.tag "task" order by name limit 10]], {
 })}
 
 ## Config Example
+
 ```lua
 config.set("taskManager", {  -- for icons you can use any unicode character or emojis
   open = "☐",                -- Task Open icon,  e.g.: "🔳", "⭕️", "☐"
@@ -48,6 +49,7 @@ config.set("taskManager", {  -- for icons you can use any unicode character or e
   editTask = "Edit",            -- Edit button icon, e.g.: "✏️" "✍️" "✎"
   boxSize = "1.8em",         -- any CSS unit "px", "em"
   emptyAttribute = "---",    -- any unicode character or emojis. e.g.: "🚫", "N.A.", "---"
+  defaultAttributes = { {"Completed", "completed", "date"} } -- default Attributes to use if none are specified
  })
 ```
 
@@ -407,6 +409,7 @@ local open = cfg.open or "☐"
 local done = cfg.done or "☑︎"
 local boxSize = cfg.boxSize or "1.4em"
 local emptyAttribute = cfg.emptyAttribute or "---"
+local defaultAttributes = cfg.defaultAttributes or { {"Completed", "completed", "date"} }
 -- local gotoTask = cfg.gotoTask or "↪"
 local editTask = cfg.editTask or "Edit"
 
@@ -825,7 +828,7 @@ end
 
 -- ------------- Table Building Function -------------
 function TaskManager(taskQuery, extraCols)
-    extraCols = extraCols or { {"Completed", "completed", "date"} }
+    extraCols = extraCols or defaultAttributes
 
     local function getField(task, key)
         if not key or type(key) ~= "string" then return nil end
@@ -1406,4 +1409,5 @@ command.define {
 ```
 
 ## Discussion to this Library
+
 - [Silverbullet Community](https://community.silverbullet.md/t/todo-task-manager-global-interactive-table-sorter-filtering/3767?u=mr.red)
