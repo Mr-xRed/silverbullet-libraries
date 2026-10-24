@@ -2,7 +2,7 @@
 name: "Library/Mr-xRed/LineNumbering"
 description: "Adds a clean, theme-aware, clickable line number gutter to the editor on every page."
 tags: meta/library
-pageDecoration.prefix: "🔢 "
+pageDecoration.prefix: "🛠️ "
 ---
 
 # Line Numbering
