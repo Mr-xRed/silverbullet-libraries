@@ -5,7 +5,7 @@ pageDecoration.prefix: "🛠️ "
 share.uri: "github:Mr-xRed/silverbullet-libraries/TableFilterAndSorting.md"
 ---
 
-# Silverbullet Table Sorting and Filtering (Ver. 2.1)
+# Silverbullet Table Sorting and Filtering (Ver. 2.2)
 
 - This library adds sorting, filtering, searching, CSV export, and rich-copy support to every Silverbullet table in your Space.
 - This is a UI/UX-focused remake of the original library. Same core idea (client-side sort + filter for SB tables), rebuilt with a modern toolbar, multi-column sort, a searchable filter dropdown with value counts, a global per-table search box, and CSV export.
@@ -28,6 +28,7 @@ share.uri: "github:Mr-xRed/silverbullet-libraries/TableFilterAndSorting.md"
 - **CSV export** — one click, respects current filters/search (only visible rows are exported).
 - **Cleaner visual language** — a floating pill-shaped toolbar, animated dropdown, theme-aware colors, and an optional custom accent color.
 - All the original Codemirror/edit-mode safety guards, session-persisted state, and cleanup-on-disable behavior are preserved.
+- **Ver. 2.2:** newer SilverBullet versions replaced the `.button-bar` on query/Lua widgets with the `sb-widget-menu` dock menu. If a query table has no `.button-bar` anymore, this library now generates its own toolbar (search, CSV, copy, reset) for it, exactly like it already does for plain markdown tables. Legacy `.button-bar`s from older SilverBullet versions are still detected and enhanced.
 
 ## Config Example:
 
@@ -53,6 +54,7 @@ config.set("multilineTables", { enabled = true })
   top: -40px; padding: 0; border-radius: 1em; opacity: 0.4; transition: opacity 0.25s ease;display: flex !important;
 }
 #sb-main .cm-editor .sb-lua-directive-block:has(.sortable-header) .button-bar:hover { opacity: 1; }
+#sb-main .cm-editor .sb-lua-directive-block:has(.button-bar[data-generated]) { position: relative; }
 #sb-main .cm-editor .sb-lua-wrapper {overflow-x:visible !important;}
 #sb-main .cm-editor .sb-table-widget:has(.sortable-header) { overflow: visible !important; position: relative !important; }
 #sb-main .cm-editor .sb-table-widget .content { overflow: auto; }
@@ -331,6 +333,7 @@ function enableTableSorter()
         .dropdown-item[data-selected="true"] .chk svg { opacity: 1; }
         .button-bar { position: absolute !important; top: -40px !important; right: 0 !important; left: auto !important; bottom: auto !important; display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: center !important; width: max-content !important; height: auto !important; overflow: visible !important; z-index: 20; }
         .button-bar button { display: flex !important; align-items: center; justify-content: center; flex: 0 0 auto; }
+        .sb-lua-directive-block:has(.button-bar[data-generated]) { position: relative; }
         .button-bar button svg { width: 13px; height: 13px; flex: 0 0 auto; }
         .tfs-search-wrap { display: flex !important; flex: 0 0 auto; align-items: center; }
         .tfs-search-input { width: 0; opacity: 0; pointer-events: none; border: 1px solid transparent; background: transparent; color: inherit; flex: 0 0 auto; }
@@ -485,10 +488,13 @@ function enableTableSorter()
         }
 
         function getButtonBarForTable(table) {
+            if (table._tfsBar && table._tfsBar.isConnected) return table._tfsBar;
             const block = table.closest('.sb-lua-directive-block');
             if (block) return block.querySelector('.button-bar');
             const wrapper = table.closest('[data-md-wrapper]');
             if (wrapper) return wrapper.querySelector('.button-bar');
+            const widget = table.closest('.sb-table-widget');
+            if (widget) return widget.querySelector('.button-bar');
             return null;
         }
 
@@ -747,6 +753,7 @@ function enableTableSorter()
             btn.onmousedown = handler;
             btn.ontouchstart = handler;
             btn.onmouseup = (e) => { e.preventDefault(); e.stopPropagation(); };
+            btn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); };
             return btn;
         }
 
@@ -833,6 +840,8 @@ function enableTableSorter()
 
         function enhanceBar(bar, table, opts) {
             opts = opts || {};
+            bar._tfsTable = table;
+            table._tfsBar = bar;
             attachSearchToggle(bar, table);
             if (TFS_CONFIG.showCsvExport && !bar.querySelector('.global-csv-btn')) {
                 bar.appendChild(buildToolbarButton('global-csv-btn', 'Export visible rows as CSV', CSV_SVG, (e) => {
@@ -849,8 +858,16 @@ function enableTableSorter()
             }
         }
 
+        function createGeneratedBar() {
+            const bar = document.createElement('div');
+            bar.className = 'button-bar';
+            bar.dataset.generated = "true";
+            return bar;
+        }
+
         function injectToolbar() {
-            // Case 1: existing widget button bars (Lua query/table widgets)
+            // Case 1: legacy SilverBullet versions that still ship their own
+            // .button-bar inside Lua query/table widgets -> just enhance it.
             document.querySelectorAll('.sb-lua-directive-block:has(table) .button-bar').forEach(bar => {
                 if (bar.dataset.generated) return;
                 const block = bar.closest('.sb-lua-directive-block');
@@ -859,7 +876,28 @@ function enableTableSorter()
                 enhanceBar(bar, table, { copy: false });
             });
 
-            // Case 2: orphan tables (plain markdown tables, not in a Lua widget)
+            // Case 1b: newer SilverBullet versions replaced the .button-bar with the
+            // sb-widget-menu dock menu, so Lua query/table widgets have NO button bar.
+            // Generate our own for them (same bar as for markdown tables). The table
+            // itself is NOT moved/wrapped here, since SilverBullet owns that DOM and
+            // re-renders it on reload.
+            document.querySelectorAll('.sb-lua-directive-block:has(table)').forEach(block => {
+                const table = block.querySelector('table');
+                if (!table || !table.dataset.sortedInit) return;
+                const existing = block.querySelector('.button-bar');
+                if (existing) {
+                    if (!existing.dataset.generated) return; // legacy bar, handled in Case 1
+                    // Our bar is still bound to the current table -> nothing to do.
+                    if (existing._tfsTable === table && table._tfsBar === existing) return;
+                    // The widget was re-rendered (new table element) -> rebuild the bar.
+                    existing.remove();
+                }
+                const bar = createGeneratedBar();
+                block.insertBefore(bar, block.firstChild);
+                enhanceBar(bar, table, { copy: true });
+            });
+
+            // Case 2: orphan tables (plain markdown tables / any widget outside a Lua block)
             document.querySelectorAll('.sb-table-widget').forEach(widget => {
                 if (widget.closest('.sb-lua-directive-block')) return;
                 if (widget.querySelector('.button-bar')) return;
@@ -870,9 +908,7 @@ function enableTableSorter()
                 widget._mouseupGuard = widget._mouseupGuard || ((e) => { e.preventDefault(); e.stopPropagation(); });
                 widget.addEventListener('mouseup', widget._mouseupGuard);
 
-                const bar = document.createElement('div');
-                bar.className = 'button-bar';
-                bar.dataset.generated = "true";
+                const bar = createGeneratedBar();
 
                 enhanceBar(bar, table, { copy: true });
 
@@ -1083,6 +1119,7 @@ function enableTableSorter()
                 delete t.dataset.sortedInit;
                 delete t.dataset.tfsKey;
                 delete t._searchInput;
+                delete t._tfsBar;
                 if (t.id.startsWith('sb-table-pos-')) t.removeAttribute('id');
             });
             style.remove();
