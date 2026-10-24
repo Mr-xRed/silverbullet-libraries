@@ -28,7 +28,7 @@ share.uri: "github:Mr-xRed/silverbullet-libraries/TableFilterAndSorting.md"
 - **CSV export** — one click, respects current filters/search (only visible rows are exported).
 - **Cleaner visual language** — a floating pill-shaped toolbar, animated dropdown, theme-aware colors, and an optional custom accent color.
 - All the original Codemirror/edit-mode safety guards, session-persisted state, and cleanup-on-disable behavior are preserved.
-- **Ver. 2.2:** newer SilverBullet versions replaced the `.button-bar` on query/Lua widgets with the `sb-widget-menu` dock menu. If a query table has no `.button-bar` anymore, this library now generates its own toolbar (search, CSV, copy, reset) for it, exactly like it already does for plain markdown tables. Legacy `.button-bar`s from older SilverBullet versions are still detected and enhanced.
+- **Ver. 2.2:** newer SilverBullet versions replaced the `.button-bar` on query/Lua widgets with the `sb-widget-menu` dock menu. On those widgets the toolbar now only holds the **search box and the row counter**, while **Export CSV, Copy table and Reset** are added to the end of SilverBullet's own widget menu (below *Bake into page*). On older SilverBullet versions that still ship a `.button-bar`, everything stays in the bar exactly as before. Plain markdown tables keep the full bar (search, CSV, copy, reset). Set `actionsInMenu = false` to keep all buttons in the bar on query tables too.
 
 ## Config Example:
 
@@ -38,7 +38,9 @@ config.set("tableSort", {
     enabled = true,        -- set to false to disable auto-start (commands still work)
     accentColor = "",      -- e.g. "#22c55e" to override the accent color, "" = theme default
     showRowCount = true,   -- show the "x / y rows" badge in the toolbar
-    showCsvExport = true,  -- show the CSV export button in the toolbar
+    showCsvExport = true,  -- show the CSV export action
+    actionsInMenu = true,  -- query tables: put CSV/Copy/Reset into the SilverBullet widget menu
+                           -- (false = keep them as buttons in the toolbar bar)
 })
 
 -- Multiline table cell support (turns <br> / \n into real line breaks)
@@ -256,6 +258,14 @@ body {
 }
 .tfs-search-input.open { width: 50px; opacity: 1; padding: 5px 10px; margin-inline: 4px; pointer-events: auto; border-color: var(--tfs-border); background: oklch(from var(--root-background-color, #fff) l c h / .95); }
 
+/*---------- Items injected into the SilverBullet widget menu ----------*/
+.sb-widget-menu .sb-dock-menu-item.tfs-injected {
+    display: flex; align-items: center; justify-content: flex-start;
+    gap: 8px; width: 100%; text-align: left; white-space: nowrap;
+}
+.sb-widget-menu .sb-dock-menu-item.tfs-injected svg { flex: 0 0 auto; width: 15px; height: 15px; }
+.sb-widget-menu .sb-dock-menu-item.tfs-injected span { flex: 0 1 auto; text-align: left; white-space: nowrap; }
+
 ```
 
 ## Filter and Sort Tables
@@ -268,10 +278,11 @@ local enabled = cfg.enabled ~= false
 local accentColor = cfg.accentColor or ""
 local showRowCount = cfg.showRowCount ~= false
 local showCsvExport = cfg.showCsvExport ~= false
+local actionsInMenu = cfg.actionsInMenu ~= false
 
 local jsConfig = string.format(
-    '{"accent": %q, "showRowCount": %s, "showCsvExport": %s}',
-    accentColor, tostring(showRowCount), tostring(showCsvExport)
+    '{"accent": %q, "showRowCount": %s, "showCsvExport": %s, "actionsInMenu": %s}',
+    accentColor, tostring(showRowCount), tostring(showCsvExport), tostring(actionsInMenu)
 )
 
 local function cleanupSorter()
@@ -338,6 +349,9 @@ function enableTableSorter()
         .tfs-search-wrap { display: flex !important; flex: 0 0 auto; align-items: center; }
         .tfs-search-input { width: 0; opacity: 0; pointer-events: none; border: 1px solid transparent; background: transparent; color: inherit; flex: 0 0 auto; }
         .tfs-search-input.open { width: 50px; opacity: 1; padding: 5px 10px; margin-inline: 4px; pointer-events: auto; border-color: var(--tfs-border); }
+        .sb-widget-menu .sb-dock-menu-item.tfs-injected { display: flex; align-items: center; justify-content: flex-start; gap: 8px; width: 100%; text-align: left; white-space: nowrap; }
+        .sb-widget-menu .sb-dock-menu-item.tfs-injected svg { flex: 0 0 auto; width: 15px; height: 15px; }
+        .sb-widget-menu .sb-dock-menu-item.tfs-injected span { flex: 0 1 auto; text-align: left; white-space: nowrap; }
         `;
         document.head.appendChild(style);
 
@@ -838,11 +852,96 @@ function enableTableSorter()
             };
         }
 
+        /* ---- Integration with SilverBullet's sb-widget-menu (dock menu) ----
+           Newer SilverBullet versions replaced the .button-bar on query widgets with a
+           popup menu (div.sb-widget-menu > button.sb-dock-menu-item). We append our own
+           actions (CSV / Copy / Reset) to it. The menu only exists while it is open and
+           carries no reference to its table, so we work out which table it belongs to by
+           (1) remembering the widget the user last pressed on, and (2) as a fallback,
+           the table whose widget is under the menu's position. */
+        let _lastWidgetBlock = null;
+        const _trackWidgetHandler = (e) => {
+            const t = e.target;
+            _lastWidgetBlock = (t && t.closest) ? t.closest('.sb-lua-directive-block, .sb-table-widget') : null;
+        };
+        ['pointerdown', 'mousedown', 'touchstart', 'contextmenu'].forEach(ev => document.addEventListener(ev, _trackWidgetHandler, true));
+
+        function tableForMenu(menu) {
+            const usable = (t) => (t && t.dataset.sortedInit && t._tfsMenuActions) ? t : null;
+            if (_lastWidgetBlock && _lastWidgetBlock.isConnected) {
+                return usable(_lastWidgetBlock.matches('table') ? _lastWidgetBlock : _lastWidgetBlock.querySelector('table'));
+            }
+            const x = parseFloat(menu.style.left), y = parseFloat(menu.style.top);
+            if (isNaN(x) || isNaN(y)) return null;
+            const pad = 60;
+            let best = null, bestD = Infinity;
+            document.querySelectorAll('table[data-sorted-init]').forEach(t => {
+                if (!t._tfsMenuActions) return;
+                const r = (t.closest('.sb-lua-directive-block') || t).getBoundingClientRect();
+                if (x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad) {
+                    const d = Math.abs(y - (r.top + r.bottom) / 2);
+                    if (d < bestD) { best = t; bestD = d; }
+                }
+            });
+            return best;
+        }
+
+        function closeWidgetMenu(menu) {
+            // We stop the click from bubbling (so the editor never sees it), which means
+            // SilverBullet's own close logic may not run: close the menu ourselves.
+            setTimeout(() => {
+                if (!menu.isConnected) return;
+                document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+                if (menu.isConnected) menu.remove();
+            }, 30);
+        }
+
+        function buildMenuItem(menu, label, svg, action) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.setAttribute('role', 'menuitem');
+            b.className = 'sb-dock-menu-item tfs-injected';
+            b.innerHTML = svg + '<span></span>';
+            b.querySelector('span').textContent = label;
+            b.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                try { action(); } finally { closeWidgetMenu(menu); }
+            });
+            return b;
+        }
+
+        function injectWidgetMenuItems() {
+            document.querySelectorAll('.sb-widget-menu').forEach(menu => {
+                if (menu.querySelector('.tfs-injected')) return;
+                const table = tableForMenu(menu);
+                if (!table) return;
+                const sep = document.createElement('div');
+                sep.className = 'sb-widget-menu-separator tfs-injected';
+                sep.setAttribute('role', 'separator');
+                menu.appendChild(sep);
+                if (TFS_CONFIG.showCsvExport) {
+                    menu.appendChild(buildMenuItem(menu, 'Export as CSV', CSV_SVG, () => exportCsv(table)));
+                }
+                menu.appendChild(buildMenuItem(menu, 'Copy as RichText', COPY_SVG, () => {
+                    copyHandlerFactory(table)({
+                        preventDefault() {}, stopPropagation() {},
+                        currentTarget: document.createElement('span')
+                    });
+                }));
+                menu.appendChild(buildMenuItem(menu, 'Reset', RESET_SVG, () => resetAll(table)));
+            });
+        }
+
         function enhanceBar(bar, table, opts) {
             opts = opts || {};
             bar._tfsTable = table;
             table._tfsBar = bar;
+            table._tfsMenuActions = !!opts.menuActions;
             attachSearchToggle(bar, table);
+            // Actions live in SilverBullet's widget menu instead of the bar: the bar
+            // keeps only the search box (+ row counter).
+            if (opts.menuActions) return;
             if (TFS_CONFIG.showCsvExport && !bar.querySelector('.global-csv-btn')) {
                 bar.appendChild(buildToolbarButton('global-csv-btn', 'Export visible rows as CSV', CSV_SVG, (e) => {
                     e.preventDefault(); e.stopPropagation(); exportCsv(table);
@@ -867,7 +966,7 @@ function enableTableSorter()
 
         function injectToolbar() {
             // Case 1: legacy SilverBullet versions that still ship their own
-            // .button-bar inside Lua query/table widgets -> just enhance it.
+            // .button-bar inside Lua query/table widgets -> keep ALL buttons in that bar.
             document.querySelectorAll('.sb-lua-directive-block:has(table) .button-bar').forEach(bar => {
                 if (bar.dataset.generated) return;
                 const block = bar.closest('.sb-lua-directive-block');
@@ -894,7 +993,7 @@ function enableTableSorter()
                 }
                 const bar = createGeneratedBar();
                 block.insertBefore(bar, block.firstChild);
-                enhanceBar(bar, table, { copy: true });
+                enhanceBar(bar, table, { copy: true, menuActions: TFS_CONFIG.actionsInMenu });
             });
 
             // Case 2: orphan tables (plain markdown tables / any widget outside a Lua block)
@@ -1025,6 +1124,7 @@ function enableTableSorter()
                 if (m.addedNodes.length) {
                     document.querySelectorAll("table").forEach(initTable);
                     injectToolbar();
+                    injectWidgetMenuItems();
                 }
             });
         });
@@ -1108,6 +1208,7 @@ function enableTableSorter()
             document.querySelectorAll('.sb-table-widget').forEach(w => {
                 if (w._mouseupGuard) { w.removeEventListener('mouseup', w._mouseupGuard); delete w._mouseupGuard; }
             });
+            ['pointerdown', 'mousedown', 'touchstart', 'contextmenu'].forEach(ev => document.removeEventListener(ev, _trackWidgetHandler, true));
             document.removeEventListener('mouseup', _mdTableEventGuard, true);
             document.removeEventListener('click', _mdTableEventGuard, true);
             document.removeEventListener('focusin', _mdTableEventGuard, true);
@@ -1120,6 +1221,7 @@ function enableTableSorter()
                 delete t.dataset.tfsKey;
                 delete t._searchInput;
                 delete t._tfsBar;
+                delete t._tfsMenuActions;
                 if (t.id.startsWith('sb-table-pos-')) t.removeAttribute('id');
             });
             style.remove();
