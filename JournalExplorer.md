@@ -438,6 +438,8 @@ config.define("journalExplorer", {
   }
 })
 
+local urlPrefix = system.getURLPrefix()
+
 -- ── Load Config + Locked-Key Detection ───────────────────────────
 -- Mirrors the FloatingJournalCalendar pattern exactly:
 --   • A key is LOCKED if and only if it is present in config.get() (nil-check).
@@ -996,7 +998,8 @@ function resolveImgUrl(ref, pagePath) {
   var isAbs = r.startsWith("/") || r.includes("/");
   var fullPath = isAbs ? (r.startsWith("/") ? r.substring(1) : r)
                        : ((pagePath.includes("/") ? pagePath.substring(0, pagePath.lastIndexOf("/") + 1) : "") + r);
-  return "/.fs/" + fullPath.split("/").map(encodeURIComponent).join("/");
+  var prefix = (JE_CONFIG.urlPrefix || "").replace(/\/+$/, "");
+  return prefix + "/.fs/" + fullPath.split("/").map(encodeURIComponent).join("/");
 }
 
 function isToday(e) {
@@ -1597,6 +1600,7 @@ local function drawJournalPanel()
   configJson = configJson .. ',"showSnippets":'       .. jbool(CFG.SNIPPETS)
   configJson = configJson .. ',"showTitle":'          .. jbool(CFG.SHOW_TITLE)
   configJson = configJson .. ',"snippetStartMarker":"' .. jesc(CFG.SNIPPET_MARKER) .. '"'
+  configJson = configJson .. ',"urlPrefix":"'          .. jesc(urlPrefix or "") .. '"'
   configJson = configJson .. ',"monthNames":['        .. table.concat(quotedMonths, ",") .. ']'
   configJson = configJson .. ',"dayNames":['          .. table.concat(quotedDays,   ",") .. ']'
   configJson = configJson .. ',"locked":{'            .. table.concat(lockedParts,  ",") .. '}}'
