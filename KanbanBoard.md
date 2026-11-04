@@ -21,7 +21,13 @@ ${KanbanBoard(
     }},
     {"SortDefault", "priority"},
     {"Fields", {"taskID","priority", "scheduled", "due", "status", "contact","tags"}},
-    {"HideKeys", {"taskID","tags"}}
+    {"HideKeys", {"taskID","tags"}},
+    {"Height", 400},
+    {"Buttons", {
+      {"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='11' cy='11' r='8'/><line x1='21' y1='21' x2='16.65' y2='16.65'/></svg>", "SVG icon: open the page picker", "Navigate: Page Picker"},
+      {"🏠", "Unicode / emoji: go to the home page", "Navigate: Home"},
+      {"Reload", "Text label: reload the system", "System: Reload"}
+    }}
   }
 )}
 
@@ -30,7 +36,7 @@ ${KanbanBoard(
       [scheduled: "2026-02-27"][taskID: "T-01-26"]
       [contact: "#George"] [status: "📥"] [due: "2026-03-02"]  
 * [ ] Task with a #TestTag and special @ # - * , ! ; $ \ | / characters
-      [status: "📥"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
+      [status: "⏳"]  [priority: "2"] [due: "2026-02-02"][taskID: "T-02-26"] 
 * [ ] Another normal task  with a #TestTag in the name [status: "⏳"][due: "2026-02-13"][scheduled: "2026-04-01"] #maroon [priority: "2"][taskID: "T-03-26"]
 - [ ] Completed task [priority: "3"] [status: "👀"][taskID: "T-06-26"]
 - [ ] High priority with two [[WikiLink]] in [[name]] #TestTag
@@ -57,6 +63,8 @@ You can define the columns and their corresponding status values in the widget's
 - **HideKeys** — display an attribute value without showing its label (handy for IDs or long text)
 - **Filter & sort controls** — live filter across all columns, sort by any attribute ascending or descending
 - **WikiLink & hashtag support** — both are parsed correctly in card titles and are preserved when you edit through the modal
+- **Custom buttons** — add as many buttons as you like (text, emoji or SVG icon) that run any SilverBullet command, with a hover hint
+- **Fixed widget size** — optional `Width` / `Height` keep the board a constant size; columns then scroll independently with a subtle fade at the top/bottom edge instead of a scrollbar
 - **Mobile-friendly** — columns hold their minimum width and the board scrolls horizontally on narrow screens instead of squishing
 
 
@@ -77,6 +85,12 @@ You can define the columns and their corresponding status values in the widget's
     *   **`Columns`**: An ordered list of columns, where each column is a `{status, title}` pair (e.g., `{{'todo', 'To Do'}, {'doing', 'In Progress'}}`).
     *   **`SortDefault`**: (Optional) The task attribute to use for default sorting cards within columns. e.g. `priority`.
     *   **`Fields`**: (Optional) A list of task attributes to display on the card. E.g. `{"due", "priority"}`.
+    *   **`Width`**: (Optional) Fixed width of the whole widget. A number is read as pixels (`900`), or use any CSS size (`"900px"`, `"80%"`, `"60vw"`). If omitted, the board uses the full available width. The board never grows wider than its container; columns scroll horizontally if they don't fit.
+    *   **`Height`**: (Optional) Fixed height of the whole widget (`600`, `"600px"`, `"70vh"`). When set, the board keeps this height no matter how many cards a column has, and each column scrolls independently (no scrollbar, a subtle fade at the edge shows there is more). If omitted, the board grows with its longest column as before.
+    *   **`Buttons`**: (Optional) Custom buttons shown after the "show hidden cards" button. A list of `{label, hint, command}` entries:
+        *   `label`: the button content. Plain text, an emoji / unicode character (`"⟳"`), or an inline SVG (`"<svg ...>...</svg>"`). Icons (an SVG, or a short symbol / emoji without letters or digits) give a square button; text containing letters or digits gives a regular text button of the same height.
+        *   `hint`: the tooltip shown on hover, describing what the button does.
+        *   `command`: the exact name of the SilverBullet command to run, as shown in the command palette (e.g. `"Navigate: Home"`).
     *   **HideKeys**: (Optional) Hide certain attribute keys/labels from the card. This can be usefull if you have a longer text or a title as attribute and want to display the whole thin
 
 ### Widget example
@@ -94,7 +108,13 @@ ${KanbanBoard(
     }},
     {"SortDefault", "priority"},
     {"Fields", {"priority", "completed"}},
-    {"HideKeys", {"tags"}}
+    {"HideKeys", {"tags"}},
+    {"Width", "100%"},   -- optional: number (px) or any CSS size
+    {"Height", 600},     -- optional: number (px) or any CSS size
+    {"Buttons", {        -- optional: {label, hover hint, command name}
+      {"🏠", "Go to the home page", "Navigate: Home"},
+      {"Reload", "Reload the system", "System: Reload"}
+    }}
   }
 )}
 ```
@@ -189,6 +209,118 @@ config.set("kanban", { completedAttribute = false })
   gap: 10px;
   flex-grow: 1;
 }
+
+
+/* ---------------------------------
+   Custom buttons (Buttons option)
+   Same look as the toggle-hidden button, same height.
+---------------------------------- */
+
+[data-kanban-root] {
+  --kb-btn-h: 34px;
+}
+
+.kanban-filter-container {
+  flex-wrap: wrap;
+}
+
+.kanban-toggle-hidden-btn,
+.kanban-custom-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--kb-btn-h);
+  box-sizing: border-box;
+}
+
+.kanban-custom-btn {
+  white-space: nowrap;
+}
+
+/* icon-only buttons are square */
+.kanban-custom-btn.kanban-custom-btn-icon {
+  width: var(--kb-btn-h);
+  padding: 0;
+}
+
+.kanban-custom-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+
+/* ---------------------------------
+   Fixed-size mode (Width / Height options)
+   Only active when the widget sets Height, so the
+   default behaviour is untouched.
+---------------------------------- */
+
+@property --kb-fade-top {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --kb-fade-bottom {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+[data-kanban-root] {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+[data-kanban-root].kanban-fixed-height {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+[data-kanban-root].kanban-fixed-height > .kanban-controls {
+  flex: 0 0 auto;
+}
+
+[data-kanban-root].kanban-fixed-height > .kanban-board {
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: stretch;
+}
+
+[data-kanban-root].kanban-fixed-height .kanban-column {
+  min-height: 0;
+}
+
+[data-kanban-root].kanban-fixed-height .kanban-column-title {
+  flex: 0 0 auto;
+}
+
+[data-kanban-root].kanban-fixed-height .kanban-cards {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  /* only trap vertical scroll chaining; horizontal gestures must reach the board */
+  overscroll-behavior-x: auto;
+  overscroll-behavior-y: contain;
+  /* hide the scrollbar everywhere, scrolling still works */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* room so card shadows are not clipped by the scroll container */
+  padding: 6px;
+  margin: -6px;
+  /* soft fade where more cards are hidden (toggled via JS classes) */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--kb-fade-top), #000 calc(100% - var(--kb-fade-bottom)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--kb-fade-top), #000 calc(100% - var(--kb-fade-bottom)), transparent 100%);
+  transition: --kb-fade-top 0.2s ease, --kb-fade-bottom 0.2s ease;
+}
+
+[data-kanban-root].kanban-fixed-height .kanban-cards::-webkit-scrollbar {
+  display: none;
+}
+
+[data-kanban-root].kanban-fixed-height .kanban-cards.kb-more-above { --kb-fade-top: 26px; }
+[data-kanban-root].kanban-fixed-height .kanban-cards.kb-more-below { --kb-fade-bottom: 26px; }
 
 
 /* ---------------------------------
@@ -1153,6 +1285,21 @@ if not js.window.kanbanListenersAdded then
     js.window.kanbanListenersAdded = true
 end
 
+-- Custom buttons: the board's JS click handler dispatches this event, we run the command.
+-- (Separate flag from kanbanListenersAdded so it also registers in sessions where the
+-- older listeners were already installed.)
+if not js.window.kanbanButtonListenerAdded then
+    js.window.addEventListener("sb-kanban-run-command", function(e)
+        local cmd = e.detail and e.detail.command
+        if not cmd or cmd == "" then return end
+        local ok, err = pcall(function() editor.invokeCommand(tostring(cmd)) end)
+        if not ok then
+            editor.flashNotification("Kanban: could not run command \"" .. tostring(cmd) .. "\"", "error")
+        end
+    end)
+    js.window.kanbanButtonListenerAdded = true
+end
+
 -- ------------- Main Kanban Board Function -------------
 function KanbanBoard(taskQuery, options)
     -- List of meta-keys that are not custom attributes, used to identify true attributes.
@@ -1168,6 +1315,24 @@ function KanbanBoard(taskQuery, options)
     local columnColors = {} -- optional accent color per column, set via 3rd element in Columns config
     local fields = {} -- New: For custom fields
     local hideKeys = {} -- field keys whose label is hidden on cards, set via {"HideKeys", {"key1","key2"}}
+    local customButtons = {} -- optional custom buttons, set via {"Buttons", {{label, hint, command}, ...}}
+    local widgetWidth = nil  -- optional fixed widget width,  set via {"Width", 900 or "80%"}
+    local widgetHeight = nil -- optional fixed widget height, set via {"Height", 600 or "70vh"}
+
+    -- Numbers are treated as pixels; strings are used as given if they look like a CSS size.
+    local function toCssSize(v)
+        if v == nil then return nil end
+        if type(v) == "number" then
+            if v > 0 then return tostring(v) .. "px" end
+            return nil
+        end
+        local str = tostring(v):gsub("^%s*(.-)%s*$", "%1")
+        if str == "" then return nil end
+        if str:match("^%d+%.?%d*$") then return str .. "px" end
+        -- allow only safe characters (digits, letters, %, ., spaces, parentheses, + - * /) for calc(), vh, etc.
+        if str:match("^[%w%.%%%s%(%)%+%-%*/]+$") then return str end
+        return nil
+    end
 
     for _, opt in ipairs(options) do
         if opt[1] == "Column" then statusKey = opt[2] end
@@ -1184,6 +1349,15 @@ function KanbanBoard(taskQuery, options)
             end
           end
         end
+        if opt[1] == "Buttons" then
+            for _, b in ipairs(opt[2] or {}) do
+                if b and b[1] and b[3] and tostring(b[3]) ~= "" then
+                    table.insert(customButtons, { label = tostring(b[1]), hint = tostring(b[2] or ""), command = tostring(b[3]) })
+                end
+            end
+        end
+        if opt[1] == "Width" then widgetWidth = toCssSize(opt[2]) end
+        if opt[1] == "Height" then widgetHeight = toCssSize(opt[2]) end
         if opt[1] == "SortDefault" then sortDefault = opt[2] end -- read SortDefault option
         if opt[1] == "Fields" then fields = opt[2] or {} end -- New
         if opt[1] == "HideKeys" then -- build a lookup set of keys whose label to hide on cards
@@ -1256,6 +1430,24 @@ function KanbanBoard(taskQuery, options)
     local columnOrderJson = "[" .. table.concat(columnOrderParts, ",") .. "]"
     -- MODIFICATION END
 
+    -- Custom buttons html (placed after the toggle-hidden button)
+    local function escHtml(str)
+        return (str:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub('"', "&quot;"))
+    end
+    local buttonsHtml = ""
+    for _, b in ipairs(customButtons) do
+        local trimmed = b.label:gsub("^%s*(.-)%s*$", "%1")
+        local isSvg = trimmed:lower():sub(1, 4) == "<svg"
+        -- Space Lua has no utf8 library, so no codepoint counting: a label is an icon if it is an
+        -- SVG, or a short string (<= 8 UTF-16 units, enough for emoji incl. variation selectors /
+        -- ZWJ sequences) that contains no ASCII letters or digits. Anything else is a text button.
+        local isIcon = isSvg or (#trimmed <= 8 and not trimmed:find("%w"))
+        local inner = isSvg and trimmed or escHtml(trimmed)
+        buttonsHtml = buttonsHtml .. '<button class="kanban-reset-filter-btn kanban-custom-btn'
+            .. (isIcon and ' kanban-custom-btn-icon' or '') .. '" title="' .. escHtml(b.hint)
+            .. '" data-command="' .. escHtml(b.command) .. '">' .. inner .. '</button>'
+    end
+
     -- Controls bar (filter + sort) — MODIFICATION: pagination removed, it is not used in the Kanban Board
     -- MODIFICATION START: Added reset filter button to clear the persisted filter state
     local controlsHtml = [[
@@ -1265,6 +1457,7 @@ function KanbanBoard(taskQuery, options)
         <input type="text" class="kanban-search-input" placeholder="Search tasks...">
         <button class="kanban-reset-filter-btn" title="Reset filter">✕</button>
         <button class="kanban-toggle-hidden-btn kanban-reset-filter-btn" title="Show hidden cards"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-icon lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg></button>
+    ]] .. buttonsHtml .. [[
       </div>
       <div class="kanban-sort-container">
         <label class="kanban-sort-label">Order by: </label>
@@ -1287,7 +1480,12 @@ function KanbanBoard(taskQuery, options)
     -- keep working even when SilverBullet reuses/replaces this widget's DOM without
     -- re-invoking this Lua function (e.g. after toggling the raw-source edit view).
     local columnOrderAttr = columnOrderJson:gsub('"', '&quot;')
-    local html = '<div id="' .. boardId .. '" data-kanban-root="true" data-status-key="' .. statusKey .. '" data-column-order="' .. columnOrderAttr .. '">'
+    local rootClass = widgetHeight and ' class="kanban-fixed-height"' or ''
+    local rootStyleParts = {}
+    if widgetWidth then table.insert(rootStyleParts, "width:" .. widgetWidth) end
+    if widgetHeight then table.insert(rootStyleParts, "height:" .. widgetHeight) end
+    local rootStyle = #rootStyleParts > 0 and (' style="' .. table.concat(rootStyleParts, ";") .. '"') or ''
+    local html = '<div id="' .. boardId .. '"' .. rootClass .. rootStyle .. ' data-kanban-root="true" data-status-key="' .. statusKey .. '" data-column-order="' .. columnOrderAttr .. '">'
     html = html .. controlsHtml
     -- MODIFICATION START: Only hide the board if there's an active persisted filter that
     -- needs to be reapplied on init. Previously the board was ALWAYS rendered hidden and
@@ -1562,6 +1760,20 @@ function KanbanBoard(taskQuery, options)
 
         const getRoot = (el) => (el && el.closest) ? el.closest('[data-kanban-root]') : null;
 
+        // Toggle the subtle top/bottom fade on a column's card list depending on
+        // whether more cards are hidden above/below the visible area.
+        const updateScrollFade = (cards) => {
+            if (!cards) return;
+            const above = cards.scrollTop > 2;
+            const below = cards.scrollHeight - cards.clientHeight - cards.scrollTop > 2;
+            cards.classList.toggle("kb-more-above", above);
+            cards.classList.toggle("kb-more-below", below);
+        };
+        const updateScrollFades = (root) => {
+            if (!root || !root.classList.contains("kanban-fixed-height")) return;
+            root.querySelectorAll(".kanban-cards").forEach(updateScrollFade);
+        };
+
         const updateDisplay = (root) => {
             const board = root.querySelector(".kanban-board");
             const input = root.querySelector(".kanban-search-input");
@@ -1621,6 +1833,7 @@ function KanbanBoard(taskQuery, options)
                 const countEl = col.querySelector(".kanban-col-count");
                 if (countEl) countEl.textContent = colWrappers.length;
             });
+            updateScrollFades(root);
         };
 
         const syncCheckedTasks = (root) => {
@@ -1684,6 +1897,16 @@ function KanbanBoard(taskQuery, options)
             syncCheckedTasks(root);
             updateDisplay(root);
             board.style.visibility = "visible";
+
+            if (root.classList.contains("kanban-fixed-height")) {
+                updateScrollFades(root);
+                // keep the fades correct when the widget / columns are resized
+                if (window.ResizeObserver) {
+                    const ro = new ResizeObserver(() => updateScrollFades(root));
+                    ro.observe(root);
+                    root.querySelectorAll(".kanban-cards").forEach(c => ro.observe(c));
+                }
+            }
         };
 
         if (!window.kanbanEngineInstalled) {
@@ -1714,6 +1937,7 @@ function KanbanBoard(taskQuery, options)
                 const destCount = column.querySelector('.kanban-col-count');
                 const destVisible = Array.from(column.querySelectorAll('.kanban-card-wrapper')).filter(w => w.style.display !== 'none').length;
                 if (destCount) destCount.textContent = destVisible;
+                updateScrollFades(root);
 
                 if (page && !isNaN(pos) && newStatus && range) {
                     window.dispatchEvent(new CustomEvent("sb-kanban-dnd-update", {
@@ -1721,6 +1945,11 @@ function KanbanBoard(taskQuery, options)
                     }));
                 }
             };
+
+            document.addEventListener("scroll", (e) => {
+                const t = e.target;
+                if (t && t.classList && t.classList.contains("kanban-cards")) updateScrollFade(t);
+            }, true);
 
             document.addEventListener("input", (e) => {
                 if (!e.target.classList || !e.target.classList.contains("kanban-search-input")) return;
@@ -1739,6 +1968,15 @@ function KanbanBoard(taskQuery, options)
             document.addEventListener("click", (e) => {
                 const root = getRoot(e.target);
                 if (!root) return;
+
+                const customBtn = e.target.closest(".kanban-custom-btn");
+                if (customBtn) {
+                    e.preventDefault();
+                    window.dispatchEvent(new CustomEvent("sb-kanban-run-command", {
+                        detail: { command: customBtn.getAttribute("data-command") }
+                    }));
+                    return;
+                }
 
                 const sortBtn = e.target.closest(".kanban-sort-btn");
                 if (sortBtn) {
@@ -1866,6 +2104,7 @@ function KanbanBoard(taskQuery, options)
                 if (columnOver) {
                     const cardsContainer = columnOver.querySelector('.kanban-cards');
                     cardsContainer.appendChild(draggedCard.closest('.kanban-card-wrapper'));
+                    updateScrollFades(getRoot(columnOver));
                 }
             }, { passive: false });
 
